@@ -16,7 +16,7 @@ tags:
   - security
   - restricted
   - key-rotation
-language: zh-CN
+language: en
 source_path: data/sample_corpus/security/admin_key_rotation_sop.md
 supersedes_doc_id: null
 superseded_by: null
@@ -24,7 +24,7 @@ conflict_group_id: null
 is_authoritative: true
 corpus_source: synthetic_fixture
 source_origin: generated
-source_license_note: Week 0 synthetic fixture; not for headline metrics.
+source_license_note: Week 0 synthetic fixture for Northstar Cloud; functional regression only, not for headline metrics.
 hard_negative_group_id: null
 metadata_origin: native
 ---
@@ -39,4 +39,3 @@ Admin keys must be rotated every 90 days by a security administrator.
 
 Employees without the `security_admin` role must be denied access to this
 procedure.
-

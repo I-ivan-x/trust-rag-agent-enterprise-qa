@@ -17,7 +17,7 @@ allowed_roles:
 tags:
   - deployment
   - rollout
-language: zh-CN
+language: en
 source_path: data/sample_corpus/deployment/rollout_guide.md
 supersedes_doc_id: null
 superseded_by: null
@@ -25,7 +25,7 @@ conflict_group_id: null
 is_authoritative: true
 corpus_source: synthetic_fixture
 source_origin: generated
-source_license_note: Week 0 synthetic fixture; not for headline metrics.
+source_license_note: Week 0 synthetic fixture for Northstar Cloud; functional regression only, not for headline metrics.
 hard_negative_group_id: null
 metadata_origin: native
 ---
@@ -38,6 +38,5 @@ The rollout window for v2 is Tuesday 22:00 to 23:00 local time.
 
 ### Rollback Signal
 
-Rollback is required if login error rate exceeds 2% for five consecutive
+Rollback is required if the login error rate exceeds 2% for five consecutive
 minutes.
-
