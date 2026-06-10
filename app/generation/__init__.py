@@ -1,0 +1,2 @@
+"""Generation-facing client placeholders."""
+
