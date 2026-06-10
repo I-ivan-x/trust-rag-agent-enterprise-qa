@@ -17,7 +17,7 @@ tags:
   - auth
   - api
   - token
-language: zh-CN
+language: en
 source_path: data/sample_corpus/api/auth_service_v2.md
 supersedes_doc_id: doc-api-auth-service-v1
 superseded_by: null
@@ -25,18 +25,22 @@ conflict_group_id: auth-token-lifetime
 is_authoritative: true
 corpus_source: synthetic_fixture
 source_origin: generated
-source_license_note: Week 0 synthetic fixture; not for headline metrics.
+source_license_note: Week 0 synthetic fixture for Northstar Cloud; functional regression only, not for headline metrics.
 hard_negative_group_id: null
 metadata_origin: native
 ---
 
 # Auth Service API v2
 
-## Token Lifetime
+## Access Token Lifetime
 
-The access token lifetime is 30 minutes in v2.
+In v2 the access token lifetime is 30 minutes.
 
-### Refresh Rule
+### Refresh Behavior
 
-Clients must refresh tokens before expiry and must not assume v1 lifetime rules.
+Clients must refresh before expiry and must not assume the v1 lifetime rules.
 
+## Refresh Token Rate Limit
+
+The refresh token endpoint is limited to 30 requests per minute per client.
+Requests above this limit receive an HTTP 429 response.

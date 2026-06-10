@@ -17,7 +17,7 @@ tags:
   - auth
   - api
   - deprecated
-language: zh-CN
+language: en
 source_path: data/sample_corpus/deprecated/auth_service_v1.md
 supersedes_doc_id: null
 superseded_by: doc-api-auth-service-v2
@@ -25,19 +25,18 @@ conflict_group_id: auth-token-lifetime
 is_authoritative: false
 corpus_source: synthetic_fixture
 source_origin: generated
-source_license_note: Week 0 synthetic fixture; not for headline metrics.
+source_license_note: Week 0 synthetic fixture for Northstar Cloud; functional regression only, not for headline metrics.
 hard_negative_group_id: null
 metadata_origin: native
 ---
 
 # Auth Service API v1
 
-## Token Lifetime
+## Access Token Lifetime
 
-The v1 access token lifetime was 60 minutes.
+In v1 the access token lifetime was 60 minutes.
 
 ### Deprecation Notice
 
-This document is deprecated and should only be used to test stale-evidence
-handling.
-
+This version is deprecated and is retained only to test stale-evidence handling.
+Use Auth Service API v2 for the current behavior.

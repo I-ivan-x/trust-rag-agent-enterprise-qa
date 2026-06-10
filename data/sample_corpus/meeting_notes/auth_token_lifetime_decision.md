@@ -18,7 +18,7 @@ tags:
   - auth
   - meeting
   - decision
-language: zh-CN
+language: en
 source_path: data/sample_corpus/meeting_notes/auth_token_lifetime_decision.md
 supersedes_doc_id: null
 superseded_by: null
@@ -26,7 +26,7 @@ conflict_group_id: auth-token-lifetime
 is_authoritative: false
 corpus_source: synthetic_fixture
 source_origin: generated
-source_license_note: Week 0 synthetic fixture; not for headline metrics.
+source_license_note: Week 0 synthetic fixture for Northstar Cloud; functional regression only, not for headline metrics.
 hard_negative_group_id: null
 metadata_origin: native
 ---
@@ -35,10 +35,10 @@ metadata_origin: native
 
 ## Decision
 
-The team agreed to move from a 60-minute token lifetime to 30 minutes for v2.
+The team agreed to keep the access token lifetime at 60 minutes to reduce
+re-login friction during the v2 migration.
 
-### Rationale
+### Open Item
 
-The shorter lifetime reduces exposure after credential leakage and aligns with
-the v2 rollout plan.
-
+Security will revisit the 60-minute setting next quarter. These notes have not
+been reconciled with the v2 API spec, which currently states 30 minutes.
