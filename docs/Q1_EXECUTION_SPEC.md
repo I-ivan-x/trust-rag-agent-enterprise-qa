@@ -54,6 +54,12 @@ Active vs deprecated in the same group is `warn_deprecated`, not a conflict.
 No parser/chunker logic, production retrieval, Qdrant, Whoosh, RRF, BGE
 reranking, real model calls, Docker, LangGraph, or a complete RAG workflow.
 
+## Out Of Scope (Week 1)
+
+No sentence-transformers, Qdrant, Whoosh, BM25, RRF, BGE reranker, real LLM,
+`/chat` main chain, eval runner, Docker, LangGraph, or headline metrics from
+fixtures.
+
 ## Week 0 Acceptance
 
 - `uv sync` resolves the environment.
@@ -63,6 +69,18 @@ reranking, real model calls, Docker, LangGraph, or a complete RAG workflow.
 - Core schemas support JSON round-trip.
 - Fixtures and docs clearly state that mock and fixture results are not
   headline metrics.
+
+## Week 1 Acceptance
+
+- Markdown/TXT sample corpus files load in stable path order.
+- YAML front matter is parsed into `DocumentMetadata` with English-first
+  fallbacks.
+- Markdown headings produce stable section paths and line numbers.
+- Section-aware chunking writes stable chunk IDs and inherits metadata.
+- `data/generated/documents.jsonl`, `data/generated/chunks.jsonl`, and
+  `data/generated/chunk_manifest.jsonl` are generated.
+- Demo eval `gold_chunk_ids` are backfilled only from real generated chunks.
+- `docs/EVAL_CASE_REVIEW_WEEK1.md` exists as a review aid, not a formal report.
 
 ## Mock-First Principle
 

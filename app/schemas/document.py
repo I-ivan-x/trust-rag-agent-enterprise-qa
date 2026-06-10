@@ -29,7 +29,7 @@ class DocumentMetadata(BaseModel):
     access_level: AccessLevel = AccessLevel.internal
     allowed_roles: list[str] = Field(default_factory=lambda: ["employee"])
     tags: list[str] = Field(default_factory=list)
-    language: str = "zh-CN"
+    language: str = "en"
     source_path: str
     supersedes_doc_id: str | None = None
     superseded_by: str | None = None
@@ -79,4 +79,3 @@ class ParsedDocument(BaseModel):
     metadata: DocumentMetadata
     sections: list[ParsedSection] = Field(default_factory=list)
     raw_text: str
-

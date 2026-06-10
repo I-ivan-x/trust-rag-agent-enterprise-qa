@@ -15,6 +15,16 @@
 - Access, status, tags, corpus, origin, hard negative, conflict, and authority
   fields are preserved from document metadata.
 - Token and character counts are present for later chunking checks.
+- Week 1 chunks must not include YAML front matter text.
+- Week 1 chunk indexes must be continuous per document starting at 0.
+
+## Ingestion
+
+- Loader ignores hidden, temporary, empty, cache, `.git`, and `.venv` files.
+- `RawDocument.source_path` is stable and relative.
+- Markdown parser ignores headings inside fenced code blocks.
+- TXT parser uses a metadata fallback that still validates as `DocumentMetadata`.
+- Generated JSONL files validate against the Week 0 schemas.
 
 ## Citation
 
@@ -52,7 +62,8 @@
 
 - Eval split, corpus source, query source, query style, title overlap score,
   and real-model requirement are explicit.
-- `gold_chunk_ids` may be empty in Week 0.
+- `gold_chunk_ids` may be empty in Week 0 and are backfilled for demo fixture
+  cases in Week 1.
 - `expected_rewrite` is informational and not a scoring target.
 
 ## JSON Round-Trip

@@ -28,15 +28,19 @@ autonomous agent.
 See `docs/CORPUS_PROTOCOL.md`, `docs/EVAL_PROTOCOL.md`,
 `docs/Q1_EXECUTION_SPEC.md`, and `docs/SCHEMA_REVIEW_CHECKLIST.md`.
 
-## Q1 Hard Demo Scope (Week 0)
+## Q1 Hard Demo Scope (Week 0-1)
 
 Week 0 only builds the base: FastAPI, settings, shared enums, schemas,
 mock-only service placeholders, Northstar Cloud synthetic fixture documents,
 demo eval schema data, protocol docs, linting, and tests.
 
-Week 0 does **not** implement parser/chunker logic, Qdrant, Whoosh, RRF, BGE
-reranking, real embeddings, real LLM calls, Docker, LangGraph, or the complete
-RAG workflow.
+Week 1 adds the ingestion and section-aware chunking path from Markdown/TXT
+fixtures to generated JSONL artifacts. It also backfills demo eval
+`gold_chunk_ids` from real generated fixture chunks.
+
+Week 1 still does **not** implement Qdrant, Whoosh, BM25, RRF, BGE reranking,
+real embeddings, real LLM calls, Docker, LangGraph, `/chat`, an eval runner, or
+the complete RAG workflow.
 
 MockEmbeddingService and MockLLMClient are for tests, CI, and smoke tests only.
 Mock output must not be reported as formal evaluation or headline metrics.
@@ -50,13 +54,15 @@ python -m uv run uvicorn app.main:app --reload
 
 Open Swagger UI at <http://127.0.0.1:8000/docs>.
 
-## Current Week 0 Status
+## Current Week 1 Status
 
 - FastAPI app and `/health` endpoint are available.
 - Pydantic schemas reserve the v0.3 corpus, eval, agentic recovery, and grounded
   scoring fields.
 - Five Northstar Cloud synthetic fixtures and a 5-case demo eval exist only for
-  schema, chunking, and smoke checks; `gold_chunk_ids` are backfilled in Week 1.
+  schema, chunking, smoke checks, and fixture regression.
+- `scripts/ingest_corpus.py` generates `documents.jsonl`, `chunks.jsonl`, and
+  `chunk_manifest.jsonl` under `data/generated/`.
 - Formal evaluation still requires real embedding, real reranker, and real LLM
   in later weeks.
 
@@ -66,5 +72,6 @@ Open Swagger UI at <http://127.0.0.1:8000/docs>.
 python -m uv sync
 python -m uv run ruff check .
 python -m uv run pytest
+python -m uv run python scripts/ingest_corpus.py
 python -m uv run uvicorn app.main:app --reload
 ```
