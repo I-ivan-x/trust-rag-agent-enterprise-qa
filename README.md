@@ -28,7 +28,7 @@ autonomous agent.
 See `docs/CORPUS_PROTOCOL.md`, `docs/EVAL_PROTOCOL.md`,
 `docs/Q1_EXECUTION_SPEC.md`, and `docs/SCHEMA_REVIEW_CHECKLIST.md`.
 
-## Q1 Hard Demo Scope (Week 0-2)
+## Q1 Hard Demo Scope (Week 0-3)
 
 Week 0 only builds the base: FastAPI, settings, shared enums, schemas,
 mock-only service placeholders, Northstar Cloud synthetic fixture documents,
@@ -42,13 +42,18 @@ Week 2 adds the retrieval base: embedding service interfaces, Whoosh BM25,
 Qdrant vector-store wiring, RRF hybrid search, index status, rebuild scripts,
 and search preview.
 
-Week 2 still does **not** implement BGE reranking, `/chat`, real LLM calls,
-answer generation, citation binding, ACL gates, document state gates, evidence
-gates, agentic recovery, Docker, LangGraph, or an eval runner.
+Week 3 adds the first online `/chat` path: hybrid retrieval, BGE reranker
+interface, context assembly, structured answer generation, citation binding,
+and a FastAPI route. The default LLM remains mock for local demo and smoke.
 
-MockEmbeddingService and MockLLMClient are for tests, CI, and smoke tests only.
-Mock output must not be reported as formal evaluation or headline metrics.
-MockEmbeddingService must also not be cited as formal retrieval-eval evidence.
+Week 3 still does **not** implement ACL gates, document state gates, evidence
+gates, refusal controller, citation verifier v1, agentic query rewrite,
+second-pass retrieval, eval runner, Docker, LangGraph, or formal real-LLM eval.
+
+MockEmbeddingService, MockReranker, and MockLLMClient are for tests, CI, local
+demo, and smoke tests only. Mock output must not be reported as formal
+evaluation or headline metrics. MockEmbeddingService must also not be cited as
+formal retrieval-eval evidence.
 SentenceTransformerEmbeddingService with `BAAI/bge-small-en-v1.5` is the default
 direction for formal retrieval evaluation once Qdrant is available.
 
@@ -61,7 +66,7 @@ python -m uv run uvicorn app.main:app --reload
 
 Open Swagger UI at <http://127.0.0.1:8000/docs>.
 
-## Current Week 2 Status
+## Current Week 3 Status
 
 - FastAPI app and `/health` endpoint are available.
 - Pydantic schemas reserve the v0.3 corpus, eval, agentic recovery, and grounded
@@ -73,6 +78,10 @@ Open Swagger UI at <http://127.0.0.1:8000/docs>.
 - `scripts/rebuild_indexes.py` builds the local Whoosh index and attempts the
   Qdrant vector index.
 - `scripts/search_preview.py` previews keyword, vector, or hybrid search.
+- `/chat` returns answer, citations, response mode, trace ID, provider metadata,
+  and retrieved chunk preview.
+- BGE reranker support is available through `BAAI/bge-reranker-base` when the
+  model and `sentence-transformers` runtime are available.
 - If Qdrant is unavailable, Whoosh and RRF tests still run; formal vector
   retrieval requires Qdrant.
 - Formal evaluation still requires real embedding, real reranker, and real LLM
@@ -85,7 +94,7 @@ python -m uv sync
 python -m uv run ruff check .
 python -m uv run pytest
 python -m uv run python scripts/ingest_corpus.py
-python -m uv run python scripts/rebuild_indexes.py --embedding-provider mock
+python -m uv run python scripts/rebuild_indexes.py --embedding-provider sentence_transformer
 python -m uv run python scripts/search_preview.py "refresh token rate limit" --mode keyword
 python -m uv run python scripts/search_preview.py "refresh token rate limit" --mode hybrid
 python -m uv run uvicorn app.main:app --reload

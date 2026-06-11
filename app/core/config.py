@@ -29,12 +29,12 @@ class Settings(BaseSettings):
     eval_runs_dir: Path = Path("data/eval_runs")
     whoosh_index_dir: Path = Path("data/indexes/whoosh")
 
-    embedding_provider: str = "mock"
+    embedding_provider: str = "sentence_transformer"
     embedding_model_name: str = "BAAI/bge-small-en-v1.5"
     embedding_batch_size: int = 32
     embedding_device: str = "cpu"
-    reranker_provider: str = "mock"
-    reranker_model_name: str = "mock-reranker-v0"
+    reranker_provider: str = "bge"
+    reranker_model_name: str = "BAAI/bge-reranker-base"
     llm_provider: str = "mock"
     llm_model_name: str = "mock-llm-v0"
 

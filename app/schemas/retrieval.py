@@ -1,6 +1,6 @@
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from app.core.enums import AccessLevel, RetrievalSource
 from app.schemas.chunk import Chunk
@@ -21,6 +21,18 @@ class RetrievalOptions(BaseModel):
     return_retrieved_chunks: bool = False
     enable_agentic_recovery: bool = True
     max_rewrite_rounds: int = Field(default=1, ge=0)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _accept_week3_top_k_alias(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        normalized = dict(data)
+        if "top_k" in normalized:
+            top_k = normalized.pop("top_k")
+            normalized.setdefault("top_k_dense", top_k)
+            normalized.setdefault("top_k_sparse", top_k)
+        return normalized
 
 
 class RetrievalPlan(BaseModel):
@@ -48,4 +60,3 @@ class ContextPack(BaseModel):
     context_text: str = ""
     token_count: int = Field(default=0, ge=0)
     warnings: list[str] = Field(default_factory=list)
-
