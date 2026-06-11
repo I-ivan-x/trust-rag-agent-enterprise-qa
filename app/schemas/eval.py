@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, model_validator
 
 from app.core.enums import (
     AccessLevel,
@@ -16,10 +16,16 @@ from app.core.enums import (
 
 
 class EvalCase(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     case_id: str
     query: str
     query_type: QueryType
-    eval_split: EvalSplit = EvalSplit.fixture
+    eval_split: EvalSplit = Field(
+        default=EvalSplit.fixture,
+        validation_alias=AliasChoices("split", "eval_split"),
+        serialization_alias="split",
+    )
     corpus_source: CorpusSource = CorpusSource.synthetic_fixture
     query_source: QuerySource = QuerySource.manifest_authored
     query_source_url: str | None = None
@@ -32,15 +38,29 @@ class EvalCase(BaseModel):
     user_clearance: AccessLevel = AccessLevel.internal
 
     expected_behavior: ExpectedBehavior
+    expected_response_mode: ExpectedBehavior | None = None
     gold_doc_ids: list[str] = Field(default_factory=list)
     gold_chunk_ids: list[str] = Field(default_factory=list)
     reference_answer: str | None = None
+    reference_claims: list[str] = Field(default_factory=list)
+    requires_citation: bool = Field(
+        default=True,
+        validation_alias=AliasChoices("requires_citation", "must_cite"),
+    )
     must_cite: bool = True
     must_refuse: bool = False
     requires_real_model: bool = False
 
     expected_rewrite: str | None = None
     hard_negative_group_id: str | None = None
+    notes: str | None = None
+
+    @model_validator(mode="after")
+    def _normalize_compatible_fields(self) -> "EvalCase":
+        self.must_cite = self.requires_citation
+        if self.expected_response_mode is None:
+            self.expected_response_mode = self.expected_behavior
+        return self
 
 
 class EvalResult(BaseModel):
@@ -69,4 +89,3 @@ class EvalRunSummary(BaseModel):
     uses_real_embedding: bool = False
     uses_real_reranker: bool = False
     uses_real_llm: bool = False
-
