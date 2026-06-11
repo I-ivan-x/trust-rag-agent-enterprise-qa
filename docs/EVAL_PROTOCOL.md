@@ -31,7 +31,7 @@ To avoid corpus-and-eval collusion:
 
 1. The corpus and its manifest are frozen first.
 2. The eval author does not read full text - only manifest, title, doc_type,
-   tags, section titles, status, and access level.
+   tags, section titles, status, access level, source URL, and metadata origin.
 3. Queries and `expected_behavior` are written from the manifest.
 4. Codex backfills `gold_chunk_ids` from real chunks; the Owner spot-checks.
 5. `check_eval_leakage.py` runs before the data is frozen; the report is
@@ -61,3 +61,17 @@ obfuscated split** (grounded_correctness / correct refusal).
 
 Headline claims use grounded_correctness from real embedding + real reranker +
 real LLM paths. Mock runs are valid for smoke tests only, never for reports.
+
+The public external split is a headline source only when evaluated with real
+providers. Synthetic fixtures remain functional regression only. Hard negative
+results are reported as a separate retrieval/citation robustness slice, not
+merged into the headline external score.
+
+Week 5A prepares corpus artifacts only. It does not implement `run_eval.py`,
+metrics summaries, formal real-LLM runs, or an `EVALUATION_REPORT`.
+
+For Week 5A hard negatives, eval authors should treat `pair_type` as a
+conservative corpus-construction label. Current public-derived pairs are
+`adjacent_topic` or `similar_title`; unsupported labels such as
+`deprecated_vs_active` or `official_doc_vs_meeting_note` must not be inferred
+from these pairs.

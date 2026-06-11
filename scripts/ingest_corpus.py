@@ -14,6 +14,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from app.ingest.chunker import chunk_documents
 from app.ingest.loader import load_corpus
+from app.ingest.metadata_overlay import apply_metadata_overlay, load_metadata_overlay
 from app.ingest.parser_markdown import parse_markdown_document
 from app.ingest.parser_text import parse_text_document
 from app.schemas.chunk import Chunk
@@ -26,9 +27,16 @@ def run_ingest(
     output_dir: Path,
     eval_path: Path | None = None,
     review_path: Path | None = Path("docs/EVAL_CASE_REVIEW_WEEK1.md"),
+    overlay_path: Path | None = None,
 ) -> dict[str, Any]:
     raw_documents = load_corpus(input_dir)
     parsed_documents = [_parse_raw_document(raw_doc) for raw_doc in raw_documents]
+    overlay = load_metadata_overlay(overlay_path)
+    overlay_summary = apply_metadata_overlay(
+        parsed_documents,
+        overlay,
+        corpus_root=input_dir,
+    )
     chunks = chunk_documents(parsed_documents)
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -53,6 +61,10 @@ def run_ingest(
         "documents_output_path": documents_output_path.as_posix(),
         "chunks_output_path": chunks_output_path.as_posix(),
         "chunk_manifest_output_path": chunk_manifest_output_path.as_posix(),
+        "overlay_applied": overlay_summary.overlay_applied,
+        "overlay_modified_count": overlay_summary.overlay_modified_count,
+        "restricted_or_confidential_ratio": overlay_summary.restricted_or_confidential_ratio,
+        "deprecated_ratio": overlay_summary.deprecated_ratio,
         "demo_eval_backfilled": backfill_details["updated"],
         "demo_eval_backfill_details": backfill_details["cases"],
     }
@@ -72,6 +84,7 @@ def write_documents_jsonl(path: Path, parsed_documents: list[ParsedDocument]) ->
                 "source_path": metadata.source_path,
                 "corpus_source": metadata.corpus_source.value,
                 "metadata_origin": metadata.metadata_origin.value,
+                "overlay_applied": metadata.metadata_origin.value == "overlay",
                 "section_count": _section_count(parsed_doc.sections),
             }
         )
@@ -98,6 +111,7 @@ def write_chunk_manifest_jsonl(path: Path, chunks: list[Chunk]) -> None:
                 "corpus_source": chunk.corpus_source.value,
                 "hard_negative_group_id": chunk.hard_negative_group_id,
                 "metadata_origin": chunk.metadata_origin.value,
+                "overlay_applied": chunk.metadata_origin.value == "overlay",
             }
             for chunk in chunks
         ],
@@ -282,15 +296,27 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Ingest Week 1 sample corpus into JSONL files.")
     parser.add_argument("--input", type=Path, default=Path("data/sample_corpus"))
     parser.add_argument("--output", type=Path, default=Path("data/generated"))
-    parser.add_argument("--corpus", choices=["sample"], default="sample")
-    parser.add_argument("--eval", type=Path, default=Path("data/gold_eval/demo_eval.jsonl"))
+    parser.add_argument("--corpus", choices=["sample", "public", "hard_negative"], default="sample")
+    parser.add_argument("--eval", type=Path, default=None)
+    parser.add_argument("--overlay", type=Path, default=None)
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
-    result = run_ingest(input_dir=args.input, output_dir=args.output, eval_path=args.eval)
+    result = run_ingest(
+        input_dir=args.input,
+        output_dir=args.output,
+        eval_path=args.eval or _default_eval_path(args.input),
+        overlay_path=args.overlay,
+    )
     print(json.dumps(result, ensure_ascii=False, indent=2))
+
+
+def _default_eval_path(input_dir: Path) -> Path | None:
+    if input_dir.as_posix().rstrip("/") == Path("data/sample_corpus").as_posix():
+        return Path("data/gold_eval/demo_eval.jsonl")
+    return None
 
 
 if __name__ == "__main__":

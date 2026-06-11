@@ -138,6 +138,22 @@ formal metrics from fixture or mock chat output.
   `refuse_permission > report_conflict > warn_deprecated > answer/refuse_no_evidence`.
 - `/chat` records Week 4 trust trace fields in the response.
 
+## Week 5A Acceptance
+
+- `scripts/fetch_public_corpus.py --limit 40` creates a public external FastAPI
+  docs corpus with source URLs and non-empty license notes.
+- `data/public_corpus/overlay/metadata_overlay.yaml` applies reproducible
+  metadata-only ACL/state overlays without modifying public body text.
+- Public ingest supports `--overlay` and writes overlay metadata into documents,
+  chunks, and chunk manifests.
+- `data/public_corpus/public_corpus_manifest.jsonl` supports eval author
+  isolation by exposing metadata and section titles without requiring full-body
+  reading.
+- `scripts/build_hard_negatives.py` creates at least 20 hard negative pairs and
+  `data/hard_negative_corpus/hard_negative_manifest.jsonl`.
+- Week 5A does not implement `run_eval.py`, formal metrics, or real LLM final
+  runs.
+
 ## Mock-First Principle
 
 Mock providers are scaffolding for fast local verification (tests, CI, smoke).

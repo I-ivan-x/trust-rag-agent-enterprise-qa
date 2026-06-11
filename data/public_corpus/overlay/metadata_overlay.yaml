@@ -1,0 +1,42 @@
+seed: 42
+relation_note: Deprecated and superseded_by values are controlled synthetic overlay
+  relationships for trust-gate testing; they are not upstream FastAPI version lineage.
+defaults:
+  status: active
+  access_level: internal
+  allowed_roles:
+  - employee
+  - engineer
+rules:
+- match: security/**
+  access_level: restricted
+  allowed_roles:
+  - security_admin
+- match: confidential/**
+  access_level: confidential
+  allowed_roles:
+  - engineer
+  - manager
+- match: deprecated/**
+  status: deprecated
+documents:
+- path: deprecated/009-tutorial-query-params-str-validations.md
+  status: deprecated
+  version: fastapi-docs-legacy
+  superseded_by: active/014-tutorial-schema-extra-example.md
+- path: deprecated/010-tutorial-path-params-numeric-validations.md
+  status: deprecated
+  version: fastapi-docs-legacy
+  superseded_by: active/015-tutorial-extra-data-types.md
+- path: deprecated/011-tutorial-body-multiple-params.md
+  status: deprecated
+  version: fastapi-docs-legacy
+  superseded_by: active/016-tutorial-cookie-params.md
+- path: deprecated/012-tutorial-body-fields.md
+  status: deprecated
+  version: fastapi-docs-legacy
+  superseded_by: active/017-tutorial-header-params.md
+- path: deprecated/013-tutorial-body-nested-models.md
+  status: deprecated
+  version: fastapi-docs-legacy
+  superseded_by: active/018-tutorial-response-model.md

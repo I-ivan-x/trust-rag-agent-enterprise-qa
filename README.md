@@ -28,7 +28,7 @@ autonomous agent.
 See `docs/CORPUS_PROTOCOL.md`, `docs/EVAL_PROTOCOL.md`,
 `docs/Q1_EXECUTION_SPEC.md`, and `docs/SCHEMA_REVIEW_CHECKLIST.md`.
 
-## Q1 Hard Demo Scope (Week 0-4)
+## Q1 Hard Demo Scope (Week 0-5A)
 
 Week 0 only builds the base: FastAPI, settings, shared enums, schemas,
 mock-only service placeholders, Northstar Cloud synthetic fixture documents,
@@ -50,9 +50,13 @@ Week 4 connects trust gates to `/chat`: document state gate, ACL gate, minimal
 active-active conflict detection, simplified evidence gate, one rule-based
 rewrite pass, and refusal controller priority.
 
-Week 4 still does **not** implement `run_eval.py`, formal metrics, public corpus
-fetch, hard negatives, external eval, citation verifier v1, Docker, Streamlit,
-LangGraph, complex planning, or trace indexing.
+Week 5A adds a public external corpus pipeline using a FastAPI documentation
+subset, reproducible ACL/state metadata overlay, public manifest generation, and
+hard negative corpus pairs.
+
+Week 5A still does **not** implement `run_eval.py`, metrics summaries, formal
+real-LLM runs, `/eval`, trace indexing, Docker, Streamlit, LangGraph, or Week 6
+delivery polish.
 
 MockEmbeddingService, MockReranker, and MockLLMClient are for tests, CI, local
 demo, and smoke tests only. Mock output must not be reported as formal
@@ -70,7 +74,7 @@ python -m uv run uvicorn app.main:app --reload
 
 Open Swagger UI at <http://127.0.0.1:8000/docs>.
 
-## Current Week 4 Status
+## Current Week 5A Status
 
 - FastAPI app and `/health` endpoint are available.
 - Pydantic schemas reserve the v0.3 corpus, eval, agentic recovery, and grounded
@@ -88,6 +92,18 @@ Open Swagger UI at <http://127.0.0.1:8000/docs>.
   refusal control before context assembly and answer generation.
 - Rule-based rewrite can attempt one second-pass retrieval when evidence is
   insufficient and no higher-priority trust mode has fired.
+- `scripts/fetch_public_corpus.py --limit 40` fetches real public FastAPI docs
+  text from the public GitHub repository and writes
+  `data/public_corpus/public_corpus_manifest.jsonl`.
+- Public corpus ACL/state/conflict fields can be controlled by
+  `data/public_corpus/overlay/metadata_overlay.yaml`; `metadata_origin=native`
+  means source/front-matter metadata, while `metadata_origin=overlay` means a
+  controlled metadata-only test overlay changed at least one field.
+- `scripts/build_hard_negatives.py` creates hard negative pairs and
+  `data/hard_negative_corpus/hard_negative_manifest.jsonl`; these are reported
+  separately from headline external metrics. Week 5A hard negative labels are
+  conservative (`adjacent_topic` / `similar_title`) unless richer source types
+  are explicitly introduced later.
 - BGE reranker support is available through `BAAI/bge-reranker-base` when the
   model and `sentence-transformers` runtime are available.
 - If Qdrant is unavailable, Whoosh and RRF tests still run; formal vector
@@ -106,5 +122,8 @@ python -m uv run python scripts/rebuild_indexes.py --embedding-provider sentence
 python -m uv run python scripts/search_preview.py "refresh token rate limit" --mode keyword
 python -m uv run python scripts/search_preview.py "refresh token rate limit" --mode hybrid
 python -m uv run python scripts/demo_queries.py
+python -m uv run python scripts/fetch_public_corpus.py --limit 40
+python -m uv run python scripts/ingest_corpus.py --input data/public_corpus --output data/generated/public --overlay data/public_corpus/overlay/metadata_overlay.yaml
+python -m uv run python scripts/build_hard_negatives.py
 python -m uv run uvicorn app.main:app --reload
 ```

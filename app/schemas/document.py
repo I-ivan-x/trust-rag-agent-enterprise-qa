@@ -39,6 +39,7 @@ class DocumentMetadata(BaseModel):
     corpus_source: CorpusSource = CorpusSource.synthetic_fixture
     source_origin: SourceOrigin = SourceOrigin.generated
     source_license_note: str | None = None
+    source_url: str | None = None
     hard_negative_group_id: str | None = None
     metadata_origin: MetadataOrigin = MetadataOrigin.native
 

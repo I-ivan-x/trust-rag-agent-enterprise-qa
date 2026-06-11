@@ -38,6 +38,16 @@ metrics.**
 attribution and license notes. Public external eval is the primary basis for
 headline metrics. Prefer versioned pages updated within the last 12 months.
 
+Week 5A uses a FastAPI documentation subset fetched from the public
+`fastapi/fastapi` GitHub repository. The document body text is real public
+documentation text. Front matter is generated locally to preserve stable IDs,
+source URLs, source repo paths, license notes, language, and Q1 schema fields.
+
+`data/public_corpus/public_corpus_manifest.jsonl` is the eval-author-facing
+view. Eval authors may inspect title, tags, section titles, status, access
+level, source URL, and metadata origin from the manifest, but should not read
+the full document body while drafting external eval queries.
+
 ## Hard Negative Corpus
 
 `data/hard_negative_corpus/` holds adjacent-version, similar-title, and
@@ -56,6 +66,30 @@ Overlay constraints (frozen): restricted/confidential 15-25%; deprecated
 seed-controlled and reproducible; any field changed by overlay is marked
 `metadata_origin=overlay`. Reports must state that external ACL/state metadata
 is a controlled overlay while the text is real public text.
+
+`metadata_origin=native` means the parsed document retained its source/front
+matter metadata after ingestion. `metadata_origin=overlay` means the public
+text is unchanged but at least one controlled metadata field was modified by the
+overlay. Week 5A target ratios are 15-25% restricted/confidential and 10-15%
+deprecated.
+
+Week 5A FastAPI docs are a single-version public source. Deprecated status and
+`superseded_by` values in the overlay are controlled synthetic relationships for
+trust-gate testing, not upstream FastAPI version lineage. The public manifest
+marks these rows with `overlay_relation_note`.
+
+## Hard Negative Reporting
+
+`data/hard_negative_corpus/hard_negative_manifest.jsonl` records near-miss
+pairs separately with `hard_negative_group_id`, pair type, source paths, and
+why the pair is hard. Hard negative results must be reported separately from
+headline public-external metrics.
+
+Week 5A hard negative pair labels are intentionally conservative. The builder
+uses only labels that the current public docs actually support, such as
+`adjacent_topic` and `similar_title`; it does not claim adjacent-version,
+deprecated-vs-active, same-limit, or meeting-note contrasts unless those source
+types are truly present.
 
 ## Metric Boundary
 
