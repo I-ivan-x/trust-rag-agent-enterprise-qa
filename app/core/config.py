@@ -27,9 +27,12 @@ class Settings(BaseSettings):
     gold_eval_dir: Path = Path("data/gold_eval")
     trace_dir: Path = Path("data/traces")
     eval_runs_dir: Path = Path("data/eval_runs")
+    whoosh_index_dir: Path = Path("data/indexes/whoosh")
 
     embedding_provider: str = "mock"
-    embedding_model_name: str = "mock-embedding-v0"
+    embedding_model_name: str = "BAAI/bge-small-en-v1.5"
+    embedding_batch_size: int = 32
+    embedding_device: str = "cpu"
     reranker_provider: str = "mock"
     reranker_model_name: str = "mock-reranker-v0"
     llm_provider: str = "mock"
@@ -50,4 +53,3 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
-

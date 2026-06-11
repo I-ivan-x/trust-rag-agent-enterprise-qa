@@ -60,6 +60,12 @@ No sentence-transformers, Qdrant, Whoosh, BM25, RRF, BGE reranker, real LLM,
 `/chat` main chain, eval runner, Docker, LangGraph, or headline metrics from
 fixtures.
 
+## Out Of Scope (Week 2)
+
+No reranker, MockReranker, `/chat`, real LLM, answer generator, context
+assembler, citation binder, ACL gate, document state gate, evidence gate,
+agentic recovery, eval runner, Docker, LangGraph, or rerank-improvement claims.
+
 ## Week 0 Acceptance
 
 - `uv sync` resolves the environment.
@@ -82,11 +88,27 @@ fixtures.
 - Demo eval `gold_chunk_ids` are backfilled only from real generated chunks.
 - `docs/EVAL_CASE_REVIEW_WEEK1.md` exists as a review aid, not a formal report.
 
+## Week 2 Acceptance
+
+- `data/generated/chunks.jsonl` loads into validated `Chunk` records.
+- MockEmbedding remains deterministic and smoke-test only.
+- SentenceTransformerEmbedding is the formal retrieval-eval direction, with
+  `BAAI/bge-small-en-v1.5` as the English-first default model.
+- Whoosh BM25 index can be built and searched locally.
+- Qdrant vector-store wiring exists and reports clear errors when local Qdrant
+  is unavailable.
+- RRF hybrid retrieval deduplicates by chunk ID and preserves vector/keyword
+  scores.
+- `scripts/rebuild_indexes.py` and `scripts/search_preview.py` run without
+  entering Week 3 functionality.
+
 ## Mock-First Principle
 
 Mock providers are scaffolding for fast local verification (tests, CI, smoke).
 They are not valid for formal evaluation, EVALUATION_REPORT claims, or headline
 metrics.
+Mock embedding retrieval results are also not valid for formal retrieval-eval
+conclusions.
 
 ## Codex And Claude Split
 

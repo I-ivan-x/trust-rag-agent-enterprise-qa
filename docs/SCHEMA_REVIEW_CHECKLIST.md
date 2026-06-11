@@ -26,6 +26,25 @@
 - TXT parser uses a metadata fallback that still validates as `DocumentMetadata`.
 - Generated JSONL files validate against the Week 0 schemas.
 
+## Retrieval Indexes
+
+- Embedding providers expose `embed_texts()` and `embed_query()`.
+- Mock embeddings are deterministic and marked smoke-test only.
+- SentenceTransformer embeddings are the formal retrieval-eval direction.
+- Qdrant payloads preserve chunk metadata needed for later gates.
+- Whoosh fields include chunk/document IDs, text, section path text, status,
+  access level, and corpus source.
+- Metadata filters support status, access level, corpus source, and doc ID.
+
+## Hybrid Retrieval
+
+- RRF uses `sum(1 / (k + rank_i))`.
+- Fused results deduplicate by `chunk_id`.
+- `vector_score`, `keyword_score`, and `rrf_score` are preserved where
+  available.
+- Hybrid rank starts at 1 after fusion.
+- Week 2 does not include reranker logic or rerank-improvement reporting.
+
 ## Citation
 
 - Citation IDs, document IDs, chunk IDs, section paths, and locators are present.
