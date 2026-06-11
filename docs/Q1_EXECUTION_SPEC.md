@@ -66,6 +66,13 @@ No reranker, MockReranker, `/chat`, real LLM, answer generator, context
 assembler, citation binder, ACL gate, document state gate, evidence gate,
 agentic recovery, eval runner, Docker, LangGraph, or rerank-improvement claims.
 
+## Out Of Scope (Week 3)
+
+No ACL gate, document state gate, evidence gate, refusal controller, conflict
+detection, citation verifier v1, agentic query rewrite, second-pass retrieval,
+eval runner, public corpus download, hard negative corpus, Docker, LangGraph, or
+formal metrics from fixture or mock chat output.
+
 ## Week 0 Acceptance
 
 - `uv sync` resolves the environment.
@@ -102,13 +109,30 @@ agentic recovery, eval runner, Docker, LangGraph, or rerank-improvement claims.
 - `scripts/rebuild_indexes.py` and `scripts/search_preview.py` run without
   entering Week 3 functionality.
 
+## Week 3 Acceptance
+
+- `/chat` runs the first online path:
+  `ChatRequest -> hybrid retrieval -> rerank -> context assembly -> answer
+  generation -> citation binding -> ChatResponse`.
+- `BGEReranker` supports `BAAI/bge-reranker-base` on CPU and never silently
+  falls back to mock when the model is unavailable.
+- `MockReranker` and `MockLLMClient` are deterministic and explicitly marked
+  test/local-demo/smoke only.
+- Context assembly preserves citation metadata, access/status metadata, RRF
+  score, rerank score, and line ranges where available.
+- Generated claims carry `supporting_chunk_ids`, and citation binding only binds
+  chunks present in the assembled context.
+- `/chat` returns `answer`, `citations`, `response_mode`, `trace_id`, provider
+  metadata, and retrieved chunk preview.
+
 ## Mock-First Principle
 
 Mock providers are scaffolding for fast local verification (tests, CI, smoke).
 They are not valid for formal evaluation, EVALUATION_REPORT claims, or headline
 metrics.
 Mock embedding retrieval results are also not valid for formal retrieval-eval
-conclusions.
+conclusions. Mock rerank and mock chat output are likewise not valid for formal
+rerank or end-to-end claims.
 
 ## Codex And Claude Split
 

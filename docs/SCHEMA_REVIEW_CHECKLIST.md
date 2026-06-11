@@ -45,17 +45,33 @@
 - Hybrid rank starts at 1 after fusion.
 - Week 2 does not include reranker logic or rerank-improvement reporting.
 
+## Rerank And Context
+
+- Reranked chunks preserve original vector, keyword, and RRF scores.
+- `rerank_score` is present after reranking.
+- Context assembly deduplicates by `chunk_id`.
+- Context assembly preserves status, access level, allowed roles, corpus source,
+  metadata origin, line range, section path, and scores.
+- Restricted or deprecated metadata is preserved in Week 3 but not gated until
+  Week 4.
+
 ## Citation
 
 - Citation IDs, document IDs, chunk IDs, section paths, and locators are present.
 - Support type and verification status use shared enums.
+- Week 3 citation binding starts with `verification_status=unchecked`; citation
+  verifier v1 is not implemented yet.
 
 ## ChatRequest And ChatResponse
 
 - User scope (role, department, clearance) and retrieval options are part of the
   request.
+- Week 3 also accepts the flat demo request shape with `user_role`,
+  `user_department`, `user_clearance`, and `retrieval_options`.
 - Response carries citations, decision, trace ID, and optional retrieved chunk
   previews.
+- Response carries top-level `response_mode`, provider metadata, and warnings
+  for mock/provider boundaries where applicable.
 - `response_mode` is limited to exactly: `answer`, `refuse_no_evidence`,
   `refuse_permission`, `warn_deprecated`, `report_conflict`, `system_error`.
 - `ask_clarification` must not appear as a supported Q1 response mode.
@@ -97,5 +113,6 @@
 
 ## Mock Boundary
 
-- Mock embeddings and mock LLM output are valid for tests, CI, and smoke only.
+- Mock embeddings, mock reranker output, and mock LLM output are valid for tests,
+  CI, local demo, and smoke only.
 - Mock output must not appear in formal evaluation reports or headline metrics.

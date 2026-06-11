@@ -113,6 +113,7 @@ class CitationSupportType(StrEnum):
 
 
 class CitationVerificationStatus(StrEnum):
+    unchecked = "unchecked"
     supported = "supported"
     weak = "weak"
     unsupported = "unsupported"
