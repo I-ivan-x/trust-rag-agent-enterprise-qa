@@ -125,6 +125,19 @@ formal metrics from fixture or mock chat output.
 - `/chat` returns `answer`, `citations`, `response_mode`, `trace_id`, provider
   metadata, and retrieved chunk preview.
 
+## Week 4 Acceptance
+
+- Document state gate preserves active chunks, withholds deprecated chunks from
+  normal answer context, and blocks archived/draft chunks.
+- ACL gate blocks unauthorized restricted/internal evidence before answer
+  context assembly.
+- Minimal active-active conflict detection runs after state and ACL gates.
+- Evidence gate can trigger at most one rule-based rewrite and second retrieval
+  pass.
+- Refusal controller enforces
+  `refuse_permission > report_conflict > warn_deprecated > answer/refuse_no_evidence`.
+- `/chat` records Week 4 trust trace fields in the response.
+
 ## Mock-First Principle
 
 Mock providers are scaffolding for fast local verification (tests, CI, smoke).

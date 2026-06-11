@@ -28,7 +28,7 @@ autonomous agent.
 See `docs/CORPUS_PROTOCOL.md`, `docs/EVAL_PROTOCOL.md`,
 `docs/Q1_EXECUTION_SPEC.md`, and `docs/SCHEMA_REVIEW_CHECKLIST.md`.
 
-## Q1 Hard Demo Scope (Week 0-3)
+## Q1 Hard Demo Scope (Week 0-4)
 
 Week 0 only builds the base: FastAPI, settings, shared enums, schemas,
 mock-only service placeholders, Northstar Cloud synthetic fixture documents,
@@ -46,9 +46,13 @@ Week 3 adds the first online `/chat` path: hybrid retrieval, BGE reranker
 interface, context assembly, structured answer generation, citation binding,
 and a FastAPI route. The default LLM remains mock for local demo and smoke.
 
-Week 3 still does **not** implement ACL gates, document state gates, evidence
-gates, refusal controller, citation verifier v1, agentic query rewrite,
-second-pass retrieval, eval runner, Docker, LangGraph, or formal real-LLM eval.
+Week 4 connects trust gates to `/chat`: document state gate, ACL gate, minimal
+active-active conflict detection, simplified evidence gate, one rule-based
+rewrite pass, and refusal controller priority.
+
+Week 4 still does **not** implement `run_eval.py`, formal metrics, public corpus
+fetch, hard negatives, external eval, citation verifier v1, Docker, Streamlit,
+LangGraph, complex planning, or trace indexing.
 
 MockEmbeddingService, MockReranker, and MockLLMClient are for tests, CI, local
 demo, and smoke tests only. Mock output must not be reported as formal
@@ -66,7 +70,7 @@ python -m uv run uvicorn app.main:app --reload
 
 Open Swagger UI at <http://127.0.0.1:8000/docs>.
 
-## Current Week 3 Status
+## Current Week 4 Status
 
 - FastAPI app and `/health` endpoint are available.
 - Pydantic schemas reserve the v0.3 corpus, eval, agentic recovery, and grounded
@@ -80,6 +84,10 @@ Open Swagger UI at <http://127.0.0.1:8000/docs>.
 - `scripts/search_preview.py` previews keyword, vector, or hybrid search.
 - `/chat` returns answer, citations, response mode, trace ID, provider metadata,
   and retrieved chunk preview.
+- `/chat` now applies state/ACL/evidence gates, minimal conflict detection, and
+  refusal control before context assembly and answer generation.
+- Rule-based rewrite can attempt one second-pass retrieval when evidence is
+  insufficient and no higher-priority trust mode has fired.
 - BGE reranker support is available through `BAAI/bge-reranker-base` when the
   model and `sentence-transformers` runtime are available.
 - If Qdrant is unavailable, Whoosh and RRF tests still run; formal vector
@@ -97,5 +105,6 @@ python -m uv run python scripts/ingest_corpus.py
 python -m uv run python scripts/rebuild_indexes.py --embedding-provider sentence_transformer
 python -m uv run python scripts/search_preview.py "refresh token rate limit" --mode keyword
 python -m uv run python scripts/search_preview.py "refresh token rate limit" --mode hybrid
+python -m uv run python scripts/demo_queries.py
 python -m uv run uvicorn app.main:app --reload
 ```

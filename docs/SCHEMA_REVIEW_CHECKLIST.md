@@ -72,6 +72,20 @@
   previews.
 - Response carries top-level `response_mode`, provider metadata, and warnings
   for mock/provider boundaries where applicable.
+- Week 4 response carries trust trace fields including first-pass query,
+  rewritten query, pass count, gate blocked counts, conflict flag, evidence flag,
+  final response mode, and decision reason.
+
+## Trust Gates
+
+- State gate keeps active chunks, records deprecated chunks, and blocks archived
+  or draft chunks.
+- ACL gate keeps only chunks visible to the requesting role/clearance.
+- Minimal conflict detection only considers active post-state/post-ACL chunks
+  with a shared non-empty conflict group across distinct documents.
+- Evidence gate records sufficiency reason, top score, support count, and entity
+  miss.
+- Query rewrite is rule-based and limited to one second pass.
 - `response_mode` is limited to exactly: `answer`, `refuse_no_evidence`,
   `refuse_permission`, `warn_deprecated`, `report_conflict`, `system_error`.
 - `ask_clarification` must not appear as a supported Q1 response mode.

@@ -4,6 +4,9 @@ from app.core.config import get_settings
 from app.core.enums import RetrievalSource
 from app.schemas.retrieval import RetrievedChunk
 
+DEFAULT_BGE_RERANKER_MODEL = "BAAI/bge-reranker-base"
+MOCK_RERANKER_MODEL_NAME = "mock-reranker-v0"
+
 
 class BGEReranker:
     def __init__(
@@ -12,7 +15,13 @@ class BGEReranker:
         device: str | None = None,
     ) -> None:
         settings = get_settings()
-        self.model_name = model_name or settings.reranker_model_name
+        configured_model = model_name or settings.reranker_model_name
+        self.model_name = configured_model or DEFAULT_BGE_RERANKER_MODEL
+        if self.model_name == MOCK_RERANKER_MODEL_NAME:
+            raise ValueError(
+                "mock-reranker-v0 is only valid for RERANKER_PROVIDER=mock tests/smoke. "
+                f"Use {DEFAULT_BGE_RERANKER_MODEL} for RERANKER_PROVIDER=bge."
+            )
         self.device = device or settings.embedding_device
         try:
             from sentence_transformers import CrossEncoder

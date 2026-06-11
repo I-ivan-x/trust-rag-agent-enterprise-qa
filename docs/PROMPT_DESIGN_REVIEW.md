@@ -42,10 +42,12 @@ stable while making parser failure visible.
 ## Known Limitations
 
 - Citation verifier v1 is not implemented in Week 3.
-- ACL, document state, and evidence gates are not connected in Week 3.
+- ACL, document state, and evidence gates are connected in Week 4 before prompt
+  construction.
 - The no-evidence path is lightweight and should not be confused with the Week 4
-  refusal controller.
-- Agentic query rewrite, second-pass retrieval, and recovery are not connected.
+  refusal controller in older Week 3 notes.
+- Agentic query rewrite and second-pass retrieval are rule-based and limited to
+  one retry in Week 4.
 - Prompt quality has not been measured against public external formal eval.
 
 ## Review Ownership
