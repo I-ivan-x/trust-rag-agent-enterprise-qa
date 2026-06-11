@@ -6,7 +6,7 @@ import types
 import pytest
 
 from app.core.enums import AccessLevel, DocumentStatus, RetrievalSource
-from app.rerank.bge_reranker import BGEReranker
+from app.rerank.bge_reranker import DEFAULT_BGE_RERANKER_MODEL, BGEReranker
 from app.rerank.reranker import MOCK_RERANKER_WARNING, MockReranker, get_reranker
 from app.schemas.chunk import Chunk
 from app.schemas.retrieval import RetrievedChunk
@@ -68,14 +68,20 @@ def test_bge_reranker_can_be_constructed_with_cross_encoder(monkeypatch) -> None
     fake_module.CrossEncoder = FakeCrossEncoder
     monkeypatch.setitem(sys.modules, "sentence_transformers", fake_module)
 
-    reranker = BGEReranker(model_name="BAAI/bge-reranker-base")
+    reranker = BGEReranker()
     results = reranker.rerank(
         "alpha",
         [_retrieved("chunk-a", "alpha", 1), _retrieved("chunk-b", "alpha beta", 2)],
     )
 
+    assert reranker.model_name == DEFAULT_BGE_RERANKER_MODEL
     assert results[0].chunk.chunk_id == "chunk-b"
     assert results[0].rerank_score == 0.9
+
+
+def test_bge_reranker_rejects_mock_model_name() -> None:
+    with pytest.raises(ValueError, match="only valid for RERANKER_PROVIDER=mock"):
+        BGEReranker(model_name="mock-reranker-v0")
 
 
 def test_bge_reranker_does_not_fallback_to_mock(monkeypatch) -> None:
