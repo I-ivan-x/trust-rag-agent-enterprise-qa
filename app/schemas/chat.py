@@ -47,6 +47,15 @@ class ChatDecision(BaseModel):
     state_policy: str | None = None
     rewrite_triggered: bool = False
     response_mode: ExpectedBehavior = ExpectedBehavior.answer
+    first_pass_query: str | None = None
+    rewritten_query: str | None = None
+    retrieval_pass_count: int = Field(default=1, ge=1)
+    state_gate_blocked_count: int = Field(default=0, ge=0)
+    acl_blocked_count: int = Field(default=0, ge=0)
+    deprecated_count: int = Field(default=0, ge=0)
+    conflict_detected: bool = False
+    final_response_mode: ExpectedBehavior = ExpectedBehavior.answer
+    decision_reason: str | None = None
 
 
 class ChatResponse(BaseModel):
@@ -58,3 +67,4 @@ class ChatResponse(BaseModel):
     retrieved_chunks_preview: list[RetrievedChunk] = Field(default_factory=list)
     provider_metadata: dict[str, Any] = Field(default_factory=dict)
     warnings: list[str] = Field(default_factory=list)
+    trust_trace: dict[str, Any] = Field(default_factory=dict)
