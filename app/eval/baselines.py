@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from collections import Counter
 from functools import lru_cache
 from math import sqrt
@@ -141,6 +140,14 @@ def _require_index_metadata(chunks: list[Chunk]) -> None:
         raise BaselineUnavailable(
             "Formal retrieval eval requires non-mock embeddings; current index uses mock."
         )
+    expected_chunks_path = _expected_chunks_path(chunks)
+    indexed_chunks_path = _normalize_path(metadata.get("chunks_path"))
+    if expected_chunks_path and indexed_chunks_path != expected_chunks_path:
+        raise BaselineUnavailable(
+            "Current retrieval index was built from a different chunks file. "
+            f"index_chunks_path={indexed_chunks_path or 'missing'} "
+            f"expected_chunks_path={expected_chunks_path}. Rebuild indexes for this split."
+        )
     whoosh_path = Path(str(metadata.get("whoosh_index_path") or ""))
     if not whoosh_path.exists():
         raise BaselineUnavailable(
@@ -148,13 +155,28 @@ def _require_index_metadata(chunks: list[Chunk]) -> None:
         )
 
 
+def _expected_chunks_path(chunks: list[Chunk]) -> str | None:
+    if not chunks:
+        return None
+    doc_ids = {chunk.doc_id for chunk in chunks[:10]}
+    corpus_sources = {chunk.corpus_source.value for chunk in chunks[:10]}
+    if "hard_negative" in corpus_sources or any(
+        doc_id.startswith("hard-negative-") for doc_id in doc_ids
+    ):
+        return "data/generated/hard_negative/chunks.jsonl"
+    if "public_external" in corpus_sources:
+        return "data/generated/public/chunks.jsonl"
+    if "synthetic_fixture" in corpus_sources:
+        return "data/generated/chunks.jsonl"
+    return None
+
+
+def _normalize_path(value: object) -> str:
+    return str(value or "").replace("\\", "/")
+
+
+@lru_cache(maxsize=1)
 def _build_bge_reranker():
-    if os.environ.get("EVAL_ENABLE_BGE_RERANK") != "1":
-        raise RuntimeError(
-            "BGE reranker loading is disabled for local eval by default to avoid "
-            "implicit model downloads. Set EVAL_ENABLE_BGE_RERANK=1 after preparing "
-            "the local BAAI/bge-reranker-base model cache."
-        )
     from app.rerank.bge_reranker import BGEReranker
 
     return BGEReranker()

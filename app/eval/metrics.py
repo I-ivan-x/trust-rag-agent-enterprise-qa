@@ -14,31 +14,48 @@ def retrieval_metrics(
     *,
     k: int = 5,
 ) -> dict[str, Any]:
+    cutoffs = sorted({cutoff for cutoff in (1, 3, k) if cutoff > 0})
     top = retrieved[:k]
     gold_chunks = set(case.gold_chunk_ids)
     gold_docs = set(case.gold_doc_ids)
-    retrieved_chunk_ids = [item.chunk.chunk_id for item in top]
-    retrieved_doc_ids = [item.chunk.doc_id for item in top]
 
-    hit = bool(gold_chunks & set(retrieved_chunk_ids)) if gold_chunks else False
-    doc_hit = bool(gold_docs & set(retrieved_doc_ids)) if gold_docs else False
     mrr = 0.0
     for rank, item in enumerate(top, 1):
         if item.chunk.chunk_id in gold_chunks or item.chunk.doc_id in gold_docs:
             mrr = 1.0 / rank
             break
-    doc_recall = 0.0
-    if gold_docs:
-        doc_recall = len(gold_docs & set(retrieved_doc_ids)) / len(gold_docs)
 
-    return {
-        f"hit@{k}": hit,
-        f"doc_hit@{k}": doc_hit,
+    metrics: dict[str, Any] = {
         "mrr": round(mrr, 4),
-        "doc_recall": round(doc_recall, 4),
-        "hard_negative_error": _hard_negative_error(case, retrieved_doc_ids),
         "deprecated_confusion": _deprecated_confusion(case, top),
+        "deprecated_confusion_rate": _deprecated_confusion(case, top),
     }
+    for cutoff in cutoffs:
+        cutoff_results = retrieved[:cutoff]
+        retrieved_chunk_ids = [item.chunk.chunk_id for item in cutoff_results]
+        retrieved_doc_ids = [item.chunk.doc_id for item in cutoff_results]
+        hit = bool(gold_chunks & set(retrieved_chunk_ids)) if gold_chunks else False
+        doc_hit = bool(gold_docs & set(retrieved_doc_ids)) if gold_docs else False
+        gold_doc_recall = 0.0
+        if gold_docs:
+            gold_doc_recall = len(gold_docs & set(retrieved_doc_ids)) / len(gold_docs)
+        metrics.update(
+            {
+                f"hit@{cutoff}": hit,
+                f"doc_hit@{cutoff}": doc_hit,
+                f"gold_doc_recall@{cutoff}": round(gold_doc_recall, 4),
+            }
+        )
+    retrieved_doc_ids_at_k = [item.chunk.doc_id for item in top]
+    hard_negative_error = _hard_negative_error(case, retrieved_doc_ids_at_k)
+    metrics.update(
+        {
+            "doc_recall": metrics.get(f"gold_doc_recall@{k}", 0.0),
+            "hard_negative_error": hard_negative_error,
+            "hard_negative_error_rate": hard_negative_error,
+        }
+    )
+    return metrics
 
 
 def grounded_correctness(

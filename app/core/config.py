@@ -37,9 +37,17 @@ class Settings(BaseSettings):
     reranker_model_name: str = "BAAI/bge-reranker-base"
     llm_provider: str = "mock"
     llm_model_name: str = "mock-llm-v0"
+    llm_base_url: str | None = None
+    llm_timeout_seconds: float = 30.0
+    llm_max_output_tokens: int = 512
+    llm_temperature: float = 0.0
+
+    rewrite_llm_provider: str = "rule_based"
+    rewrite_llm_model_name: str = "mock-llm-v0"
 
     openai_api_key: str | None = None
     openai_base_url: str | None = None
+    deepseek_api_key: str | None = None
     qdrant_url: str = "http://localhost:6333"
     qdrant_collection: str = "trust_rag_enterprise_qa"
 

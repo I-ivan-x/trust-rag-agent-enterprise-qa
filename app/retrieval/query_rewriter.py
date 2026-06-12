@@ -10,6 +10,8 @@ class RewriteDecision(BaseModel):
     rewritten_query: str | None = None
     reason: str
     warnings: list[str] = Field(default_factory=list)
+    source: str = "rule_based"
+    model_name: str | None = None
 
 
 def rewrite_query_for_evidence(query: str) -> RewriteDecision:
@@ -52,4 +54,5 @@ def rewrite_query_for_evidence(query: str) -> RewriteDecision:
         should_rewrite=True,
         rewritten_query=rewritten,
         reason="rule_based:" + ",".join(reasons),
+        source="rule_based_query_rewriter",
     )

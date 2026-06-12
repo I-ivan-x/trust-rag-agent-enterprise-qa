@@ -134,6 +134,7 @@ def build_index_metadata(
     keyword_count: int | None,
     vector_count: int | None,
     whoosh_index_path: str,
+    chunks_path: str | None = None,
 ) -> dict[str, Any]:
     return {
         "embedding_provider": canonical_embedding_provider(embedding_provider),
@@ -144,6 +145,7 @@ def build_index_metadata(
         "keyword_count": keyword_count,
         "vector_count": vector_count,
         "whoosh_index_path": whoosh_index_path,
+        "chunks_path": chunks_path,
         "built_at": datetime.now(UTC).isoformat(),
     }
 

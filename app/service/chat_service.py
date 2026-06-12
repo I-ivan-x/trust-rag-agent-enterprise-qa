@@ -18,6 +18,7 @@ from app.llm.llm_client import get_llm_client
 from app.rerank.reranker import MOCK_RERANKER_WARNING, get_reranker
 from app.retrieval.hybrid_retriever import HybridRetriever
 from app.retrieval.keyword_retriever import KeywordRetriever
+from app.retrieval.llm_query_rewriter import get_query_rewriter
 from app.retrieval.query_rewriter import rewrite_query_for_evidence
 from app.retrieval.vector_retriever import VectorRetriever
 from app.schemas.chat import ChatDecision, ChatRequest, ChatResponse
@@ -65,7 +66,15 @@ def _answer_chat_checked(request: ChatRequest, trace_id: str) -> ChatResponse:
     final_pass = first_pass
 
     if _should_attempt_rewrite(request, first_pass):
-        rewrite_decision = rewrite_query_for_evidence(request.query)
+        rewriter = get_query_rewriter()
+        rewrite_decision = (
+            rewriter.rewrite(
+                request.query,
+                chunk_previews=first_pass.reranked_chunks[:3],
+            )
+            if rewriter is not None
+            else rewrite_query_for_evidence(request.query)
+        )
         if rewrite_decision.should_rewrite and rewrite_decision.rewritten_query:
             recovery.rewrite_triggered = True
             recovery.rewritten_query = rewrite_decision.rewritten_query

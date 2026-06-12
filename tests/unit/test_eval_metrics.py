@@ -19,8 +19,16 @@ def test_retrieval_metrics_reports_hit_and_mrr() -> None:
 
     metrics = retrieval_metrics(case, retrieved, k=5)
 
+    assert metrics["hit@1"] is False
+    assert metrics["hit@3"] is True
     assert metrics["hit@5"] is True
+    assert metrics["doc_hit@1"] is False
+    assert metrics["doc_hit@3"] is True
     assert metrics["doc_hit@5"] is True
+    assert metrics["gold_doc_recall@1"] == 0.0
+    assert metrics["gold_doc_recall@3"] == 1.0
+    assert metrics["gold_doc_recall@5"] == 1.0
+    assert metrics["doc_recall"] == 1.0
     assert metrics["mrr"] == 0.5
 
 
@@ -54,4 +62,3 @@ def test_summarize_results_groups_by_system() -> None:
 
     assert summary["hybrid_rrf"]["hit@5"] == 1.0
     assert summary["hybrid_rrf"]["grounded_correctness"] == 1.0
-

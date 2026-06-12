@@ -80,6 +80,7 @@ def rebuild_indexes(
         keyword_count=keyword_summary["keyword_count"],
         vector_count=vector_summary["vector_count"],
         whoosh_index_path=keyword_store.index_dir.as_posix(),
+        chunks_path=chunks_path.as_posix(),
     )
     write_index_metadata(INDEX_METADATA_PATH, metadata)
 
@@ -91,6 +92,7 @@ def rebuild_indexes(
         "embedding_model_name": embedding_model_name,
         "qdrant_collection": settings.qdrant_collection,
         "whoosh_index_path": keyword_store.index_dir.as_posix(),
+        "chunks_path": chunks_path.as_posix(),
         "index_metadata_path": INDEX_METADATA_PATH.as_posix(),
         "warnings": warnings,
     }

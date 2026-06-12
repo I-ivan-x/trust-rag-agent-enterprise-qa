@@ -24,6 +24,21 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--real-run", action="store_true")
     parser.add_argument("--output-root", type=Path, default=None)
     parser.add_argument("--run-id", default=None)
+    parser.add_argument("--limit", type=int, default=None, help="Cap number of cases.")
+    parser.add_argument("--case-id", default=None, help="Run a single case id.")
+    parser.add_argument("--max-cases", type=int, default=None, help="Alias cap for cases.")
+    parser.add_argument(
+        "--sleep-seconds",
+        type=float,
+        default=0.0,
+        help="Delay between real LLM cases for rate-limit friendliness.",
+    )
+    parser.add_argument(
+        "--max-output-tokens",
+        type=int,
+        default=None,
+        help="Override max output tokens for real LLM calls.",
+    )
     return parser.parse_args()
 
 
@@ -39,6 +54,11 @@ def main() -> None:
             real_run=args.real_run,
             output_root=args.output_root,
             run_id=args.run_id,
+            limit=args.limit,
+            case_id=args.case_id,
+            max_cases=args.max_cases,
+            sleep_seconds=args.sleep_seconds,
+            max_output_tokens=args.max_output_tokens,
         )
     except (RuntimeError, ValueError, FileNotFoundError) as exc:
         raise SystemExit(str(exc)) from exc
