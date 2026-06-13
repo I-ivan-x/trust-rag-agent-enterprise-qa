@@ -1,6 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -55,7 +56,24 @@ class Settings(BaseSettings):
     chunk_overlap_tokens: int = 80
     max_context_tokens: int = 5000
     max_rewrite_rounds: int = 1
+    evidence_min_support_count: int = 1
+    evidence_min_score: float | None = None
+    trust_gate_policy: str = "legacy"
     eval_mode: str = "mock"
+
+    @field_validator("evidence_min_score", mode="before")
+    @classmethod
+    def _empty_evidence_min_score_is_none(cls, value):
+        if value == "":
+            return None
+        return value
+
+    @field_validator("trust_gate_policy", mode="before")
+    @classmethod
+    def _normalize_trust_gate_policy(cls, value):
+        if value is None or value == "":
+            return "legacy"
+        return str(value).strip().lower()
 
 
 @lru_cache

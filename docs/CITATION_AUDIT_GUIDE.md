@@ -1,53 +1,55 @@
 # Citation Support Audit Guide (Manual Audit Protocol v1)
 
-Status: protocol frozen, audit not yet executed.
+Status: protocol frozen, ready to freeze sample (C1-00 landed; answers
+persisted). Audit not yet labeled.
 Owner: Project Owner (single annotator).
 Prerequisite reading: `docs/CITATION_AUDIT.md` (rule-based v1 status and caveats).
 
-This protocol defines the minimum viable manual citation-support audit required
-to close Q1. Until pass 1 and the re-label pass are complete, no report or
-resume may state "citation accuracy X%". The only safe wording remains
-"structural citation validity (rule-based v1)".
+This protocol defines the manual citation-support audit required to close Q1.
+Until pass 1 and the re-label pass are complete, no report or resume may state
+"citation accuracy X%". The only safe wording remains "structural citation
+validity (rule-based v1)".
 
-Minimum viable scope: 25 claims. Ideal scope: 40 claims.
-The re-label pass requires a ≥7-day gap, so pass 1 must start at the beginning
-of Week 7 to finish inside Q1.
+**Scope is a census, not a sample (revised 2026-06-12).** The protocol was
+originally written assuming a 25–40 claim sample drawn from a larger answered
+pool. The measured reality is that the fail-closed system answered only ~15
+cases across external + obfuscated, and **every answered case produced exactly
+one claim** (external 13 → 13 claims, obfuscated 2 → 2 claims, zero multi-claim
+cases). There is no larger pool to sample from. The audit therefore covers
+**100% of answered cases (n=15)** — a census, which carries no sampling error,
+not a deficient sample. The small n is itself a reportable finding: it is the
+direct consequence of ~26% external answer coverage under fail-closed gating
+(over-refusal), and **must not be padded** with Q2 hard-negative claims.
+The re-label pass requires a ≥7-day gap, so pass 1 should start as soon as the
+sample is frozen to finish inside Q1.
 
 ------
 
-## 0. Execution Prerequisite — Artifact Gap (verified 2026-06-12)
+## 0. Execution Prerequisite — Artifact Gap (RESOLVED 2026-06-12)
 
-Sample freezing is currently **blocked**. Inspection of all three target runs
-confirmed that no Week 6 artifact persists the generated answer text, the
-claims, or the claim→citation bindings:
+This blocker is closed. It is kept here as a record because it produced
+ADR-008 (trace schema must be derived from what governance consumes).
 
-- `results.jsonl`: boolean metrics only;
-- `traces.jsonl`: retrieval ids and decision metadata; the `answer` event
-  carries flags (`answer_llm_called`, `response_mode`) but no answer content;
-- `failures.jsonl` / `citation_audit_sample.jsonl`: no claim text either.
+History: Week 6 artifacts persisted only boolean metrics and decision
+metadata, never answer text or claim→citation bindings, so the (claim, cited
+chunks) pairs this audit needs were generated at run time and discarded.
 
-The (claim, cited chunks) pairs this audit needs were produced at run time and
-discarded. They cannot be reconstructed without re-calling the LLM, and they
-must not be fabricated.
+Resolution (C1-00, `docs/SPEC_C1_00_ARTIFACT_PERSISTENCE.md`):
 
-Required unblock steps (small, cheap):
+1. `RealFinalResult` now carries `claims`, and the runner persists a per-run
+   `answers.jsonl` with `answer_text`, `claims[].text`,
+   `claims[].supporting_chunk_ids`, `cited_chunk_texts`, and
+   `cited_text_sha256`.
+2. `final_agentic` re-run on external + obfuscated only:
+   `week7-audit-external-final-agentic` and
+   `week7-audit-obfuscated-final-agentic`. hard_negative was deliberately
+   excluded (metadata-only template queries; deferred to ROADMAP C2-05 / Q2-W1).
+3. The audit applies to **these re-run run_ids**. Reports must cite them and
+   must not present the audit as auditing the original Week 6 runs (answers are
+   regenerated and may differ — expected non-determinism, stated once in the
+   report).
 
-1. Codex: persist `answer_text`, `claims[].text`, and
-   `claims[].supporting_chunk_ids` in run artifacts (results or a dedicated
-   `answers.jsonl` per run).
-2. Re-run `final_agentic` real on external + obfuscated only (≈65 LLM calls,
-   roughly ¥5). The hard_negative split is deliberately excluded: its Week 6
-   queries are metadata-only templates (see HARD_NEGATIVE_ADJUDICATION.md),
-   so claims answered to them carry no hard-negative semantics. That stratum
-   is deferred until the rewritten-query real run lands (ROADMAP C2-05 /
-   Q2-W1).
-3. The audit then applies to the **re-run's run_ids**. Reports must cite those
-   run_ids; the audit must not be presented as auditing the original Week 6
-   runs (answers are regenerated and may differ — that is expected
-   non-determinism, not a defect, and must be stated once in the report).
-
-Timeline impact: "Week 7 day 1" in §8 becomes "the day the re-run lands".
-The 7-day re-label clock starts from pass 1 of the re-run-based labels.
+The 7-day re-label clock starts from pass 1 of these re-run-based labels.
 
 ------
 
@@ -64,13 +66,15 @@ The judgment is always: *do the cited chunks support this claim*, never
 
 ## 2. Eligible Population
 
-Claims are drawn only from **real-run answers**:
+Claims are drawn only from **real-run answers** (measured 2026-06-12 from the
+re-run `answers.jsonl`):
 
-| run_id | system sampled | answered cases available |
-| --- | --- | --- |
-| `week6-real-external-full` | `final_agentic` only | ~13 (refusal_rate 0.74) |
-| `week6-real-obfuscated-full` | `final_agentic` only | ~2 (13/15 refused) |
-| rewritten hard-negative real run (Q2-W1, post-adjudication) | `final_agentic` | ~18 — deferred stratum |
+| run_id | system | answered cases | claims |
+| --- | --- | ---: | ---: |
+| `week7-audit-external-final-agentic` | `final_agentic` | 13 / 50 | 13 |
+| `week7-audit-obfuscated-final-agentic` | `final_agentic` | 2 / 15 | 2 |
+| rewritten hard-negative real run (Q2-W1, post-adjudication) | `final_agentic` | deferred | deferred |
+| **census total (Q1)** | | **15** | **15** |
 
 Exclusions, with reasons recorded here once so the report can reference them:
 
@@ -86,34 +90,39 @@ fixture 10`. The fixture stratum is replaced because the Week 6 fixture run was
 mock-only. Replacement allocation is defined in §3. This deviation must be
 declared in `CITATION_AUDIT.md` when results are written.
 
-## 3. Sampling Rules
+## 3. Census Rules (not sampling)
 
-Target strata (ideal 40 / minimum 25):
+The original 25-floor arithmetic — "13 external cases × 2-claim cap ≈ 26" — is
+**empirically disproven**: every answered case produced exactly one claim, so
+the 2-claim cap never binds and the real ceiling is 15. There is nothing to
+sample; the audit is a census of all 15 answered-case claims.
 
-| stratum | ideal | minimum |
-| --- | ---: | ---: |
-| external | 24 | 21 |
-| hard_negative (rewritten run, deferred) | 12 | 0 — not required for the 25-claim minimum |
-| obfuscated | all available (~4) | all available (~2) |
+| stratum | claims (all taken) |
+| --- | ---: |
+| external | 13 |
+| obfuscated | 2 |
+| hard_negative (rewritten run, deferred to Q2-W1) | — |
+| **Q1 census total** | **15** |
 
-The 25-claim minimum is reachable from external + obfuscated alone
-(13 answered external cases × 2-claim cap ≈ 26 claims). The hard_negative
-stratum is added once the rewritten-query real run exists; its purpose there
-is the `wrong_side_citation` mechanism (F4), not hard-negative robustness.
+The hard_negative stratum is added only once the rewritten-query real run
+exists; its purpose there is the `wrong_side_citation` mechanism (F4), not
+hard-negative robustness.
 
 Procedure (deterministic, reproducible):
 
-1. List answered cases per stratum, sorted by `case_id`.
-2. Shuffle with `random.Random(42)`.
-3. Walk the shuffled list, taking claims in claim-index order, with a cap of
-   **2 claims per case**, until the stratum target is reached.
-4. If a stratum has fewer available claims than its target (expected for
-   obfuscated), take all of them and reallocate the shortfall to
-   hard_negative first, then external. Record the actual counts.
-5. Freeze the sample as `data/citation_audit/manual_audit_v1_sample.jsonl`
-   **before** any labeling begins. The sample file must include a snapshot of
-   each cited chunk's text (or a content hash plus path), so later index
-   rebuilds cannot silently change what was judged.
+1. Take **all** answered-case claims from the two re-run `answers.jsonl` files
+   (external first, then obfuscated), sorted by `case_id` then `claim_index`.
+2. Assign `audit_id` in that order (`AUD-001` …). `random.Random(42)` may be
+   used to permute audit_id assignment for reproducibility, but since all 15
+   are taken, shuffling changes only numbering, never inclusion.
+3. The 2-claim-per-case cap is retained in the rule but is inert at n=15
+   (no case has >1 claim); it will matter only if a future re-run yields
+   multi-claim answers.
+4. Freeze the sample as `data/citation_audit/manual_audit_v1_sample.jsonl`
+   **before** any labeling begins. Each row must carry the cited-text snapshot
+   and its sha256 (copied from `answers.jsonl`), so later index rebuilds cannot
+   silently change what was judged. Verify each row's sha256 matches
+   `answers.jsonl`.
 
 ## 4. Label Schema
 
@@ -124,7 +133,7 @@ committed to git; it is a deliverable, unlike `data/eval_runs/`):
 ```json
 {
   "audit_id": "AUD-001",
-  "run_id": "week6-real-external-full",
+  "run_id": "week7-audit-external-final-agentic",
   "case_id": "external-012",
   "system": "final_agentic",
   "eval_split": "external",
@@ -172,8 +181,9 @@ Hard rules:
 ## 6. Re-label Pass (Self-Consistency)
 
 - Timing: **≥7 days** after pass 1 completes.
-- Size: 10 items if pass 1 had 40; 8 items if pass 1 had 25. Selected with
-  `random.Random(43)` from the labeled set.
+- Size: at the Q1 census (n=15), re-label **8 items** selected with
+  `random.Random(43)` from the labeled set. (For a future larger set: ~half,
+  capped at 10.)
 - Blinding: re-label from the sample file (claim + cited text only), without
   the pass-1 label visible. Write rows with `"pass": "relabel"` to
   `data/citation_audit/manual_audit_v1_relabel.jsonl`.
@@ -186,39 +196,46 @@ Hard rules:
 
 ## 7. Reporting
 
-Metrics to compute over pass-1 labels:
+Report **absolute counts**, not percentages, as the primary form. At n=15 a
+percentage implies a precision the census does not have; counts are honest.
 
 ```text
-citation_support_accuracy_manual_sampled = supported / n
-citation_support_or_weak_rate            = (supported + weak) / n
-unsupported_rate                         = unsupported / n
-wrong_side_rate (hard_negative stratum)  = wrong_side_citation true / n_stratum
-self_consistency_exact / _binary         = from §6
+supported / weak / unsupported           = absolute counts over the 15 claims
+citation_support_accuracy_manual_census  = supported / 15  (report only beside the count)
+wrong_side_count                         = wrong_side_citation true (count)
+self_consistency_exact / _binary         = from §6 (over 8 re-labeled items)
 ```
 
 Reporting rules:
 
-- Per-stratum breakdown; any stratum with n < 5 (expected: obfuscated) is
-  reported as case studies only, no percentage — same rule as the eval report.
+- Lead with the per-claim results table (15 rows) and combined counts. The
+  obfuscated stratum (n=2) is case study only — never a percentage. The
+  external stratum (n=13) may carry a percentage only if shown next to its
+  count and labeled census, not sample.
+- Frame as a **census**: "complete manual audit of all 15 answered-case
+  citations from the real evaluation", not "a sample of 15".
 - Results go into `CITATION_AUDIT.md` under a new "Manual Audit Results v1"
   section, replacing the current "audit pending" caveat; `EVALUATION_REPORT.md`
-  links to it and may then — and only then — cite
-  `citation_support_accuracy_manual_sampled`.
-- Mandatory limitations paragraph: single annotator; small n; sample drawn only
-  from answered cases (survivorship — the fail-closed system answered ~26% of
-  external queries, so this audits the surviving answers, not hypothetical
-  coverage); rule-based `citation_valid=1.0` remains a structural metric and is
-  not superseded by this audit.
+  links to it and may then — and only then — cite the manual support counts.
+- Mandatory limitations paragraph: single annotator (self-consistency, not
+  inter-annotator reliability); n=15 is small **because** the fail-closed
+  system answered only ~26% of external queries — the scarcity is an
+  over-refusal finding, not an audit defect, and the audit covers the answered
+  set completely (no survivorship within the answered population, but it says
+  nothing about the ~74% refused); rule-based `citation_valid=1.0` remains a
+  structural metric and is not superseded by this audit.
 
 Allowed wording after completion:
 
-> Manual citation-support audit on N sampled claims from real runs:
-> X% supported, Y% weak, Z% unsupported (self-consistency: E% exact / B%
-> binary on a one-week re-label of M items).
+> Complete manual citation-support audit of all 15 answered cases from the
+> real evaluation (external 13 + obfuscated 2): A supported, B weak,
+> C unsupported (self-consistency: E% exact / F% binary on a one-week re-label
+> of 8 items).
 
 Still forbidden, even after completion:
 
-- extrapolating the sampled rate to "the system's citation accuracy";
+- extrapolating the census rate to "the system's citation accuracy" over all
+  queries (it covers answered cases only, not the refused majority);
 - mixing structural `citation_valid` with manual support numbers in one claim;
 - citing the obfuscated stratum as a percentage.
 
@@ -226,7 +243,7 @@ Still forbidden, even after completion:
 
 | step | when |
 | --- | --- |
-| Freeze sample file | Week 7, day 1 |
-| Pass 1 labeling (~2h for 40 claims) | Week 7, days 1–2 |
-| Re-label pass | Week 8 (≥7 days later) |
-| Write results into CITATION_AUDIT.md / EVALUATION_REPORT.md | Week 8 |
+| Freeze sample file (C1-01, 15 rows) | as soon as Owner confirms census scope |
+| Pass 1 labeling (~30–45 min for 15 claims) | same day or next |
+| Re-label pass (8 items) | ≥7 days later |
+| Write results into CITATION_AUDIT.md / EVALUATION_REPORT.md | after re-label |

@@ -1,6 +1,12 @@
 from __future__ import annotations
 
-from app.guards.evidence_gate import apply_evidence_gate
+from types import SimpleNamespace
+
+from app.guards.evidence_gate import (
+    EvidenceGateConfig,
+    apply_evidence_gate,
+    evidence_gate_config_from_settings,
+)
 from app.retrieval.query_rewriter import rewrite_query_for_evidence
 from tests.helpers import make_retrieved_chunk
 
@@ -30,6 +36,19 @@ def test_low_score_is_insufficient() -> None:
     chunk = make_retrieved_chunk("chunk-low", "Refresh token rate limit.", rerank_score=0.1)
 
     decision = apply_evidence_gate("refresh token rate limit", [chunk], min_score=0.5)
+
+    assert decision.evidence_sufficient is False
+    assert decision.reason == "top_score_below_minimum"
+
+
+def test_configured_score_threshold_is_applied() -> None:
+    chunk = make_retrieved_chunk("chunk-low", "Refresh token rate limit.", rerank_score=0.1)
+
+    decision = apply_evidence_gate(
+        "refresh token rate limit",
+        [chunk],
+        config=EvidenceGateConfig(min_score=0.5),
+    )
 
     assert decision.evidence_sufficient is False
     assert decision.reason == "top_score_below_minimum"
@@ -75,3 +94,9 @@ def test_version_miss_is_insufficient() -> None:
 
     assert decision.evidence_sufficient is False
     assert decision.reason == "entity_miss"
+
+
+def test_evidence_gate_config_from_settings_uses_defaults_for_missing_attrs() -> None:
+    config = evidence_gate_config_from_settings(SimpleNamespace())
+
+    assert config == EvidenceGateConfig()

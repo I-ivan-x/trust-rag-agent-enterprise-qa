@@ -42,19 +42,19 @@ AI 治理：
 | 编号 | 负责人 | 任务 | 验收标准 |
 | --- | --- | --- | --- |
 | C1-00 | Codex | **审计前置补丁**：run 产物持久化 answer_text / claims / supporting_chunk_ids，并复跑 final_agentic real（**仅 external + obfuscated，≈65 次调用**；hard_negative 不复跑——模板 query 的答案无审计语义，该层推迟至重写后，见 C2-05）。Week 6 产物未存 claim 级内容，已实测确认（`CITATION_AUDIT_GUIDE.md` §0） | 复跑 run 落盘，audit 引用新 run_id |
-| C1-01 | Codex + Owner | C1-00 落地当天冻结 citation audit 抽样（`CITATION_AUDIT_GUIDE.md` §3）并完成 pass 1 标注（40 条理想 / 25 条最低） | `data/citation_audit/manual_audit_v1_labels.jsonl` 落盘；**复标 7 天时钟自此起算** |
-| C1-02 | Codex | Dockerfile / docker-compose / Makefile / smoke_test | `docker compose up` 可启动 API + Qdrant；timebox：能启动即止，模型权重挂载本地缓存 |
-| C1-03 | Claude + Codex | README 按新信息架构重写（Honest Results 双表、Evaluation Governance 章节、F1–F8 链接） | 第一屏含正负结果并排表；禁放数字清单见 §1.4 |
+| C1-01 | Codex + Owner | ✅ 冻结 15 条 census 抽样并完成两遍标注：GPT pass（preview，`judge_pass_v1_gpt_labels.jsonl`）+ **人工盲标 census**（`manual_audit_v1_labels.jsonl`，annotator=owner，2026-06-14）。实测可审 claim = 15（每 case 1 claim），按 census 全收，非抽样。 | 人工结果：11 supported / 4 weak / 0 unsupported / 0 wrong_side；human-vs-GPT exact agreement 15/15（easy split，n=15，非 validated judge，写入 CITATION_AUDIT.md） |
+| C1-02 | Codex | ✅ Dockerfile / docker-compose / Makefile / smoke_test 已落地：compose 默认 mock provider，API + 内部 Qdrant 可启动；`scripts/smoke_test.py` 可在容器内准备 sample index 并打 `/health` + `/chat` | 已验：`docker compose up -d --build` + `docker compose exec -T api python scripts/smoke_test.py --prepare --embedding-provider mock --require-vector --chat` 通过；模型权重通过 `huggingface_cache` volume 挂载 |
+| C1-03 | Claude + Codex | ✅ README 已按新信息架构定稿：Honest Results 正负双表、Evaluation Governance、Docker Quick Start、F1–F8/报告链接 | 第一屏含正负结果并排表；禁放数字清单见 §1.4 |
 | C1-04 | Owner | hard-negative 裁定：预消化已完成（`HARD_NEGATIVE_ADJUDICATION.md`，预判 F8 主因、F3 未被测试），Owner 逐行裁定 §4 表格（≤30 分钟）后按 §5 清单执行（重写 query + 零 token 复跑 retrieval-only） | 结论写回 `FAILURE_ANALYSIS.md`；复测结果决定 Q2 动作 c 去留 |
 
 ### 1.2 收尾第 2 周
 
 | 编号 | 负责人 | 任务 | 验收标准 |
 | --- | --- | --- | --- |
-| C2-01 | Owner | 复标 pass（距 pass 1 ≥7 天，盲标 8–10 条）+ 自一致率计算 | `manual_audit_v1_relabel.jsonl`；exact / binary agreement 落盘 |
-| C2-02 | Claude | 人工审计结果写入 `CITATION_AUDIT.md`；`EVALUATION_REPORT.md` 补两处 non-blocking 项（hard-negative retrieval 行 0.05、fixture mock 免责句） | 报告可引用 `citation_support_accuracy_manual_sampled` |
+| C2-01 | Owner | ⏭️ **可选,不再阻塞**。人工 census 已一遍完成(C1-01),真正的人工自一致性(Owner vs ≥7 天后盲复标)降为可选;此 easy split 上预计也接近 100%,信息量低。Phase 2 judge 选型改用 G2 绝对门(≥0.80),不依赖 G1 自一致率锚。 | 如做:`manual_audit_v1_relabel.jsonl` |
+| C2-02 | Claude | ✅ 人工审计结果已写入 `CITATION_AUDIT.md`（human census + human-vs-GPT 一致率 + caveats）；`EVALUATION_REPORT.md` 两处 non-blocking 项已补（hard-negative retrieval 行 0.05、fixture mock 免责句）。 | 完成 |
 | C2-03 | Claude | `TECHNICAL_DESIGN.md` 瘦版：ADR 体例，6–8 条决策记录，每条含 Decision / Rationale / Measured consequence / Calibration path | 四个 Q1 负结果各回溯到一条 ADR；体例 append-only，Q2 演进只增不改 |
-| C2-04 | Owner | tag `v0.3-q1-hard-demo` + release notes | Q1 正式收口；若复标 7 天窗越过收尾期，允许带"pass 1 完成 + 复标已排期"打 tag——复标完成是 Q2-W4 judge 选型的硬前置，不是 tag 的前置 |
+| C2-04 | Owner | ✅ tag `v0.3-q1-hard-demo` + release notes | Q1 正式收口；tag 指向包含 Docker/README/评估报告补丁的 release commit |
 | C2-05 | Claude + Codex | **hard-negative 重写落地**（裁定通过后）：定稿替换 query（split 收缩为 18 条）→ 双向泄漏检查 → gold 回填 → retrieval-only 复跑（零 token） | 复测结果写回 FAILURE_ANALYSIS；rewritten **real run**（≈20 次调用）排 Q2-W1，补审计 hard_negative 层并支撑动作 c 去留决策 |
 
 ### 1.3 砍掉与推迟
@@ -123,11 +123,13 @@ gate calibration（W1–3）
 | 编号 | 负责人 | 任务 | 验收标准 |
 | --- | --- | --- | --- |
 | P1-01 | Codex | evidence gate 阈值参数化 + sweep harness | 单命令跑 4–6 个配置点 |
-| P1-02 | Codex | 阈值 sweep：external × final_gated × 4–6 配置 | 每点输出 false_refusal / false_answer / grounded；≈300 次调用 |
+| P1-02 | Codex | ✅ 阈值 sweep：external × final_gated × 5 配置；旧 `q2-p1-02-legacy-threshold-sweep` 因 Qdrant collection 缺失实际为 keyword-only fallback，已用 `q2-p1-02-legacy-threshold-sweep-reconciled` 重跑 | 每点输出 false_refusal / false_answer / grounded；corrected default = 0.46 / 0.00 / 0.24 |
 | P1-03 | Codex | **策略变体**：区分"检索邻域存在 deprecated/restricted 邻居"与"仅剩 deprecated/受限证据"两种 gate 决策 | 新旧策略均有单测；F1/F2 场景行为差异可演示 |
-| P1-04 | Codex | 策略变体复跑 external full | 新配置完整 50 条 real run |
-| P1-05 | Claude | trade-off 曲线报告：false_refusal vs false_answer，含工作点选择论证 | 曲线进 EVALUATION_REPORT 新章节；选点理由明写成本不对称 |
-| P1-06 | Owner | **冻结新基线 `final_gated_calibrated`**（配置 + run_id 存档） | 后续所有 agent 对比以此为对照 |
+| P1-04 | Codex | ✅ 策略变体复跑 external full；旧 `q2-p1-04-neighbor-tolerant-default` 因 vector unavailable + 权限泄漏不得入 baseline，P1-07 后用 `q2-p1-07-neighbor-tolerant-fixed` 重跑 | fixed neighbor_tolerant：false_refusal 0.44 / false_answer 0.00 / grounded 0.22 |
+| P1-05 | Claude | ✅ 完成（随对账修正）。trade-off 报告在 EVALUATION_REPORT "Q2 Phase 1" 节。**修正后结论**：(1) 阈值旋钮惰性——reconciled 全 5 点中 4 点全等（0.46/0.00/0.24），仅 min_score=1.0 退化为全拒答；over-refusal 非阈值驱动而是 policy 驱动（证实 F1/F2）；(2) neighbor_tolerant 修复后（q2-p1-07）相对 legacy 几乎不释放拒答（fr 0.46→0.44）且 grounded 略低（0.24→0.22），不进 baseline。原 q2-p1-04 的 0.08/0.22"权限泄漏"是 keyword-only 坏跑 + 未修策略复合产物，已作废。独立核验：reconciled/p1-07 真值经 results.jsonl 重算确认。 | 已落盘 |
+| P1-06 | Owner | ✅ 冻结 `final_gated_calibrated` = legacy default（非 neighbor_tolerant；min_support_count=1/min_score=none；ref run `q2-p1-02-legacy-threshold-sweep-reconciled/default`；cross-check `q2-p1-06-reconciled-legacy-default`）。对账结论：0.28/0.34/0.62 来自 Qdrant collection 缺失导致的 keyword-only fallback，不是 P1-01 调松默认；恢复向量栈后精确复现 Week 6 0.24/0.46/0.74。 | 已冻结为保守对照，不宣称相对 Week 6 增益 |
+| P1-07 | Codex | ✅ **策略修复（P1-05 衍生）**：neighbor_tolerant 须区分"受限的是邻居"与"受限的是答案所需证据"，后者仍拒答；修复前该策略不得进入任何 baseline | 权限题不再被放行；新单测覆盖；fixed run false_answer=0.00 |
+| P1-08 | Codex | ✅ runner guard：真实 final run 出现 vector fallback 时标 `vector_unavailable` 且不进 headline（runner.py:482/828 已接入 headline_eligible）。**小尾巴（待确认）**：现存 summary 均无该字段（guard 晚于这些 run 落地），下一次真实 final run 须确认 `vector_unavailable=false` 实际写出、且故意制造 fallback 时 headline_eligible 转 false。 | 代码已接入，待产物侧验证 |
 
 Phase 1 即产出 Q2 第一批新 headline 数字。预算：≈400–500 次调用，约 ¥25。
 

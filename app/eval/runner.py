@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import time
 from datetime import UTC, datetime
+from hashlib import sha256
 from pathlib import Path
 from typing import Any
 
@@ -22,6 +23,7 @@ from app.eval.report import (
     write_eval_report,
     write_failure_analysis,
 )
+from app.guards.evidence_gate import EvidenceGateConfig, evidence_gate_config_from_settings
 from app.index.build_index import INDEX_METADATA_PATH, read_index_metadata
 from app.llm.usage import get_usage_tracker
 from app.observability.tracing import make_trace_event, now_iso
@@ -50,6 +52,8 @@ def run_eval(
     max_cases: int | None = None,
     sleep_seconds: float = 0.0,
     max_output_tokens: int | None = None,
+    evidence_gate_config: EvidenceGateConfig | None = None,
+    trust_gate_policy: str | None = None,
 ) -> dict[str, Any]:
     eval_split = EvalSplit(split)
     _validate_mode(systems, mock_run=mock_run, retrieval_only=retrieval_only, real_run=real_run)
@@ -59,6 +63,14 @@ def run_eval(
     selected_run_id = run_id or _make_run_id(eval_split)
     run_dir = (output_root or get_settings().eval_runs_dir) / selected_run_id
     run_dir.mkdir(parents=True, exist_ok=True)
+    resolved_evidence_gate_config = (
+        evidence_gate_config or evidence_gate_config_from_settings(get_settings())
+    )
+    resolved_trust_gate_policy = trust_gate_policy or getattr(
+        get_settings(),
+        "trust_gate_policy",
+        "legacy",
+    )
 
     all_cases = load_eval_cases(eval_split)
     case_selection = {
@@ -79,8 +91,10 @@ def run_eval(
     trace_rows: list[dict[str, Any]] = []
     failure_rows: list[dict[str, Any]] = []
     audit_rows: list[dict[str, Any]] = []
+    answer_rows: list[dict[str, Any]] = []
     unavailable_systems: dict[str, str] = {}
     reranker_unavailable_any = False
+    vector_unavailable_any = False
 
     for system_name in systems:
         for case in cases:
@@ -92,7 +106,10 @@ def run_eval(
                     retrieval_only=retrieval_only,
                     mock_run=mock_run,
                     real_run=real_run,
+                    run_id=selected_run_id,
                     max_output_tokens=max_output_tokens,
+                    evidence_gate_config=resolved_evidence_gate_config,
+                    trust_gate_policy=resolved_trust_gate_policy,
                 )
             except BaselineUnavailable as exc:
                 if exc.fatal:
@@ -105,8 +122,12 @@ def run_eval(
             trace_rows.append(row["trace"])
             if row["audit"] is not None:
                 audit_rows.append(row["audit"])
+            if row["answer"] is not None:
+                answer_rows.append(row["answer"])
             if row.get("reranker_unavailable"):
                 reranker_unavailable_any = True
+            if row.get("vector_unavailable"):
+                vector_unavailable_any = True
             if _is_failure(result, case):
                 failure_rows.append(row["failure"])
             if real_run and sleep_seconds > 0:
@@ -127,14 +148,18 @@ def run_eval(
         retrieval_only=retrieval_only,
         real_run=real_run,
         reranker_unavailable_any=reranker_unavailable_any,
+        vector_unavailable_any=vector_unavailable_any,
         run_dir=run_dir,
         usage=get_usage_tracker().totals,
+        evidence_gate_config=resolved_evidence_gate_config,
+        trust_gate_policy=resolved_trust_gate_policy,
     )
 
     write_jsonl(run_dir / "results.jsonl", result_rows)
     write_jsonl(run_dir / "traces.jsonl", trace_rows)
     write_jsonl(run_dir / "failures.jsonl", failure_rows)
     write_jsonl(run_dir / "citation_audit_sample.jsonl", audit_rows[:25])
+    write_jsonl(run_dir / "answers.jsonl", answer_rows)
     (run_dir / "summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
@@ -171,10 +196,20 @@ def _run_case(
     retrieval_only: bool,
     mock_run: bool,
     real_run: bool = False,
+    run_id: str = "unknown",
     max_output_tokens: int | None = None,
+    evidence_gate_config: EvidenceGateConfig | None = None,
+    trust_gate_policy: str | None = None,
 ) -> dict[str, Any]:
     if real_run:
-        return _run_case_real(case, system_name, max_output_tokens=max_output_tokens)
+        return _run_case_real(
+            case,
+            system_name,
+            run_id=run_id,
+            max_output_tokens=max_output_tokens,
+            evidence_gate_config=evidence_gate_config,
+            trust_gate_policy=trust_gate_policy,
+        )
     return _run_case_offline(
         case, system_name, chunks, retrieval_only=retrieval_only, mock_run=mock_run
     )
@@ -303,6 +338,7 @@ def _run_case_offline(
         "result": result,
         "trace": trace,
         "audit": audit_payload,
+        "answer": None,
         "failure": _failure_row(case, system_name, result),
     }
 
@@ -311,7 +347,10 @@ def _run_case_real(
     case: EvalCase,
     system_name: str,
     *,
+    run_id: str,
     max_output_tokens: int | None,
+    evidence_gate_config: EvidenceGateConfig | None,
+    trust_gate_policy: str | None,
 ) -> dict[str, Any]:
     trace_id = f"trace-{case.case_id}-{system_name}"
     tracker = get_usage_tracker()
@@ -320,7 +359,11 @@ def _run_case_real(
         real = run_direct_llm_baseline(case, max_output_tokens=max_output_tokens)
     else:
         real = run_real_final_pipeline(
-            case, system_name, max_output_tokens=max_output_tokens
+            case,
+            system_name,
+            max_output_tokens=max_output_tokens,
+            evidence_gate_config=evidence_gate_config,
+            trust_gate_policy=trust_gate_policy,
         )
     answer_after, rewrite_after = tracker.snapshot()
     answer_llm_called = answer_after > answer_before
@@ -423,12 +466,63 @@ def _run_case_real(
         retrieved=real.reranked_chunks,
         events=events,
     )
+    answer_row = _answer_row(
+        run_id=run_id,
+        case=case,
+        system_name=system_name,
+        real=real,
+    )
     return {
         "result": result,
         "trace": trace,
         "audit": audit_payload,
+        "answer": answer_row,
         "failure": _failure_row(case, system_name, result),
         "reranker_unavailable": real.reranker_unavailable,
+        "vector_unavailable": _vector_unavailable(real.warnings),
+    }
+
+
+def _answer_row(
+    *,
+    run_id: str,
+    case: EvalCase,
+    system_name: str,
+    real: RealFinalResult,
+) -> dict[str, Any]:
+    chunk_texts_by_id = {
+        item.chunk.chunk_id: item.chunk.text for item in real.reranked_chunks
+    }
+    cited_chunk_texts: dict[str, str | None] = {}
+    cited_text_sha256: dict[str, str | None] = {}
+    warnings = list(real.warnings)
+
+    for citation in real.citations:
+        chunk_id = citation.chunk_id
+        text = chunk_texts_by_id.get(chunk_id)
+        cited_chunk_texts[chunk_id] = text
+        cited_text_sha256[chunk_id] = (
+            sha256(text.encode("utf-8")).hexdigest() if text is not None else None
+        )
+        if text is None:
+            warnings.append(f"cited_chunk_not_in_reranked:{chunk_id}")
+
+    return {
+        "run_id": run_id,
+        "case_id": case.case_id,
+        "system_name": system_name,
+        "eval_split": case.eval_split.value,
+        "refused": real.refused,
+        "response_mode": real.response_mode.value,
+        "answer_text": real.answer_text,
+        "llm_model_name": get_settings().llm_model_name,
+        "claims": [claim.model_dump(mode="json") for claim in real.claims],
+        "citations": [
+            citation.model_dump(mode="json") for citation in real.citations
+        ],
+        "cited_chunk_texts": cited_chunk_texts,
+        "cited_text_sha256": cited_text_sha256,
+        "warnings": warnings,
     }
 
 
@@ -445,6 +539,10 @@ def _score_raw_correct(case: EvalCase, real: RealFinalResult) -> bool:
     if real.refused:
         return False
     return _answer_overlaps_reference(real.answer_text, case)
+
+
+def _vector_unavailable(warnings: list[str]) -> bool:
+    return any("Vector retrieval unavailable" in warning for warning in warnings)
 
 
 def _answer_overlaps_reference(answer_text: str, case: EvalCase) -> bool:
@@ -670,6 +768,9 @@ def _build_summary(
     reranker_unavailable_any: bool,
     run_dir: Path,
     usage,
+    vector_unavailable_any: bool = False,
+    evidence_gate_config: EvidenceGateConfig | None = None,
+    trust_gate_policy: str | None = None,
 ) -> dict[str, Any]:
     settings = get_settings()
     has_final = bool((set(systems) - set(unavailable_systems)) & FINAL_SYSTEMS)
@@ -692,6 +793,14 @@ def _build_summary(
         reranker_unavailable_any=reranker_unavailable_any,
     )
     uses_real_llm = bool(real_run and settings.llm_provider.lower() != "mock")
+    resolved_evidence_gate_config = (
+        evidence_gate_config or evidence_gate_config_from_settings(settings)
+    )
+    resolved_trust_gate_policy = trust_gate_policy or getattr(
+        settings,
+        "trust_gate_policy",
+        "legacy",
+    )
 
     summary = EvalRunSummary(
         run_id=run_id,
@@ -716,6 +825,7 @@ def _build_summary(
         and bool(trace_rows)
         and bool(audit_rows)
         and usage.total_calls > 0
+        and not vector_unavailable_any
     )
     retrieval_headline_eligible = bool(
         retrieval_only
@@ -746,10 +856,13 @@ def _build_summary(
             "rewrite_llm_model_name": (
                 settings.rewrite_llm_model_name if real_run else None
             ),
+            "evidence_gate_config": resolved_evidence_gate_config.model_dump(mode="json"),
+            "trust_gate_policy": resolved_trust_gate_policy,
             "uses_real_llm": uses_real_llm,
             "uses_real_embedding": uses_real_embedding,
             "uses_real_reranker": uses_real_reranker,
             "reranker_unavailable": bool(real_run and reranker_unavailable_any),
+            "vector_unavailable": bool(real_run and vector_unavailable_any),
             "llm_call_count": usage.total_calls,
             "answer_llm_call_count": usage.answer_calls,
             "rewrite_llm_call_count": usage.rewrite_calls,

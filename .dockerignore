@@ -1,0 +1,14 @@
+.env
+.git/
+.pytest_cache/
+.ruff_cache/
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+data/generated/
+data/indexes/
+data/traces/
+data/eval_runs/

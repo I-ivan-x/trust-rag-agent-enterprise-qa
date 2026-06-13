@@ -1,0 +1,79 @@
+services:
+  api:
+    build:
+      context: .
+      args:
+        INSTALL_SENTENCE_TRANSFORMER: ${INSTALL_SENTENCE_TRANSFORMER:-false}
+    environment:
+      APP_NAME: TrustRAG Enterprise QA
+      APP_VERSION: ${APP_VERSION:-0.1.0}
+      TASK_PLAN_VERSION: ${TASK_PLAN_VERSION:-v0.3-q1-hard-demo-plan-freeze}
+      ENVIRONMENT: docker
+      DEBUG: "false"
+      MOCK_MODE: "true"
+      DATA_DIR: data
+      GENERATED_DIR: data/generated
+      SAMPLE_CORPUS_DIR: data/sample_corpus
+      PUBLIC_CORPUS_DIR: data/public_corpus
+      HARD_NEGATIVE_CORPUS_DIR: data/hard_negative_corpus
+      GOLD_EVAL_DIR: data/gold_eval
+      TRACE_DIR: data/traces
+      EVAL_RUNS_DIR: data/eval_runs
+      WHOOSH_INDEX_DIR: data/indexes/whoosh
+      EMBEDDING_PROVIDER: ${DOCKER_EMBEDDING_PROVIDER:-mock}
+      EMBEDDING_MODEL_NAME: ${DOCKER_EMBEDDING_MODEL_NAME:-BAAI/bge-small-en-v1.5}
+      EMBEDDING_BATCH_SIZE: ${DOCKER_EMBEDDING_BATCH_SIZE:-32}
+      EMBEDDING_DEVICE: ${DOCKER_EMBEDDING_DEVICE:-cpu}
+      RERANKER_PROVIDER: ${DOCKER_RERANKER_PROVIDER:-mock}
+      RERANKER_MODEL_NAME: ${DOCKER_RERANKER_MODEL_NAME:-BAAI/bge-reranker-base}
+      LLM_PROVIDER: ${DOCKER_LLM_PROVIDER:-mock}
+      LLM_MODEL_NAME: ${DOCKER_LLM_MODEL_NAME:-mock-llm-v0}
+      LLM_BASE_URL: ${DOCKER_LLM_BASE_URL:-}
+      LLM_TIMEOUT_SECONDS: ${DOCKER_LLM_TIMEOUT_SECONDS:-30}
+      LLM_MAX_OUTPUT_TOKENS: ${DOCKER_LLM_MAX_OUTPUT_TOKENS:-512}
+      LLM_TEMPERATURE: ${DOCKER_LLM_TEMPERATURE:-0}
+      REWRITE_LLM_PROVIDER: ${DOCKER_REWRITE_LLM_PROVIDER:-rule_based}
+      REWRITE_LLM_MODEL_NAME: ${DOCKER_REWRITE_LLM_MODEL_NAME:-mock-llm-v0}
+      OPENAI_API_KEY: ${DOCKER_OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${DOCKER_OPENAI_BASE_URL:-}
+      DEEPSEEK_API_KEY: ${DOCKER_DEEPSEEK_API_KEY:-}
+      QDRANT_URL: http://qdrant:6333
+      QDRANT_COLLECTION: ${QDRANT_COLLECTION:-trust_rag_enterprise_qa}
+      CHUNK_MAX_TOKENS: ${CHUNK_MAX_TOKENS:-500}
+      CHUNK_OVERLAP_TOKENS: ${CHUNK_OVERLAP_TOKENS:-80}
+      MAX_CONTEXT_TOKENS: ${MAX_CONTEXT_TOKENS:-5000}
+      MAX_REWRITE_ROUNDS: ${MAX_REWRITE_ROUNDS:-1}
+      EVIDENCE_MIN_SUPPORT_COUNT: ${EVIDENCE_MIN_SUPPORT_COUNT:-1}
+      EVIDENCE_MIN_SCORE: ${EVIDENCE_MIN_SCORE:-}
+      TRUST_GATE_POLICY: ${TRUST_GATE_POLICY:-legacy}
+      EVAL_MODE: mock
+    depends_on:
+      - qdrant
+    ports:
+      - "${API_PORT:-8000}:8000"
+    volumes:
+      - ./data:/app/data
+      - huggingface_cache:/root/.cache/huggingface
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import httpx; r=httpx.get('http://127.0.0.1:8000/health', timeout=2); raise SystemExit(0 if r.status_code == 200 else 1)",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 20s
+
+  qdrant:
+    image: qdrant/qdrant:v1.18.0
+    expose:
+      - "6333"
+    volumes:
+      - qdrant_storage_v118:/qdrant/storage
+
+volumes:
+  qdrant_storage_v118:
+  huggingface_cache:

@@ -11,8 +11,10 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from app.core.config import get_settings
 from app.core.enums import EvalSplit
 from app.eval.runner import run_eval
+from app.guards.evidence_gate import EvidenceGateConfig, evidence_gate_config_from_settings
 
 
 def parse_args() -> argparse.Namespace:
@@ -39,12 +41,31 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Override max output tokens for real LLM calls.",
     )
+    parser.add_argument(
+        "--evidence-min-support-count",
+        type=int,
+        default=None,
+        help="Override evidence gate min_support_count.",
+    )
+    parser.add_argument(
+        "--evidence-min-score",
+        type=float,
+        default=None,
+        help="Override evidence gate min_score; omit to disable score thresholding.",
+    )
+    parser.add_argument(
+        "--trust-gate-policy",
+        choices=["legacy", "neighbor_tolerant"],
+        default=None,
+        help="Override trust gate policy variant.",
+    )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
     systems = [item.strip() for item in args.systems.split(",") if item.strip()]
+    evidence_gate_config = _evidence_gate_config_from_args(args)
     try:
         summary = run_eval(
             split=args.split,
@@ -59,12 +80,27 @@ def main() -> None:
             max_cases=args.max_cases,
             sleep_seconds=args.sleep_seconds,
             max_output_tokens=args.max_output_tokens,
+            evidence_gate_config=evidence_gate_config,
+            trust_gate_policy=args.trust_gate_policy,
         )
     except (RuntimeError, ValueError, FileNotFoundError) as exc:
         raise SystemExit(str(exc)) from exc
     print(json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True))
 
 
+def _evidence_gate_config_from_args(args: argparse.Namespace) -> EvidenceGateConfig | None:
+    if args.evidence_min_support_count is None and args.evidence_min_score is None:
+        return None
+    base = evidence_gate_config_from_settings(get_settings())
+    return EvidenceGateConfig(
+        min_support_count=(
+            base.min_support_count
+            if args.evidence_min_support_count is None
+            else args.evidence_min_support_count
+        ),
+        min_score=base.min_score if args.evidence_min_score is None else args.evidence_min_score,
+    )
+
+
 if __name__ == "__main__":
     main()
-

@@ -10,6 +10,7 @@ from app.context.context_assembler import assemble_context
 from app.core.config import get_settings
 from app.core.enums import DecisionReason, ExpectedBehavior
 from app.core.ids import make_trace_id
+from app.guards.evidence_gate import evidence_gate_config_from_settings
 from app.index.build_index import INDEX_METADATA_PATH, read_index_metadata
 from app.index.embedding_service import get_embedding_service
 from app.index.keyword_store import KeywordStore
@@ -28,6 +29,12 @@ from app.workflow.state import AgenticRecoveryState, RetrievalPassResult
 
 _QUERY_TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
 _DEPRECATED_QUERY_TERMS = {"deprecated", "legacy", "old", "stale", "v1"}
+_TRUST_GATE_POLICY_LEGACY = "legacy"
+_TRUST_GATE_POLICY_NEIGHBOR_TOLERANT = "neighbor_tolerant"
+_TRUST_GATE_POLICIES = {
+    _TRUST_GATE_POLICY_LEGACY,
+    _TRUST_GATE_POLICY_NEIGHBOR_TOLERANT,
+}
 
 
 def answer_chat(request: ChatRequest) -> ChatResponse:
@@ -46,8 +53,12 @@ def _answer_chat_checked(request: ChatRequest, trace_id: str) -> ChatResponse:
     if getattr(retriever, "vector_retriever", None) is None:
         warnings.append(
             "Vector retriever unavailable; using keyword retrieval only for this request."
-        )
+    )
     reranker = get_reranker(settings.reranker_provider)
+    evidence_gate_config = evidence_gate_config_from_settings(settings)
+    trust_gate_policy = _normalize_trust_gate_policy(
+        getattr(settings, "trust_gate_policy", _TRUST_GATE_POLICY_LEGACY)
+    )
 
     first_pass = run_trust_gated_pass(
         query=request.query,
@@ -57,6 +68,7 @@ def _answer_chat_checked(request: ChatRequest, trace_id: str) -> ChatResponse:
         user_role=request.user.role,
         user_department=request.user.department,
         user_clearance=request.user.clearance.value,
+        evidence_gate_config=evidence_gate_config,
     )
     recovery = AgenticRecoveryState(
         original_query=request.query,
@@ -65,7 +77,11 @@ def _answer_chat_checked(request: ChatRequest, trace_id: str) -> ChatResponse:
     )
     final_pass = first_pass
 
-    if _should_attempt_rewrite(request, first_pass):
+    if _should_attempt_rewrite(
+        request,
+        first_pass,
+        trust_gate_policy=trust_gate_policy,
+    ):
         rewriter = get_query_rewriter()
         rewrite_decision = (
             rewriter.rewrite(
@@ -90,6 +106,7 @@ def _answer_chat_checked(request: ChatRequest, trace_id: str) -> ChatResponse:
                 user_role=request.user.role,
                 user_department=request.user.department,
                 user_clearance=request.user.clearance.value,
+                evidence_gate_config=evidence_gate_config,
             )
             recovery.second_pass_evidence_sufficient = (
                 final_pass.evidence_decision.evidence_sufficient
@@ -102,10 +119,13 @@ def _answer_chat_checked(request: ChatRequest, trace_id: str) -> ChatResponse:
     if settings.reranker_provider.lower() == "mock":
         warnings.append(MOCK_RERANKER_WARNING)
 
-    permission_denied = _acl_denies_required_evidence(final_pass)
-    deprecated_warning = _query_targets_deprecated(
-        final_pass.query,
-        final_pass.state_decision.deprecated_chunks,
+    permission_denied = _acl_denies_required_evidence(
+        final_pass,
+        trust_gate_policy=trust_gate_policy,
+    )
+    deprecated_warning = _deprecated_warning_for_policy(
+        final_pass,
+        trust_gate_policy=trust_gate_policy,
     )
     refusal = decide_response_mode(
         state_decision=final_pass.state_decision,
@@ -124,6 +144,7 @@ def _answer_chat_checked(request: ChatRequest, trace_id: str) -> ChatResponse:
             final_pass=final_pass,
             refusal=refusal,
             recovery=recovery,
+            trust_gate_policy=trust_gate_policy,
             warnings=warnings,
         )
     else:
@@ -133,6 +154,7 @@ def _answer_chat_checked(request: ChatRequest, trace_id: str) -> ChatResponse:
             final_pass=final_pass,
             refusal=refusal,
             recovery=recovery,
+            trust_gate_policy=trust_gate_policy,
             warnings=warnings,
         )
     return response
@@ -145,6 +167,7 @@ def _answer_from_selected_chunks(
     final_pass: RetrievalPassResult,
     refusal: RefusalDecision,
     recovery: AgenticRecoveryState,
+    trust_gate_policy: str,
     warnings: list[str],
 ) -> ChatResponse:
     settings = get_settings()
@@ -166,6 +189,7 @@ def _answer_from_selected_chunks(
         response_mode=ExpectedBehavior.answer,
         final_pass=final_pass,
         recovery=recovery,
+        trust_gate_policy=trust_gate_policy,
         warnings=response_warnings,
         preview_chunks=refusal.selected_chunks,
     )
@@ -178,6 +202,7 @@ def _non_answer_response(
     final_pass: RetrievalPassResult,
     refusal: RefusalDecision,
     recovery: AgenticRecoveryState,
+    trust_gate_policy: str,
     warnings: list[str],
 ) -> ChatResponse:
     answer = _refusal_answer_text(refusal.response_mode)
@@ -198,6 +223,7 @@ def _non_answer_response(
         response_mode=refusal.response_mode,
         final_pass=final_pass,
         recovery=recovery,
+        trust_gate_policy=trust_gate_policy,
         warnings=[*warnings, *refusal.warnings],
         preview_chunks=preview_chunks,
     )
@@ -212,6 +238,7 @@ def _format_response(
     response_mode: ExpectedBehavior,
     final_pass: RetrievalPassResult,
     recovery: AgenticRecoveryState,
+    trust_gate_policy: str,
     warnings: list[str],
     preview_chunks: list[RetrievedChunk],
 ) -> ChatResponse:
@@ -220,7 +247,10 @@ def _format_response(
         reason=_decision_reason(response_mode),
         warnings=warnings,
         evidence_sufficient=final_pass.evidence_decision.evidence_sufficient,
-        acl_passed=not _acl_denies_required_evidence(final_pass),
+        acl_passed=not _acl_denies_required_evidence(
+            final_pass,
+            trust_gate_policy=trust_gate_policy,
+        ),
         state_policy=_state_policy(final_pass),
         rewrite_triggered=recovery.rewrite_triggered,
         response_mode=response_mode,
@@ -244,8 +274,14 @@ def _format_response(
         "llm_model_name": settings.llm_model_name,
         "mock_llm_for_local_demo_only": settings.llm_provider.lower() == "mock",
         "mock_reranker_for_tests_smoke_only": settings.reranker_provider.lower() == "mock",
+        "trust_gate_policy": trust_gate_policy,
     }
-    trust_trace = _trust_trace(final_pass, recovery, response_mode)
+    trust_trace = _trust_trace(
+        final_pass,
+        recovery,
+        response_mode,
+        trust_gate_policy=trust_gate_policy,
+    )
 
     return ChatResponse(
         answer=answer,
@@ -334,14 +370,22 @@ def _preview_chunks(chunks: list[RetrievedChunk], include_full: bool) -> list[Re
     return chunks[:3]
 
 
-def _should_attempt_rewrite(request: ChatRequest, pass_result: RetrievalPassResult) -> bool:
+def _should_attempt_rewrite(
+    request: ChatRequest,
+    pass_result: RetrievalPassResult,
+    *,
+    trust_gate_policy: str = _TRUST_GATE_POLICY_LEGACY,
+) -> bool:
     if not request.options.enable_agentic_recovery:
         return False
     if request.options.max_rewrite_rounds <= 0:
         return False
     if pass_result.evidence_decision.evidence_sufficient:
         return False
-    if _acl_denies_required_evidence(pass_result):
+    if _acl_denies_required_evidence(
+        pass_result,
+        trust_gate_policy=trust_gate_policy,
+    ):
         return False
     if pass_result.conflict_decision.has_conflict:
         return False
@@ -353,13 +397,41 @@ def _should_attempt_rewrite(request: ChatRequest, pass_result: RetrievalPassResu
     return True
 
 
-def _acl_denies_required_evidence(pass_result: RetrievalPassResult) -> bool:
+def _acl_denies_required_evidence(
+    pass_result: RetrievalPassResult,
+    *,
+    trust_gate_policy: str = _TRUST_GATE_POLICY_LEGACY,
+) -> bool:
     blocked = pass_result.acl_decision.blocked_chunks
     if not blocked:
         return False
     if not pass_result.acl_decision.surviving_chunks:
         return True
-    return _chunks_match_query(pass_result.query, blocked)
+    blocked_match_query = _chunks_match_query(pass_result.query, blocked)
+    return blocked_match_query
+
+
+def _deprecated_warning_for_policy(
+    pass_result: RetrievalPassResult,
+    *,
+    trust_gate_policy: str = _TRUST_GATE_POLICY_LEGACY,
+) -> bool:
+    deprecated_matches_query = _query_targets_deprecated(
+        pass_result.query,
+        pass_result.state_decision.deprecated_chunks,
+    )
+    if not deprecated_matches_query:
+        return False
+    if _normalize_trust_gate_policy(trust_gate_policy) == _TRUST_GATE_POLICY_NEIGHBOR_TOLERANT:
+        return not pass_result.evidence_decision.evidence_sufficient
+    return True
+
+
+def _normalize_trust_gate_policy(policy: str | None) -> str:
+    normalized = (policy or _TRUST_GATE_POLICY_LEGACY).strip().lower()
+    if normalized not in _TRUST_GATE_POLICIES:
+        raise ValueError(f"Unsupported trust gate policy: {policy}")
+    return normalized
 
 
 def _query_targets_deprecated(query: str, chunks: list[RetrievedChunk]) -> bool:
@@ -465,6 +537,8 @@ def _trust_trace(
     pass_result: RetrievalPassResult,
     recovery: AgenticRecoveryState,
     response_mode: ExpectedBehavior,
+    *,
+    trust_gate_policy: str = _TRUST_GATE_POLICY_LEGACY,
 ) -> dict[str, Any]:
     return {
         "first_pass_query": recovery.original_query,
@@ -479,6 +553,7 @@ def _trust_trace(
         "deprecated_count": len(pass_result.state_decision.deprecated_chunks),
         "conflict_detected": pass_result.conflict_decision.has_conflict,
         "evidence_sufficient": pass_result.evidence_decision.evidence_sufficient,
+        "trust_gate_policy": trust_gate_policy,
         "final_response_mode": response_mode.value,
         "decision_reason": _decision_reason(response_mode).value,
     }

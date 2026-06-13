@@ -41,6 +41,11 @@ _STOPWORDS = {
 _STRICT_ENTITY_TERMS = {"ttl", "expiry", "expires", "expiration", "rlimit", "v1", "v2"}
 
 
+class EvidenceGateConfig(BaseModel):
+    min_support_count: int = Field(default=1, ge=0)
+    min_score: float | None = None
+
+
 class EvidenceGateDecision(BaseModel):
     evidence_sufficient: bool
     reason: str
@@ -53,9 +58,16 @@ class EvidenceGateDecision(BaseModel):
 def apply_evidence_gate(
     query: str,
     chunks: list[RetrievedChunk],
-    min_support_count: int = 1,
+    min_support_count: int | None = None,
     min_score: float | None = None,
+    config: EvidenceGateConfig | None = None,
 ) -> EvidenceGateDecision:
+    config = config or EvidenceGateConfig()
+    min_support_count = (
+        config.min_support_count if min_support_count is None else min_support_count
+    )
+    min_score = config.min_score if min_score is None else min_score
+
     if min_support_count < 0:
         raise ValueError("min_support_count must be non-negative")
     support_count = len(chunks)
@@ -153,3 +165,10 @@ def _query_terms(query: str) -> set[str]:
         if len(token) >= 3 or token in {"v1", "v2"}:
             terms.add(token)
     return terms
+
+
+def evidence_gate_config_from_settings(settings) -> EvidenceGateConfig:
+    return EvidenceGateConfig(
+        min_support_count=getattr(settings, "evidence_min_support_count", 1),
+        min_score=getattr(settings, "evidence_min_score", None),
+    )

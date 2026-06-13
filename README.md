@@ -1,129 +1,177 @@
 # TrustRAG Enterprise QA
 
-TrustRAG Enterprise QA is the Week 0 engineering foundation for the
-**Trustworthy Enterprise Document RAG-Agent QA System**. The Q1 goal is a
-local, traceable, testable enterprise document QA system that can explain why it
-answered, refused, warned on deprecated evidence, or blocked access.
+A trustworthy enterprise-document **RAG-Agent** with fail-closed trust gates,
+plus an **anti-self-deception evaluation framework** -- which honestly measured
+both the system's strengths (zero false answers, full auditability) and its
+failures (over-refusal, a collapsed stress-test split, an agentic loop with no
+measured gain), each with traced root causes.
 
-This is not a plain RAG chatbot. The frozen Q1 plan centers on five trust
-dimensions - retrieval correctness, citation support, refusal behavior,
-state/ACL compliance, and auditability - rather than only "retrieve chunks and
-prompt a model."
+**What this is**
 
-The RAG-Agent name is justified by a small, workflow-based agentic evidence
-recovery loop (query rewrite + one second-pass retrieval), not a free-planning
-autonomous agent.
+- A QA pipeline whose trust properties are measured, not asserted: retrieval
+  correctness, citation support, refusal behavior, state/ACL compliance, and
+  auditability.
+- An evaluation governance system: corpus/eval author isolation, leakage
+  checks, contamination-isolating grounded scoring, and machine-enforced rules
+  about which numbers may be reported.
+- An honest results report. The negative findings below are not hidden; they
+  are the project's strongest evidence of being real.
 
-## Trust & Evaluation Discipline
+**What this is not**
 
-- **Headline metric is `grounded_correctness`** (correct answer + valid,
-  supporting citations). Raw answer correctness is reference only.
-- Three separate corpora: synthetic fixtures, public external, hard negatives.
-  Headline numbers come from the **public external** corpus with real models.
-- **Synthetic fixtures and mock runs are never headline metrics** - they are for
-  schema, CI, chunking, and smoke checks only.
-- Response modes are fixed to `answer`, `refuse_no_evidence`,
-  `refuse_permission`, `warn_deprecated`, `report_conflict`, `system_error`.
+- Not a chatbot wrapper or a LangChain tutorial walkthrough.
+- Not a leaderboard project: the headline metric is deliberately the hardest
+  one we could define (`grounded_correctness`), not the prettiest.
+- Not an autonomous agent: the "Agent" is a bounded, policy-constrained, fully
+  traced evidence-recovery loop. The current report says plainly that this loop
+  has not yet earned its keep.
 
-See `docs/CORPUS_PROTOCOL.md`, `docs/EVAL_PROTOCOL.md`,
-`docs/Q1_EXECUTION_SPEC.md`, and `docs/SCHEMA_REVIEW_CHECKLIST.md`.
+------
 
-## Q1 Hard Demo Scope (Week 0-5A)
+## Honest Results at a Glance
 
-Week 0 only builds the base: FastAPI, settings, shared enums, schemas,
-mock-only service placeholders, Northstar Cloud synthetic fixture documents,
-demo eval schema data, protocol docs, linting, and tests.
+All numbers from Week 6 **real runs**: real embedding (`bge-small-en-v1.5`),
+real reranker (`bge-reranker-base`), real LLM (DeepSeek), public external
+corpus (FastAPI docs subset, 50 evaluation cases). Full run inventory:
+[EVALUATION_REPORT](docs/EVALUATION_REPORT.md).
 
-Week 1 adds the ingestion and section-aware chunking path from Markdown/TXT
-fixtures to generated JSONL artifacts. It also backfills demo eval
-`gold_chunk_ids` from real generated fixture chunks.
+### What works (measured)
 
-Week 2 adds the retrieval base: embedding service interfaces, Whoosh BM25,
-Qdrant vector-store wiring, RRF hybrid search, index status, rebuild scripts,
-and search preview.
+| Result | Number | Scope |
+| --- | --- | --- |
+| False answers on external real run | **0.00** | Fail-closed gates: the system answered nothing it could not cite |
+| Citation structural validity | **1.00** | Every citation id verifiably from retrieved context; fabricated ids are blocked. This is structural validity, not human-audited support. |
+| Hybrid retrieval vs vector-only | doc_hit@5 **0.60 -> 0.80** | The one retrieval improvement the ablation actually supports |
+| Contamination control | direct LLM raw **0.20** -> grounded **0.00** | The model knows some public-corpus content from training, but cannot convert that into cited evidence |
+| Final system retrieval | doc_hit@5 0.76, MRR 0.61 | External split, end-to-end |
 
-Week 3 adds the first online `/chat` path: hybrid retrieval, BGE reranker
-interface, context assembly, structured answer generation, citation binding,
-and a FastAPI route. The default LLM remains mock for local demo and smoke.
+### What fails (measured, with root cause)
 
-Week 4 connects trust gates to `/chat`: document state gate, ACL gate, minimal
-active-active conflict detection, simplified evidence gate, one rule-based
-rewrite pass, and refusal controller priority.
+| Result | Number | Root cause and status |
+| --- | --- | --- |
+| Grounded correctness | **0.24**, with false-refusal **0.46** | The price of fail-closed gating: the bottleneck is not answering, not answering wrong. Gate calibration is the next planned phase. |
+| Agentic recovery gain | **0.3333 vs 0.3333** (tie) | The single recovery action (query rewrite) is forbidden on the policy paths where most refusals occur. Typed action space planned. |
+| Reranker contribution | doc_hit@5 0.80 -> **0.78** | Not proven; no rerank improvement is claimed anywhere in this project. |
+| Hard-negative stress test | error rate **1.0** | Pre-digested adjudication attributes this to an eval design flaw: all 20 queries were metadata-only templates with zero content words. Retrieval robustness is currently unknown, not bad; owner sign-off and re-validation with rewritten queries are pending. |
 
-Week 5A adds a public external corpus pipeline using a FastAPI documentation
-subset, reproducible ACL/state metadata overlay, public manifest generation, and
-hard negative corpus pairs.
+Every failure row links to a root-cause analysis in
+[FAILURE_ANALYSIS](docs/FAILURE_ANALYSIS.md) (taxonomy F1-F8) and a planned fix
+in [ROADMAP](docs/ROADMAP.md).
 
-Week 5A still does **not** implement `run_eval.py`, metrics summaries, formal
-real-LLM runs, `/eval`, trace indexing, Docker, Streamlit, LangGraph, or Week 6
-delivery polish.
+------
 
-MockEmbeddingService, MockReranker, and MockLLMClient are for tests, CI, local
-demo, and smoke tests only. Mock output must not be reported as formal
-evaluation or headline metrics. MockEmbeddingService must also not be cited as
-formal retrieval-eval evidence.
-SentenceTransformerEmbeddingService with `BAAI/bge-small-en-v1.5` is the default
-direction for formal retrieval evaluation once Qdrant is available.
+## Architecture
+
+```text
+ingest (markdown/txt + front matter + metadata overlay)
+  -> section-aware chunking
+  -> dense retrieval (Qdrant) || BM25 (Whoosh) -> RRF fusion -> BGE rerank
+  -> state gate -> ACL gate -> evidence gate
+       -> if evidence insufficient and not policy-blocked:
+            one query rewrite -> second-pass retrieval -> all gates again
+  -> conflict detection -> context assembly
+  -> grounded generation (claims + supporting_chunk_ids)
+  -> citation binding (context-only ids) -> structural verification
+  -> refusal controller (permission > conflict > deprecated > answer/no-evidence)
+  -> JSONL trace
+```
+
+Design rationale and the measured consequence of every major decision:
+[TECHNICAL_DESIGN](docs/TECHNICAL_DESIGN.md).
+
+## Why You Can Trust These Numbers
+
+1. **Grounded-only headline.** An answer scores only if it is correct, every
+   citation comes from retrieved context, and a citation supports the core
+   claim. Parametric memory cannot cheat this metric.
+2. **No circular validation.** Corpus authors and eval authors are
+   process-isolated; queries pass automated leakage checks; half the external
+   queries come from real user questions.
+3. **Reporting eligibility is code, not discipline.** Run summaries carry
+   `headline_eligible` and `mock_used` flags guarded by unit tests; mock or
+   partial runs are mechanically excluded from headline reporting.
+4. **The governance system audits itself.** The hard-negative split failure was
+   traced to the eval's own query design and reported as such, with the protocol
+   fix documented.
 
 ## Quick Start
 
+Docker smoke path:
+
+```powershell
+docker compose up -d --build
+docker compose exec api python scripts/smoke_test.py --prepare --embedding-provider mock --require-vector --chat
+```
+
+The compose stack starts the FastAPI API and an internal Qdrant service. It
+defaults to mock embedding/reranker/LLM providers so the demo starts without
+model downloads or API keys. Mock output is for local smoke only and must not
+be reported as formal evaluation.
+
+Local uv path:
+
 ```powershell
 python -m uv sync
+python -m uv run python scripts/ingest_corpus.py
+python -m uv run python scripts/rebuild_indexes.py --embedding-provider mock
 python -m uv run uvicorn app.main:app --reload
 ```
 
 Open Swagger UI at <http://127.0.0.1:8000/docs>.
 
-## Current Week 5A Status
-
-- FastAPI app and `/health` endpoint are available.
-- Pydantic schemas reserve the v0.3 corpus, eval, agentic recovery, and grounded
-  scoring fields.
-- Five Northstar Cloud synthetic fixtures and a 5-case demo eval exist only for
-  schema, chunking, smoke checks, and fixture regression.
-- `scripts/ingest_corpus.py` generates `documents.jsonl`, `chunks.jsonl`, and
-  `chunk_manifest.jsonl` under `data/generated/`.
-- `scripts/rebuild_indexes.py` builds the local Whoosh index and attempts the
-  Qdrant vector index.
-- `scripts/search_preview.py` previews keyword, vector, or hybrid search.
-- `/chat` returns answer, citations, response mode, trace ID, provider metadata,
-  and retrieved chunk preview.
-- `/chat` now applies state/ACL/evidence gates, minimal conflict detection, and
-  refusal control before context assembly and answer generation.
-- Rule-based rewrite can attempt one second-pass retrieval when evidence is
-  insufficient and no higher-priority trust mode has fired.
-- `scripts/fetch_public_corpus.py --limit 40` fetches real public FastAPI docs
-  text from the public GitHub repository and writes
-  `data/public_corpus/public_corpus_manifest.jsonl`.
-- Public corpus ACL/state/conflict fields can be controlled by
-  `data/public_corpus/overlay/metadata_overlay.yaml`; `metadata_origin=native`
-  means source/front-matter metadata, while `metadata_origin=overlay` means a
-  controlled metadata-only test overlay changed at least one field.
-- `scripts/build_hard_negatives.py` creates hard negative pairs and
-  `data/hard_negative_corpus/hard_negative_manifest.jsonl`; these are reported
-  separately from headline external metrics. Week 5A hard negative labels are
-  conservative (`adjacent_topic` / `similar_title`) unless richer source types
-  are explicitly introduced later.
-- BGE reranker support is available through `BAAI/bge-reranker-base` when the
-  model and `sentence-transformers` runtime are available.
-- If Qdrant is unavailable, Whoosh and RRF tests still run; formal vector
-  retrieval requires Qdrant.
-- Formal evaluation still requires real embedding, real reranker, and real LLM
-  in later weeks.
-
-## Common Commands
+Useful Make targets:
 
 ```powershell
-python -m uv sync
-python -m uv run ruff check .
-python -m uv run pytest
-python -m uv run python scripts/ingest_corpus.py
-python -m uv run python scripts/rebuild_indexes.py --embedding-provider sentence_transformer
-python -m uv run python scripts/search_preview.py "refresh token rate limit" --mode keyword
-python -m uv run python scripts/search_preview.py "refresh token rate limit" --mode hybrid
-python -m uv run python scripts/demo_queries.py
-python -m uv run python scripts/fetch_public_corpus.py --limit 40
-python -m uv run python scripts/ingest_corpus.py --input data/public_corpus --output data/generated/public --overlay data/public_corpus/overlay/metadata_overlay.yaml
-python -m uv run python scripts/build_hard_negatives.py
-python -m uv run uvicorn app.main:app --reload
+make sync
+make lint
+make test
+make docker-smoke
 ```
+
+For real embedding/reranker experiments, build the optional model runtime and
+mount the Hugging Face cache through the compose volume. Compose intentionally
+uses `DOCKER_*` override variables so local `.env` evaluation keys do not leak
+into smoke containers by accident:
+
+```powershell
+$env:INSTALL_SENTENCE_TRANSFORMER="true"
+$env:DOCKER_EMBEDDING_PROVIDER="sentence_transformer"
+$env:DOCKER_RERANKER_PROVIDER="bge"
+docker compose build
+```
+
+## Reproducing the Evaluation
+
+```powershell
+python -m uv run python scripts/check_eval_leakage.py --all
+python -m uv run python scripts/run_eval.py --split external --systems vector_only,bm25_only,hybrid_rrf,hybrid_rrf_rerank --retrieval-only
+python -m uv run python scripts/run_eval.py --split external --systems direct_llm,final_gated,final_agentic --real-run
+python -m uv run python scripts/run_eval.py --split obfuscated --systems final_gated,final_agentic --real-run
+```
+
+Real runs require a DeepSeek-compatible API key in `.env` (see
+`.env.example`). Retrieval-tier runs make zero LLM calls. Each run writes
+`results.jsonl`, `traces.jsonl`, `failures.jsonl`, and a `summary.json` whose
+`headline_eligible` field states whether it may be cited.
+
+## Documentation
+
+| Document | Content |
+| --- | --- |
+| [TECHNICAL_DESIGN](docs/TECHNICAL_DESIGN.md) | Threat model and ADRs with measured consequences |
+| [EVALUATION_REPORT](docs/EVALUATION_REPORT.md) | Week 6 results, contamination analysis, trade-off discussion, and Q2 Phase 1 calibration notes |
+| [FAILURE_ANALYSIS](docs/FAILURE_ANALYSIS.md) | Failure taxonomy F1-F8 with trace evidence |
+| [HARD_NEGATIVE_ADJUDICATION](docs/HARD_NEGATIVE_ADJUDICATION.md) | Why the stress-test split collapsed, and the re-validation plan |
+| [CITATION_AUDIT](docs/CITATION_AUDIT.md) / [GUIDE](docs/CITATION_AUDIT_GUIDE.md) | Rule-based audit status, manual census, and audit protocol |
+| [EVAL_PROTOCOL](docs/EVAL_PROTOCOL.md) / [CORPUS_PROTOCOL](docs/CORPUS_PROTOCOL.md) | Author isolation and corpus governance |
+| [ROADMAP](docs/ROADMAP.md) | Q1 closeout plus Q2 plan: gate calibration, anchored LLM judge, red-team split, typed-action agent |
+
+## Data Sources and Boundaries
+
+- **Public external corpus**: a subset of public FastAPI documentation. Document
+  text is unmodified; ACL/state/conflict metadata is a controlled, seeded
+  overlay declared in every report that uses it.
+- **Synthetic fixture corpus**: authored for functional regression only; never
+  reported as headline metrics.
+- **Hard negatives**: adjacent/similar pages from the public corpus.
+- Evaluation artifacts referenced by reports are archived per run id.

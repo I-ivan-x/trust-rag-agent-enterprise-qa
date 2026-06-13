@@ -108,11 +108,17 @@ The real `final_agentic` hard-negative run also had `grounded_correctness=0.0`,
 `doc_hit@5=0.05`, and `hard_negative_error_rate=1.0`. These results must not be
 reported as hard-negative robustness.
 
+| split | system | mode | doc_hit@5 | hard_negative_error_rate | interpretation |
+| --- | --- | --- | ---: | ---: | --- |
+| hard_negative | `hybrid_rrf_rerank` | retrieval_only | 0.0500 | 1.0000 | Retrieval selected the wrong paired evidence in nearly every case; this is a stress-test failure row, not an answer-quality metric. |
+
 ## Fixture Functional Regression
 
 Fixture regression run: `week6-fixture-functional-regression`. It covered 36/36
 fixture cases with `final_gated` and `final_agentic` in `mock_smoke` mode. It
 made zero LLM calls, is `headline_eligible=false`, and includes a mock-run note.
+Any fixture grounded or correctness-like value from this run is a toy/mock
+functional-regression signal only, not real model or retrieval quality.
 
 The fixture run covered the expected response paths: answer (`none` decision
 reason), `no_evidence`, `permission_denied`, `deprecated_only`, and
@@ -130,3 +136,93 @@ cited as headline evaluation.
   citation-support claim.
 - external conflict cases use the existing active-active synthetic conflict
   group because the public FastAPI corpus has no native conflict overlay.
+
+------
+
+# Q2 Phase 1 — Gate Calibration (P1-02 .. P1-06)
+
+This section is Q2 work extending the Q1 report. All runs are external split,
+`final_gated`, real LLM, 50 cases, `headline_eligible=true` unless noted.
+
+## Threshold Sweep (P1-02, legacy policy)
+
+Run `q2-p1-02-legacy-threshold-sweep-reconciled`, 5 configs over the now-configurable
+`EvidenceGateConfig(min_support_count, min_score)`:
+
+| config | min_support | min_score | false_refusal | false_answer | grounded | refusal | note |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| default | 1 | none | 0.46 | 0.00 | 0.24 | 0.74 | |
+| support2 | 2 | none | 0.46 | 0.00 | 0.24 | 0.74 | identical |
+| score0 | 1 | 0.0 | 0.46 | 0.00 | 0.24 | 0.74 | identical |
+| support2_score0 | 2 | 0.0 | 0.46 | 0.00 | 0.24 | 0.74 | identical |
+| score1 | 1 | 1.0 | 0.72 | 0.00 | 0.22 | 1.00 | degenerate: refuses all, 0 LLM calls, `headline_eligible=false` |
+
+**Finding: the threshold knobs are inert.** Four of five configs are bit-for-bit
+identical; only `min_score=1.0` changes anything, and it does so degenerately
+(refuses every case, zero answers). Loosening does nothing because retrieved
+scores already clear 0; tightening to 1.0 refuses everything. **Over-refusal on
+this split is not threshold-driven** — it is policy/neighbor-driven, which is
+exactly what failure classes F1/F2 and the hard-negative adjudication predicted.
+Evidence-gate thresholds are therefore not the lever; the trust *policy* is.
+
+**Reconciliation note.** The earlier run `q2-p1-02-legacy-threshold-sweep`
+reported default metrics of grounded 0.28 / false_refusal 0.34 / refusal 0.62,
+but all `final_gated` answer rows in that run carried `Vector retrieval
+unavailable: Qdrant ... collection doesn't exist`. That run silently fell back
+to keyword-only retrieval and is not comparable to the Week 6 headline. After
+rebuilding the Qdrant collection (`vector_count=442`) and rerunning the same
+legacy/default configuration, `q2-p1-06-reconciled-legacy-default` and the
+corrected sweep exactly match Week 6: grounded 0.24 / false_refusal 0.46 /
+refusal 0.74, with zero vector-unavailable warnings. Therefore P1-01 did **not**
+make the default gate looser; the apparent 0.28 result was runtime retrieval
+stack drift.
+
+## Policy Variant (P1-03/P1-04, neighbor_tolerant)
+
+Run `q2-p1-07-neighbor-tolerant-fixed`. `TRUST_GATE_POLICY=neighbor_tolerant`
+ignores restricted/deprecated neighbors when clean active evidence is judged
+sufficient, while still refusing when only restricted/deprecated evidence
+remains.
+
+| policy | false_refusal | false_answer | grounded | refusal |
+| --- | ---: | ---: | ---: | ---: |
+| legacy (default) | 0.46 | 0.00 | **0.24** | 0.74 |
+| neighbor_tolerant_fixed | 0.44 | 0.00 | 0.22 | 0.72 |
+
+The original `neighbor_tolerant` run (`q2-p1-04-neighbor-tolerant-default`) is
+invalid for baseline use: it ran with vector retrieval unavailable and leaked
+permission/no-evidence cases (false_answer 0.22). P1-07 fixes the permission
+leak by keeping ACL fail-closed whenever restricted chunks match the query; the
+fixed run has false_answer 0.00. It still does not beat legacy/default:
+false_refusal only moves 0.46 → 0.44 and grounded drops 0.24 → 0.22. It should
+not enter any baseline.
+
+## Cost-Asymmetry Conclusion
+
+In enterprise QA, a confident wrong answer about permissions or coverage is an
+incident; a refusal is an inconvenience. The fixed neighbor_tolerant policy buys
+only a 0.02 drop in false-refusal and loses grounded correctness. Under the
+project's stated cost asymmetry, that is not a useful trade.
+
+The deeper conclusion sets up Q2 Phase 3: a *blanket* policy switch is too
+coarse. Releasing false-refusal **safely** requires per-case, evidence-quality
+decisions that re-fetch clean evidence rather than tolerating dirty neighbors —
+i.e. the typed-action agent's metadata-filtered re-retrieval (action b), which
+can lift coverage on genuinely answerable cases without answering
+permission-restricted ones. P1-05's negative result is the motivation for that
+design, and it also fixes a guardrail: any future false-refusal release must be
+checked against permission/no-evidence leakage, not just against the aggregate
+refusal rate.
+
+## P1-06 — Baseline Freeze
+
+Frozen `final_gated_calibrated` = **legacy policy, default config**
+(`min_support_count=1`, `min_score=none`; reference run
+`q2-p1-02-legacy-threshold-sweep-reconciled/default`; cross-check run
+`q2-p1-06-reconciled-legacy-default`): false_refusal 0.46, false_answer 0.00,
+grounded 0.24, refusal 0.74, citation_valid 1.00. This is not claimed as an
+improvement over Week 6; it is the same fail-closed baseline made explicit and
+reproducible after the retrieval-stack drift was fixed. No threshold or policy
+variant measured in Phase 1 improves grounded correctness without violating the
+false-answer constraint, so `final_gated_calibrated` freezes the conservative
+legacy/default point for Q2 comparisons.

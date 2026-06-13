@@ -5,7 +5,7 @@ import re
 from app.guards.acl_gate import apply_acl_gate
 from app.guards.conflict_detector import ConflictDecision, detect_minimal_conflict
 from app.guards.document_state_gate import apply_document_state_gate
-from app.guards.evidence_gate import apply_evidence_gate
+from app.guards.evidence_gate import EvidenceGateConfig, apply_evidence_gate
 from app.schemas.retrieval import RetrievalOptions
 from app.workflow.state import RetrievalPassResult
 
@@ -22,6 +22,7 @@ def run_trust_gated_pass(
     user_role: str,
     user_department: str | None,
     user_clearance: str | None,
+    evidence_gate_config: EvidenceGateConfig | None = None,
 ) -> RetrievalPassResult:
     warnings: list[str] = []
     retrieved_chunks = retriever.retrieve(query, retrieval_options)
@@ -38,7 +39,11 @@ def run_trust_gated_pass(
         user_department=user_department,
         user_clearance=user_clearance,
     )
-    evidence_decision = apply_evidence_gate(query, acl_decision.surviving_chunks)
+    evidence_decision = apply_evidence_gate(
+        query,
+        acl_decision.surviving_chunks,
+        config=evidence_gate_config,
+    )
     conflict_decision = (
         ConflictDecision()
         if evidence_decision.entity_miss or _query_targets_deprecated(query, state_decision)

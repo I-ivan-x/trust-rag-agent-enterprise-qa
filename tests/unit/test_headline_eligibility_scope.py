@@ -85,6 +85,32 @@ def test_full_real_run_can_be_headline_only_when_all_conditions_hold(monkeypatch
     assert summary["expected_rewrite_used"] is False
 
 
+def test_vector_unavailable_real_run_cannot_be_headline(monkeypatch) -> None:
+    monkeypatch.setattr(runner, "get_settings", _settings)
+    summary = runner._build_summary(
+        run_id="full-vector-fallback",
+        systems=["final_gated"],
+        eval_split=EvalSplit.external,
+        cases=[object()] * 50,
+        results=[_result()],
+        trace_rows=[{"trace_id": "t"}],
+        audit_rows=[{"case_id": "case-1"}],
+        unavailable_systems={},
+        full_case_count=50,
+        case_selection={"limit": None, "case_id": None, "max_cases": None},
+        mock_run=False,
+        retrieval_only=False,
+        real_run=True,
+        reranker_unavailable_any=False,
+        vector_unavailable_any=True,
+        run_dir=Path("data/eval_runs/full-vector-fallback"),
+        usage=LLMUsageTotals(answer_calls=50, total_tokens=1000, usage_reported=True),
+    )
+
+    assert summary["headline_eligible"] is False
+    assert summary["vector_unavailable"] is True
+
+
 def test_mock_run_is_smoke_scope() -> None:
     summary = runner._build_summary(
         run_id="mock",

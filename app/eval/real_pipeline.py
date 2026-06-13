@@ -4,11 +4,12 @@ from dataclasses import dataclass, field
 from functools import lru_cache
 
 from app.answer.answer_generator import generate_answer
-from app.answer.citation_binder import bind_citations
+from app.answer.citation_binder import BoundClaim, bind_citations
 from app.answer.refusal_controller import decide_response_mode
 from app.context.context_assembler import assemble_context
 from app.core.config import get_settings
 from app.core.enums import DecisionReason, ExpectedBehavior
+from app.guards.evidence_gate import EvidenceGateConfig, evidence_gate_config_from_settings
 from app.llm.llm_client import BaseLLMClient, get_llm_client
 from app.rerank.reranker import BaseReranker, get_reranker
 from app.retrieval.llm_query_rewriter import get_query_rewriter
@@ -18,7 +19,9 @@ from app.schemas.eval import EvalCase
 from app.schemas.retrieval import RetrievalOptions, RetrievedChunk
 from app.service.chat_service import (
     _acl_denies_required_evidence,
+    _deprecated_warning_for_policy,
     _make_hybrid_retriever,
+    _normalize_trust_gate_policy,
     _query_targets_deprecated,
 )
 from app.workflow.orchestrator import run_trust_gated_pass
@@ -47,6 +50,7 @@ class RealFinalResult:
     rewrite_reason: str | None
     second_pass_attempted: bool
     reranker_unavailable: bool
+    claims: list[BoundClaim] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
     used_real_llm_answer: bool = False
 
@@ -91,8 +95,13 @@ def run_real_final_pipeline(
     *,
     llm_client: BaseLLMClient | None = None,
     max_output_tokens: int | None = None,
+    evidence_gate_config: EvidenceGateConfig | None = None,
+    trust_gate_policy: str | None = None,
 ) -> RealFinalResult:
     settings = get_settings()
+    resolved_trust_gate_policy = _normalize_trust_gate_policy(
+        trust_gate_policy or getattr(settings, "trust_gate_policy", "legacy")
+    )
     retriever = _get_eval_hybrid_retriever()
     reranker, reranker_unavailable = _get_eval_reranker()
     client = llm_client or get_llm_client(
@@ -101,7 +110,13 @@ def run_real_final_pipeline(
     )
 
     warnings: list[str] = []
-    first_pass = _trust_pass(case, case.query, retriever, reranker)
+    first_pass = _trust_pass_with_optional_config(
+        case,
+        case.query,
+        retriever,
+        reranker,
+        evidence_gate_config=evidence_gate_config,
+    )
     final_pass = first_pass
     first_pass_reranked: list[RetrievedChunk] | None = None
 
@@ -111,7 +126,10 @@ def run_real_final_pipeline(
     rewrite_reason: str | None = None
     second_pass_attempted = False
 
-    if system_name == "final_agentic" and _should_rewrite(first_pass):
+    if system_name == "final_agentic" and _should_rewrite(
+        first_pass,
+        trust_gate_policy=resolved_trust_gate_policy,
+    ):
         decision = _agentic_rewrite(case, first_pass)
         rewrite_source = decision.source
         rewrite_model_name = decision.model_name
@@ -121,17 +139,26 @@ def run_real_final_pipeline(
             actual_rewritten_query = decision.rewritten_query
             second_pass_attempted = True
             first_pass_reranked = first_pass.reranked_chunks
-            final_pass = _trust_pass(
-                case, decision.rewritten_query, retriever, reranker
+            final_pass = _trust_pass_with_optional_config(
+                case,
+                decision.rewritten_query,
+                retriever,
+                reranker,
+                evidence_gate_config=evidence_gate_config,
             )
 
     warnings.extend(first_pass.warnings)
     if final_pass is not first_pass:
         warnings.extend(final_pass.warnings)
 
-    refusal = _refusal_for_pass(final_pass, warnings)
+    refusal = _refusal_for_pass_with_optional_policy(
+        final_pass,
+        warnings,
+        trust_gate_policy=resolved_trust_gate_policy,
+    )
 
     citations: list[Citation] = []
+    claims: list[BoundClaim] = []
     answer_text = ""
     used_real_llm_answer = False
     if refusal.should_answer:
@@ -144,6 +171,7 @@ def run_real_final_pipeline(
         generated = generate_answer(final_pass.query, context_pack, client)
         bound = bind_citations(generated, context_pack)
         answer_text = bound.answer_text
+        claims = bound.claims
         citations = bound.citations
         warnings.extend(bound.warnings)
         used_real_llm_answer = bool(context_pack.chunks)
@@ -165,6 +193,7 @@ def run_real_final_pipeline(
         rewrite_reason=rewrite_reason,
         second_pass_attempted=second_pass_attempted,
         reranker_unavailable=reranker_unavailable,
+        claims=claims,
         warnings=warnings,
         used_real_llm_answer=used_real_llm_answer,
     )
@@ -206,6 +235,7 @@ def run_direct_llm_baseline(
             rewrite_reason=None,
             second_pass_attempted=False,
             reranker_unavailable=False,
+            claims=[],
             warnings=[*warnings, f"direct_llm_error:{type(exc).__name__}"],
             used_real_llm_answer=False,
         )
@@ -224,6 +254,7 @@ def run_direct_llm_baseline(
         rewrite_reason=None,
         second_pass_attempted=False,
         reranker_unavailable=False,
+        claims=[],
         warnings=warnings,
         used_real_llm_answer=True,
     )
@@ -246,7 +277,10 @@ def _trust_pass(
     query: str,
     retriever,
     reranker,
+    *,
+    evidence_gate_config: EvidenceGateConfig | None = None,
 ) -> RetrievalPassResult:
+    gate_config = evidence_gate_config or evidence_gate_config_from_settings(get_settings())
     return run_trust_gated_pass(
         query=query,
         retrieval_options=_REAL_RUN_OPTIONS,
@@ -255,13 +289,40 @@ def _trust_pass(
         user_role=case.user_role,
         user_department=case.user_department,
         user_clearance=case.user_clearance.value,
+        evidence_gate_config=gate_config,
     )
 
 
-def _should_rewrite(pass_result: RetrievalPassResult) -> bool:
+def _trust_pass_with_optional_config(
+    case: EvalCase,
+    query: str,
+    retriever,
+    reranker,
+    *,
+    evidence_gate_config: EvidenceGateConfig | None,
+) -> RetrievalPassResult:
+    if evidence_gate_config is None:
+        return _trust_pass(case, query, retriever, reranker)
+    return _trust_pass(
+        case,
+        query,
+        retriever,
+        reranker,
+        evidence_gate_config=evidence_gate_config,
+    )
+
+
+def _should_rewrite(
+    pass_result: RetrievalPassResult,
+    *,
+    trust_gate_policy: str = "legacy",
+) -> bool:
     if pass_result.evidence_decision.evidence_sufficient:
         return False
-    if _acl_denies_required_evidence(pass_result):
+    if _acl_denies_required_evidence(
+        pass_result,
+        trust_gate_policy=trust_gate_policy,
+    ):
         return False
     if pass_result.conflict_decision.has_conflict:
         return False
@@ -292,10 +353,19 @@ def _agentic_rewrite(case: EvalCase, first_pass: RetrievalPassResult) -> Rewrite
     )
 
 
-def _refusal_for_pass(final_pass: RetrievalPassResult, warnings: list[str]):
-    permission_denied = _acl_denies_required_evidence(final_pass)
-    deprecated_warning = _query_targets_deprecated(
-        final_pass.query, final_pass.state_decision.deprecated_chunks
+def _refusal_for_pass(
+    final_pass: RetrievalPassResult,
+    warnings: list[str],
+    *,
+    trust_gate_policy: str = "legacy",
+):
+    permission_denied = _acl_denies_required_evidence(
+        final_pass,
+        trust_gate_policy=trust_gate_policy,
+    )
+    deprecated_warning = _deprecated_warning_for_policy(
+        final_pass,
+        trust_gate_policy=trust_gate_policy,
     )
     return decide_response_mode(
         state_decision=final_pass.state_decision,
@@ -306,6 +376,24 @@ def _refusal_for_pass(final_pass: RetrievalPassResult, warnings: list[str]):
         deprecated_warning=deprecated_warning,
         warnings=warnings,
     )
+
+
+def _refusal_for_pass_with_optional_policy(
+    final_pass: RetrievalPassResult,
+    warnings: list[str],
+    *,
+    trust_gate_policy: str,
+):
+    try:
+        return _refusal_for_pass(
+            final_pass,
+            warnings,
+            trust_gate_policy=trust_gate_policy,
+        )
+    except TypeError as exc:
+        if "trust_gate_policy" not in str(exc):
+            raise
+        return _refusal_for_pass(final_pass, warnings)
 
 
 def _refusal_text(response_mode: ExpectedBehavior) -> str:
