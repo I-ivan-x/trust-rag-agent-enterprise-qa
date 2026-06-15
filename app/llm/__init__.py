@@ -1,4 +1,9 @@
-from app.llm.llm_client import BaseLLMClient, OpenAICompatibleLLMClient, get_llm_client
+from app.llm.llm_client import (
+    BaseLLMClient,
+    OpenAICompatibleLLMClient,
+    XiaomiLLMClient,
+    get_llm_client,
+)
 from app.llm.mock_llm import MOCK_LLM_WARNING, MockLLMClient
 
 __all__ = [
@@ -6,5 +11,6 @@ __all__ = [
     "BaseLLMClient",
     "MockLLMClient",
     "OpenAICompatibleLLMClient",
+    "XiaomiLLMClient",
     "get_llm_client",
 ]

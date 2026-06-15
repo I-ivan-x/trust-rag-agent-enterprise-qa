@@ -49,6 +49,13 @@ class Settings(BaseSettings):
     openai_api_key: str | None = None
     openai_base_url: str | None = None
     deepseek_api_key: str | None = None
+    judge_llm_provider: str = "xiaomi"
+    judge_llm_model_name: str = "mimo-v2.5-pro"
+    judge_llm_base_url: str | None = "https://api.xiaomimimo.com/v1"
+    judge_api_key: str | None = None
+    judge_llm_timeout_seconds: float = 45.0
+    judge_llm_max_output_tokens: int = 512
+    judge_llm_temperature: float = 0.0
     qdrant_url: str = "http://localhost:6333"
     qdrant_collection: str = "trust_rag_enterprise_qa"
 
@@ -64,6 +71,13 @@ class Settings(BaseSettings):
     @field_validator("evidence_min_score", mode="before")
     @classmethod
     def _empty_evidence_min_score_is_none(cls, value):
+        if value == "":
+            return None
+        return value
+
+    @field_validator("judge_api_key", "judge_llm_base_url", mode="before")
+    @classmethod
+    def _empty_judge_optional_string_is_none(cls, value):
         if value == "":
             return None
         return value

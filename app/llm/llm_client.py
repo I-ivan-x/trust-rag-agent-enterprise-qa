@@ -164,6 +164,39 @@ class DeepSeekLLMClient(OpenAICompatibleLLMClient):
         )
 
 
+class XiaomiLLMClient(OpenAICompatibleLLMClient):
+    """Xiaomi/MiMo OpenAI-compatible client used for secondary-family judging."""
+
+    def __init__(
+        self,
+        *,
+        api_key: str | None = None,
+        base_url: str | None = None,
+        model_name: str | None = None,
+        timeout: float | None = None,
+        max_output_tokens: int | None = None,
+        temperature: float | None = None,
+        purpose: str = "judge",
+    ) -> None:
+        settings = get_settings()
+        super().__init__(
+            api_key=api_key if api_key is not None else settings.judge_api_key,
+            base_url=base_url or settings.judge_llm_base_url,
+            model_name=model_name or settings.judge_llm_model_name,
+            provider="xiaomi",
+            timeout=timeout if timeout is not None else settings.judge_llm_timeout_seconds,
+            max_output_tokens=(
+                max_output_tokens
+                if max_output_tokens is not None
+                else settings.judge_llm_max_output_tokens
+            ),
+            temperature=(
+                temperature if temperature is not None else settings.judge_llm_temperature
+            ),
+            purpose=purpose,
+        )
+
+
 def get_llm_client(
     provider: str | None = None,
     *,
@@ -179,6 +212,12 @@ def get_llm_client(
         return MockLLMClient()
     if selected_provider == "deepseek":
         return DeepSeekLLMClient(
+            model_name=model_name,
+            max_output_tokens=max_output_tokens,
+            purpose=purpose,
+        )
+    if selected_provider in {"xiaomi", "mimo"}:
+        return XiaomiLLMClient(
             model_name=model_name,
             max_output_tokens=max_output_tokens,
             purpose=purpose,

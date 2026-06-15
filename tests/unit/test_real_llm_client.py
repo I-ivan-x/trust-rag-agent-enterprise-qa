@@ -10,6 +10,7 @@ from app.llm.llm_client import (
     DeepSeekLLMClient,
     LLMClientError,
     OpenAICompatibleLLMClient,
+    XiaomiLLMClient,
     get_llm_client,
 )
 
@@ -90,6 +91,20 @@ def test_get_llm_client_mock_returns_mock() -> None:
         warnings.simplefilter("ignore")
         client = get_llm_client("mock")
     assert client.__class__.__name__ == "MockLLMClient"
+
+
+def test_xiaomi_client_uses_judge_defaults_without_leaking_key() -> None:
+    client = XiaomiLLMClient(
+        api_key="judge-secret",
+        base_url="https://api.xiaomimimo.com/v1",
+        model_name="mimo-v2.5-pro",
+    )
+
+    metadata = client.provider_metadata()
+    assert metadata["llm_provider"] == "xiaomi"
+    assert metadata["llm_model_name"] == "mimo-v2.5-pro"
+    assert metadata["base_url_host"] == "api.xiaomimimo.com"
+    assert "judge-secret" not in json.dumps(metadata)
 
 
 def test_generate_records_calls_and_usage(monkeypatch: pytest.MonkeyPatch) -> None:
