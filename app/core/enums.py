@@ -73,6 +73,7 @@ class QuerySource(StrEnum):
     real_user_question = "real_user_question"
     manifest_authored = "manifest_authored"
     manual_adversarial = "manual_adversarial"
+    manual_adversarial_rewrite = "manual_adversarial_rewrite"
 
 
 class QueryStyle(StrEnum):

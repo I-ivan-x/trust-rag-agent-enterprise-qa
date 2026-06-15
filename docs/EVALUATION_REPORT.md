@@ -18,6 +18,7 @@ retrieval, rewrite, or scoring.
 | `week6-hard-negative-final-agentic-real` | hard_negative | `final_agentic` | real_run | 20/20 | full_split | true | false |
 | `week6-external-retrieval-ablation` | external | `vector_only,bm25_only,hybrid_rrf,hybrid_rrf_rerank` | retrieval_only | 50/50 | full_split | true | false |
 | `week6-fixture-functional-regression` | fixture | `final_gated,final_agentic` | mock_smoke | 36/36 | smoke | false | true |
+| `q2-c205-hardneg-rewritten-retrieval` | hard_negative | `vector_only,bm25_only,hybrid_rrf,hybrid_rrf_rerank` | retrieval_only | 18/18 | full_split | true | false |
 
 The public corpus index was rebuilt before external retrieval ablation:
 40 documents, 442 chunks, `chunks_path=data/generated/public/chunks.jsonl`,
@@ -100,17 +101,46 @@ agentic recovery benefit. Do not claim that agentic improves performance.
 
 ## Hard Negative Result Statement
 
-hard_negative_error_rate=1.0 indicates a serious failure mode.
+The Week 6 hard_negative numbers (`doc_hit@5=0.05`,
+`hard_negative_error_rate=1.0`) are retained as an invalid-test finding: the
+original 20 queries were metadata templates such as "answer from side A/B" and
+contained no retrievable content. They must not be used as robustness evidence
+or as a baseline for improvement claims.
 
-This is a failure finding, not a robustness proof. Retrieval-only
-`hybrid_rrf_rerank` had `doc_hit@5=0.05` and `hard_negative_error_rate=1.0`.
-The real `final_agentic` hard-negative run also had `grounded_correctness=0.0`,
-`doc_hit@5=0.05`, and `hard_negative_error_rate=1.0`. These results must not be
-reported as hard-negative robustness.
+C2-05 replaced the queries with Owner-signed contentful questions, retired
+cases 019/020, and reran retrieval only as `q2-c205-hardneg-rewritten-retrieval`
+(n=18, zero LLM calls, real sentence-transformer embeddings, BGE reranker
+available). This is the first valid hard-negative retrieval measurement.
 
-| split | system | mode | doc_hit@5 | hard_negative_error_rate | interpretation |
-| --- | --- | --- | ---: | ---: | --- |
-| hard_negative | `hybrid_rrf_rerank` | retrieval_only | 0.0500 | 1.0000 | Retrieval selected the wrong paired evidence in nearly every case; this is a stress-test failure row, not an answer-quality metric. |
+| split | system | mode | n | doc_hit@5 | hit@5 | mrr | hard_negative_error_rate | interpretation |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| hard_negative_rewritten_v1 | `vector_only` | retrieval_only | 18 | 1.0000 | 0.5556 | 0.9213 | 0.1111 | Gold document reaches top-5 for every case; residual error is top-1 wrong-side ranking. |
+| hard_negative_rewritten_v1 | `bm25_only` | retrieval_only | 18 | 1.0000 | 0.2778 | 0.8722 | 0.2222 | Gold document reaches top-5 for every case; chunk-level exact hit remains harder. |
+| hard_negative_rewritten_v1 | `hybrid_rrf` | retrieval_only | 18 | 1.0000 | 0.4444 | 0.8426 | 0.2778 | Hybrid retrieval finds the gold document in top-5 across the rewritten split. |
+| hard_negative_rewritten_v1 | `hybrid_rrf_rerank` | retrieval_only | 18 | 1.0000 | 0.5000 | 0.7870 | 0.3889 | Rerank does not improve top-1 ordering here, but the gold document is still in top-5 for every case. |
+
+Interpretation: the rewritten split confirms F8 for the Week 6 failure. The
+original hard-negative test was unfair and uninformative for F3. The C2-05 run
+does not prove robust retrieval; it only establishes a fair measurement where
+the unfair-query artifact is removed.
+
+Two qualifiers keep `doc_hit@5=1.0` from being over-read:
+
+- **Index scope.** The hard_negative split is retrieved against the
+  hard-negative corpus only (~37 docs), so "gold document in top-5" is a
+  near-trivial ceiling and must not be read as retrieval strength. The
+  informative signals are `hard_negative_error_rate` (0.11–0.39: the confusable
+  sibling out-ranks the gold side in 11–39% of cases) and chunk-level `hit@5`
+  (0.28–0.56). A stronger robustness test would retrieve against the full
+  public+hard-negative index; that is an optional follow-up, not done here.
+- **Rerank aggravates sibling confusion.** `hard_negative_error_rate` rises
+  monotonically from `vector_only` 0.111 to `hybrid_rrf_rerank` 0.389 — the
+  reranker makes top-1 sibling ranking worse, consistent with the external-split
+  finding that rerank did not help.
+
+So F3 does not appear as a top-5 recall collapse (that was a query artifact),
+but a residual ranking-level hard-negative confusion does exist. "Robust" is not
+claimed, and the old 0.05 result must not be cited as an improvement baseline.
 
 ## Fixture Functional Regression
 
@@ -130,7 +160,9 @@ cited as headline evaluation.
 - external: 50 cases, including 25 `real_user_question` cases and 25
   manifest-authored cases.
 - obfuscated: 15 cases, used only for `final_gated` vs `final_agentic`.
-- hard_negative: 20 cases, used as retrieval/citation robustness pressure.
+- hard_negative: 18 rewritten cases (`hard_negative_rewritten_v1`), used as
+  retrieval/citation diagnostics. The original 20-case template-query result is
+  archived as an invalid-test finding only.
 - fixture: 36 cases, used as non-headline functional regression.
 - citation audit is rule-based v1 and requires manual review before any human
   citation-support claim.

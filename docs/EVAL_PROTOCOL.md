@@ -9,7 +9,7 @@ unqualified accuracy number.
 | ----- | ----- | --- |
 | fixture | 36 | functional regression; never headline |
 | external | 50 | headline primary basis |
-| hard_negative | 20 | retrieval/citation robustness |
+| hard_negative | 18 | retrieval/citation diagnostics (`hard_negative_rewritten_v1`) |
 | obfuscated | 15 | agentic loop value |
 
 Week 0 ships only 5 placeholder fixture cases in
@@ -46,9 +46,13 @@ phrasing style, so the set is not saturated by title-word matching.
 
 ## Leakage Check
 
-`check_eval_leakage.py` backfills `title_overlap_score` and enforces: title
-overlap > 0.6 -> flag; answer-sentence copy (char similarity > 0.8) -> reject;
-external split must have >= 40% of queries with `title_overlap_score < 0.3`.
+`check_eval_leakage.py` backfills `title_overlap_score` and enforces a
+two-sided boundary: title overlap > 0.6 -> flag; query content must overlap the
+gold content set so metadata-only questions are rejected; answer-sentence copy
+(char similarity > 0.8) -> reject; external split must have >= 40% of queries
+with `title_overlap_score < 0.3`. For hard_negative, high title overlap is
+diagnostic but non-blocking because similar-title pairs intentionally share
+title vocabulary.
 
 ## Agentic Rewrite
 

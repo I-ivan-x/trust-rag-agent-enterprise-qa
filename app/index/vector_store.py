@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+from pathlib import Path
 from typing import Any
 
 from app.core.config import get_settings
@@ -18,7 +19,7 @@ class VectorStore:
             from qdrant_client import QdrantClient
         except ImportError as exc:
             raise ImportError("qdrant-client is required for VectorStore") from exc
-        self.client = QdrantClient(url=self.qdrant_url)
+        self.client = _make_qdrant_client(QdrantClient, self.qdrant_url)
 
     def recreate_collection(self, vector_size: int) -> None:
         try:
@@ -108,6 +109,18 @@ def _point_id(chunk_id: str) -> str:
     return str(uuid.uuid5(uuid.NAMESPACE_URL, chunk_id))
 
 
+def _make_qdrant_client(client_cls: Any, qdrant_url: str) -> Any:
+    if qdrant_url == ":memory:":
+        return client_cls(path=":memory:")
+    if qdrant_url.startswith("local:"):
+        local_path = qdrant_url.removeprefix("local:")
+        if not local_path:
+            raise ValueError("QDRANT_URL=local:<path> requires a non-empty path")
+        Path(local_path).parent.mkdir(parents=True, exist_ok=True)
+        return client_cls(path=local_path)
+    return client_cls(url=qdrant_url)
+
+
 def _raise_qdrant_error(
     operation: str,
     qdrant_url: str,
@@ -176,11 +189,7 @@ def _build_qdrant_filter(filters: dict[str, Any] | None) -> Any:
             continue
         value = filters[key]
         if isinstance(value, list):
-            conditions.append(
-                models.FieldCondition(key=key, match=models.MatchAny(any=value))
-            )
+            conditions.append(models.FieldCondition(key=key, match=models.MatchAny(any=value)))
         else:
-            conditions.append(
-                models.FieldCondition(key=key, match=models.MatchValue(value=value))
-            )
+            conditions.append(models.FieldCondition(key=key, match=models.MatchValue(value=value)))
     return models.Filter(must=conditions) if conditions else None

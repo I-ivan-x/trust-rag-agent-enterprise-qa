@@ -3,6 +3,14 @@ import pytest
 from app.index.vector_store import VectorStore
 
 
+def test_vector_store_supports_local_memory_qdrant() -> None:
+    store = VectorStore(qdrant_url=":memory:", collection_name="unit_test_vectors")
+
+    store.recreate_collection(vector_size=2)
+
+    assert store.count() == 0
+
+
 def test_vector_store_search_error_includes_original_error_and_category() -> None:
     store = VectorStore.__new__(VectorStore)
     store.client = _DimensionMismatchClient()
@@ -15,8 +23,7 @@ def test_vector_store_search_error_includes_original_error_and_category() -> Non
     message = str(exc_info.value)
     assert "Qdrant search failed: vector dimension mismatch" in message
     assert (
-        "original_error=Wrong input: Vector dimension error: expected dim: 384, got 16"
-        in message
+        "original_error=Wrong input: Vector dimension error: expected dim: 384, got 16" in message
     )
 
 

@@ -45,7 +45,7 @@ AI 治理：
 | C1-01 | Codex + Owner | ✅ 冻结 15 条 census 抽样并完成两遍标注：GPT pass（preview，`judge_pass_v1_gpt_labels.jsonl`）+ **人工盲标 census**（`manual_audit_v1_labels.jsonl`，annotator=owner，2026-06-14）。实测可审 claim = 15（每 case 1 claim），按 census 全收，非抽样。 | 人工结果：11 supported / 4 weak / 0 unsupported / 0 wrong_side；human-vs-GPT exact agreement 15/15（easy split，n=15，非 validated judge，写入 CITATION_AUDIT.md） |
 | C1-02 | Codex | ✅ Dockerfile / docker-compose / Makefile / smoke_test 已落地：compose 默认 mock provider，API + 内部 Qdrant 可启动；`scripts/smoke_test.py` 可在容器内准备 sample index 并打 `/health` + `/chat` | 已验：`docker compose up -d --build` + `docker compose exec -T api python scripts/smoke_test.py --prepare --embedding-provider mock --require-vector --chat` 通过；模型权重通过 `huggingface_cache` volume 挂载 |
 | C1-03 | Claude + Codex | ✅ README 已按新信息架构定稿：Honest Results 正负双表、Evaluation Governance、Docker Quick Start、F1–F8/报告链接 | 第一屏含正负结果并排表；禁放数字清单见 §1.4 |
-| C1-04 | Owner | hard-negative 裁定：预消化已完成（`HARD_NEGATIVE_ADJUDICATION.md`，预判 F8 主因、F3 未被测试），Owner 逐行裁定 §4 表格（≤30 分钟）后按 §5 清单执行（重写 query + 零 token 复跑 retrieval-only） | 结论写回 `FAILURE_ANALYSIS.md`；复测结果决定 Q2 动作 c 去留 |
+| C1-04 | Owner | ✅ hard-negative 裁定已落地：F8 确认为 Week 6 hard-negative 主因；F3 未被原 20 条模板 query 有效测试。C2-05 已用 Owner 签字 query 收缩为 18 条并完成零 token retrieval-only 复跑。 | 结论已写回 `FAILURE_ANALYSIS.md` / `EVALUATION_REPORT.md`；Phase 3 动作 c 理据转弱 |
 
 ### 1.2 收尾第 2 周
 
@@ -55,7 +55,7 @@ AI 治理：
 | C2-02 | Claude | ✅ 人工审计结果已写入 `CITATION_AUDIT.md`（human census + human-vs-GPT 一致率 + caveats）；`EVALUATION_REPORT.md` 两处 non-blocking 项已补（hard-negative retrieval 行 0.05、fixture mock 免责句）。 | 完成 |
 | C2-03 | Claude | `TECHNICAL_DESIGN.md` 瘦版：ADR 体例，6–8 条决策记录，每条含 Decision / Rationale / Measured consequence / Calibration path | 四个 Q1 负结果各回溯到一条 ADR；体例 append-only，Q2 演进只增不改 |
 | C2-04 | Owner | ✅ tag `v0.3-q1-hard-demo` + release notes | Q1 正式收口；tag 指向包含 Docker/README/评估报告补丁的 release commit |
-| C2-05 | Claude + Codex | **hard-negative 重写落地**（裁定通过后）：定稿替换 query（split 收缩为 18 条）→ 双向泄漏检查 → gold 回填 → retrieval-only 复跑（零 token） | 复测结果写回 FAILURE_ANALYSIS；rewritten **real run**（≈20 次调用）排 Q2-W1，补审计 hard_negative 层并支撑动作 c 去留决策 |
+| C2-05 | Claude + Codex | ✅ **hard-negative 重写落地**：`hard_negative_rewritten_v1` 18 条；旁路 annotation；双向泄漏检查 18/18 通过；gold 校验通过；零 token retrieval-only run `q2-c205-hardneg-rewritten-retrieval` 落盘。 | doc_hit@5：四档检索均 1.0000；F8 确认，F3 不成立为 top-5 检索崩塌；rewritten real run 降为可选 citation/answer 审计 |
 
 ### 1.3 砍掉与推迟
 
@@ -84,6 +84,20 @@ fixture mock 数字；裸 "24% accuracy"。
 | Eval 工程 | gate calibration + trade-off 曲线；人工锚定判官三方对比；CI 回归门禁 | W1–W6 |
 | AI 治理 | injection/poisoning 红队 split（10 条）实测 | W6–W7 |
 | Agent 工程 | 类型化动作空间 + 双控制器消融（A）+ judge 运行时化（B）+ pass^k（C） | W7–W13 |
+
+### 2.0 Eval split 架构（purpose-separated；冻结此原则）
+
+一个 split 一个目的，不互相膨胀。目标→split 映射 + 状态：
+
+| 目标 | split | 状态 |
+| --- | --- | --- |
+| hard-negative 检索复测（query 是否唯一指向 gold） | `hard_negative_rewritten_v1`（18 条） | ✅ C2-05 完成；只做检索/引用诊断，不塞别的；首个有效测量为 `q2-c205-hardneg-rewritten-retrieval` |
+| Indirect injection / poisoning（治理） | injection split（10 条） | **已规格**：`REDTEAM_INJECTION_SPLIT.md`（P2-07）。**勿重造** |
+| Agent 动作空间残余场景 | agent 定向 case（≈10 条） | **已规划**：`Q2_AGENT_DESIGN.md §8` / P3-08。**阻塞于 C2-05 结果 + Phase 3 设计冻结**（动作 c 是否存在要先由 C2-05 复跑决定，不能提前出题） |
+| Judge / 人工判别力 wrong_side probe | `judge_probe_wrong_side_v1`（5–6 条） | **新增**（采纳外部分析）。源自 hard-neg similar_title 对（天生 wrong_side 素材）；补 judge harness 当前 wrong_side 0/2 缺口。**延后到 judge 重试时做**，每条配 wrong_side_answer_example |
+| ACL / deprecated 边界 | policy_boundary | **缓做**：与 external/fixture 现有 permission_denied/deprecated case 重叠，边际低 |
+
+诊断标注（gold_distinguishers 等）一律走旁路 annotation 文件，**非评分**，不进 query/检索打分路径（避免再造未验证的 rule-based judge）。
 
 ```text
 W1–2   evidence gate 参数化 + 阈值 sweep
@@ -140,21 +154,24 @@ Phase 1 即产出 Q2 第一批新 headline 数字。预算：≈400–500 次调
 
 ## 4. Q2 Phase 2：Judge + CI + 红队（W4–7）
 
-### 4.1 判官锚定验证（W4–5）
+### 4.1 判官锚定验证（W4–5）— ✅ 完成，结论：不部署 judge
 
 | 编号 | 负责人 | 任务 | 验收标准 |
 | --- | --- | --- | --- |
-| P2-01 | Codex | 锚点集整理：Q1 人工审计 25–40 条标签转判官验证集格式 | 与 `manual_audit_v1_labels.jsonl` 一一对应 |
-| P2-02 | Codex | 接入 RAGAS faithfulness 与 DeepEval（G-Eval）跑同锚点 | 两个 off-the-shelf 判官输出落盘 |
-| P2-03 | Codex | 自建领域 judge（claim-support 三档）+ 同锚点验证 | **judge 模型与 DeepSeek 不同家族**（self-preference bias 红线） |
-| P2-04 | Claude | 三方 agreement 对比报告 + 选型结论 | exact / binary agreement；n 小的置信区间 caveat 必须写；预留"分歧采样扩锚至 60–80 条"路径 |
+| P2-01 | Codex | ✅ 锚点 = 15 条人工 census | — |
+| P2-02/03 | Codex | ✅ 三候选(ragas/deepeval/custom)落地。**注**：实为同一二次家族模型(MiMo/mimo-v2.5-pro)上的 prompt adapter，**非真 RAGAS/DeepEval 库**，故非"框架 benchmark"。 | guard + 隔离 + parse fallback 单测过 |
+| P2-04 | Claude | ✅ `JUDGE_AGREEMENT_REPORT.md`（含散文结论）。三候选全部 binary=0.7333(<0.80)、probe=3/5(<4/5)，全判 supported、漏 4 weak、漏 2/2 wrong_side。**deploy_judge=false**。提交 `bbf0df2`。 | 已落盘 |
+
+**Phase 2 净结论**：无可用 judge。claim-support 维持 human-only（15 条人工 census 即证据）。
+判别力下限失败的决定性项是 **wrong_side 0/2**（F4 失明）。结论是窄的——测的是该 judge
+模型在此任务的判别力，**不是** "RAGAS 不行"。
 
 ### 4.2 接入与门禁（W6）
 
 | 编号 | 负责人 | 任务 | 验收标准 |
 | --- | --- | --- | --- |
-| P2-05 | Codex | 选定判官接入 metrics：judge-based unsupported_claim_rate 全量回填历史与新 run | 指标带 `judge_based` 标签；summary schema 扩展过 headline eligibility 测试 |
-| P2-06 | Codex | 最小 CI 回归门禁：pytest 对比冻结 baseline summary，grounded/citation 指标回归即 fail | mock 路径可在 CI 跑通；真实 run 对比手动触发 |
+| P2-05 | Codex | ❌ **descoped**：无 judge → 无 judge-based unsupported_claim_rate 回填。 | 不做 |
+| P2-06 | Codex | ✅ **仍做且不依赖 judge**：CI 回归门禁对冻结 baseline 的 grounded/citation 指标比对，回归即 fail。这是 eval-in-CI 治理件，judge 缺席不影响。 | 待实现（Phase 2 剩余唯一项） |
 
 ### 4.3 红队模块（W6 构造 ∥ W7 运行）
 
@@ -178,7 +195,7 @@ Phase 1 即产出 Q2 第一批新 headline 数字。预算：≈400–500 次调
 1. 动作空间（类型化、白名单）：
    a. query rewrite            —— 召回弱（沿用 Q1）
    b. metadata-filtered 二次检索 —— 策略邻居挤占（攻 F1/F2 残余）
-   c. version-scoped 二次检索   —— 版本混淆（攻 F3，受 C1-04 裁定结论约束）
+   c. version-scoped 二次检索   —— 版本混淆（原攻 F3；C2-05 后理据弱，除非新证据显示版本/相似页 top-5 崩塌，否则砍/缓）
    d. conflict-set 呈现         —— active-active
    e. 带解释拒答               —— 无可用动作
 2. 诊断 schema：从 gate 结果 + 邻域构成提取失败类型，作为 controller 输入。
@@ -209,7 +226,7 @@ Phase 1 即产出 Q2 第一批新 headline 数字。预算：≈400–500 次调
 | P3-04 | Codex | orchestrator 集成 + trace 新字段（动作序列、预算消耗、validator 拒绝记录） | agentic loop 测试更新；停止条件不变式保留 |
 | P3-05 | Codex | **LLM controller + validator（A）**：结构化输出提议动作及参数，validator 强制白名单/预算/不可绕 gate | 非法提议被拒并 trace；最坏情况退化为规则版 |
 | P3-06 | Codex | 逐动作归因进 runner/metrics | 每动作独立报 trigger/success/false-recovery |
-| P3-07 | Codex | **judge 运行时验证器（B）**：回答返回前 claim-support 校验，不过线降级 | 每答案延迟/成本增量被测量并报告 |
+| P3-07 | Codex | **决议 B 弱化（Phase 2 结论连带）**：自动 judge 不可用 → 运行时 claim-support 验证器无法用 LLM judge。退化为 rule-based verifier 或直接砍。**不得用未过门的 judge 当门卫。** | 若做：rule-based；否则降级记录 |
 | P3-08 | Owner + Claude | 定向新 case 约 10 条（残余场景） | 走泄漏检查；gold 回填 |
 
 ### 5.3 最终对比与报告（W12–13）

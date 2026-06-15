@@ -12,6 +12,7 @@ failure taxonomy, not a single latest-run dump.
 | `week6-hard-negative-real-retrieval` | hard_negative | 19 | gold_doc_not_retrieved | hybrid_rrf_rerank 19 |
 | `week6-hard-negative-final-agentic-real` | hard_negative | 20 | grounded_correctness_false | final_agentic 20 |
 | `week6-fixture-functional-regression` | fixture | 10 | grounded_correctness_false | final_gated 5, final_agentic 5 |
+| `q2-c205-hardneg-rewritten-retrieval` | hard_negative_rewritten_v1 | 0 | none at doc_hit@5 | vector_only, bm25_only, hybrid_rrf, hybrid_rrf_rerank |
 
 ## F1 Over-Refusal / Conservative Gate Failure
 
@@ -48,19 +49,23 @@ failure taxonomy, not a single latest-run dump.
 
 - definition: Retrieval ranks a confusing adjacent or similar-title document
   above the gold side of the hard-negative pair.
-- observed evidence: `hybrid_rrf_rerank` on hard_negative had `doc_hit@5=0.05`
-  and `hard_negative_error_rate=1.0`. The real `final_agentic` hard-negative run
-  also had `doc_hit@5=0.05`, `grounded_correctness=0.0`, and
-  `hard_negative_error_rate=1.0`.
+- observed evidence: C2-05 rewrote the hard-negative queries into contentful
+  questions and reran retrieval-only as
+  `q2-c205-hardneg-rewritten-retrieval` (n=18, zero LLM calls). All four
+  retrieval systems reached `doc_hit@5=1.0`; `hybrid_rrf_rerank` had
+  `hit@5=0.5000`, `mrr=0.7870`, and `hard_negative_error_rate=0.3889`
+  because top-1 ordering is still imperfect.
 - affected splits: hard_negative.
-- likely root cause: Query wording such as "answer from side A/B" is not enough
-  for semantic retrieval/reranking to identify the intended pair side; ranking
-  collapses toward globally similar later pairs.
-- impact: The answer layer cannot recover because target evidence usually does
-  not reach the top retrieved set.
-- next mitigation: Stronger reranker, metadata-aware rerank, pair/group-aware
-  retrieval features, version-aware ranking, and hard-negative-specific
-  calibration.
+- likely root cause: No strong F3 evidence remains at top-5 after fair query
+  rewriting. The residual signal is narrower: top-1 wrong-side ordering and
+  chunk-level exact-hit weakness on similar pages.
+- impact: The original Week 6 answer-layer failure should not be attributed to
+  unrecoverable retrieval collapse; with contentful queries, gold documents are
+  available in top-5.
+- next mitigation: Do not prioritize broad "stronger reranker" work from the
+  invalid Week 6 number. If hard-negative work continues, focus on top-1
+  ordering, citation selection, and a small real-run audit over the rewritten
+  split.
 
 ## F4 Citation Support Insufficient Despite Retrieved Evidence
 
@@ -127,45 +132,40 @@ failure taxonomy, not a single latest-run dump.
 
 - definition: The gold target or scoring rule may be narrower than what the
   retrieval/answer system can infer from the query wording.
-- observed evidence: Hard-negative queries ask for "side A" or "side B" and use
-  narrow gold doc IDs. Traces show top retrieved docs often come from different
-  hard-negative groups, not the target group.
+- observed evidence: The original 20 hard-negative queries asked for "side A" or
+  "side B" and used group metadata that is not retrievable from document text.
+  C2-05 replaced them with 18 Owner-signed contentful queries and doc_hit@5 rose
+  to 1.0 for all retrieval systems.
 - affected splits: hard_negative.
-- likely root cause: Hard-negative query formulation and pair construction may
-  require metadata that is not explicit enough in the query or index.
-- impact: Some failures may combine real retrieval weakness with gold design
-  difficulty.
-- next mitigation: Manual adjudication of hard-negative pairs, clearer query
-  wording, and metadata-aware retrieval experiments.
+- likely root cause: The Week 6 hard-negative split was a query-design failure,
+  not a valid F3 stress test. Cases 019/020 also had weak/boilerplate gold and
+  were retired.
+- impact: Week 6 hard-negative results are useful only as an evaluation-governance
+  failure finding. They are not comparable to C2-05 as an "improvement" baseline.
+- next mitigation: Keep `hard_negative_rewritten_v1` as the fair retrieval/citation
+  diagnostic split; use the annotation sidecar for human trajectory attribution
+  only.
 
 ## Hard-Negative Failure Analysis
 
 hard_negative_error_rate=1.0 indicates a serious failure mode.
 
-The evidence supports at least two plausible causes:
+The Week 6 `hard_negative_error_rate=1.0` row is now classified as F8: an
+invalid hard-negative test caused by metadata-template queries. It remains a
+serious evaluation-governance failure, but not evidence that retrieval cannot
+separate the rewritten similar/adjacent pages.
 
-1. Retrieval/rerank cannot distinguish similar documents reliably. For example,
-   `hard-negative-001` has gold doc `hard-negative-hn-fastapi-0001-a`, but
-   `hybrid_rrf_rerank` top docs begin with `hard-negative-hn-fastapi-0019-b`,
-   `hard-negative-hn-fastapi-0019-a`, and `hard-negative-hn-fastapi-0020-a`.
-   `hard-negative-002` targets `hard-negative-hn-fastapi-0002-b`, but the top
-   docs again begin with the 0019/0020 groups. The real `final_agentic` run shows
-   the same pattern.
-2. The hard-negative gold definition or pair construction may be too narrow.
-   The manifest labels pairs as `similar_title` or `adjacent_topic`, and queries
-   refer to "side A" or "side B". If the index does not expose that side/group
-   metadata to retrieval, the gold target may require information that semantic
-   retrieval cannot infer from the natural query alone.
+C2-05 results (`q2-c205-hardneg-rewritten-retrieval`, n=18, zero LLM calls):
 
-Current evidence is insufficient to fully separate retrieval failure from gold
-design issue; but the result is a real stress-test failure and must not be
-reported as robustness.
+| system | doc_hit@5 | hit@5 | mrr | hard_negative_error_rate |
+| --- | ---: | ---: | ---: | ---: |
+| vector_only | 1.0000 | 0.5556 | 0.9213 | 0.1111 |
+| bm25_only | 1.0000 | 0.2778 | 0.8722 | 0.2222 |
+| hybrid_rrf | 1.0000 | 0.4444 | 0.8426 | 0.2778 |
+| hybrid_rrf_rerank | 1.0000 | 0.5000 | 0.7870 | 0.3889 |
 
-Recommended mitigations:
-
-- stronger reranker;
-- metadata-aware rerank;
-- version-aware ranking;
-- conflict-aware retrieval;
-- hard-negative-specific calibration;
-- manual adjudication of hard-negative pairs.
+Conclusion: F8 is confirmed for the old split; F3 is not established as a
+top-5 retrieval-collapse problem on the fair rewritten split. Future hard-negative
+work should be framed as top-1 ranking and citation/answer-side attribution, and
+any rewritten real run should be reported as a new n=18 measurement, not as a
+gain over Week 6.
