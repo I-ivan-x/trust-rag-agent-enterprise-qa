@@ -93,7 +93,7 @@ fixture mock 数字；裸 "24% accuracy"。
 | --- | --- | --- |
 | hard-negative 检索复测（query 是否唯一指向 gold） | `hard_negative_rewritten_v1`（18 条） | ✅ C2-05 完成；只做检索/引用诊断，不塞别的；首个有效测量为 `q2-c205-hardneg-rewritten-retrieval` |
 | Indirect injection / poisoning（治理） | injection split（10 条） | **已规格**：`REDTEAM_INJECTION_SPLIT.md`（P2-07）。**勿重造** |
-| Agent 动作空间残余场景 | agent 定向 case（≈10 条） | **已规划**：`Q2_AGENT_DESIGN.md §8` / P3-08。**阻塞于 C2-05 结果 + Phase 3 设计冻结**（动作 c 是否存在要先由 C2-05 复跑决定，不能提前出题） |
+| Agent 动作空间残余场景 | agent 定向 case（≈10 条） | **设计已 freeze-ready**：`Q2_AGENT_DESIGN.md`（动作 c 已砍 → 空间 a/b/d/e；§9 全部裁定）。C2-05 已结，不再阻塞；W7 确认子集量后出题（针对动作 a/b 的残余场景） |
 | Judge / 人工判别力 wrong_side probe | `judge_probe_wrong_side_v1`（5–6 条） | **新增**（采纳外部分析）。源自 hard-neg similar_title 对（天生 wrong_side 素材）；补 judge harness 当前 wrong_side 0/2 缺口。**延后到 judge 重试时做**，每条配 wrong_side_answer_example |
 | ACL / deprecated 边界 | policy_boundary | **缓做**：与 external/fixture 现有 permission_denied/deprecated case 重叠，边际低 |
 
@@ -105,7 +105,7 @@ W3     策略变体 + 复跑 + trade-off 曲线 → 冻结新基线 final_gated_
 W4–5   judge：人工锚点 × {RAGAS, DeepEval, 自建} agreement 对比 + 选型
 W6     judge 接入 metrics + 最小 CI 门禁 ∥ 红队 split 构造（10 条）
 W7     红队 run + 报告 ∥ agent 设计冻结 ★ 期中 scope review
-W8–9   agent 核心：诊断器 → 动作 b/c → 规则 controller → orchestrator 集成
+W8–9   agent 核心：诊断器 → 动作 a/b/d/e（c 已砍）→ 规则 controller → orchestrator 集成
 W10    LLM controller + validator（A）+ 逐动作归因
 W11    judge 运行时验证器（B）+ 延迟/成本测量
 W12    最终对比 run（含 k=3 重复，产出 pass^k，C 在此合并）
@@ -212,8 +212,10 @@ Phase 1 即产出 Q2 第一批新 headline 数字。预算：≈400–500 次调
 | 进度状态 | 动作 |
 | --- | --- |
 | 正常 | 按计划全量执行 |
-| 落后 ≤1 周 | 砍 D（MCP 包装，本就"看心情"）；动作空间收缩为 a + b |
-| 落后 >1 周 | B（judge 运行时化）移入 Q3；保 A + C |
+| 落后 ≤1 周 | 砍 D（MCP 包装，本就"看心情"）；动作空间收缩为 a + b（d/e 是终结类，保留） |
+| 落后 >1 周 | 砍 LLM controller 对比（保 rule controller + pass^k）；A 降级为单控制器 |
+
+（B 已撤——Phase 2 无可用 judge，不再有"B 移入 Q3"一说；运行时仅保留既有结构性 citation_valid。）
 | 不可砍底线 | 双控制器消融（A）、逐动作归因、pass^k、红队模块存在性、headline eligibility 纪律 |
 
 ### 5.2 实现（W8–11）
@@ -221,19 +223,19 @@ Phase 1 即产出 Q2 第一批新 headline 数字。预算：≈400–500 次调
 | 编号 | 负责人 | 任务 | 验收标准 |
 | --- | --- | --- | --- |
 | P3-01 | Codex | 诊断提取器（gate 结果/邻域 → 失败类型） | 单测覆盖 F1/F2/F3 型诊断 |
-| P3-02 | Codex | 动作 b / c：复用现有检索栈 + 元数据过滤器 | 过滤器不越过 ACL（restricted 不因过滤重入）；单测 |
+| P3-02 | Codex | 动作 b（filtered_retrieval，c 已砍）：复用现有检索栈 + 元数据过滤器 | 过滤器只收紧、不越过 ACL（restricted 不因过滤重入）；单测 |
 | P3-03 | Codex | 规则 controller（诊断 → 查表选动作） | 全分支单测 |
 | P3-04 | Codex | orchestrator 集成 + trace 新字段（动作序列、预算消耗、validator 拒绝记录） | agentic loop 测试更新；停止条件不变式保留 |
 | P3-05 | Codex | **LLM controller + validator（A）**：结构化输出提议动作及参数，validator 强制白名单/预算/不可绕 gate | 非法提议被拒并 trace；最坏情况退化为规则版 |
 | P3-06 | Codex | 逐动作归因进 runner/metrics | 每动作独立报 trigger/success/false-recovery |
-| P3-07 | Codex | **决议 B 弱化（Phase 2 结论连带）**：自动 judge 不可用 → 运行时 claim-support 验证器无法用 LLM judge。退化为 rule-based verifier 或直接砍。**不得用未过门的 judge 当门卫。** | 若做：rule-based；否则降级记录 |
+| P3-07 | — | **决议 B 已撤**（Phase 2 无可用 judge，wrong_side 0/2）：运行时不引入 LLM verifier，仅保留既有结构性 `citation_valid`。无 verifier on/off 变体。将来用更强模型 + C2-05 wrong_side 锚点重验出可用 judge 再议（Q3）。 | 不做 |
 | P3-08 | Owner + Claude | 定向新 case 约 10 条（残余场景） | 走泄漏检查；gold 回填 |
 
 ### 5.3 最终对比与报告（W12–13）
 
 | 编号 | 负责人 | 任务 | 验收标准 |
 | --- | --- | --- | --- |
-| P3-09 | Owner | 最终对比 run：`final_gated_calibrated` / `final_agentic_v2(rule)` / `final_agentic_v2(llm)`（均 verifier 关），各 **k=3 重复**（C 在此合并）；**verifier 开/关只对优胜控制器加测，不做全交叉** | 测试床 = 残余 false-refusal 子集 + obfuscated + 定向 case + 重写 hard-negative 子集（若 F3 成立）；系统变体封顶 4 个 |
+| P3-09 | Owner | 最终对比 run：`final_gated_calibrated` / `final_agentic_v2(rule)` / `final_agentic_v2(llm)`，各 **k=3 重复**（C 在此合并）。无 verifier 变体（B 已撤）。 | 测试床 = 残余 false-refusal 子集 + obfuscated + 定向 case（**不含** hard-negative：其残余是检索-rerank 质量问题、非 agent 动作可解，见 `Q2_AGENT_DESIGN.md §7`）；系统变体 3 个 |
 | P3-10 | Codex | pass^k 与跨运行一致率指标 | pass^1 与 pass^3 并报 |
 | P3-11 | Claude | trajectory 归因报告 + 可靠性报告 + 验证器 trade-off 报告 | 负结果照常三段式归档；taxonomy 扩展 trajectory 失败型（选错动作/无效动作） |
 | P3-12 | Claude + Codex | README / EVALUATION_REPORT / TECHNICAL_DESIGN（新增 ADR）更新 | 叙事三句话（§0）每从句可指到 run_id |
