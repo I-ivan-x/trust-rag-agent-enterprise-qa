@@ -55,7 +55,12 @@ def retrieve_toy_baseline(
     if system_name == "toy_bm25ish":
         ranked = _rank_bm25ish(query, chunks)
         return _to_retrieved(ranked, RetrievalSource.keyword, top_k, "keyword_score")
-    if system_name in {"toy_hybrid", "final_gated", "final_agentic"}:
+    if system_name in {
+        "toy_hybrid",
+        "final_gated",
+        "final_gated_calibrated",
+        "final_agentic",
+    }:
         ranked = _rank_hybrid(
             query,
             chunks,
@@ -160,6 +165,9 @@ def _expected_chunks_path(chunks: list[Chunk]) -> str | None:
         return None
     doc_ids = {chunk.doc_id for chunk in chunks[:10]}
     corpus_sources = {chunk.corpus_source.value for chunk in chunks[:10]}
+    all_corpus_sources = {chunk.corpus_source.value for chunk in chunks}
+    if "redteam_injection" in all_corpus_sources:
+        return "data/generated/redteam/chunks.jsonl"
     if "hard_negative" in corpus_sources or any(
         doc_id.startswith("hard-negative-") for doc_id in doc_ids
     ):

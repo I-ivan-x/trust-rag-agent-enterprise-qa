@@ -34,6 +34,7 @@ def rebuild_indexes(
     chunks_path: Path,
     embedding_provider: str | None = None,
     whoosh_index_dir: Path | None = None,
+    include_redteam: bool = False,
 ) -> dict[str, Any]:
     settings = get_settings()
     if not chunks_path.exists():
@@ -93,6 +94,7 @@ def rebuild_indexes(
         "qdrant_collection": settings.qdrant_collection,
         "whoosh_index_path": keyword_store.index_dir.as_posix(),
         "chunks_path": chunks_path.as_posix(),
+        "include_redteam": include_redteam,
         "index_metadata_path": INDEX_METADATA_PATH.as_posix(),
         "warnings": warnings,
     }
@@ -107,16 +109,30 @@ def parse_args() -> argparse.Namespace:
         default=None,
     )
     parser.add_argument("--whoosh-index-dir", type=Path, default=None)
+    parser.add_argument(
+        "--include-redteam",
+        action="store_true",
+        help=(
+            "Build from data/generated/redteam/chunks.jsonl when --chunks is not "
+            "overridden. Default is off so redteam corpus never enters normal indexes."
+        ),
+    )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
+    chunks_path = (
+        Path("data/generated/redteam/chunks.jsonl")
+        if args.include_redteam and args.chunks == Path("data/generated/chunks.jsonl")
+        else args.chunks
+    )
     try:
         summary = rebuild_indexes(
-            chunks_path=args.chunks,
+            chunks_path=chunks_path,
             embedding_provider=args.embedding_provider,
             whoosh_index_dir=args.whoosh_index_dir,
+            include_redteam=args.include_redteam,
         )
     except FileNotFoundError as exc:
         raise SystemExit(str(exc)) from exc

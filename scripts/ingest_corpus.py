@@ -28,8 +28,14 @@ def run_ingest(
     eval_path: Path | None = None,
     review_path: Path | None = Path("docs/EVAL_CASE_REVIEW_WEEK1.md"),
     overlay_path: Path | None = None,
+    include_redteam: bool = False,
+    redteam_input_dir: Path = Path("data/redteam_corpus"),
 ) -> dict[str, Any]:
     raw_documents = load_corpus(input_dir)
+    redteam_documents: list[RawDocument] = []
+    if include_redteam:
+        redteam_documents = load_corpus(redteam_input_dir)
+        raw_documents = [*raw_documents, *redteam_documents]
     parsed_documents = [_parse_raw_document(raw_doc) for raw_doc in raw_documents]
     overlay = load_metadata_overlay(overlay_path)
     overlay_summary = apply_metadata_overlay(
@@ -56,6 +62,9 @@ def run_ingest(
 
     return {
         "loaded_files": len(raw_documents),
+        "loaded_fixture_files": len(raw_documents) - len(redteam_documents),
+        "loaded_redteam_files": len(redteam_documents),
+        "include_redteam": include_redteam,
         "parsed_documents": len(parsed_documents),
         "generated_chunks": len(chunks),
         "documents_output_path": documents_output_path.as_posix(),
@@ -299,6 +308,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--corpus", choices=["sample", "public", "hard_negative"], default="sample")
     parser.add_argument("--eval", type=Path, default=None)
     parser.add_argument("--overlay", type=Path, default=None)
+    parser.add_argument(
+        "--include-redteam",
+        action="store_true",
+        help="Include data/redteam_corpus in addition to the selected fixture corpus.",
+    )
+    parser.add_argument("--redteam-input", type=Path, default=Path("data/redteam_corpus"))
     return parser.parse_args()
 
 
@@ -309,6 +324,8 @@ def main() -> None:
         output_dir=args.output,
         eval_path=args.eval or _default_eval_path(args.input),
         overlay_path=args.overlay,
+        include_redteam=args.include_redteam,
+        redteam_input_dir=args.redteam_input,
     )
     print(json.dumps(result, ensure_ascii=False, indent=2))
 

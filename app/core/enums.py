@@ -34,6 +34,7 @@ class CorpusSource(StrEnum):
     synthetic_fixture = "synthetic_fixture"
     public_external = "public_external"
     hard_negative = "hard_negative"
+    redteam_injection = "redteam_injection"
 
 
 class SourceOrigin(StrEnum):
@@ -67,6 +68,7 @@ class EvalSplit(StrEnum):
     external = "external"
     hard_negative = "hard_negative"
     obfuscated = "obfuscated"
+    redteam = "redteam"
 
 
 class QuerySource(StrEnum):

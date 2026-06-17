@@ -132,6 +132,11 @@ def _headline_banner(summary: dict[str, Any]) -> str:
             "> Pilot run. These metrics demonstrate pipeline validity and cost behavior, "
             "but are not final headline metrics."
         )
+    if summary.get("headline_scope") == "redteam" or summary.get("redteam_run"):
+        return (
+            "> Red-team injection run. These metrics may be cited only as defensive "
+            "red-team evidence and must never be merged into external headline metrics."
+        )
     return (
         "> NOT headline-eligible. The metrics below are smoke/diagnostic only and must "
         "not be cited as headline results."

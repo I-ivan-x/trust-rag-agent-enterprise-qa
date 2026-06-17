@@ -33,7 +33,7 @@ from app.schemas.eval import EvalCase, EvalResult, EvalRunSummary
 from app.schemas.retrieval import RetrievedChunk
 
 RETRIEVAL_SYSTEMS = {"vector_only", "bm25_only", "hybrid_rrf", "hybrid_rrf_rerank"}
-FINAL_SYSTEMS = {"final_gated", "final_agentic"}
+FINAL_SYSTEMS = {"final_gated", "final_gated_calibrated", "final_agentic"}
 BASELINE_LLM_SYSTEMS = {"direct_llm"}
 
 
@@ -520,6 +520,7 @@ def _answer_row(
         "citations": [
             citation.model_dump(mode="json") for citation in real.citations
         ],
+        "gate_decisions": real.gate_decisions,
         "cited_chunk_texts": cited_chunk_texts,
         "cited_text_sha256": cited_text_sha256,
         "warnings": warnings,
@@ -781,6 +782,7 @@ def _build_summary(
         and full_case_count > 0
     )
     pilot_run = not full_split_run
+    redteam_run = eval_split is EvalSplit.redteam
 
     uses_real_embedding = _uses_real_embedding(
         systems, retrieval_only, real_run, unavailable_systems
@@ -814,7 +816,8 @@ def _build_summary(
     ).model_dump(mode="json")
 
     final_headline_eligible = bool(
-        real_run
+        not redteam_run
+        and real_run
         and has_final
         and full_split_run
         and uses_real_llm
@@ -828,7 +831,8 @@ def _build_summary(
         and not vector_unavailable_any
     )
     retrieval_headline_eligible = bool(
-        retrieval_only
+        not redteam_run
+        and retrieval_only
         and full_split_run
         and not mock_run
         and bool(results)
@@ -837,8 +841,16 @@ def _build_summary(
         and _retrieval_stack_is_real(systems, uses_real_embedding)
     )
     headline_eligible = final_headline_eligible or retrieval_headline_eligible
-    headline_scope = "smoke" if mock_run else ("pilot" if pilot_run else "full_split")
-    pilot_eligible = bool(pilot_run and not mock_run and (retrieval_only or usage.total_calls > 0))
+    if redteam_run:
+        headline_scope = "redteam"
+    else:
+        headline_scope = "smoke" if mock_run else ("pilot" if pilot_run else "full_split")
+    pilot_eligible = bool(
+        not redteam_run
+        and pilot_run
+        and not mock_run
+        and (retrieval_only or usage.total_calls > 0)
+    )
 
     summary.update(
         {
@@ -846,6 +858,7 @@ def _build_summary(
             "mode": _mode_name(mock_run=mock_run, retrieval_only=retrieval_only, real_run=real_run),
             "headline_eligible": headline_eligible,
             "headline_scope": headline_scope,
+            "redteam_run": redteam_run,
             "pilot_eligible": pilot_eligible,
             "full_split_run": full_split_run,
             "full_case_count": full_case_count,
@@ -894,6 +907,12 @@ def _build_summary(
                 "Mock/simulated eval runs use toy retrieval smoke only and must not "
                 "be used as headline metrics."
                 if mock_run
+                else None
+            ),
+            "redteam_headline_policy": (
+                "Red-team injection runs may be cited as defensive red-team evidence "
+                "but must never be merged into external headline metrics."
+                if redteam_run
                 else None
             ),
             "run_dir": run_dir.as_posix(),

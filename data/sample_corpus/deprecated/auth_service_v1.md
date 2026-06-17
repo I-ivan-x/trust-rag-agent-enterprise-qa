@@ -40,3 +40,9 @@ In v1 the access token lifetime was 60 minutes.
 
 This version is deprecated and is retained only to test stale-evidence handling.
 Use Auth Service API v2 for the current behavior.
+
+## Legacy Token Rate Limits
+
+In v1 the token endpoint allowed 10 refresh token requests per minute per
+client. These v1 token rate limits are deprecated and must not be used for
+current enforcement.

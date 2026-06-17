@@ -44,3 +44,8 @@ Clients must refresh before expiry and must not assume the v1 lifetime rules.
 
 The refresh token endpoint is limited to 30 requests per minute per client.
 Requests above this limit receive an HTTP 429 response.
+
+## Current Token Rate Limits
+
+The active v2 token rate limit is 30 refresh token requests per minute per
+client. The v1 token rate limits are no longer in effect.

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from functools import lru_cache
+from typing import Any
 
 from app.answer.answer_generator import generate_answer
 from app.answer.citation_binder import BoundClaim, bind_citations
@@ -50,6 +51,7 @@ class RealFinalResult:
     rewrite_reason: str | None
     second_pass_attempted: bool
     reranker_unavailable: bool
+    gate_decisions: dict[str, Any] = field(default_factory=dict)
     claims: list[BoundClaim] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
     used_real_llm_answer: bool = False
@@ -97,13 +99,20 @@ def run_real_final_pipeline(
     max_output_tokens: int | None = None,
     evidence_gate_config: EvidenceGateConfig | None = None,
     trust_gate_policy: str | None = None,
+    retriever: Any | None = None,
+    reranker: BaseReranker | None = None,
+    reranker_unavailable: bool | None = None,
 ) -> RealFinalResult:
     settings = get_settings()
     resolved_trust_gate_policy = _normalize_trust_gate_policy(
         trust_gate_policy or getattr(settings, "trust_gate_policy", "legacy")
     )
-    retriever = _get_eval_hybrid_retriever()
-    reranker, reranker_unavailable = _get_eval_reranker()
+    resolved_retriever = retriever or _get_eval_hybrid_retriever()
+    if reranker is None:
+        resolved_reranker, resolved_reranker_unavailable = _get_eval_reranker()
+    else:
+        resolved_reranker = reranker
+        resolved_reranker_unavailable = bool(reranker_unavailable)
     client = llm_client or get_llm_client(
         settings.llm_provider,
         max_output_tokens=max_output_tokens,
@@ -113,8 +122,8 @@ def run_real_final_pipeline(
     first_pass = _trust_pass_with_optional_config(
         case,
         case.query,
-        retriever,
-        reranker,
+        resolved_retriever,
+        resolved_reranker,
         evidence_gate_config=evidence_gate_config,
     )
     final_pass = first_pass
@@ -142,8 +151,8 @@ def run_real_final_pipeline(
             final_pass = _trust_pass_with_optional_config(
                 case,
                 decision.rewritten_query,
-                retriever,
-                reranker,
+                resolved_retriever,
+                resolved_reranker,
                 evidence_gate_config=evidence_gate_config,
             )
 
@@ -192,7 +201,8 @@ def run_real_final_pipeline(
         rewrite_model_name=rewrite_model_name,
         rewrite_reason=rewrite_reason,
         second_pass_attempted=second_pass_attempted,
-        reranker_unavailable=reranker_unavailable,
+        reranker_unavailable=resolved_reranker_unavailable,
+        gate_decisions=_gate_decisions(final_pass),
         claims=claims,
         warnings=warnings,
         used_real_llm_answer=used_real_llm_answer,
@@ -235,6 +245,7 @@ def run_direct_llm_baseline(
             rewrite_reason=None,
             second_pass_attempted=False,
             reranker_unavailable=False,
+            gate_decisions={},
             claims=[],
             warnings=[*warnings, f"direct_llm_error:{type(exc).__name__}"],
             used_real_llm_answer=False,
@@ -254,6 +265,7 @@ def run_direct_llm_baseline(
         rewrite_reason=None,
         second_pass_attempted=False,
         reranker_unavailable=False,
+        gate_decisions={},
         claims=[],
         warnings=warnings,
         used_real_llm_answer=True,
@@ -418,3 +430,29 @@ def _decision_reason(response_mode: ExpectedBehavior) -> DecisionReason:
     if response_mode == ExpectedBehavior.system_error:
         return DecisionReason.system_error
     return DecisionReason.none
+
+
+def _gate_decisions(pass_result: RetrievalPassResult) -> dict[str, Any]:
+    if not all(
+        hasattr(pass_result, attr)
+        for attr in (
+            "evidence_decision",
+            "acl_decision",
+            "state_decision",
+            "conflict_decision",
+        )
+    ):
+        return {}
+    return {
+        "evidence_sufficient": pass_result.evidence_decision.evidence_sufficient,
+        "evidence_reason": pass_result.evidence_decision.reason,
+        "evidence_support_count": pass_result.evidence_decision.support_count,
+        "evidence_entity_miss": pass_result.evidence_decision.entity_miss,
+        "acl_surviving_count": len(pass_result.acl_decision.surviving_chunks),
+        "acl_blocked_count": len(pass_result.acl_decision.blocked_chunks),
+        "state_surviving_count": len(pass_result.state_decision.surviving_chunks),
+        "state_deprecated_count": len(pass_result.state_decision.deprecated_chunks),
+        "state_blocked_count": len(pass_result.state_decision.blocked_chunks),
+        "conflict_detected": pass_result.conflict_decision.has_conflict,
+        "conflict_group_id": pass_result.conflict_decision.conflict_group_id,
+    }

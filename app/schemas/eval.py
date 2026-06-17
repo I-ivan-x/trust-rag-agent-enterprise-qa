@@ -54,6 +54,10 @@ class EvalCase(BaseModel):
     expected_rewrite: str | None = None
     hard_negative_group_id: str | None = None
     notes: str | None = None
+    attack_class: str | None = None
+    success_predicate: str | None = None
+    paired_control: bool = False
+    benign_gold: str | None = None
 
     @model_validator(mode="after")
     def _normalize_compatible_fields(self) -> "EvalCase":
