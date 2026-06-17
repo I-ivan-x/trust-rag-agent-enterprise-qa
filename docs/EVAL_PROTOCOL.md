@@ -71,6 +71,23 @@ providers. Synthetic fixtures remain functional regression only. Hard negative
 results are reported as a separate retrieval/citation robustness slice, not
 merged into the headline external score.
 
+## Regression Gates
+
+Frozen eval baselines live in `data/eval_baselines/regression_baseline_v1.json`.
+Each gated metric records `source_run_id`, direction, and tolerance. The checker
+is `scripts/check_eval_regression.py`; it only reads existing `summary.json`
+files and never reruns eval or calls an LLM.
+
+There are two layers:
+
+1. CI layer: zero-token pytest coverage verifies checker behavior and
+   headline-eligibility invariants. Mock or synthetic summaries can test the
+   contract, but must not be reported as real metric validation.
+2. Manual/offline layer: after a new real or formal retrieval run is produced,
+   run the checker against its `summary.json`. This may require token spend to
+   create the new real run, so it is not part of CI. Any gated metric outside
+   tolerance fails the manual gate.
+
 Week 5A prepares corpus artifacts only. It does not implement `run_eval.py`,
 metrics summaries, formal real-LLM runs, or an `EVALUATION_REPORT`.
 
