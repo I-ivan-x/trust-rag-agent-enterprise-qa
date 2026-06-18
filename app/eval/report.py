@@ -73,6 +73,7 @@ def write_eval_report(path: Path, summary: dict[str, Any]) -> None:
         ),
         "```",
         "",
+        *_agent_attribution_section(summary),
         "## Real-Run Interpretation (Week 6)",
         "",
         "- grounded_correctness is the headline metric (raw_correct AND citation_valid "
@@ -141,6 +142,84 @@ def _headline_banner(summary: dict[str, Any]) -> str:
         "> NOT headline-eligible. The metrics below are smoke/diagnostic only and must "
         "not be cited as headline results."
     )
+
+
+def _agent_attribution_section(summary: dict[str, Any]) -> list[str]:
+    attribution = summary.get("agent_attribution")
+    if not isinstance(attribution, dict):
+        return []
+
+    per_action = attribution.get("per_action") or {}
+    failures = attribution.get("trajectory_failures") or {}
+    controller = attribution.get("controller") or {}
+    lines = [
+        "## Agent Attribution",
+        "",
+        "> Diagnostic per-action counts only. These are not merged into headline "
+        "grounded metrics; TF1 is a replay candidate list, not an automatic finding.",
+        "",
+        "| action | trigger | accept | success | false_recovery | ineffective |",
+        "| --- | ---: | ---: | ---: | ---: | ---: |",
+    ]
+    for action in (
+        "rewrite_query",
+        "filtered_retrieval",
+        "present_conflict_set",
+        "refuse_with_explanation",
+    ):
+        metrics = per_action.get(action) or {}
+        lines.append(
+            "| {action} | {trigger} | {accept} | {success} | {false} | {ineffective} |".format(
+                action=action,
+                trigger=metrics.get("trigger_count", 0),
+                accept=metrics.get("accept_count", 0),
+                success=metrics.get("success_count", 0),
+                false=metrics.get("false_recovery", 0),
+                ineffective=metrics.get("ineffective", 0),
+            )
+        )
+
+    lines.extend(
+        [
+            "",
+            "| trajectory_failure | count |",
+            "| --- | ---: |",
+            (
+                "| TF2 ineffective action cases | "
+                f"{failures.get('tf2_ineffective_action_case_count', 0)} |"
+            ),
+            (
+                "| TF3 validator reject steps | "
+                f"{failures.get('tf3_validator_reject_step_count', 0)} |"
+            ),
+            (
+                "| TF4 budget exhausted cases | "
+                f"{failures.get('tf4_budget_exhausted_case_count', 0)} |"
+            ),
+            (
+                "| TF1 replay candidates | "
+                f"{failures.get('tf1_candidate_count', 0)} |"
+            ),
+            (
+                "| TF1 auto hits | "
+                f"{failures.get('tf1_auto_hit_count', 0)} |"
+            ),
+            "",
+        ]
+    )
+    if "llm_propose_count" in controller:
+        lines.extend(
+            [
+                "LLM controller attribution:",
+                "",
+                f"- llm_propose_count: `{controller.get('llm_propose_count', 0)}`",
+                f"- llm_accept_count: `{controller.get('llm_accept_count', 0)}`",
+                f"- llm_fallback_count: `{controller.get('llm_fallback_count', 0)}`",
+                f"- llm_fallback_rate: `{controller.get('llm_fallback_rate', 0.0)}`",
+                "",
+            ]
+        )
+    return lines
 
 
 def _external_coverage() -> dict[str, Any]:

@@ -9,6 +9,7 @@ from typing import Any
 
 from app.core.config import get_settings
 from app.core.enums import DecisionReason, EvalSplit, ExpectedBehavior
+from app.eval.agent_attribution import compute_agent_attribution
 from app.eval.baselines import BaselineUnavailable, retrieve_baseline, retrieve_toy_baseline
 from app.eval.citation_audit import verify_citations
 from app.eval.dataset import load_chunks_for_split, load_eval_cases, terms, write_jsonl
@@ -927,6 +928,9 @@ def _build_summary(
             "run_dir": run_dir.as_posix(),
         }
     )
+    agent_attribution = compute_agent_attribution(trace_rows, results)
+    if agent_attribution is not None:
+        summary["agent_attribution"] = agent_attribution
     return summary
 
 
