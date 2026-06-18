@@ -1,7 +1,7 @@
 # Eval Leakage Report
 
 - passed: `True`
-- case_count: `18`
+- case_count: `10`
 - flags: `0`
 - blocking_flags: `0`
 

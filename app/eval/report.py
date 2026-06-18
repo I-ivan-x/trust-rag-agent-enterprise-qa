@@ -138,6 +138,13 @@ def _headline_banner(summary: dict[str, Any]) -> str:
             "> Red-team injection run. These metrics may be cited only as defensive "
             "red-team evidence and must never be merged into external headline metrics."
         )
+    if summary.get("headline_scope") == "agent_residual" or summary.get(
+        "agent_residual_run"
+    ):
+        return (
+            "> Agent residual testbed run. These metrics are diagnostic for controller "
+            "ablation and must never be merged into external headline metrics."
+        )
     return (
         "> NOT headline-eligible. The metrics below are smoke/diagnostic only and must "
         "not be cited as headline results."

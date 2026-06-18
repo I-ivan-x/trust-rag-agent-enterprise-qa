@@ -170,6 +170,8 @@ def _expected_chunks_path(chunks: list[Chunk]) -> str | None:
     all_corpus_sources = {chunk.corpus_source.value for chunk in chunks}
     if "redteam_injection" in all_corpus_sources:
         return "data/generated/redteam/chunks.jsonl"
+    if "agent_residual" in all_corpus_sources:
+        return "data/generated/agent_residual/chunks.jsonl"
     if "hard_negative" in corpus_sources or any(
         doc_id.startswith("hard-negative-") for doc_id in doc_ids
     ):

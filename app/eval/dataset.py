@@ -17,6 +17,7 @@ _CASE_FILE_BY_SPLIT = {
     EvalSplit.hard_negative: "hard_negative_eval.jsonl",
     EvalSplit.obfuscated: "obfuscated_eval.jsonl",
     EvalSplit.redteam: "redteam_eval.jsonl",
+    EvalSplit.agent_residual: "agent_residual_eval.jsonl",
 }
 
 _CHUNK_FILE_BY_SPLIT = {
@@ -25,6 +26,7 @@ _CHUNK_FILE_BY_SPLIT = {
     EvalSplit.hard_negative: Path("data/generated/hard_negative/chunks.jsonl"),
     EvalSplit.obfuscated: Path("data/generated/public/chunks.jsonl"),
     EvalSplit.redteam: Path("data/generated/redteam/chunks.jsonl"),
+    EvalSplit.agent_residual: Path("data/generated/agent_residual/chunks.jsonl"),
 }
 
 _STOPWORDS = {
@@ -130,6 +132,8 @@ def case_corpus_source(split: EvalSplit) -> CorpusSource:
         return CorpusSource.hard_negative
     if split is EvalSplit.redteam:
         return CorpusSource.redteam_injection
+    if split is EvalSplit.agent_residual:
+        return CorpusSource.agent_residual
     return CorpusSource.public_external
 
 

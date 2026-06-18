@@ -35,6 +35,7 @@ def rebuild_indexes(
     embedding_provider: str | None = None,
     whoosh_index_dir: Path | None = None,
     include_redteam: bool = False,
+    include_agent_residual: bool = False,
 ) -> dict[str, Any]:
     settings = get_settings()
     if not chunks_path.exists():
@@ -95,6 +96,7 @@ def rebuild_indexes(
         "whoosh_index_path": keyword_store.index_dir.as_posix(),
         "chunks_path": chunks_path.as_posix(),
         "include_redteam": include_redteam,
+        "include_agent_residual": include_agent_residual,
         "index_metadata_path": INDEX_METADATA_PATH.as_posix(),
         "warnings": warnings,
     }
@@ -117,22 +119,32 @@ def parse_args() -> argparse.Namespace:
             "overridden. Default is off so redteam corpus never enters normal indexes."
         ),
     )
+    parser.add_argument(
+        "--include-agent-residual",
+        action="store_true",
+        help=(
+            "Build from data/generated/agent_residual/chunks.jsonl when --chunks is "
+            "not overridden. Default is off so residual docs never enter normal indexes."
+        ),
+    )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
-    chunks_path = (
-        Path("data/generated/redteam/chunks.jsonl")
-        if args.include_redteam and args.chunks == Path("data/generated/chunks.jsonl")
-        else args.chunks
-    )
+    chunks_path = args.chunks
+    if args.chunks == Path("data/generated/chunks.jsonl"):
+        if args.include_redteam:
+            chunks_path = Path("data/generated/redteam/chunks.jsonl")
+        elif args.include_agent_residual:
+            chunks_path = Path("data/generated/agent_residual/chunks.jsonl")
     try:
         summary = rebuild_indexes(
             chunks_path=chunks_path,
             embedding_provider=args.embedding_provider,
             whoosh_index_dir=args.whoosh_index_dir,
             include_redteam=args.include_redteam,
+            include_agent_residual=args.include_agent_residual,
         )
     except FileNotFoundError as exc:
         raise SystemExit(str(exc)) from exc

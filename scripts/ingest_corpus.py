@@ -30,12 +30,18 @@ def run_ingest(
     overlay_path: Path | None = None,
     include_redteam: bool = False,
     redteam_input_dir: Path = Path("data/redteam_corpus"),
+    include_agent_residual: bool = False,
+    agent_residual_input_dir: Path = Path("data/agent_residual_corpus"),
 ) -> dict[str, Any]:
     raw_documents = load_corpus(input_dir)
     redteam_documents: list[RawDocument] = []
+    agent_residual_documents: list[RawDocument] = []
     if include_redteam:
         redteam_documents = load_corpus(redteam_input_dir)
         raw_documents = [*raw_documents, *redteam_documents]
+    if include_agent_residual:
+        agent_residual_documents = load_corpus(agent_residual_input_dir)
+        raw_documents = [*raw_documents, *agent_residual_documents]
     parsed_documents = [_parse_raw_document(raw_doc) for raw_doc in raw_documents]
     overlay = load_metadata_overlay(overlay_path)
     overlay_summary = apply_metadata_overlay(
@@ -62,9 +68,13 @@ def run_ingest(
 
     return {
         "loaded_files": len(raw_documents),
-        "loaded_fixture_files": len(raw_documents) - len(redteam_documents),
+        "loaded_fixture_files": (
+            len(raw_documents) - len(redteam_documents) - len(agent_residual_documents)
+        ),
         "loaded_redteam_files": len(redteam_documents),
+        "loaded_agent_residual_files": len(agent_residual_documents),
         "include_redteam": include_redteam,
+        "include_agent_residual": include_agent_residual,
         "parsed_documents": len(parsed_documents),
         "generated_chunks": len(chunks),
         "documents_output_path": documents_output_path.as_posix(),
@@ -314,6 +324,19 @@ def parse_args() -> argparse.Namespace:
         help="Include data/redteam_corpus in addition to the selected fixture corpus.",
     )
     parser.add_argument("--redteam-input", type=Path, default=Path("data/redteam_corpus"))
+    parser.add_argument(
+        "--include-agent-residual",
+        action="store_true",
+        help=(
+            "Include data/agent_residual_corpus in addition to the selected fixture "
+            "corpus. Default is off so residual testbed docs never enter normal indexes."
+        ),
+    )
+    parser.add_argument(
+        "--agent-residual-input",
+        type=Path,
+        default=Path("data/agent_residual_corpus"),
+    )
     return parser.parse_args()
 
 
@@ -326,6 +349,8 @@ def main() -> None:
         overlay_path=args.overlay,
         include_redteam=args.include_redteam,
         redteam_input_dir=args.redteam_input,
+        include_agent_residual=args.include_agent_residual,
+        agent_residual_input_dir=args.agent_residual_input,
     )
     print(json.dumps(result, ensure_ascii=False, indent=2))
 

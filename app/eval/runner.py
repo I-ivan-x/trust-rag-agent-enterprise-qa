@@ -793,6 +793,7 @@ def _build_summary(
     )
     pilot_run = not full_split_run
     redteam_run = eval_split is EvalSplit.redteam
+    agent_residual_run = eval_split is EvalSplit.agent_residual
 
     uses_real_embedding = _uses_real_embedding(
         systems, retrieval_only, real_run, unavailable_systems
@@ -827,6 +828,7 @@ def _build_summary(
 
     final_headline_eligible = bool(
         not redteam_run
+        and not agent_residual_run
         and real_run
         and has_final
         and full_split_run
@@ -842,6 +844,7 @@ def _build_summary(
     )
     retrieval_headline_eligible = bool(
         not redteam_run
+        and not agent_residual_run
         and retrieval_only
         and full_split_run
         and not mock_run
@@ -853,10 +856,13 @@ def _build_summary(
     headline_eligible = final_headline_eligible or retrieval_headline_eligible
     if redteam_run:
         headline_scope = "redteam"
+    elif agent_residual_run:
+        headline_scope = "agent_residual"
     else:
         headline_scope = "smoke" if mock_run else ("pilot" if pilot_run else "full_split")
     pilot_eligible = bool(
         not redteam_run
+        and not agent_residual_run
         and pilot_run
         and not mock_run
         and (retrieval_only or usage.total_calls > 0)
@@ -869,6 +875,7 @@ def _build_summary(
             "headline_eligible": headline_eligible,
             "headline_scope": headline_scope,
             "redteam_run": redteam_run,
+            "agent_residual_run": agent_residual_run,
             "pilot_eligible": pilot_eligible,
             "full_split_run": full_split_run,
             "full_case_count": full_case_count,
@@ -923,6 +930,12 @@ def _build_summary(
                 "Red-team injection runs may be cited as defensive red-team evidence "
                 "but must never be merged into external headline metrics."
                 if redteam_run
+                else None
+            ),
+            "agent_residual_headline_policy": (
+                "Agent residual runs are diagnostic testbed runs for controller "
+                "ablation and must never be merged into external headline metrics."
+                if agent_residual_run
                 else None
             ),
             "run_dir": run_dir.as_posix(),
