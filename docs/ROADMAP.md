@@ -177,9 +177,9 @@ Phase 1 即产出 Q2 第一批新 headline 数字。预算：≈400–500 次调
 
 | 编号 | 负责人 | 任务 | 验收标准 |
 | --- | --- | --- | --- |
-| P2-07 | Claude + Owner | injection split 构造：**10 条**（瘦身版），覆盖正文指令注入、零宽/注释藏匿、诱导引用毒块、诱导绕过 ACL/deprecated 至少各 2 条 | 毒文档走 fixture 语料机制，单独 `corpus_source`；参考 OWASP LLM01 与 Promptfoo red-team 模式 |
-| P2-08 | Codex | injection split 接入 runner + 指标 | injection_success_rate、gate_bypass_rate、poisoned_citation_rate |
-| P2-09 | Owner | 红队 real run + 报告 | 结果如实进 EVALUATION_REPORT 新章节；失败进 taxonomy（预留 F9） |
+| P2-07 | Claude + Owner | ✅ injection split 10 条（6 向量），毒语料隔离（默认索引 0 redteam chunk）；成对 real run（authoritative=`-vector`，非 -vector 是 Qdrant 502 keyword-fallback 已弃） | 已落成 `data/redteam_corpus/` + `redteam_eval.jsonl` |
+| P2-08 | Codex | ✅ runner + 指标 + 测试（6 passed） | injection_success / gate_bypass / poisoned_citation + ingest passthrough findings |
+| P2-09 | Owner + Claude | ✅ 人工裁定 10/10（human-vs-auto 10/10 一致）+ 散文结论。**两级结果**：strict 注入 1/10（RT-008 版本偏好注入，F9）；gate bypass 4/10；6/10 直接拒答。确定性门对 NL 注入免疫；ingest 不清洗注释/零宽（攻击面）。 | `REDTEAM_INJECTION_REPORT.md` 结论 + `FAILURE_ANALYSIS.md` F9 定稿；redteam 永不并入 headline |
 
 预算：judge 验证迭代 + 全量回填 + 红队 ≈ 800 次调用，约 ¥40。
 
