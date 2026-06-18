@@ -30,6 +30,16 @@ agent 看不到动作 d。**两选一，Owner/Claude 倾向后者**：
 信号值）写入 `docs/` 或 run artifact，作为"决策点稀缺"的实证附录。预门从"放行门"
 转为"实证记录"。
 
+**1d. rewrite 触发面预检（零 token，决定 Agent 能力主读数的床够不够）。**
+决议 A 的真实看点是 **LLM 控制器的语义改写 vs 规则改写**（action a 的 args 质量，
+不是动作选择）。但改写要先**触发**才能比。对 `obfuscated`(15) + `agent_residual`(10)
+跑零 token diagnose，统计 **weak_recall 触发（action a 合法）的 case 数**。
+- 若 ≥8 → 改写对比的床够，进 §2。
+- 若 <8（obfuscated 太易、检索仍找到 gold）→ **Claude 补几条更难的 obfuscated case**
+  （重缩写/术语错位/间接问法，使 gold 在不改写时真检索不到）。这**不是制造**——
+  用户用糟糕措辞提问是真实现象，测 agent 改写能否救回是合法考验；诚实点在于
+  "调到改写**触发**为止"而非"调到 llm **赢**为止"。补完重跑 1d 预检。
+
 ## 2. 修订消融 run（P3-09，真实 LLM；先开 Docker/Qdrant）
 
 **不再要求共现 ≥6**。目的从"看 llm 是否赢 rule"转为**测真实数字佐证稀缺结论**：
@@ -37,12 +47,22 @@ agent 看不到动作 d。**两选一，Owner/Claude 倾向后者**：
 系统：`final_gated_calibrated`（对照）/ `final_agentic_v2`（rule）/ `final_agentic_v2_llm`（llm）。
 测试床：`obfuscated`(15，天然 action-a 决策点) + `agent_residual`(10)。每 case **k=3**。
 
-测什么（全部诚实记录，任何结果有效）：
+### ★ 决议 A 主读数：LLM vs 规则的改写质量（Agent 能力的真实展示）
+
+在 weak_recall（action a）case 上，rule 与 llm 都选 rewrite，**但 rewritten_query 不同**
+（rule=`query_rewriter` 关键词；llm=语义生成）。这是消融**真正不平**的维度，作为头条：
 ```text
-- grounded_correctness 每系统：v2(rule/llm) vs 对照 calibrated —— agent 恢复循环到底帮没帮
-  （预期：小或无增益，与 Q1 F5 一致）。
-- rule vs llm 轨迹一致性：预期 ≈ 完全一致（共现≈0 → 控制器无分叉点）。这是"决策点稀缺
-  → 控制器选择鲜有分叉"的直接佐证，不是失败。
+- 并排呈现每条 weak_recall case 的 rule 改写 vs llm 改写原文（qualitative，进报告）。
+- 二次检索恢复：rule 改写 vs llm 改写各自的 second_pass gold 命中（doc_hit 改善）。
+- grounded：rule 改写 vs llm 改写各自最终 grounded_correct。
+- 结论任一方向都有效：llm 改写更好→真实 agent 能力亮点；打平→"语义改写未超关键词改写"
+  的诚实结论。绝不调到 llm 赢。
+```
+
+其余指标（佐证稀缺 + 安全 + 可靠性）：
+```text
+- grounded_correctness 每系统：v2(rule/llm) vs 对照 calibrated —— agent 恢复循环帮没帮。
+- rule vs llm 动作选择一致性：预期 ≈ 一致（多动作共现≈0 → 选择无分叉；分叉在 args/改写质量）。
 - llm fallback_rate：llm 多少次真提议 vs 退化 rule。
 - agent_attribution（P3-06）每系统：per-action success/false_recovery。
 - pass^1 / pass^3 / run_consistency（决议 C）。
@@ -52,16 +72,17 @@ run_id `p3-09-agent-ablation`。agent_residual grounded 标"controlled, 非 head
 
 ## 3. P3-11 报告（Claude，run 后）
 
-Phase 3 诚实 headline，不是"llm 赢"，而是：
+Phase 3 诚实 headline，三层（能力 + 安全 + 边界）：
 ```text
-"完备且安全的有界 agent 已构建并实测：类型化动作空间 a/b/(d 冗余)/e、规则与 LLM 双控制器
-(LLM 失灵时确定性退化为 rule,已端到端证明)、validator 不可绕、逐动作归因、pass^k 可靠性。
-经零 token 真实检索预门两次实证:多动作决策点在真实检索下结构性稀缺(共现≈0,因好的检索
-使证据充足、无恢复余地),故双控制器选择鲜有分叉、rule≈llm。这与 Q1 的 agentic 零增益(F5)、
-Phase 1 的 over-refusal 策略驱动一脉相承——agent 的边际价值真实而狭窄。"
+能力：双控制器在 weak_recall case 上比 LLM 语义改写 vs 规则改写——决议 A 的真实读数
+      （rewrite args 质量，附改写原文并排 + second_pass 恢复 + grounded）。
+安全：类型化动作空间、validator 不可绕、LLM 失灵端到端退化为 rule（已证明）、逐动作归因、pass^k。
+边界：零 token 真实检索预门两次实证——多动作决策点(共现)结构性稀缺(好的检索→证据充足→
+      无恢复余地)，故动作选择层 rule≈llm；与 Q1 F5、Phase 1 一脉相承，agent 边际价值真实而狭窄。
 ```
-这是三支柱 Agent 维度的最终结论:**展示的是"能造受控 agent 并严格证明其适用边界",
-不是"agent 提升了 X%"。** 后者编得出,前者编不出。
+**展示的是"能造受控 agent、用它做真实改写决策、并严格证明其适用边界",不是"agent 提升了 X%"。**
+能力(改写对比)给 Agent 味，安全/评测给工程深度，边界实证给判断力。后两者编得出,
+"诚实的边界实证 + 端到端安全证明"编不出。
 
 ## 4. 验收
 
