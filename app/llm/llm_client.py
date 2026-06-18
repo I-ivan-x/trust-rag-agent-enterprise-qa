@@ -202,6 +202,7 @@ def get_llm_client(
     *,
     model_name: str | None = None,
     max_output_tokens: int | None = None,
+    temperature: float | None = None,
     purpose: str = "answer",
 ) -> BaseLLMClient:
     settings = get_settings()
@@ -214,12 +215,14 @@ def get_llm_client(
         return DeepSeekLLMClient(
             model_name=model_name,
             max_output_tokens=max_output_tokens,
+            temperature=temperature,
             purpose=purpose,
         )
     if selected_provider in {"xiaomi", "mimo"}:
         return XiaomiLLMClient(
             model_name=model_name,
             max_output_tokens=max_output_tokens,
+            temperature=temperature,
             purpose=purpose,
         )
     if selected_provider in {"openai", "openai_compatible"}:
@@ -227,6 +230,7 @@ def get_llm_client(
             provider=selected_provider,
             model_name=model_name,
             max_output_tokens=max_output_tokens,
+            temperature=temperature,
             purpose=purpose,
         )
     raise ValueError(f"Unsupported LLM provider: {selected_provider}")

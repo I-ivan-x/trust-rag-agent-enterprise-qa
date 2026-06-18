@@ -38,6 +38,7 @@ FINAL_SYSTEMS = {
     "final_gated_calibrated",
     "final_agentic",
     "final_agentic_v2",
+    "final_agentic_v2_llm",
 }
 BASELINE_LLM_SYSTEMS = {"direct_llm"}
 

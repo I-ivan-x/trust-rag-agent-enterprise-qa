@@ -155,8 +155,8 @@ class _SequenceRetriever:
 
 
 class _IllegalController:
-    def select(self, diagnosis):
-        del diagnosis
+    def select(self, diagnosis, context=None):
+        del diagnosis, context
         return ActionProposal(
             action=ActionType.filtered_retrieval,
             args={"filters": {"status": "active"}},

@@ -4,6 +4,8 @@ from dataclasses import dataclass, field
 from functools import lru_cache
 from typing import Any
 
+from app.agent.controller import RuleController
+from app.agent.llm_controller import LLMController
 from app.agent.loop import run_agentic_v2_loop
 from app.answer.answer_generator import generate_answer
 from app.answer.citation_binder import BoundClaim, bind_citations
@@ -115,11 +117,6 @@ def run_real_final_pipeline(
     else:
         resolved_reranker = reranker
         resolved_reranker_unavailable = bool(reranker_unavailable)
-    client = llm_client or get_llm_client(
-        settings.llm_provider,
-        max_output_tokens=max_output_tokens,
-    )
-
     rewrite_source = "none"
     actual_rewritten_query: str | None = None
     rewrite_model_name: str | None = None
@@ -129,13 +126,26 @@ def run_real_final_pipeline(
     agent_trace: dict[str, Any] = {}
     warnings: list[str] = []
 
-    if system_name == "final_agentic_v2":
+    if system_name in {"final_agentic_v2", "final_agentic_v2_llm"}:
+        controller = None
+        if system_name == "final_agentic_v2_llm":
+            controller_client = llm_client or get_llm_client(
+                settings.llm_provider,
+                max_output_tokens=max_output_tokens,
+                temperature=0,
+                purpose="controller",
+            )
+            controller = LLMController(
+                controller_client,
+                fallback=RuleController(),
+            )
         loop_result = run_agentic_v2_loop(
             case=case,
             retriever=resolved_retriever,
             reranker=resolved_reranker,
             retrieval_options=_REAL_RUN_OPTIONS,
             evidence_gate_config=evidence_gate_config,
+            controller=controller,
         )
         first_pass = loop_result.first_pass
         final_pass = loop_result.final_pass
@@ -143,7 +153,12 @@ def run_real_final_pipeline(
             first_pass.reranked_chunks if final_pass is not first_pass else None
         )
         actual_rewritten_query = loop_result.actual_rewritten_query
-        rewrite_source = "rule_controller" if actual_rewritten_query else "none"
+        if actual_rewritten_query:
+            rewrite_source = (
+                "llm_controller"
+                if loop_result.controller_source == "llm"
+                else "rule_controller"
+            )
         rewrite_reason = loop_result.terminal_reason
         second_pass_attempted = loop_result.second_pass_attempted
         agent_trace = loop_result.trace_fields
@@ -199,7 +214,11 @@ def run_real_final_pipeline(
             token_budget=settings.max_context_tokens,
             max_chunks=_REAL_RUN_OPTIONS.top_n_rerank,
         )
-        generated = generate_answer(final_pass.query, context_pack, client)
+        answer_client = llm_client or get_llm_client(
+            settings.llm_provider,
+            max_output_tokens=max_output_tokens,
+        )
+        generated = generate_answer(final_pass.query, context_pack, answer_client)
         bound = bind_citations(generated, context_pack)
         answer_text = bound.answer_text
         claims = bound.claims

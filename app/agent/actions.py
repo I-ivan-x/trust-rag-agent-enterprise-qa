@@ -45,6 +45,11 @@ class ActionProposal(BaseModel):
     action: ActionType
     args: dict[str, Any] = Field(default_factory=dict)
     source: str = "rule"
+    reason: str | None = None
+    controller_source: str | None = None
+    llm_raw_proposal: dict[str, Any] | None = None
+    accepted: bool = True
+    fallback_reason: str | None = None
 
 
 @dataclass
