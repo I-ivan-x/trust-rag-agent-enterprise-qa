@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from functools import lru_cache
 from typing import Any
 
+from app.agent.loop import run_agentic_v2_loop
 from app.answer.answer_generator import generate_answer
 from app.answer.citation_binder import BoundClaim, bind_citations
 from app.answer.refusal_controller import decide_response_mode
@@ -52,6 +53,7 @@ class RealFinalResult:
     second_pass_attempted: bool
     reranker_unavailable: bool
     gate_decisions: dict[str, Any] = field(default_factory=dict)
+    agent_trace: dict[str, Any] = field(default_factory=dict)
     claims: list[BoundClaim] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
     used_real_llm_answer: bool = False
@@ -118,43 +120,63 @@ def run_real_final_pipeline(
         max_output_tokens=max_output_tokens,
     )
 
-    warnings: list[str] = []
-    first_pass = _trust_pass_with_optional_config(
-        case,
-        case.query,
-        resolved_retriever,
-        resolved_reranker,
-        evidence_gate_config=evidence_gate_config,
-    )
-    final_pass = first_pass
-    first_pass_reranked: list[RetrievedChunk] | None = None
-
     rewrite_source = "none"
     actual_rewritten_query: str | None = None
     rewrite_model_name: str | None = None
     rewrite_reason: str | None = None
     second_pass_attempted = False
+    first_pass_reranked: list[RetrievedChunk] | None = None
+    agent_trace: dict[str, Any] = {}
+    warnings: list[str] = []
 
-    if system_name == "final_agentic" and _should_rewrite(
-        first_pass,
-        trust_gate_policy=resolved_trust_gate_policy,
-    ):
-        decision = _agentic_rewrite(case, first_pass)
-        rewrite_source = decision.source
-        rewrite_model_name = decision.model_name
-        rewrite_reason = decision.reason
-        warnings.extend(decision.warnings)
-        if decision.should_rewrite and decision.rewritten_query:
-            actual_rewritten_query = decision.rewritten_query
-            second_pass_attempted = True
-            first_pass_reranked = first_pass.reranked_chunks
-            final_pass = _trust_pass_with_optional_config(
-                case,
-                decision.rewritten_query,
-                resolved_retriever,
-                resolved_reranker,
-                evidence_gate_config=evidence_gate_config,
-            )
+    if system_name == "final_agentic_v2":
+        loop_result = run_agentic_v2_loop(
+            case=case,
+            retriever=resolved_retriever,
+            reranker=resolved_reranker,
+            retrieval_options=_REAL_RUN_OPTIONS,
+            evidence_gate_config=evidence_gate_config,
+        )
+        first_pass = loop_result.first_pass
+        final_pass = loop_result.final_pass
+        first_pass_reranked = (
+            first_pass.reranked_chunks if final_pass is not first_pass else None
+        )
+        actual_rewritten_query = loop_result.actual_rewritten_query
+        rewrite_source = "rule_controller" if actual_rewritten_query else "none"
+        rewrite_reason = loop_result.terminal_reason
+        second_pass_attempted = loop_result.second_pass_attempted
+        agent_trace = loop_result.trace_fields
+    else:
+        first_pass = _trust_pass_with_optional_config(
+            case,
+            case.query,
+            resolved_retriever,
+            resolved_reranker,
+            evidence_gate_config=evidence_gate_config,
+        )
+        final_pass = first_pass
+
+        if system_name == "final_agentic" and _should_rewrite(
+            first_pass,
+            trust_gate_policy=resolved_trust_gate_policy,
+        ):
+            decision = _agentic_rewrite(case, first_pass)
+            rewrite_source = decision.source
+            rewrite_model_name = decision.model_name
+            rewrite_reason = decision.reason
+            warnings.extend(decision.warnings)
+            if decision.should_rewrite and decision.rewritten_query:
+                actual_rewritten_query = decision.rewritten_query
+                second_pass_attempted = True
+                first_pass_reranked = first_pass.reranked_chunks
+                final_pass = _trust_pass_with_optional_config(
+                    case,
+                    decision.rewritten_query,
+                    resolved_retriever,
+                    resolved_reranker,
+                    evidence_gate_config=evidence_gate_config,
+                )
 
     warnings.extend(first_pass.warnings)
     if final_pass is not first_pass:
@@ -203,6 +225,7 @@ def run_real_final_pipeline(
         second_pass_attempted=second_pass_attempted,
         reranker_unavailable=resolved_reranker_unavailable,
         gate_decisions=_gate_decisions(final_pass),
+        agent_trace=agent_trace,
         claims=claims,
         warnings=warnings,
         used_real_llm_answer=used_real_llm_answer,
@@ -246,6 +269,7 @@ def run_direct_llm_baseline(
             second_pass_attempted=False,
             reranker_unavailable=False,
             gate_decisions={},
+            agent_trace={},
             claims=[],
             warnings=[*warnings, f"direct_llm_error:{type(exc).__name__}"],
             used_real_llm_answer=False,
@@ -266,6 +290,7 @@ def run_direct_llm_baseline(
         second_pass_attempted=False,
         reranker_unavailable=False,
         gate_decisions={},
+        agent_trace={},
         claims=[],
         warnings=warnings,
         used_real_llm_answer=True,

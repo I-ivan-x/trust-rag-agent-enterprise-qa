@@ -184,6 +184,7 @@ def _build_qdrant_filter(filters: dict[str, Any] | None) -> Any:
     from qdrant_client.http import models
 
     conditions = []
+    must_not = []
     for key in ("status", "access_level", "corpus_source", "doc_id"):
         if key not in filters or filters[key] is None:
             continue
@@ -192,4 +193,15 @@ def _build_qdrant_filter(filters: dict[str, Any] | None) -> Any:
             conditions.append(models.FieldCondition(key=key, match=models.MatchAny(any=value)))
         else:
             conditions.append(models.FieldCondition(key=key, match=models.MatchValue(value=value)))
-    return models.Filter(must=conditions) if conditions else None
+    exclude_doc_ids = filters.get("exclude_doc_ids")
+    if exclude_doc_ids:
+        must_not.append(
+            models.FieldCondition(
+                key="doc_id",
+                match=models.MatchAny(any=list(exclude_doc_ids)),
+            )
+        )
+    return models.Filter(
+        must=conditions or None,
+        must_not=must_not or None,
+    ) if conditions or must_not else None

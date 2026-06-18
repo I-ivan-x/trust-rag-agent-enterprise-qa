@@ -60,6 +60,7 @@ def retrieve_toy_baseline(
         "final_gated",
         "final_gated_calibrated",
         "final_agentic",
+        "final_agentic_v2",
     }:
         ranked = _rank_hybrid(
             query,

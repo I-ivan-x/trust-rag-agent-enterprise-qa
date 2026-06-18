@@ -129,6 +129,9 @@ class KeywordStore:
 def _matches_filters(hit: Any, filters: dict[str, Any] | None) -> bool:
     if not filters:
         return True
+    exclude_doc_ids = filters.get("exclude_doc_ids")
+    if exclude_doc_ids and hit.get("doc_id") in set(exclude_doc_ids):
+        return False
     for key in ("status", "access_level", "corpus_source", "doc_id"):
         if key not in filters or filters[key] is None:
             continue

@@ -33,7 +33,12 @@ from app.schemas.eval import EvalCase, EvalResult, EvalRunSummary
 from app.schemas.retrieval import RetrievedChunk
 
 RETRIEVAL_SYSTEMS = {"vector_only", "bm25_only", "hybrid_rrf", "hybrid_rrf_rerank"}
-FINAL_SYSTEMS = {"final_gated", "final_gated_calibrated", "final_agentic"}
+FINAL_SYSTEMS = {
+    "final_gated",
+    "final_gated_calibrated",
+    "final_agentic",
+    "final_agentic_v2",
+}
 BASELINE_LLM_SYSTEMS = {"direct_llm"}
 
 
@@ -466,6 +471,8 @@ def _run_case_real(
         retrieved=real.reranked_chunks,
         events=events,
     )
+    if real.agent_trace:
+        trace.update(real.agent_trace)
     answer_row = _answer_row(
         run_id=run_id,
         case=case,
@@ -521,6 +528,7 @@ def _answer_row(
             citation.model_dump(mode="json") for citation in real.citations
         ],
         "gate_decisions": real.gate_decisions,
+        "agent_trace": real.agent_trace,
         "cited_chunk_texts": cited_chunk_texts,
         "cited_text_sha256": cited_text_sha256,
         "warnings": warnings,

@@ -23,9 +23,14 @@ def run_trust_gated_pass(
     user_department: str | None,
     user_clearance: str | None,
     evidence_gate_config: EvidenceGateConfig | None = None,
+    filters: dict | None = None,
 ) -> RetrievalPassResult:
     warnings: list[str] = []
-    retrieved_chunks = retriever.retrieve(query, retrieval_options)
+    retrieved_chunks = (
+        retriever.retrieve(query, retrieval_options, filters=filters)
+        if filters is not None
+        else retriever.retrieve(query, retrieval_options)
+    )
     warnings.extend(getattr(retriever, "last_warnings", []))
     reranked_chunks = reranker.rerank(
         query,
