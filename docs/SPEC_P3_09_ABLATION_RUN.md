@@ -4,21 +4,22 @@
 设计：`Q2_AGENT_DESIGN.md` §8。前置：P3-01~08 已落地。
 **这是 Phase 3 第一个真正消耗 token 的任务。** 报告散文（P3-11）由 Claude 后补。
 
-## 0. 强制零 token 预门（先跑，不过不准花 token）
+## 0. 零 token 诊断预检（先跑，不过不准花 token）
 
 P3-08 的验证 gate 是**受控手搭**的（diagnose 逻辑层），**未证明真实检索会产生共现信号**。
-P3-09 用真实检索，所以**必须先零 token 验证**：
+P3-09 用真实检索，所以**必须先零 token 记录真实触发面**：
 
 ```text
 1. ingest agent_residual + 建真实索引（--include-agent-residual）。
-2. 对 10 条 case 跑真实检索（hybrid + rerank）→ first_pass → diagnose()。
-3. 统计真实检索下 legal=={a,b,e} 的 case 数。
-4. 断言 ≥6；否则 **HALT**，报告哪几条没触发 + 实际 legal_actions + 信号值
-   （entity_miss/top_rerank_score/邻居计数），**不进入花 token 的消融 run**。
+2. 对 obfuscated(15) + agent_residual(10) 跑真实检索（hybrid + rerank）→ first_pass → diagnose()。
+3. 统计真实检索下 failure_type/legal_actions 分布、每 case 信号值，以及
+   weak_recall 触发（action a 合法）的 case 数。
+4. RECORD 不 HALT：预检结果写入 docs/ 或 run artifact，作为"决策点稀缺"实证附录。
 ```
 
-若 <6：交回 Owner/Claude 决策（调 query 弱召回程度 / 调邻居 / 调占位阈值），重跑预门。
-**这一步保护昂贵的 LLM run 不在没有决策点的测试床上空跑。**
+若 weak_recall/action-a 触发数 <8：交回 Owner/Claude 决策是否补更难的 obfuscated case。
+这不是调到 LLM 赢，只是确认 rewrite 对比有足够触发面；真实多动作共现稀缺则如实报告，
+不再制造共现或用"≥6 否则 HALT"阻断记录。
 
 ## 1. 消融 run（真实 LLM，预门通过后）
 
@@ -30,7 +31,7 @@ final_agentic_v2            动作空间 + 规则 controller
 final_agentic_v2_llm        动作空间 + LLM controller
 ```
 
-测试床（主）：`agent_residual`(10) + `obfuscated`(15) = 25 条。
+测试床（主）：`obfuscated`(15) + `agent_residual`(10) = 25 条。
 （external 校准后 false-refusal 子集为可选次要床，token 紧张可不跑。）
 
 **每条 case 重复 k=3**（pass^k）。预算：3 系统 × 25 × 3 = 225 答案调用
@@ -76,7 +77,7 @@ pass^k 块）；run_id 形如 `p3-09-agent-ablation`。
 ## 5. 验收
 
 ```text
-- 预门：真实检索 diagnose ≥6 共现（否则 HALT 报告，不花 token）。
+- 预检：真实检索 diagnose 分布归档；weak_recall/action-a 触发数记录；不再 HALT。
 - 消融 run 落盘：3 系统 × 25 × k=3；summary 含 agent_attribution + pass^k + 并排对比。
 - ruff + pytest 全绿（指标/pass^k 计算逻辑有零 token 单测）；不破坏既有 214。
 - agent_residual 不进 headline（断言）。
@@ -88,13 +89,14 @@ pass^k 块）；run_id 形如 `p3-09-agent-ablation`。
 ```text
 - 不做 TF1 replay（仍只候选）。
 - 不把 agent_residual grounded 当 headline / 简历主数字。
-- 不改 controller/validator/动作空间/诊断阈值（阈值若需调，回 P3-08 预门处理）。
+- 不制造共现；不为动作选择层调语料。rewrite 触发面不足时，只补真实糟糕措辞类 obfuscated case。
+- 不改 controller/validator/动作空间；诊断阈值按 P3-09 revised 的 scarcity cleanup 执行。
 - 散文结论留 P3-11（Claude）。
 ```
 
 ## 7. 执行提示（Owner）
 
-- 预门零 token，先跑、贴结果给 Claude 审（确认 ≥6 共现真实成立）再放行花 token 的消融。
+- 预检零 token，先跑、贴诊断分布 + weak_recall 触发数给 Claude/Owner 审，再决定是否放行花 token 的消融。
 - 真实 run 用 DeepSeek 主模型；llm controller 也用主模型（§9.2，无家族 guard）。
 - 跑完贴 summary（grounded per系统 + agent_attribution 并排 + pass^k + fallback_rate），
   Claude 审核 + 写 P3-11 trajectory 报告散文。

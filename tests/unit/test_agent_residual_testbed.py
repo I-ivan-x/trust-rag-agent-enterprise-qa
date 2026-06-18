@@ -214,6 +214,7 @@ def _first_pass_for(
 ) -> RetrievalPassResult:
     if case_id in {f"AR-00{index}" for index in range(1, 7)}:
         selected = [
+            chunks_by_doc[f"doc-ar-00{int(case_id[-1])}-gold"],
             chunks_by_doc[f"doc-ar-00{int(case_id[-1])}-old-a"],
             chunks_by_doc[f"doc-ar-00{int(case_id[-1])}-old-b"],
         ]
@@ -237,6 +238,7 @@ def _first_pass_for(
         return _pass_result(
             query,
             [
+                chunks_by_doc["doc-ar-009-gold"],
                 chunks_by_doc["doc-ar-009-old-a"],
                 chunks_by_doc["doc-ar-009-old-b"],
             ],

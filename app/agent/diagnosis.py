@@ -40,8 +40,10 @@ class DiagnosisReport(BaseModel):
     legal_actions: list[ActionType] = Field(default_factory=list)
 
 
-# TODO-W7: calibrate these against Phase 1/Week 7 distributions.
-DEFAULT_MIN_SUPPORT = 1
+# TODO-W7: calibrate these against Phase 1/Week 7 distributions. Keep the
+# placeholder support line at >=2 so policy crowding can mean "some clean
+# evidence exists, but not enough yet" rather than "no clean evidence exists."
+DEFAULT_MIN_SUPPORT = 2
 DEFAULT_MIN_SCORE = 0.3
 
 
@@ -114,7 +116,7 @@ def diagnose(
 
     signal_policy_crowding = (
         deprecated_neighbor_count + restricted_neighbor_count >= 2
-        and clean_active_count < min_support
+        and 0 < clean_active_count < min_support
     )
     signal_weak_recall = entity_miss or (
         top_rerank_score is not None and top_rerank_score < min_score

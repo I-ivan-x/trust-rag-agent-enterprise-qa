@@ -72,6 +72,39 @@ def test_diagnosis_conflict_allows_conflict_set() -> None:
 
 
 def test_diagnosis_policy_crowding_allows_filtered_retrieval() -> None:
+    active = make_retrieved_chunk(
+        "active",
+        "current token limit",
+        status=DocumentStatus.active,
+    )
+    deprecated = make_retrieved_chunk(
+        "deprecated",
+        "old token limit",
+        status=DocumentStatus.deprecated,
+    )
+    deprecated_2 = make_retrieved_chunk(
+        "deprecated-2",
+        "older token limit",
+        status=DocumentStatus.deprecated,
+    )
+    report = diagnose(
+        _pass_result(
+            reranked=[active, deprecated, deprecated_2],
+            acl_surviving=[active],
+            deprecated=[deprecated, deprecated_2],
+            evidence_sufficient=False,
+            top_score=0.9,
+        )
+    )
+
+    assert report.failure_type == FailureType.policy_crowding
+    assert report.legal_actions == [
+        ActionType.filtered_retrieval,
+        ActionType.refuse_with_explanation,
+    ]
+
+
+def test_diagnosis_policy_crowding_requires_some_clean_evidence() -> None:
     deprecated = make_retrieved_chunk(
         "deprecated",
         "old token limit",
@@ -91,11 +124,9 @@ def test_diagnosis_policy_crowding_allows_filtered_retrieval() -> None:
         )
     )
 
-    assert report.failure_type == FailureType.policy_crowding
-    assert report.legal_actions == [
-        ActionType.filtered_retrieval,
-        ActionType.refuse_with_explanation,
-    ]
+    assert report.clean_active_count == 0
+    assert report.failure_type == FailureType.no_recovery
+    assert report.legal_actions == [ActionType.refuse_with_explanation]
 
 
 def test_diagnosis_weak_recall_allows_rewrite() -> None:
@@ -118,6 +149,12 @@ def test_diagnosis_weak_recall_allows_rewrite() -> None:
 
 
 def test_diagnosis_policy_and_weak_recall_coexistence_allows_a_b_e() -> None:
+    active = make_retrieved_chunk(
+        "active",
+        "current token limit",
+        status=DocumentStatus.active,
+        rerank_score=0.1,
+    )
     deprecated = make_retrieved_chunk(
         "deprecated",
         "old token limit",
@@ -132,7 +169,8 @@ def test_diagnosis_policy_and_weak_recall_coexistence_allows_a_b_e() -> None:
     )
     report = diagnose(
         _pass_result(
-            reranked=[deprecated, deprecated_2],
+            reranked=[active, deprecated, deprecated_2],
+            acl_surviving=[active],
             deprecated=[deprecated, deprecated_2],
             evidence_sufficient=False,
             entity_miss=True,

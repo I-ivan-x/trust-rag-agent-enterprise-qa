@@ -32,7 +32,12 @@ def test_agentic_v2_cooccurrence_takes_b_then_answers() -> None:
         "The active token limit is 30 requests per minute.",
         doc_id="doc-clean",
     )
-    retriever = _SequenceRetriever([[deprecated, deprecated_2], [clean]])
+    clean_hint = make_retrieved_chunk(
+        "clean-hint",
+        "The current rate ceiling is documented in the operations guide.",
+        doc_id="doc-clean-hint",
+    )
+    retriever = _SequenceRetriever([[clean_hint, deprecated, deprecated_2], [clean]])
 
     result = run_agentic_v2_loop(
         case=_case(),

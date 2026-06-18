@@ -35,6 +35,11 @@ def test_llm_controller_valid_action_is_accepted_and_traced() -> None:
         "The active token limit is 30 requests per minute.",
         doc_id="doc-clean",
     )
+    clean_hint = make_retrieved_chunk(
+        "clean-hint",
+        "The current rate ceiling is documented in the operations guide.",
+        doc_id="doc-clean-hint",
+    )
     llm = _FakeControllerLLM(
         {
             "action": "filtered_retrieval",
@@ -45,7 +50,7 @@ def test_llm_controller_valid_action_is_accepted_and_traced() -> None:
 
     result = run_agentic_v2_loop(
         case=_case(),
-        retriever=_SequenceRetriever([[deprecated, deprecated_2], [clean]]),
+        retriever=_SequenceRetriever([[clean_hint, deprecated, deprecated_2], [clean]]),
         reranker=MockReranker(),
         retrieval_options=_options(),
         controller=LLMController(llm),
@@ -121,6 +126,11 @@ def test_llm_filter_widening_is_validator_rejected_then_rule_fallback() -> None:
         status=DocumentStatus.deprecated,
         rerank_score=0.1,
     )
+    clean_hint = make_retrieved_chunk(
+        "clean-hint",
+        "The current rate ceiling is documented in the operations guide.",
+        doc_id="doc-clean-hint",
+    )
     llm = _FakeControllerLLM(
         {
             "action": "filtered_retrieval",
@@ -131,7 +141,7 @@ def test_llm_filter_widening_is_validator_rejected_then_rule_fallback() -> None:
 
     result = run_agentic_v2_loop(
         case=_case(),
-        retriever=_SequenceRetriever([[deprecated, deprecated_2], []]),
+        retriever=_SequenceRetriever([[clean_hint, deprecated, deprecated_2], []]),
         reranker=MockReranker(),
         retrieval_options=_options(),
         controller=LLMController(llm),
