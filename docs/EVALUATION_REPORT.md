@@ -258,3 +258,96 @@ reproducible after the retrieval-stack drift was fixed. No threshold or policy
 variant measured in Phase 1 improves grounded correctness without violating the
 false-answer constraint, so `final_gated_calibrated` freezes the conservative
 legacy/default point for Q2 comparisons.
+
+---
+
+## Q2 Phase 3 P3-09/P3-10 Agent Ablation
+
+- run_id: `p3-09-agent-ablation`
+- run_dir: `data/eval_runs/p3-09-agent-ablation`
+- systems: `final_gated_calibrated, final_agentic_v2_rule, final_agentic_v2_llm`
+- cases: `22` unique x `k=3`
+- mode: `real_run`
+- headline_eligible: `False`
+- headline_scope: `agent_phase3_diagnostic`
+- mock_used: `False`
+- toy_retrieval: `False`
+- expected_rewrite_used: `False`
+- vector_unavailable: `False`
+- llm_call_count: `42` (answer `24`, controller `18`, rewrite `0`)
+- llm_usage_total_tokens: `79194`
+
+> Diagnostic-only P3 agent ablation. agent_residual/AR cases and this mixed testbed never enter external headline metrics.
+
+### Metric Boundary Carry-Forward
+
+Retrieval-tier metrics measure whether gold evidence is retrieved, not whether the final answer is correct.
+
+Week 6 boundary retained: final_agentic did not outperform final_gated; P3 agent deltas are diagnostic small-n observations, not headline claims.
+
+### Testbed
+
+| slice | count / ids |
+| --- | --- |
+| obfuscated | 15 cases |
+| external false-refusal controls | external-003, external-004, external-010, external-014, external-015, external-017 |
+| legal-trigger | obfuscated-015, AR-002 |
+| hard-negative | excluded |
+
+### Grounded And Reliability
+
+| system | grounded | pass^1 attempt mean | pass^3 | action sequence consistency |
+| --- | ---: | ---: | ---: | ---: |
+| final_gated_calibrated | 0.2273 | 0.2273 | 0.2273 | 1.0000 |
+| final_agentic_v2_rule | 0.2727 | 0.2727 | 0.2727 | 1.0000 |
+| final_agentic_v2_llm | 0.2727 | 0.2727 | 0.2727 | 1.0000 |
+
+### LLM Calls
+
+| system | answer | controller | rewrite | total |
+| --- | ---: | ---: | ---: | ---: |
+| final_gated_calibrated | 6 | 0 | 0 | 6 |
+| final_agentic_v2_rule | 9 | 0 | 0 | 9 |
+| final_agentic_v2_llm | 9 | 18 | 0 | 27 |
+
+### Agent Attribution
+
+| action | trigger | accept | success | false_recovery_count | ineffective |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| rewrite_query | 18 | 12 | 6 | 0 | 6 |
+| filtered_retrieval | 0 | 0 | 0 | 0 | 0 |
+| present_conflict_set | 0 | 0 | 0 | 0 | 0 |
+| refuse_with_explanation | 36 | 18 | 0 | 0 | 0 |
+
+LLM controller:
+
+- llm_propose_count: `18`
+- llm_accept_count: `10`
+- llm_fallback_count: `8`
+- llm_fallback_rate: `0.4444444444444444`
+
+Per-system action attribution:
+
+| system | action | trigger | accept | success | false_recovery_count | ineffective |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| final_agentic_v2_rule | rewrite_query | 9 | 6 | 3 | 0 | 3 |
+| final_agentic_v2_rule | filtered_retrieval | 0 | 0 | 0 | 0 | 0 |
+| final_agentic_v2_rule | present_conflict_set | 0 | 0 | 0 | 0 | 0 |
+| final_agentic_v2_rule | refuse_with_explanation | 18 | 9 | 0 | 0 | 0 |
+| final_agentic_v2_llm | rewrite_query | 9 | 6 | 3 | 0 | 3 |
+| final_agentic_v2_llm | filtered_retrieval | 0 | 0 | 0 | 0 | 0 |
+| final_agentic_v2_llm | present_conflict_set | 0 | 0 | 0 | 0 | 0 |
+| final_agentic_v2_llm | refuse_with_explanation | 18 | 9 | 0 | 0 | 0 |
+
+### Diagnostic Anchor
+
+P3-09 zero-token precheck: 33 cases; failure distribution `{'NO_RECOVERY': 29, 'PERMISSION_BLOCKED': 2, 'WEAK_RECALL': 2}`; a legal trigger=2, b legal trigger=0, b gold-doc-recoverable=0, d legal trigger=0.
+
+### P3-11 Interpretation
+
+Phenomenon: action b/d have no legal trigger and action-a recovery is confined to the legal-trigger diagnostic corner. The small observed delta is not a headline gain.
+
+Root cause: the remaining false-refusals are policy-adjudication style failures (F1/F2), not retrieval recoveries. Action b has a broad diagnostic surface, but gold-doc-recoverable remains 0, and filtered retrieval does not bypass ACL/state gates.
+
+Next step: treat the mechanism as usable and guarded, while recording that the current frozen testbed has no broad measurable agent gain. The dual-controller ablation has degraded to a vs e on n=2 legal-trigger cases, so it is qualitative and statistically powerless.
+

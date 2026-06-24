@@ -212,3 +212,199 @@ top-5 retrieval-collapse problem on the fair rewritten split. Future hard-negati
 work should be framed as top-1 ranking and citation/answer-side attribution, and
 any rewritten real run should be reported as a new n=18 measurement, not as a
 gain over Week 6.
+
+---
+
+## Q2 Phase 3 P3-09/P3-10
+
+- run_id: `p3-09-agent-ablation`
+- failure rows: `147`
+- headline_eligible: `False`
+
+### Failure Distribution
+
+```json
+{
+  "by_reason": {
+    "grounded_correctness_false": 147
+  },
+  "by_system": {
+    "final_agentic_v2_llm": 48,
+    "final_agentic_v2_rule": 48,
+    "final_gated_calibrated": 51
+  },
+  "by_testbed_group": {
+    "external_false_refusal": 54,
+    "legal_trigger": 3,
+    "obfuscated": 90
+  }
+}
+```
+
+### Trajectory Failure Taxonomy
+
+| code | meaning | count |
+| --- | --- | ---: |
+| TF1 | wrong action; replay candidate only | 0 |
+| TF2 | ineffective action; evidence still insufficient | 2 |
+| TF3 | validator rejected an action | 8 |
+| TF4 | budget exhausted | 0 |
+
+### P3 Root Cause
+
+The residual failures are dominated by the already-known calibrated-gate boundary: false-refusal cases are policy adjudication failures rather than recoverable metadata-filtered retrieval failures. The P3 action space remains guarded: retrieval actions rerun ACL/state/evidence gates, and invalid LLM controller proposals fall back to the rule controller.
+
+Week 6 boundary retained: hard_negative_error_rate=1.0 indicates a serious failure mode.
+
+### Failure Samples
+
+#### obfuscated:obfuscated-003 / final_gated_calibrated / run 1
+
+- group: `obfuscated`
+- reason: `grounded_correctness_false`
+- query: Browser says CORS blocked my API call; which FastAPI knob actually controls that?
+
+#### obfuscated:obfuscated-004 / final_gated_calibrated / run 1
+
+- group: `obfuscated`
+- reason: `grounded_correctness_false`
+- query: Pydantic enum values show up weird in responses; where do the FastAPI docs talk about supported data types?
+
+#### obfuscated:obfuscated-006 / final_gated_calibrated / run 1
+
+- group: `obfuscated`
+- reason: `grounded_correctness_false`
+- query: Can one endpoint take an uploaded file and normal form values together, or does multipart change the body story?
+
+#### obfuscated:obfuscated-007 / final_gated_calibrated / run 1
+
+- group: `obfuscated`
+- reason: `grounded_correctness_false`
+- query: I just want to save an uploaded file from a client request; which FastAPI file parameter guidance should I cite?
+
+#### obfuscated:obfuscated-008 / final_gated_calibrated / run 1
+
+- group: `obfuscated`
+- reason: `grounded_correctness_false`
+- query: Why use Depends instead of calling my helper directly inside the route?
+
+#### obfuscated:obfuscated-009 / final_gated_calibrated / run 1
+
+- group: `obfuscated`
+- reason: `grounded_correctness_false`
+- query: Where should I look when I want FastAPI to return a structured HTTP error?
+
+#### obfuscated:obfuscated-010 / final_gated_calibrated / run 1
+
+- group: `obfuscated`
+- reason: `grounded_correctness_false`
+- query: Can I use a Pydantic-ish object with form posts, or are forms handled differently from JSON bodies?
+
+#### obfuscated:obfuscated-011 / final_gated_calibrated / run 1
+
+- group: `obfuscated`
+- reason: `grounded_correctness_false`
+- query: How do I read a custom header from a request without treating it like a query parameter?
+
+#### obfuscated:obfuscated-014 / final_gated_calibrated / run 1
+
+- group: `obfuscated`
+- reason: `grounded_correctness_false`
+- query: Swagger docs need a description for a query field; which legacy validation page is relevant?
+
+#### obfuscated:obfuscated-015 / final_gated_calibrated / run 1
+
+- group: `obfuscated`
+- reason: `grounded_correctness_false`
+- query: For nested payloads, how do list length or nested-model constraints show up in the older docs?
+
+#### external:external-003 / final_gated_calibrated / run 1
+
+- group: `external_false_refusal`
+- reason: `grounded_correctness_false`
+- query: How can I enable CORS in FastAPI?
+
+#### external:external-004 / final_gated_calibrated / run 1
+
+- group: `external_false_refusal`
+- reason: `grounded_correctness_false`
+- query: Pydantic enum field does not get converted to string
+
+#### external:external-010 / final_gated_calibrated / run 1
+
+- group: `external_false_refusal`
+- reason: `grounded_correctness_false`
+- query: How to use a Pydantic model with Form data in FastAPI?
+
+#### external:external-014 / final_gated_calibrated / run 1
+
+- group: `external_false_refusal`
+- reason: `grounded_correctness_false`
+- query: Set description for query parameter in swagger doc using Pydantic model (FastAPI)
+
+#### external:external-015 / final_gated_calibrated / run 1
+
+- group: `external_false_refusal`
+- reason: `grounded_correctness_false`
+- query: Is it possible to impose the length for a list attribute of the request body with fastapi?
+
+#### external:external-017 / final_gated_calibrated / run 1
+
+- group: `external_false_refusal`
+- reason: `grounded_correctness_false`
+- query: Displaying of FastAPI validation errors to end users
+
+#### obfuscated:obfuscated-003 / final_agentic_v2_rule / run 1
+
+- group: `obfuscated`
+- reason: `grounded_correctness_false`
+- query: Browser says CORS blocked my API call; which FastAPI knob actually controls that?
+
+#### obfuscated:obfuscated-004 / final_agentic_v2_rule / run 1
+
+- group: `obfuscated`
+- reason: `grounded_correctness_false`
+- query: Pydantic enum values show up weird in responses; where do the FastAPI docs talk about supported data types?
+
+#### obfuscated:obfuscated-006 / final_agentic_v2_rule / run 1
+
+- group: `obfuscated`
+- reason: `grounded_correctness_false`
+- query: Can one endpoint take an uploaded file and normal form values together, or does multipart change the body story?
+
+#### obfuscated:obfuscated-007 / final_agentic_v2_rule / run 1
+
+- group: `obfuscated`
+- reason: `grounded_correctness_false`
+- query: I just want to save an uploaded file from a client request; which FastAPI file parameter guidance should I cite?
+
+#### obfuscated:obfuscated-008 / final_agentic_v2_rule / run 1
+
+- group: `obfuscated`
+- reason: `grounded_correctness_false`
+- query: Why use Depends instead of calling my helper directly inside the route?
+
+#### obfuscated:obfuscated-009 / final_agentic_v2_rule / run 1
+
+- group: `obfuscated`
+- reason: `grounded_correctness_false`
+- query: Where should I look when I want FastAPI to return a structured HTTP error?
+
+#### obfuscated:obfuscated-010 / final_agentic_v2_rule / run 1
+
+- group: `obfuscated`
+- reason: `grounded_correctness_false`
+- query: Can I use a Pydantic-ish object with form posts, or are forms handled differently from JSON bodies?
+
+#### obfuscated:obfuscated-011 / final_agentic_v2_rule / run 1
+
+- group: `obfuscated`
+- reason: `grounded_correctness_false`
+- query: How do I read a custom header from a request without treating it like a query parameter?
+
+#### obfuscated:obfuscated-014 / final_agentic_v2_rule / run 1
+
+- group: `obfuscated`
+- reason: `grounded_correctness_false`
+- query: Swagger docs need a description for a query field; which legacy validation page is relevant?
+
