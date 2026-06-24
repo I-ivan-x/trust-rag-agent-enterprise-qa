@@ -88,6 +88,81 @@ def compute_passk(
     }
 
 
+def compute_govern_passk(
+    result_rows: list[dict[str, Any]],
+    *,
+    k: int,
+) -> dict[str, Any]:
+    """Compute governance pass^k using action correctness and action consistency."""
+
+    if k <= 0:
+        raise ValueError("k must be positive")
+
+    results_by_system_case: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
+    for row in result_rows:
+        system = _string(row.get("system_name"))
+        case_key = _case_key(row)
+        if not system or not case_key:
+            continue
+        results_by_system_case[(system, case_key)].append(row)
+
+    systems = sorted({system for system, _ in results_by_system_case})
+    by_system: dict[str, dict[str, Any]] = {}
+    for system in systems:
+        keys = sorted(key for key in results_by_system_case if key[0] == system)
+        complete_keys = [key for key in keys if len(results_by_system_case[key]) >= k]
+        total_attempts = len(complete_keys) * k
+        passed_attempts = 0
+        first_run_passed = 0
+        all_run_passed = 0
+        consistent_actions = 0
+
+        for key in complete_keys:
+            rows = _sort_by_run_index(results_by_system_case[key])[:k]
+            pass_values = [_govern_action_correct(row) for row in rows]
+            passed_attempts += sum(pass_values)
+            if pass_values[0]:
+                first_run_passed += 1
+            if all(pass_values):
+                all_run_passed += 1
+
+            proposed_actions = [_string(row.get("proposed_action")) for row in rows]
+            if len(proposed_actions) == k and len(set(proposed_actions)) <= 1:
+                consistent_actions += 1
+
+        case_count = len(complete_keys)
+        by_system[system] = {
+            "metric_type": "action_metric",
+            "metric_tags": ["action_metric"],
+            "k": k,
+            "case_count": case_count,
+            "complete_case_count": case_count,
+            "attempt_count": total_attempts,
+            "pass_1_attempt_mean": _ratio(passed_attempts, total_attempts),
+            "pass_1_first_run": _ratio(first_run_passed, case_count),
+            f"pass_{k}": _ratio(all_run_passed, case_count),
+            "governance_action_consistency": _ratio(consistent_actions, case_count),
+        }
+
+    return {
+        "k": k,
+        "metric_type": "action_metric",
+        "metric_tags": ["action_metric"],
+        "by_system": by_system,
+        "notes": {
+            "pass_1_attempt_mean": "Mean action_correct over all repeated attempts.",
+            "pass_k": "Case passes only when every repeated attempt is action_correct.",
+            "governance_action_consistency": (
+                "Share of cases whose proposed_action is identical across all repeats."
+            ),
+            "headline_policy": (
+                "Governance pass^k is an action_metric diagnostic and is not merged "
+                "into grounded retrieval/answer headline metrics."
+            ),
+        },
+    }
+
+
 def _sort_by_run_index(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return sorted(rows, key=lambda row: int(row.get("run_index") or 0))
 
@@ -118,3 +193,10 @@ def _ratio(numerator: int, denominator: int) -> float:
 
 def _string(value: Any) -> str:
     return str(value) if value is not None else ""
+
+
+def _govern_action_correct(row: dict[str, Any]) -> bool:
+    value = row.get("action_correct")
+    if isinstance(value, bool):
+        return value
+    return _string(row.get("proposed_action")) == _string(row.get("gold_action"))

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from app.eval.passk import compute_passk
+from app.eval.passk import compute_govern_passk, compute_passk
 
 
 def test_compute_passk_attempt_mean_all_pass_and_sequence_consistency() -> None:
@@ -43,6 +43,63 @@ def test_compute_passk_treats_empty_baseline_sequence_as_consistent() -> None:
     assert summary["by_system"]["baseline"]["action_sequence_consistency"] == 1.0
 
 
+def test_govern_passk_all_pass() -> None:
+    results = [
+        _govern_result("case-a", "sys-a", index, "flag_stale", "flag_stale")
+        for index in (1, 2, 3)
+    ]
+
+    summary = compute_govern_passk(results, k=3)
+
+    metrics = summary["by_system"]["sys-a"]
+    assert summary["metric_tags"] == ["action_metric"]
+    assert metrics["pass_1_attempt_mean"] == 1.0
+    assert metrics["pass_1_first_run"] == 1.0
+    assert metrics["pass_3"] == 1.0
+
+
+def test_govern_passk_partial() -> None:
+    results = [
+        _govern_result("case-a", "sys-a", 1, "flag_stale", "flag_stale"),
+        _govern_result("case-a", "sys-a", 2, "escalate_to_human", "flag_stale"),
+        _govern_result("case-a", "sys-a", 3, "flag_stale", "flag_stale"),
+    ]
+
+    summary = compute_govern_passk(results, k=3)
+
+    metrics = summary["by_system"]["sys-a"]
+    assert metrics["pass_1_attempt_mean"] == pytest.approx(2 / 3, abs=0.0001)
+    assert metrics["pass_1_first_run"] == 1.0
+    assert metrics["pass_3"] == 0.0
+
+
+def test_govern_action_consistency() -> None:
+    results = [
+        _govern_result("case-a", "sys-a", 1, "flag_stale", "flag_stale"),
+        _govern_result("case-a", "sys-a", 2, "flag_stale", "flag_stale"),
+        _govern_result("case-a", "sys-a", 3, "flag_stale", "flag_stale"),
+        _govern_result(
+            "case-b",
+            "sys-a",
+            1,
+            "open_remediation_ticket",
+            "open_remediation_ticket",
+        ),
+        _govern_result("case-b", "sys-a", 2, "send_alert", "open_remediation_ticket"),
+        _govern_result(
+            "case-b",
+            "sys-a",
+            3,
+            "open_remediation_ticket",
+            "open_remediation_ticket",
+        ),
+    ]
+
+    summary = compute_govern_passk(results, k=3)
+
+    assert summary["by_system"]["sys-a"]["governance_action_consistency"] == 0.5
+
+
 def _result(
     case_id: str,
     system_name: str,
@@ -70,4 +127,21 @@ def _trace(
         "system_name": system_name,
         "run_index": run_index,
         "action_sequence": action_sequence,
+    }
+
+
+def _govern_result(
+    case_id: str,
+    system_name: str,
+    run_index: int,
+    proposed_action: str,
+    gold_action: str,
+) -> dict:
+    return {
+        "split": "external",
+        "case_id": case_id,
+        "system_name": system_name,
+        "run_index": run_index,
+        "proposed_action": proposed_action,
+        "gold_action": gold_action,
     }

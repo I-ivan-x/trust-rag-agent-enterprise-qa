@@ -43,6 +43,7 @@ FINAL_SYSTEMS = {
     "final_agentic_v2_llm",
 }
 BASELINE_LLM_SYSTEMS = {"direct_llm"}
+GOVERN_SYSTEMS = {"final_governed_rule", "final_governed_llm"}
 
 
 def run_eval(
@@ -945,6 +946,8 @@ def _build_summary(
     agent_attribution = compute_agent_attribution(trace_rows, results)
     if agent_attribution is not None:
         summary["agent_attribution"] = agent_attribution
+    # P7 hook: governance action systems will attach governance_metrics,
+    # governance_attribution, and governance_passk as action_metric diagnostics only.
     return summary
 
 
