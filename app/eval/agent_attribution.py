@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-AGENT_SYSTEMS = {"final_agentic_v2", "final_agentic_v2_llm"}
+AGENT_SYSTEMS = {"final_agentic_v2", "final_agentic_v2_rule", "final_agentic_v2_llm"}
 ACTION_TYPES = (
     "rewrite_query",
     "filtered_retrieval",
@@ -72,7 +72,6 @@ def compute_agent_attribution(
             chosen_source = _string_or_none(step.get("chosen_source"))
             fallback_reason = _string_or_none(step.get("fallback_reason"))
             validator_ok = step.get("validator_ok") is not False
-            accepted = step.get("accepted", True) is True
 
             for action in ACTION_TYPES:
                 if action in legal_actions:
@@ -88,7 +87,6 @@ def compute_agent_attribution(
 
             if (
                 chosen_action in ACTION_TYPES
-                and accepted
                 and validator_ok
             ):
                 per_action[chosen_action]["accept_count"] += 1

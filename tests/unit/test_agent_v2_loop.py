@@ -152,6 +152,22 @@ def test_final_agentic_v2_can_run_through_eval_mock_path(tmp_path) -> None:
     assert summary["llm_call_count"] == 0
 
 
+def test_final_agentic_v2_rule_alias_can_run_through_eval_mock_path(tmp_path) -> None:
+    summary = run_eval(
+        split="fixture",
+        systems=["final_agentic_v2_rule"],
+        mock_run=True,
+        output_root=tmp_path,
+        run_id="agent-v2-rule-mock",
+        write_reports=False,
+        limit=1,
+    )
+
+    assert summary["systems"] == ["final_agentic_v2_rule"]
+    assert summary["mode"] == "mock_smoke"
+    assert summary["llm_call_count"] == 0
+
+
 def _case() -> EvalCase:
     return EvalCase(
         case_id="agent-v2-case",

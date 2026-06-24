@@ -61,6 +61,7 @@ def retrieve_toy_baseline(
         "final_gated_calibrated",
         "final_agentic",
         "final_agentic_v2",
+        "final_agentic_v2_rule",
         "final_agentic_v2_llm",
     }:
         ranked = _rank_hybrid(

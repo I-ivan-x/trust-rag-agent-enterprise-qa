@@ -95,6 +95,7 @@ def test_agent_attribution_tf3_counts_rejected_llm_step() -> None:
     assert controller["llm_accept_count"] == 0
     assert controller["llm_fallback_count"] == 1
     assert controller["llm_fallback_rate"] == 1.0
+    assert attribution["per_action"]["filtered_retrieval"]["accept_count"] == 1
 
 
 def test_agent_attribution_tf4_counts_budget_exhaustion() -> None:

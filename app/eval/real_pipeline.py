@@ -126,7 +126,11 @@ def run_real_final_pipeline(
     agent_trace: dict[str, Any] = {}
     warnings: list[str] = []
 
-    if system_name in {"final_agentic_v2", "final_agentic_v2_llm"}:
+    if system_name in {
+        "final_agentic_v2",
+        "final_agentic_v2_rule",
+        "final_agentic_v2_llm",
+    }:
         controller = None
         if system_name == "final_agentic_v2_llm":
             controller_client = llm_client or get_llm_client(
