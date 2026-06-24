@@ -23,8 +23,8 @@ def test_agent_residual_split_loads_eval_and_chunks() -> None:
     cases = load_eval_cases(EvalSplit.agent_residual)
     chunks = load_chunks_for_split(EvalSplit.agent_residual)
 
-    assert len(cases) == 10
-    assert len(chunks) == 25
+    assert len(cases) == 18
+    assert len(chunks) == 33
     assert {case.corpus_source.value for case in cases} == {"agent_residual"}
     assert {chunk.corpus_source.value for chunk in chunks} == {"agent_residual"}
 
@@ -71,8 +71,9 @@ def test_agent_residual_diagnosis_gate_matches_annotations() -> None:
 
 def test_agent_residual_annotations_have_required_shape() -> None:
     annotations = list(read_jsonl(Path("data/gold_eval/agent_residual_v1_annotations.jsonl")))
-    assert len(annotations) == 10
+    assert len(annotations) == 18
     assert sum(row["scenario_type"] == "cooccurrence" for row in annotations) >= 6
+    assert sum(row["scenario_type"] == "weak_recall_hard" for row in annotations) == 8
     for row in annotations:
         assert set(row) == {
             "case_id",
@@ -86,7 +87,7 @@ def test_agent_residual_corpus_documents_are_marked_agent_residual() -> None:
     raw_docs = load_corpus(Path("data/agent_residual_corpus"))
     parsed = [parse_markdown_document(raw_doc) for raw_doc in raw_docs]
 
-    assert len(parsed) == 25
+    assert len(parsed) == 33
     assert {parsed_doc.metadata.corpus_source.value for parsed_doc in parsed} == {
         "agent_residual"
     }
@@ -256,6 +257,24 @@ def _first_pass_for(
             evidence_sufficient=False,
             entity_miss=False,
             conflict=True,
+        )
+    hard_gold_doc_by_case = {
+        "AR-H01": "nc-deploy-checklist-2026",
+        "AR-H02": "nc-retention-2026",
+        "AR-H03": "nc-webhook-retry-2026",
+        "AR-H04": "nc-password-policy-2026",
+        "AR-H05": "nc-healthcheck",
+        "AR-H06": "nc-config-env",
+        "AR-H07": "nc-sso-oidc",
+        "AR-H08": "nc-pagination-cursor-v2",
+    }
+    if case_id in hard_gold_doc_by_case:
+        return _pass_result(
+            query,
+            [chunks_by_doc[hard_gold_doc_by_case[case_id]]],
+            evidence_sufficient=False,
+            entity_miss=True,
+            conflict=False,
         )
     raise AssertionError(f"unhandled residual case: {case_id}")
 

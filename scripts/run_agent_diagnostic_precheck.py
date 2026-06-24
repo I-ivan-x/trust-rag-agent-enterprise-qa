@@ -14,6 +14,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from app.agent.actions import ActionProposal, materialize_proposal
 from app.agent.diagnosis import ActionType, diagnose
 from app.core.config import get_settings
 from app.core.enums import EvalSplit
@@ -173,12 +174,21 @@ def _run_split(
             evidence_gate_config=evidence_gate_config,
         )
         report = diagnose(first_pass)
+        action_b_probe = _action_b_probe(
+            case=case,
+            first_pass=first_pass,
+            first_report=report,
+            retriever=retriever,
+            reranker=reranker,
+            evidence_gate_config=evidence_gate_config,
+        )
         records.append(
             _case_record(
                 case=case,
                 split=split,
                 report=report,
                 first_pass=first_pass,
+                action_b_probe=action_b_probe,
                 vector_available=vector_available,
                 reranker_unavailable=reranker_unavailable,
             )
@@ -196,12 +206,97 @@ def _run_split(
     return split_summary, records
 
 
-def _case_record(*, case, split, report, first_pass, vector_available, reranker_unavailable):
+def _action_b_probe(
+    *,
+    case,
+    first_pass,
+    first_report,
+    retriever,
+    reranker,
+    evidence_gate_config,
+) -> dict[str, Any]:
+    policy_neighbor_count = (
+        first_report.deprecated_neighbor_count + first_report.restricted_neighbor_count
+    )
+    legal_actions = [action.value for action in first_report.legal_actions]
+    probe: dict[str, Any] = {
+        "policy_neighbor_count": policy_neighbor_count,
+        "policy_neighbor_surface": policy_neighbor_count >= 2,
+        "legal_triggered": ActionType.filtered_retrieval.value in legal_actions,
+        "filtered_retrieval_attempted": False,
+        "filters": None,
+        "filtered_evidence_decision": None,
+        "filtered_evidence_reason": None,
+        "filtered_failure_type": None,
+        "filtered_gold_doc_hit_at_5": None,
+        "filtered_gold_chunk_hit_at_5": None,
+        "recoverable": False,
+        "gold_doc_recoverable": False,
+    }
+    if not probe["policy_neighbor_surface"]:
+        return probe
+
+    proposal = materialize_proposal(
+        ActionProposal(action=ActionType.filtered_retrieval),
+        query=first_pass.query,
+        pass_result=first_pass,
+    )
+    filters = proposal.args.get("filters") or {}
+    filtered_pass = run_trust_gated_pass(
+        query=first_pass.query,
+        retrieval_options=PRECHECK_OPTIONS,
+        retriever=retriever,
+        reranker=reranker,
+        user_role=case.user_role,
+        user_department=case.user_department,
+        user_clearance=case.user_clearance.value,
+        evidence_gate_config=evidence_gate_config,
+        filters=filters,
+    )
+    filtered_report = diagnose(filtered_pass)
+    filtered_hits = _gold_hits(case, filtered_pass.reranked_chunks)
+    first_hits = _gold_hits(case, first_pass.reranked_chunks)
+    first_insufficient = first_report.evidence_decision == "insufficient"
+    filtered_sufficient = filtered_report.evidence_decision == "sufficient"
+    probe.update(
+        {
+            "filtered_retrieval_attempted": True,
+            "filters": filters,
+            "filtered_evidence_decision": filtered_report.evidence_decision,
+            "filtered_evidence_reason": filtered_pass.evidence_decision.reason,
+            "filtered_failure_type": filtered_report.failure_type.value,
+            "filtered_gold_doc_hit_at_5": filtered_hits["gold_doc_hit_at_5"],
+            "filtered_gold_chunk_hit_at_5": filtered_hits["gold_chunk_hit_at_5"],
+            "recoverable": bool(first_insufficient and filtered_sufficient),
+            "gold_doc_recoverable": bool(
+                first_insufficient
+                and not first_hits["gold_doc_hit_at_5"]
+                and filtered_hits["gold_doc_hit_at_5"]
+            ),
+        }
+    )
+    return probe
+
+
+def _case_record(
+    *,
+    case,
+    split,
+    report,
+    first_pass,
+    action_b_probe,
+    vector_available,
+    reranker_unavailable,
+):
     legal_actions = [action.value for action in report.legal_actions]
     retrieved_doc_ids = [item.chunk.doc_id for item in first_pass.reranked_chunks[:10]]
     retrieved_chunk_ids = [item.chunk.chunk_id for item in first_pass.reranked_chunks[:10]]
-    gold_doc_ids = set(case.gold_doc_ids)
-    gold_chunk_ids = set(case.gold_chunk_ids)
+    hits = _gold_hits(case, first_pass.reranked_chunks)
+    action_d = {
+        "conflict_surface": bool(report.conflict_group_ids),
+        "legal_triggered": ActionType.present_conflict_set.value in legal_actions,
+        "conflict_group_ids": report.conflict_group_ids,
+    }
     return {
         "case_id": case.case_id,
         "split": split.value,
@@ -211,6 +306,11 @@ def _case_record(*, case, split, report, first_pass, vector_available, reranker_
         "failure_type": report.failure_type.value,
         "legal_actions": legal_actions,
         "weak_recall_triggered": ActionType.rewrite_query.value in legal_actions,
+        "action_a": {
+            "legal_triggered": ActionType.rewrite_query.value in legal_actions,
+        },
+        "action_b": action_b_probe,
+        "action_d": action_d,
         "signals": {
             "permission_blocked_count": report.permission_blocked_count,
             "deprecated_neighbor_count": report.deprecated_neighbor_count,
@@ -221,13 +321,22 @@ def _case_record(*, case, split, report, first_pass, vector_available, reranker_
             "support_chunk_count": report.support_chunk_count,
             "entity_miss": report.entity_miss,
         },
-        "gold_doc_hit_at_5": bool(gold_doc_ids & set(retrieved_doc_ids[:5])),
-        "gold_chunk_hit_at_5": bool(gold_chunk_ids & set(retrieved_chunk_ids[:5])),
+        "gold_doc_hit_at_5": hits["gold_doc_hit_at_5"],
+        "gold_chunk_hit_at_5": hits["gold_chunk_hit_at_5"],
         "retrieved_doc_ids": retrieved_doc_ids,
         "retrieved_chunk_ids": retrieved_chunk_ids,
         "warnings": first_pass.warnings,
         "vector_available": vector_available,
         "reranker_unavailable": reranker_unavailable,
+    }
+
+
+def _gold_hits(case, reranked_chunks) -> dict[str, bool]:
+    retrieved_doc_ids = [item.chunk.doc_id for item in reranked_chunks[:5]]
+    retrieved_chunk_ids = [item.chunk.chunk_id for item in reranked_chunks[:5]]
+    return {
+        "gold_doc_hit_at_5": bool(set(case.gold_doc_ids) & set(retrieved_doc_ids)),
+        "gold_chunk_hit_at_5": bool(set(case.gold_chunk_ids) & set(retrieved_chunk_ids)),
     }
 
 
@@ -254,7 +363,60 @@ def _build_summary(
             "weak_recall_trigger_count": sum(
                 1 for record in split_records if record["weak_recall_triggered"]
             ),
+            "action_a_trigger_count": _count(
+                split_records,
+                lambda record: record["action_a"]["legal_triggered"],
+            ),
+            "action_b_policy_neighbor_count": _count(
+                split_records,
+                lambda record: record["action_b"]["policy_neighbor_surface"],
+            ),
+            "action_b_legal_count": _count(
+                split_records,
+                lambda record: record["action_b"]["legal_triggered"],
+            ),
+            "action_b_recoverable_count": _count(
+                split_records,
+                lambda record: record["action_b"]["recoverable"],
+            ),
+            "action_b_gold_doc_recoverable_count": _count(
+                split_records,
+                lambda record: record["action_b"]["gold_doc_recoverable"],
+            ),
+            "action_d_conflict_surface_count": _count(
+                split_records,
+                lambda record: record["action_d"]["conflict_surface"],
+            ),
+            "action_d_legal_count": _count(
+                split_records,
+                lambda record: record["action_d"]["legal_triggered"],
+            ),
         }
+    action_a_count = _count(records, lambda record: record["action_a"]["legal_triggered"])
+    action_b_policy_count = _count(
+        records,
+        lambda record: record["action_b"]["policy_neighbor_surface"],
+    )
+    action_b_legal_count = _count(
+        records,
+        lambda record: record["action_b"]["legal_triggered"],
+    )
+    action_b_recoverable_count = _count(
+        records,
+        lambda record: record["action_b"]["recoverable"],
+    )
+    action_b_gold_recoverable_count = _count(
+        records,
+        lambda record: record["action_b"]["gold_doc_recoverable"],
+    )
+    action_d_surface_count = _count(
+        records,
+        lambda record: record["action_d"]["conflict_surface"],
+    )
+    action_d_legal_count = _count(
+        records,
+        lambda record: record["action_d"]["legal_triggered"],
+    )
     return {
         "run_id": run_id,
         "created_at": datetime.now(UTC).isoformat(),
@@ -268,11 +430,23 @@ def _build_summary(
         "weak_recall_trigger_count": sum(
             1 for record in records if record["weak_recall_triggered"]
         ),
+        "residual_action_profile": {
+            "action_a_rewrite_query": {
+                "legal_trigger_count": action_a_count,
+            },
+            "action_b_filtered_retrieval": {
+                "policy_neighbor_surface_count": action_b_policy_count,
+                "legal_trigger_count": action_b_legal_count,
+                "recoverable_count": action_b_recoverable_count,
+                "gold_doc_recoverable_count": action_b_gold_recoverable_count,
+            },
+            "action_d_present_conflict_set": {
+                "conflict_surface_count": action_d_surface_count,
+                "legal_trigger_count": action_d_legal_count,
+            },
+        },
         "weak_recall_minimum_for_rewrite_bed": 8,
-        "weak_recall_bed_sufficient": sum(
-            1 for record in records if record["weak_recall_triggered"]
-        )
-        >= 8,
+        "weak_recall_bed_sufficient": action_a_count >= 8,
         "by_split": by_split,
         "split_index_summaries": split_summaries,
         "notes": {
@@ -288,7 +462,14 @@ def _build_summary(
     }
 
 
+def _count(records: list[dict[str, Any]], predicate) -> int:
+    return sum(1 for record in records if predicate(record))
+
+
 def _markdown(summary: dict[str, Any], records: list[dict[str, Any]]) -> str:
+    profile = summary["residual_action_profile"]
+    action_b = profile["action_b_filtered_retrieval"]
+    action_d = profile["action_d_present_conflict_set"]
     lines = [
         "# P3-09 Diagnostic Precheck",
         "",
@@ -299,6 +480,18 @@ def _markdown(summary: dict[str, Any], records: list[dict[str, Any]]) -> str:
         "- llm_usage_total_tokens: 0",
         f"- case_count: {summary['case_count']}",
         f"- weak_recall/action-a trigger_count: {summary['weak_recall_trigger_count']}",
+        (
+            "- action-b policy-neighbor surface_count: "
+            f"{action_b['policy_neighbor_surface_count']}"
+        ),
+        f"- action-b legal trigger_count: {action_b['legal_trigger_count']}",
+        f"- action-b filter-recoverable count: {action_b['recoverable_count']}",
+        (
+            "- action-b gold-doc-recoverable count: "
+            f"{action_b['gold_doc_recoverable_count']}"
+        ),
+        f"- action-d active-conflict surface_count: {action_d['conflict_surface_count']}",
+        f"- action-d legal trigger_count: {action_d['legal_trigger_count']}",
         f"- weak_recall bed sufficient (>=8): {summary['weak_recall_bed_sufficient']}",
         "",
         "## Diagnostic Distribution",
@@ -324,8 +517,11 @@ def _markdown(summary: dict[str, Any], records: list[dict[str, Any]]) -> str:
             "",
             "## By Split",
             "",
-            "| split | cases | weak_recall triggers | failure_distribution |",
-            "| --- | ---: | ---: | --- |",
+            (
+                "| split | cases | a triggers | b policy | b legal | b recoverable | "
+                "d surface | d legal | failure_distribution |"
+            ),
+            "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |",
         ]
     )
     for split, split_summary in summary["by_split"].items():
@@ -334,6 +530,11 @@ def _markdown(summary: dict[str, Any], records: list[dict[str, Any]]) -> str:
             f"`{split}` | "
             f"{split_summary['case_count']} | "
             f"{split_summary['weak_recall_trigger_count']} | "
+            f"{split_summary['action_b_policy_neighbor_count']} | "
+            f"{split_summary['action_b_legal_count']} | "
+            f"{split_summary['action_b_recoverable_count']} | "
+            f"{split_summary['action_d_conflict_surface_count']} | "
+            f"{split_summary['action_d_legal_count']} | "
             f"`{json.dumps(split_summary['failure_distribution'], sort_keys=True)}` |"
         )
     lines.extend(
@@ -353,16 +554,16 @@ def _markdown(summary: dict[str, Any], records: list[dict[str, Any]]) -> str:
             "## Per Case",
             "",
             (
-                "| split | case_id | failure_type | legal_actions | clean | depr | "
-                "restr | entity_miss | top_score | gold_doc@5 |"
+                "| split | case_id | failure_type | legal_actions | clean | policy | "
+                "entity_miss | a | b_legal | b_save | d_surface | d_legal | gold_doc@5 |"
             ),
-            "| --- | --- | --- | --- | ---: | ---: | ---: | --- | ---: | --- |",
+            "| --- | --- | --- | --- | ---: | ---: | --- | --- | --- | --- | --- | --- | --- |",
         ]
     )
     for record in records:
         signals = record["signals"]
-        top_score = signals["top_rerank_score"]
-        top_score_text = "" if top_score is None else f"{top_score:.4f}"
+        action_b_record = record["action_b"]
+        action_d_record = record["action_d"]
         lines.append(
             "| "
             f"`{record['split']}` | "
@@ -370,10 +571,13 @@ def _markdown(summary: dict[str, Any], records: list[dict[str, Any]]) -> str:
             f"`{record['failure_type']}` | "
             f"`{_legal_key(record['legal_actions'])}` | "
             f"{signals['clean_active_count']} | "
-            f"{signals['deprecated_neighbor_count']} | "
-            f"{signals['restricted_neighbor_count']} | "
+            f"{action_b_record['policy_neighbor_count']} | "
             f"{signals['entity_miss']} | "
-            f"{top_score_text} | "
+            f"{record['action_a']['legal_triggered']} | "
+            f"{action_b_record['legal_triggered']} | "
+            f"{action_b_record['recoverable']} | "
+            f"{action_d_record['conflict_surface']} | "
+            f"{action_d_record['legal_triggered']} | "
             f"{record['gold_doc_hit_at_5']} |"
         )
     lines.append("")
