@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import shutil
 import sys
 from datetime import UTC, date, datetime
 from pathlib import Path
@@ -30,6 +31,28 @@ LICENSE_NOTE = (
     "FastAPI documentation from the public fastapi/fastapi GitHub repository; "
     "use subject to the upstream project license."
 )
+K8S_REPO = "kubernetes/website"
+K8S_REF = "main"
+K8S_LEGACY_REF = "release-1.24"
+K8S_DOCS_PREFIX = "content/en/docs/"
+K8S_TREE_URL = f"https://api.github.com/repos/{K8S_REPO}/git/trees/{K8S_REF}?recursive=1"
+K8S_LEGACY_TREE_URL = (
+    f"https://api.github.com/repos/{K8S_REPO}/git/trees/{K8S_LEGACY_REF}?recursive=1"
+)
+K8S_RAW_BASE_URL = f"https://raw.githubusercontent.com/{K8S_REPO}/{K8S_REF}/"
+K8S_LEGACY_RAW_BASE_URL = f"https://raw.githubusercontent.com/{K8S_REPO}/{K8S_LEGACY_REF}/"
+K8S_LICENSE_NOTE = (
+    "Kubernetes documentation from the public kubernetes/website GitHub repository; "
+    "licensed under CC BY 4.0 and fetched verbatim with attribution."
+)
+K8S_PATH_ADJUSTMENTS = {
+    "content/en/docs/concepts/configuration/overview.md": (
+        "content/en/docs/concepts/configuration/_index.md"
+    ),
+    "content/en/docs/reference/command-line-tools-reference/feature-gates.md": (
+        "content/en/docs/reference/command-line-tools-reference/feature-gates/index.md"
+    ),
+}
 FASTAPI_DOC_PATHS = [
     "docs/en/docs/index.md",
     "docs/en/docs/features.md",
@@ -83,6 +106,124 @@ FASTAPI_DOC_PATHS = [
     "docs/en/docs/advanced/response-directly.md",
     "docs/en/docs/advanced/custom-response.md",
     "docs/en/docs/advanced/additional-responses.md",
+]
+K8S_DOC_PATHS = [
+    {
+        "path": "content/en/docs/reference/using-api/deprecation-policy.md",
+        "bucket": "active",
+        "condition": "STALE_PROCEDURE",
+    },
+    {
+        "path": "content/en/docs/reference/using-api/deprecation-guide.md",
+        "bucket": "active",
+        "condition": "STALE_PROCEDURE",
+    },
+    {
+        "path": "content/en/docs/concepts/security/pod-security-admission.md",
+        "bucket": "active",
+        "condition": "STALE_PROCEDURE,CONFIG_VIOLATION",
+    },
+    {
+        "path": "content/en/docs/concepts/security/pod-security-standards.md",
+        "bucket": "security",
+        "condition": "CONFIG_VIOLATION",
+    },
+    {
+        "path": "content/en/docs/tasks/configure-pod-container/migrate-from-psp.md",
+        "bucket": "active",
+        "condition": "STALE_PROCEDURE",
+    },
+    {
+        "path": (
+            "content/en/docs/tasks/configure-pod-container/enforce-standards-namespace-labels.md"
+        ),
+        "bucket": "security",
+        "condition": "CONFIG_VIOLATION",
+    },
+    {
+        "path": (
+            "content/en/docs/tasks/configure-pod-container/"
+            "enforce-standards-admission-controller.md"
+        ),
+        "bucket": "security",
+        "condition": "CONFIG_VIOLATION",
+    },
+    {
+        "path": "content/en/docs/tasks/configure-pod-container/security-context.md",
+        "bucket": "active",
+        "condition": "CONFIG_VIOLATION",
+    },
+    {
+        "path": "content/en/docs/reference/access-authn-authz/rbac.md",
+        "bucket": "security",
+        "condition": "PERMISSION_BLOCKED",
+    },
+    {
+        "path": "content/en/docs/concepts/security/rbac-good-practices.md",
+        "bucket": "security",
+        "condition": "PERMISSION_BLOCKED",
+    },
+    {
+        "path": "content/en/docs/reference/access-authn-authz/authorization.md",
+        "bucket": "security",
+        "condition": "PERMISSION_BLOCKED",
+    },
+    {
+        "path": "content/en/docs/concepts/services-networking/endpoint-slices.md",
+        "bucket": "active",
+        "condition": "STALE_PROCEDURE",
+    },
+    {
+        "path": "content/en/docs/concepts/services-networking/service.md",
+        "bucket": "active",
+        "condition": "STALE_PROCEDURE",
+    },
+    {
+        "path": "content/en/docs/concepts/workloads/controllers/deployment.md",
+        "bucket": "active",
+        "condition": "no_op",
+    },
+    {
+        "path": "content/en/docs/tasks/manage-daemon/update-daemon-set.md",
+        "bucket": "active",
+        "condition": "no_op,MISSING_PREREQ",
+    },
+    {
+        "path": "content/en/docs/tasks/administer-cluster/cluster-upgrade.md",
+        "bucket": "active",
+        "condition": "MISSING_PREREQ,ACTIVE_ACTIVE_CONFLICT",
+    },
+    {
+        "path": "content/en/docs/concepts/configuration/overview.md",
+        "actual_path": "content/en/docs/concepts/configuration/_index.md",
+        "bucket": "active",
+        "condition": "CONFIG_VIOLATION",
+    },
+    {
+        "path": "content/en/docs/concepts/security/security-checklist.md",
+        "bucket": "security",
+        "condition": "CONFIG_VIOLATION",
+    },
+    {
+        "path": "content/en/docs/concepts/security/_index.md",
+        "bucket": "security",
+        "condition": "context",
+    },
+    {
+        "path": "content/en/docs/reference/command-line-tools-reference/feature-gates.md",
+        "actual_path": (
+            "content/en/docs/reference/command-line-tools-reference/feature-gates/index.md"
+        ),
+        "bucket": "active",
+        "condition": "STALE_PROCEDURE",
+    },
+    {
+        "path": "content/en/docs/concepts/security/pod-security-policy.md",
+        "bucket": "deprecated",
+        "condition": "STALE_PROCEDURE",
+        "ref": K8S_LEGACY_REF,
+        "superseded_by": "active/003-pod-security-admission.md",
+    },
 ]
 
 
@@ -148,6 +289,79 @@ def fetch_public_corpus(limit: int, output_dir: Path) -> dict[str, Any]:
     }
 
 
+def fetch_k8s_public_corpus(output_dir: Path, *, verify_tree: bool = True) -> dict[str, Any]:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    _prepare_output_dir(output_dir, buckets={"active", "deprecated", "security", "confidential"})
+    warnings: list[str] = ["TODO: Prometheus auxiliary corpus skipped for this P5 pass."]
+    written_docs: list[Path] = []
+
+    with httpx.Client(timeout=30.0, follow_redirects=True) as client:
+        tree_paths = _load_tree_paths(client, K8S_TREE_URL, warnings) if verify_tree else None
+        legacy_tree_paths = (
+            _load_tree_paths(client, K8S_LEGACY_TREE_URL, warnings) if verify_tree else None
+        )
+        for index, spec in enumerate(K8S_DOC_PATHS, start=1):
+            ref = spec.get("ref", K8S_REF)
+            repo_path = spec.get("actual_path") or K8S_PATH_ADJUSTMENTS.get(
+                spec["path"],
+                spec["path"],
+            )
+            original_path = spec["path"]
+            selected_tree = legacy_tree_paths if ref == K8S_LEGACY_REF else tree_paths
+            if selected_tree is not None and repo_path not in selected_tree:
+                raise RuntimeError(f"Kubernetes docs path not found in {ref} tree: {repo_path}")
+            if repo_path != original_path:
+                warnings.append(f"path adjusted: {original_path} -> {repo_path}")
+
+            raw_base = K8S_LEGACY_RAW_BASE_URL if ref == K8S_LEGACY_REF else K8S_RAW_BASE_URL
+            raw_url = raw_base + repo_path
+            response = client.get(raw_url)
+            if response.status_code == 404:
+                warnings.append(f"404: {ref}:{repo_path}")
+                continue
+            response.raise_for_status()
+            body = _strip_front_matter(response.text)
+            target_rel = _k8s_target_relative_path(spec=spec, repo_path=repo_path, index=index)
+            target_path = output_dir / target_rel
+            title = _title_from_markdown(body) or _title_from_repo_path(
+                repo_path,
+                prefix=K8S_DOCS_PREFIX,
+            )
+            front_matter = _k8s_front_matter(
+                repo_path=repo_path,
+                original_path=original_path,
+                target_path=target_path,
+                target_rel=target_rel,
+                title=title,
+                raw_url=raw_url,
+                index=index,
+                spec=spec,
+                ref=ref,
+            )
+            target_path.parent.mkdir(parents=True, exist_ok=True)
+            target_path.write_text(
+                "---\n"
+                + yaml.safe_dump(front_matter, sort_keys=False, allow_unicode=True)
+                + "---\n\n"
+                + body.strip()
+                + "\n",
+                encoding="utf-8",
+            )
+            written_docs.append(target_path)
+
+    overlay_path = _write_k8s_overlay(output_dir=output_dir, written_docs=written_docs)
+    manifest_path = write_public_manifest(output_dir, overlay_path)
+    return {
+        "source": f"https://github.com/{K8S_REPO}/tree/{K8S_REF}/{K8S_DOCS_PREFIX}",
+        "legacy_source": (f"https://github.com/{K8S_REPO}/tree/{K8S_LEGACY_REF}/{K8S_DOCS_PREFIX}"),
+        "public_docs": len(written_docs),
+        "output_dir": output_dir.as_posix(),
+        "overlay_path": overlay_path.as_posix(),
+        "public_corpus_manifest_path": manifest_path.as_posix(),
+        "warnings": warnings,
+    }
+
+
 def write_public_manifest(corpus_dir: Path, overlay_path: Path | None) -> Path:
     overlay = load_metadata_overlay(overlay_path)
     raw_documents = load_corpus(corpus_dir)
@@ -194,10 +408,27 @@ def _select_doc_paths(limit: int) -> list[str]:
         and "release-notes" not in item.get("path", "")
     )
     if len(candidates) < limit:
-        raise RuntimeError(
-            f"Only found {len(candidates)} FastAPI docs candidates, need {limit}."
-        )
+        raise RuntimeError(f"Only found {len(candidates)} FastAPI docs candidates, need {limit}.")
     return candidates[:limit]
+
+
+def _load_tree_paths(
+    client: httpx.Client,
+    tree_url: str,
+    warnings: list[str],
+) -> set[str] | None:
+    response = client.get(tree_url)
+    if response.status_code == 403:
+        warnings.append(
+            f"tree check skipped for {tree_url}: GitHub API returned 403; raw validation used"
+        )
+        return None
+    response.raise_for_status()
+    return {
+        item["path"]
+        for item in response.json().get("tree", [])
+        if item.get("type") == "blob" and item.get("path")
+    }
 
 
 def _target_relative_path(
@@ -217,6 +448,19 @@ def _target_relative_path(
     if index < restricted_count + confidential_count + deprecated_count:
         return Path("deprecated") / filename
     return Path("active") / filename
+
+
+def _k8s_target_relative_path(
+    *,
+    spec: dict[str, Any],
+    repo_path: str,
+    index: int,
+) -> Path:
+    slug = _slugify(repo_path.removeprefix(K8S_DOCS_PREFIX).removesuffix(".md"))
+    if slug.endswith("-index"):
+        slug = slug[: -len("-index")]
+    filename = f"{index:03d}-{slug}.md"
+    return Path(spec["bucket"]) / filename
 
 
 def _front_matter(
@@ -261,6 +505,59 @@ def _front_matter(
         "metadata_origin": "native",
         "source_url": raw_url,
         "upstream_repo_path": repo_path,
+    }
+
+
+def _k8s_front_matter(
+    *,
+    repo_path: str,
+    original_path: str,
+    target_path: Path,
+    target_rel: Path,
+    title: str,
+    raw_url: str,
+    index: int,
+    spec: dict[str, Any],
+    ref: str,
+) -> dict[str, Any]:
+    today = date.today().isoformat()
+    status = "deprecated" if spec["bucket"] == "deprecated" else "active"
+    access_level = "restricted" if spec["bucket"] == "security" else "internal"
+    allowed_roles = ["admin", "editor"] if spec["bucket"] != "security" else ["admin"]
+    tags = [
+        "kubernetes",
+        *[tag for tag in str(spec["condition"]).lower().split(",") if tag != "context"],
+    ]
+    return {
+        "doc_id": f"doc-public-k8s-{index:04d}-{_slugify(title)[:48]}",
+        "title": title,
+        "doc_type": "public_doc",
+        "status": status,
+        "version": f"kubernetes-website-{ref}",
+        "created_at": None,
+        "updated_at": today,
+        "effective_date": None,
+        "owner_team": "Kubernetes Project",
+        "department": "Public Documentation",
+        "access_level": access_level,
+        "allowed_roles": allowed_roles,
+        "tags": tags,
+        "language": "en",
+        "source_path": target_path.as_posix(),
+        "supersedes_doc_id": None,
+        "superseded_by": spec.get("superseded_by"),
+        "conflict_group_id": None,
+        "is_authoritative": True,
+        "corpus_source": "public_external",
+        "source_origin": "public_repo",
+        "source_license_note": K8S_LICENSE_NOTE,
+        "hard_negative_group_id": None,
+        "metadata_origin": "native",
+        "source_url": raw_url,
+        "upstream_repo_path": repo_path,
+        "upstream_original_path": original_path,
+        "upstream_ref": ref,
+        "q3_condition_hint": spec["condition"],
     }
 
 
@@ -330,6 +627,66 @@ def _write_overlay(
     return overlay_path
 
 
+def _write_k8s_overlay(*, output_dir: Path, written_docs: list[Path]) -> Path:
+    documents = []
+    for path in written_docs:
+        relative_path = path.relative_to(output_dir).as_posix()
+        if relative_path.startswith("deprecated/"):
+            documents.append(
+                {
+                    "path": relative_path,
+                    "status": "deprecated",
+                    "superseded_by": "active/003-pod-security-admission.md",
+                    "version": f"kubernetes-website-{K8S_LEGACY_REF}",
+                }
+            )
+    overlay = {
+        "seed": 43,
+        "relation_note": (
+            "Q3-P5 Kubernetes base corpus only. Prometheus, seeded overlay snippets, "
+            "and gold annotations are intentionally deferred until Owner gold review."
+        ),
+        "defaults": {
+            "status": "active",
+            "access_level": "internal",
+            "allowed_roles": ["admin", "editor"],
+        },
+        "rules": [
+            {
+                "match": "security/**",
+                "access_level": "restricted",
+                "allowed_roles": ["admin"],
+            },
+            {
+                "match": "deprecated/**",
+                "status": "deprecated",
+            },
+        ],
+        "documents": documents,
+    }
+    overlay_path = output_dir / "overlay" / "metadata_overlay.yaml"
+    overlay_path.parent.mkdir(parents=True, exist_ok=True)
+    overlay_path.write_text(
+        yaml.safe_dump(overlay, sort_keys=False, allow_unicode=True),
+        encoding="utf-8",
+    )
+    return overlay_path
+
+
+def _prepare_output_dir(output_dir: Path, *, buckets: set[str]) -> None:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    for bucket in buckets:
+        bucket_path = output_dir / bucket
+        if bucket_path.exists():
+            shutil.rmtree(bucket_path)
+    overlay_path = output_dir / "overlay" / "metadata_overlay.yaml"
+    if overlay_path.exists():
+        overlay_path.unlink()
+    manifest_path = output_dir / "public_corpus_manifest.jsonl"
+    if manifest_path.exists():
+        manifest_path.unlink()
+
+
 def _strip_front_matter(text: str) -> str:
     if not text.startswith("---"):
         return text
@@ -344,8 +701,8 @@ def _title_from_markdown(text: str) -> str | None:
     return None
 
 
-def _title_from_repo_path(repo_path: str) -> str:
-    return repo_path.removeprefix(DOCS_PREFIX).removesuffix(".md").replace("/", " - ").title()
+def _title_from_repo_path(repo_path: str, *, prefix: str = DOCS_PREFIX) -> str:
+    return repo_path.removeprefix(prefix).removesuffix(".md").replace("/", " - ").title()
 
 
 def _section_titles(sections) -> list[str]:
@@ -358,6 +715,12 @@ def _section_titles(sections) -> list[str]:
 
 def _overlay_relation_note(metadata) -> str | None:
     if metadata.status.value == "deprecated" and metadata.superseded_by:
+        if metadata.source_license_note and "Kubernetes" in metadata.source_license_note:
+            return (
+                "Kubernetes legacy documentation relation for Q3 action-governance "
+                "testing; PSP is fetched from release-1.24 and superseded by current "
+                "Pod Security Admission guidance."
+            )
         return (
             "Controlled synthetic overlay relation for trust-gate testing; "
             "not an upstream FastAPI version chain."
@@ -376,15 +739,27 @@ def _slugify(text: str) -> str:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Fetch Week 5A public FastAPI corpus.")
+    parser = argparse.ArgumentParser(description="Fetch public documentation corpus.")
+    parser.add_argument("--source", choices=["fastapi", "k8s"], default="fastapi")
     parser.add_argument("--limit", type=int, default=40)
     parser.add_argument("--output", type=Path, default=Path("data/public_corpus"))
+    parser.add_argument(
+        "--skip-tree-check",
+        action="store_true",
+        help="Skip GitHub tree API path verification before raw fetch.",
+    )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
-    summary = fetch_public_corpus(limit=args.limit, output_dir=args.output)
+    if args.source == "k8s":
+        summary = fetch_k8s_public_corpus(
+            output_dir=args.output,
+            verify_tree=not args.skip_tree_check,
+        )
+    else:
+        summary = fetch_public_corpus(limit=args.limit, output_dir=args.output)
     summary["fetched_at"] = datetime.now(UTC).isoformat()
     print(json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True))
 
