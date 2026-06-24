@@ -165,7 +165,7 @@ def _agent_attribution_section(summary: dict[str, Any]) -> list[str]:
         "> Diagnostic per-action counts only. These are not merged into headline "
         "grounded metrics; TF1 is a replay candidate list, not an automatic finding.",
         "",
-        "| action | trigger | accept | success | false_recovery | ineffective |",
+        "| action | trigger | accept | success | false_recovery_count | ineffective |",
         "| --- | ---: | ---: | ---: | ---: | ---: |",
     ]
     for action in (
@@ -181,7 +181,10 @@ def _agent_attribution_section(summary: dict[str, Any]) -> list[str]:
                 trigger=metrics.get("trigger_count", 0),
                 accept=metrics.get("accept_count", 0),
                 success=metrics.get("success_count", 0),
-                false=metrics.get("false_recovery", 0),
+                false=metrics.get(
+                    "false_recovery_count",
+                    metrics.get("false_recovery", 0),
+                ),
                 ineffective=metrics.get("ineffective", 0),
             )
         )

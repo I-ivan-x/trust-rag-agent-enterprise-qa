@@ -37,7 +37,7 @@ def compute_agent_attribution(
             "trigger_count": 0,
             "accept_count": 0,
             "success_count": 0,
-            "false_recovery": 0,
+            "false_recovery_count": 0,
             "ineffective": 0,
         }
         for action in ACTION_TYPES
@@ -125,7 +125,7 @@ def compute_agent_attribution(
             if action in ACTION_TYPES and grounded is True:
                 per_action[action]["success_count"] += 1
             elif action in ACTION_TYPES and grounded is False:
-                per_action[action]["false_recovery"] += 1
+                per_action[action]["false_recovery_count"] += 1
 
         if grounded is not True and unselected_recovery_actions:
             tf1_candidates.append(

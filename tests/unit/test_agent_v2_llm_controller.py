@@ -7,8 +7,10 @@ from app.agent.controller import ControllerContext, RuleController
 from app.agent.diagnosis import ActionType, DiagnosisReport, FailureType
 from app.agent.llm_controller import LLMController
 from app.agent.loop import run_agentic_v2_loop
+from app.agent.validator import ActionBudget
 from app.core.enums import DocumentStatus
 from app.eval.runner import run_eval
+from app.llm.usage import get_usage_tracker
 from app.rerank.reranker import MockReranker
 from app.schemas.eval import EvalCase
 from app.schemas.retrieval import RetrievalOptions
@@ -16,6 +18,7 @@ from tests.helpers import make_retrieved_chunk
 
 
 def test_llm_controller_valid_action_is_accepted_and_traced() -> None:
+    get_usage_tracker().reset()
     deprecated = make_retrieved_chunk(
         "old",
         "old token limit",
@@ -65,6 +68,7 @@ def test_llm_controller_valid_action_is_accepted_and_traced() -> None:
     assert row["fallback_reason"] is None
     assert row["llm_raw_proposal"]["action"] == "filtered_retrieval"
     assert llm.temperatures == [0]
+    assert get_usage_tracker().totals.total_calls == 0
 
 
 def test_llm_controller_bad_json_parse_falls_back_to_rule() -> None:
@@ -179,6 +183,44 @@ def test_llm_rewrite_new_entity_is_validator_rejected_then_rule_fallback() -> No
     assert row["fallback_reason"].startswith(
         "validator_reject:rewrite_entities_not_allowed:"
     )
+
+
+def test_llm_budget_exhaustion_is_validator_rejected_and_traced() -> None:
+    weak = make_retrieved_chunk("weak", "unrelated", rerank_score=0.1)
+    llm = _FakeControllerLLM(
+        {
+            "action": "rewrite_query",
+            "args": {"rewritten_query": "token limit"},
+            "reason": "Try a semantic rewrite.",
+        }
+    )
+
+    result = run_agentic_v2_loop(
+        case=_case(),
+        retriever=_SequenceRetriever([[weak], [weak]]),
+        reranker=MockReranker(),
+        retrieval_options=_options(),
+        controller=LLMController(llm),
+        budget=ActionBudget(max_nonterminal_actions=0),
+    )
+
+    row = result.action_trajectory[0]
+    assert result.terminal_reason == "budget_exhausted"
+    assert result.budget_consumed == 0
+    assert row["chosen_action"] == "rewrite_query"
+    assert row["chosen_source"] == "llm_fallback_rule"
+    assert row["accepted"] is False
+    assert row["validator_ok"] is False
+    assert row["validator_reject_reason"] == "budget_exhausted"
+    assert row["fallback_reason"] == "validator_reject:budget_exhausted"
+    assert result.trace_fields["validator_rejections"] == [
+        {
+            "step": 1,
+            "action": "rewrite_query",
+            "reason": "budget_exhausted",
+            "controller_source": "llm",
+        }
+    ]
 
 
 def test_llm_controller_always_illegal_degrades_to_rule_actions() -> None:

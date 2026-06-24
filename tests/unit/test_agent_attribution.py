@@ -46,7 +46,7 @@ def test_agent_attribution_counts_trigger_accept_success_and_false_recovery() ->
     assert per_action["filtered_retrieval"]["trigger_count"] == 2
     assert per_action["filtered_retrieval"]["accept_count"] == 2
     assert per_action["filtered_retrieval"]["success_count"] == 1
-    assert per_action["filtered_retrieval"]["false_recovery"] == 1
+    assert per_action["filtered_retrieval"]["false_recovery_count"] == 1
 
 
 def test_agent_attribution_ineffective_action_counts_tf2_case() -> None:
@@ -183,9 +183,14 @@ def test_runner_summary_adds_attribution_for_agentic_v2() -> None:
     )
 
     assert "agent_attribution" in summary
-    assert summary["agent_attribution"]["per_action"]["filtered_retrieval"][
-        "success_count"
-    ] == 1
+    metrics = summary["agent_attribution"]["per_action"]["filtered_retrieval"]
+    assert metrics["success_count"] == 1
+    assert {
+        "trigger_count",
+        "accept_count",
+        "success_count",
+        "false_recovery_count",
+    } <= set(metrics)
 
 
 def test_eval_report_renders_agent_attribution_section(tmp_path: Path) -> None:
@@ -221,7 +226,7 @@ def test_eval_report_renders_agent_attribution_section(tmp_path: Path) -> None:
 
     rendered = path.read_text(encoding="utf-8")
     assert "## Agent Attribution" in rendered
-    assert "false_recovery" in rendered
+    assert "false_recovery_count" in rendered
     assert "TF1 replay candidates" in rendered
     assert "llm_fallback_rate" in rendered
 
@@ -292,7 +297,7 @@ def _metrics(**overrides: int) -> dict:
         "trigger_count": 0,
         "accept_count": 0,
         "success_count": 0,
-        "false_recovery": 0,
+        "false_recovery_count": 0,
         "ineffective": 0,
     }
     metrics.update(overrides)
