@@ -219,7 +219,11 @@ TF4 预算耗尽仍不足
 
 - §3 POLICY_CROWDING 阈值的具体值（用 Phase 1 校准后数据定）；
 - §3.1 rule_controller 共现优先序默认 b > a > e 的确认/调整；
-- §3.1 真实检索下测试床 a/b 共现与 weak_recall/action-a 触发面的实际条数；
+- §3.1 真实检索下测试床 a/b 共现与 weak_recall/action-a 触发面的实际条数
+  → ✅ **已结**（P3-09 完整诊断）：a legal trigger=2、b 共现/legal trigger=0、
+  d legal trigger=0、b gold-doc-recoverable=0。{a,b,e} 共现决策点结构性不成立，
+  双控制器消融(A)退化为 a vs e（n=2），结论按定性 / 统计无力归档
+  （见 `P3_AGENT_BUILD_INSTRUCTION.md` §0.1）；
 - §9.3 的测试床子集实际量；
 - §9.6 的合并语义实现核实。
 其余设计已冻结，可据此让 Codex 起 agent 骨架（诊断器 → 动作 a/b/d/e → 规则 controller）。
