@@ -8,8 +8,18 @@ from app.govern.conditions import (
     RiskTier,
     detect_conditions,
 )
+from app.govern.controller import GovernanceControllerContext, GovernanceRuleController
 from app.govern.executor import execute_governance_action
+from app.govern.governor import GovernanceOutcome, govern
+from app.govern.llm_controller import GovernanceLLMController
 from app.govern.sinks import ActionRecord, ActionSink, LocalJsonlSink
+from app.govern.validator import (
+    LEGAL_ACTIONS,
+    GovernanceBudget,
+    GovernanceProposal,
+    GovValidationResult,
+    validate_governance,
+)
 
 __all__ = [
     "DEFAULT_AUTHORIZED_ROLES",
@@ -22,6 +32,16 @@ __all__ = [
     "ActionRecord",
     "ActionSink",
     "LocalJsonlSink",
+    "GovernanceBudget",
+    "GovernanceControllerContext",
+    "GovernanceLLMController",
+    "GovernanceOutcome",
+    "GovernanceProposal",
+    "GovernanceRuleController",
+    "GovValidationResult",
+    "LEGAL_ACTIONS",
     "detect_conditions",
     "execute_governance_action",
+    "govern",
+    "validate_governance",
 ]

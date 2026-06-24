@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 
 from app.govern.conditions import GovernanceAction, OpsCondition, RiskTier
 
-ApprovalState = Literal["committed", "pending_approval", "escalated"]
+ApprovalState = Literal["committed", "pending_approval", "escalated", "dropped"]
 
 ACTION_STORE_DIR = Path("data/action_store")
 
@@ -155,6 +155,47 @@ class LocalJsonlSink:
             handle.write(json.dumps(record.model_dump(mode="json"), sort_keys=True) + "\n")
         return record
 
+    def list_records(self) -> list[ActionRecord]:
+        records: list[ActionRecord] = []
+        for action in (
+            GovernanceAction.flag_stale,
+            GovernanceAction.open_remediation_ticket,
+            GovernanceAction.send_alert,
+            GovernanceAction.escalate_to_human,
+        ):
+            path = self._path_for(action)
+            if path.exists():
+                records.extend(_read_records(path))
+        return records
+
+    def update_approval_state(
+        self,
+        record_id: str,
+        approval_state: ApprovalState,
+    ) -> ActionRecord:
+        for action in (
+            GovernanceAction.open_remediation_ticket,
+            GovernanceAction.send_alert,
+        ):
+            path = self._path_for(action)
+            if not path.exists():
+                continue
+            records = _read_records(path)
+            updated_records: list[ActionRecord] = []
+            matched: ActionRecord | None = None
+            for record in records:
+                if record.record_id == record_id:
+                    if record.approval_state != "pending_approval":
+                        raise ValueError(f"record is not pending approval: {record_id}")
+                    matched = record.model_copy(update={"approval_state": approval_state})
+                    updated_records.append(matched)
+                    continue
+                updated_records.append(record)
+            if matched is not None:
+                _write_records(path, updated_records)
+                return matched
+        raise ValueError(f"pending record not found: {record_id}")
+
     def _path_for(self, action: GovernanceAction) -> Path:
         filename = {
             GovernanceAction.flag_stale: "annotations.jsonl",
@@ -168,13 +209,23 @@ class LocalJsonlSink:
 
 
 def _find_existing(path: Path, dedup_key: str) -> ActionRecord | None:
-    for line in path.read_text(encoding="utf-8").splitlines():
-        if not line.strip():
-            continue
-        payload = json.loads(line)
-        if payload.get("dedup_key") == dedup_key:
-            return ActionRecord.model_validate(payload)
+    for record in _read_records(path):
+        if record.dedup_key == dedup_key:
+            return record
     return None
+
+
+def _read_records(path: Path) -> list[ActionRecord]:
+    records: list[ActionRecord] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line.strip():
+            records.append(ActionRecord.model_validate(json.loads(line)))
+    return records
+
+
+def _write_records(path: Path, records: Sequence[ActionRecord]) -> None:
+    lines = [json.dumps(record.model_dump(mode="json"), sort_keys=True) for record in records]
+    path.write_text("\n".join(lines) + ("\n" if lines else ""), encoding="utf-8")
 
 
 def _dedup_key(
