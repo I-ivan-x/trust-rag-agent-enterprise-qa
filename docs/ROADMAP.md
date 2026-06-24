@@ -220,9 +220,11 @@ Phase 1 即产出 Q2 第一批新 headline 数字。预算：≈400–500 次调
 
 ### 5.2 实现（W8–11）
 
-> **进度**：P3-01~P3-06 机制已实现并通过单测（247 passed / ruff 干净 / 零真实 token），
-> 分两批 commit（`74e7638` 诊断器+动作b+规则controller+orchestrator；`c7f632b` LLM controller+逐动作归因）。
-> P3-09~P3-11（真实对比 run + pass^k + 报告）推迟，待 Owner 放行 token。详见 `P3_AGENT_BUILD_INSTRUCTION.md` §6。
+> **进度（Phase 3 完成）**：P3-01~P3-13 全部完成。机制 + 双控制器 + 逐动作归因
+> （`74e7638` / `c7f632b`）；真实消融 run `p3-09-agent-ablation`（n=22 × k=3，42 calls，¥1 量级）
+> + pass^k + 报告（`f0be286` / `32fdeb0`）。**结论：agent 增益证伪** —— gated 0.2273 vs
+> agentic 0.2727（1 case、rule==LLM、diagnostic-only、headline_eligible=false）。
+> ADR-009/010/011 已入 `TECHNICAL_DESIGN.md`；tag `v1.0-q2-agentic-eval`。
 
 | 编号 | 负责人 | 任务 | 验收标准 |
 | --- | --- | --- | --- |

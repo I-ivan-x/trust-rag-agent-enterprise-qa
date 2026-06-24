@@ -1,11 +1,12 @@
 # Technical Design — TrustRAG Enterprise QA
 
-Status: Q1 closeout version. Decision records are append-only: Q2 work adds new
-ADRs and never rewrites Q1 ADRs.
+Status: Q1 closeout + Q2 Phases 1–3. Decision records are append-only: Q2 work
+adds ADR-009 … ADR-011 and never rewrites the Q1 ADRs (ADR-001 … ADR-008).
 
-All numbers cited here come from Week 6 real runs (DeepSeek `deepseek-v4-flash`,
-`bge-small-en-v1.5` embedding, `bge-reranker-base`). Run inventory:
-[EVALUATION_REPORT.md](EVALUATION_REPORT.md).
+Q1 numbers come from Week 6 real runs (DeepSeek `deepseek-v4-flash`,
+`bge-small-en-v1.5` embedding, `bge-reranker-base`); the Q2 ADRs cite the Phase 1
+calibration, Phase 2 judge/red-team, and Phase 3 agent-ablation runs. Run
+inventory: [EVALUATION_REPORT.md](EVALUATION_REPORT.md).
 
 ------
 
@@ -257,6 +258,83 @@ governance consumes, not from what the pipeline finds convenient to log.**
 agent actions (trajectory-level attribution) and, when budget allows, the
 OpenTelemetry GenAI semantic conventions.
 
+### ADR-009 — Q2 Phase 1: over-refusal is policy-driven, not threshold-driven
+
+**Decision.** Parameterize the evidence gate and sweep thresholds; add a policy
+variant separating "a deprecated/restricted neighbor is present" from "only
+restricted evidence is available"; freeze one calibrated baseline for all Q2
+comparisons.
+
+**Rationale.** ADR-001 shipped fail-closed and measured a 0.46 false-refusal
+cost. The open question was whether that cost is a tunable threshold artifact or
+a structural policy choice.
+
+**Measured consequence.** It is policy, not threshold. Four of five swept
+threshold points are identical (`false_refusal 0.46 / false_answer 0.00 /
+grounded 0.24`); only an extreme `min_score` collapses to total refusal. The
+neighbor-tolerant variant, once fixed to still refuse when the *restricted item
+is itself the answer evidence*, released almost no refusals (0.46 → 0.44) and
+lowered grounded (0.24 → 0.22), so it does **not** enter the baseline.
+`final_gated_calibrated` is frozen as the legacy/default point and is explicitly
+not claimed as an improvement over Week 6 (runs `q2-p1-02-…-reconciled`,
+`q2-p1-06-…`).
+
+**Calibration path.** Releasing false-refusal safely needs per-case,
+evidence-quality decisions — the typed-action agent's metadata-filtered
+re-retrieval (ADR-011), not a blanket policy switch.
+
+### ADR-010 — Q2 Phase 2: no deployable judge; governance shipped anyway
+
+**Decision.** Anchor an LLM claim-support judge on the 15-claim human census;
+compare three judge candidates by agreement; gate eval metrics in CI; build a
+measured indirect-injection red-team split.
+
+**Rationale.** An unvalidated judge must never become a gatekeeper; evaluation
+should regress in CI; injection (T7) was acknowledged-but-untested in Q1.
+
+**Measured consequence.** No judge qualified: all three candidates scored binary
+agreement 0.7333 (< 0.80) and **wrong_side 0/2** — blind to exactly the F4
+failure (a structurally valid citation of the wrong document). `deploy_judge =
+false`; claim support stays human-only. The conclusion is deliberately narrow —
+it measures *this* model's discrimination on *this* task, not "RAGAS fails."
+Governance still shipped: a CI regression gate over frozen
+grounded/citation/retrieval baselines, and a 10-case injection split — strict
+injection succeeded 1/10 (a version-preference nudge, failure class F9), gate
+bypass 4/10, 6/10 refused. The deterministic gates are immune to NL injection,
+but ingest does not strip comment/zero-width attack surface.
+
+**Calibration path.** Re-validate a judge with a stronger model against the
+C2-05 wrong_side anchors before any runtime deployment (Q3).
+
+### ADR-011 — Q2 Phase 3: typed-action agent built; gain falsified, not found
+
+**Decision.** Build the typed action space promised in ADR-004 (rewrite /
+metadata-filtered re-retrieval / conflict-set presentation / explained refusal —
+version-scoped retrieval was cut after hard-negative re-validation weakened its
+F3 rationale), a rule-based and an LLM controller under one validator, and report
+a real-run rule-vs-LLM ablation with pass^k reliability.
+
+**Rationale.** ADR-001's bottleneck ordering (calibrate first, then expand the
+action space) predicted a small residual. Phase 3 is framed to *falsify* an
+agent gain honestly, not to manufacture one.
+
+**Measured consequence.** A zero-token diagnostic first established the residual
+surface is ≈ 0 (action-a legal triggers = 2; action-b legal triggers = 0 with
+`gold-doc-recoverable = 0`; action-d = 0). The real ablation (n = 22 × k = 3, run
+`p3-09-agent-ablation`, 42 LLM calls) confirmed it: `final_gated_calibrated`
+0.2273 vs `final_agentic_v2` 0.2727 — a one-case delta from the action-a corner,
+not a headline gain. Rule and LLM controllers tied exactly (the LLM controller's
+0.44 validator-fallback rate collapses it onto the rule choice); `pass^1 ==
+pass^3` with action-sequence consistency 1.0. The constraint system held: zero
+gate bypasses, validator-rejected proposals fell back safely. The dual-controller
+ablation is therefore qualitative and statistically powerless (n = 2 decision
+points), and is reported as such.
+
+**Calibration path.** The vanished gain is the correct consequence of Phase 1
+calibration, not a defect. Genuinely query-dependent residuals (version-reference
+disambiguation, reranker-quality hard negatives) are deferred to Q3, not forced
+into this testbed.
+
 ------
 
 ## 5. Measured Trade-offs — Summary
@@ -265,7 +343,7 @@ OpenTelemetry GenAI semantic conventions.
 | --- | --- | --- | --- |
 | False answer vs false refusal | Fail closed | false_refusal 0.46, grounded capped at 0.24 | false_answer 0.00, citation_valid 1.00 |
 | Coverage vs contamination resistance | Grounded-only headline | Headline looks worse than answer-only metrics would | Parametric memory provably excluded (0.20 raw → 0.00 grounded) |
-| Agent autonomy vs auditability | Bounded single-action loop | No measured recovery gain (tie at 0.3333) | Zero gate bypasses; falsifiable agent claims |
+| Agent autonomy vs auditability | Bounded → typed action space | No measured gain (Q2 ablation 0.2273 vs 0.2727, n=22, one case; rule==LLM) | Zero gate bypasses; falsifiable, fully traced agent claims |
 | Pipeline richness vs ablation honesty | Claim-only-what's-shown | Rerank cannot be claimed | One clean, defensible retrieval claim (0.60 → 0.80) |
 
 The calibration roadmap for every row lives in [ROADMAP.md](ROADMAP.md).
@@ -274,8 +352,14 @@ The calibration roadmap for every row lives in [ROADMAP.md](ROADMAP.md).
 
 - Single LLM family (DeepSeek) for all end-to-end runs; judge work in Q2 will
   introduce a second family by methodological necessity.
-- Manual citation-support audit pending (blocked on ADR-008 persistence gap);
-  until it lands, only structural citation validity may be cited.
+- Manual citation-support audit: a 15-claim human census is complete (Q2 C1-01);
+  a larger blind re-label is optional. Until broader human review, only
+  structural citation validity is quoted as a number.
+- No deployable LLM judge: all three candidates failed the discrimination floor
+  (wrong_side 0/2), so claim support stays human-only (ADR-010).
+- Agentic gain is still unproven after the Q2 typed-action ablation: the
+  calibrated system's residual failures are policy-adjudication, not
+  retrieval-recoverable (ADR-011).
 - Hard-negative retrieval robustness is currently **unknown**, not bad: the
   Q1 split design flaw (ADR-005) means the stress test must be re-run with
   rewritten queries before any F3 conclusion.

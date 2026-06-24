@@ -50,7 +50,7 @@ corpus (FastAPI docs subset, 50 evaluation cases). Full run inventory:
 | Result | Number | Root cause and status |
 | --- | --- | --- |
 | Grounded correctness | **0.24**, with false-refusal **0.46** | The price of fail-closed gating: the bottleneck is not answering, not answering wrong. Gate calibration is the next planned phase. |
-| Agentic recovery gain | **0.3333 vs 0.3333** (tie) | The single recovery action (query rewrite) is forbidden on the policy paths where most refusals occur. Typed action space planned. |
+| Agentic recovery gain | **none proven** | Q2 built the typed action space (rewrite / filter / conflict / refuse) and ran a rule-vs-LLM controller ablation (n=22): gated 0.2273 vs agentic 0.2727 — a one-case delta, rule==LLM, diagnostic-only. The calibrated system's residual failures are policy-adjudication, not retrieval-recoverable. |
 | Reranker contribution | doc_hit@5 0.80 -> **0.78** | Not proven; no rerank improvement is claimed anywhere in this project. |
 | Hard-negative stress test | error rate **1.0** | Pre-digested adjudication attributes this to an eval design flaw: all 20 queries were metadata-only templates with zero content words. Retrieval robustness is currently unknown, not bad; owner sign-off and re-validation with rewritten queries are pending. |
 
