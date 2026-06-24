@@ -220,6 +220,10 @@ Phase 1 即产出 Q2 第一批新 headline 数字。预算：≈400–500 次调
 
 ### 5.2 实现（W8–11）
 
+> **进度**：P3-01~P3-06 机制已实现并通过单测（247 passed / ruff 干净 / 零真实 token），
+> 分两批 commit（`74e7638` 诊断器+动作b+规则controller+orchestrator；`c7f632b` LLM controller+逐动作归因）。
+> P3-09~P3-11（真实对比 run + pass^k + 报告）推迟，待 Owner 放行 token。详见 `P3_AGENT_BUILD_INSTRUCTION.md` §6。
+
 | 编号 | 负责人 | 任务 | 验收标准 |
 | --- | --- | --- | --- |
 | P3-01 | Codex | 诊断提取器（gate 结果/邻域 → 失败类型） | 单测覆盖 F1/F2/F3 型诊断 |
