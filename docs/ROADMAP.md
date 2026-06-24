@@ -330,8 +330,8 @@ framework mapping 一页     —— 自研 orchestrator ↔ LangGraph 概念对�
 | Q3-P3 | Codex | validator 动作层约束（白名单/风险层代码表/前置门/越权强制升级/预算/去重）+ 风险分级路由 + 人审 commit 流 | ✅ `b6bf6df` / `9dd53a0`（`SPEC_Q3_P3_P4.md` §1） |
 | Q3-P4 | Codex | 双控制器（rule / llm）治理动作选择（复用 P3-03/05 消融框架） | ✅ `b6bf6df`（同 SPEC §2，25 测试） |
 | Q3-P5 | Codex + Owner | `ops_runbook_action_v1` 语料 + gold + 泄漏检查 | ✅ `560dbf2`（K8s 21 篇）/ `f408a8b`（14 条 gold + overlay + annotations，Owner 已核草表） |
-| Q3-P6 | Codex | 动作级指标 + 归因 + pass^k（复用 P3-06/10） | ⏳ `SPEC_Q3_P6.md`（指标族 + F10–F13 + compute_govern_passk） |
-| Q3-P7 | Owner + Claude | 对比 run（rule vs llm，k=3）+ 报告（三段式 + taxonomy 扩展） | ⏳ |
+| Q3-P6 | Codex | 动作级指标 + 归因 + pass^k（复用 P3-06/10） | ✅ `4fee18c`（指标族 + 防刷三指标 + F10–F13 + compute_govern_passk，18 测试） |
+| Q3-P7 | Codex + Owner + Claude | 对比 run（rule vs llm，k=3）+ 报告（三段式 + taxonomy 扩展） | ⏳ `SPEC_Q3_P7.md`（govern_runner + ablation 脚本 + 动作 headline 合约 + EVAL/FAILURE 报告） |
 | Q3-P8 | Codex | Web 动作控制台（读→判→动→治 时间线 + 待审队列 + 审计链 + 越权拦截日志） | ⏳ |
 | Q3-P9 | Claude + Owner | README / EVALUATION_REPORT / TECHNICAL_DESIGN（ADR-012~014）更新 + tag `v2.0-q3-action-governance` | ⏳ |
 
