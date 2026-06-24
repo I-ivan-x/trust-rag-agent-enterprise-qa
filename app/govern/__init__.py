@@ -8,6 +8,8 @@ from app.govern.conditions import (
     RiskTier,
     detect_conditions,
 )
+from app.govern.executor import execute_governance_action
+from app.govern.sinks import ActionRecord, ActionSink, LocalJsonlSink
 
 __all__ = [
     "DEFAULT_AUTHORIZED_ROLES",
@@ -17,5 +19,9 @@ __all__ = [
     "GovernanceAction",
     "OpsCondition",
     "RiskTier",
+    "ActionRecord",
+    "ActionSink",
+    "LocalJsonlSink",
     "detect_conditions",
+    "execute_governance_action",
 ]
