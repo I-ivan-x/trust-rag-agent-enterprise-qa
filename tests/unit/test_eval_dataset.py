@@ -30,6 +30,34 @@ def test_eval_case_accepts_split_alias_and_writes_week5b_shape(tmp_path: Path) -
     assert loaded[0].must_cite is True
 
 
+def test_eval_case_preserves_q3_governance_gold_fields(tmp_path: Path) -> None:
+    case = EvalCase(
+        case_id="ora-test",
+        split="external",
+        query="Should a remediation ticket be opened?",
+        query_type="fact_lookup",
+        corpus_source="public_external",
+        expected_behavior="answer",
+        gold_doc_ids=["policy-restricted-pod-security"],
+        requires_citation=True,
+        gold_condition="CONFIG_VIOLATION",
+        secondary_conditions=["POLICY_VIOLATION"],
+        gold_action="open_remediation_ticket",
+        authorized=True,
+        expected_tier="approval",
+    )
+
+    path = tmp_path / "ops_runbook_action_v1_eval.jsonl"
+    write_eval_cases(path, [case])
+    payload = path.read_text(encoding="utf-8")
+    loaded = load_eval_cases(input_path=path)
+
+    assert '"gold_condition": "CONFIG_VIOLATION"' in payload
+    assert '"gold_action": "open_remediation_ticket"' in payload
+    assert loaded[0].secondary_conditions == ["POLICY_VIOLATION"]
+    assert loaded[0].expected_tier == "approval"
+
+
 def test_title_overlap_score_ignores_stopwords() -> None:
     score = title_overlap_score(
         "How can I enable CORS in FastAPI?",

@@ -50,6 +50,11 @@ class EvalCase(BaseModel):
     must_cite: bool = True
     must_refuse: bool = False
     requires_real_model: bool = False
+    gold_condition: str | None = None
+    secondary_conditions: list[str] = Field(default_factory=list)
+    gold_action: str | None = None
+    authorized: bool | None = None
+    expected_tier: str | None = None
 
     expected_rewrite: str | None = None
     hard_negative_group_id: str | None = None

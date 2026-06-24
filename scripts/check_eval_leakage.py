@@ -24,6 +24,12 @@ from app.eval.dataset import (
     title_overlap_score,
     write_eval_cases,
 )
+from app.ingest.chunker import chunk_documents
+from app.ingest.loader import load_corpus
+from app.ingest.metadata_overlay import apply_metadata_overlay, load_metadata_overlay
+from app.ingest.parser_markdown import parse_markdown_document
+from app.ingest.parser_text import parse_text_document
+from app.schemas.chunk import Chunk
 from app.schemas.eval import EvalCase
 
 LEAKAGE_REPORT_JSON = Path("data/eval_runs/leakage_report.json")
@@ -34,15 +40,27 @@ def check_leakage(
     *,
     split: EvalSplit | str | None = None,
     input_path: Path | None = None,
+    corpus_dir: Path | None = None,
+    overlay_path: Path | None = None,
     update_cases: bool = True,
+    report_json_path: Path | None = None,
+    report_md_path: Path | None = None,
 ) -> dict[str, Any]:
     if input_path is not None:
         cases = load_eval_cases(input_path=input_path)
-        chunks = _chunks_for_cases(cases)
+        chunks = (
+            _chunks_from_corpus(corpus_dir, overlay_path=overlay_path)
+            if corpus_dir is not None
+            else _chunks_for_cases(cases)
+        )
         report = _check_cases(cases, chunks)
         if update_cases:
             write_eval_cases(input_path, cases)
-        return _write_reports(report)
+        return _write_reports(
+            report,
+            report_json_path=report_json_path,
+            report_md_path=report_md_path,
+        )
 
     splits = [EvalSplit(split)] if split is not None else list(EvalSplit)
     all_reports = []
@@ -57,7 +75,11 @@ def check_leakage(
             write_eval_cases(path, cases)
 
     combined = _combine_reports(all_reports)
-    return _write_reports(combined)
+    return _write_reports(
+        combined,
+        report_json_path=report_json_path,
+        report_md_path=report_md_path,
+    )
 
 
 def _check_cases(cases: list[EvalCase], chunks: list[Any]) -> dict[str, Any]:
@@ -68,6 +90,7 @@ def _check_cases(cases: list[EvalCase], chunks: list[Any]) -> dict[str, Any]:
     chunks_by_doc: dict[str, list[Any]] = defaultdict(list)
     for chunk in chunks:
         chunks_by_doc[chunk.doc_id].append(chunk)
+    gold_doc_id_set = {doc_id for case in cases for doc_id in case.gold_doc_ids}
     low_overlap = 0
     for case in cases:
         titles = [doc_titles.get(doc_id, doc_id) for doc_id in case.gold_doc_ids]
@@ -83,6 +106,19 @@ def _check_cases(cases: list[EvalCase], chunks: list[Any]) -> dict[str, Any]:
                     flag_type="high_title_overlap",
                     score=score,
                     blocking=case.eval_split is not EvalSplit.hard_negative,
+                )
+            )
+        missing_gold_doc_ids = [
+            doc_id for doc_id in case.gold_doc_ids if doc_id not in chunks_by_doc
+        ]
+        if missing_gold_doc_ids:
+            flags.append(
+                _flag(
+                    case_id=case.case_id,
+                    split=case.eval_split.value,
+                    flag_type="missing_gold_doc",
+                    score=len(missing_gold_doc_ids),
+                    details={"missing_gold_doc_ids": missing_gold_doc_ids},
                 )
             )
 
@@ -104,7 +140,8 @@ def _check_cases(cases: list[EvalCase], chunks: list[Any]) -> dict[str, Any]:
             )
         gold_content_chunks = _gold_content_chunks(case, gold_chunks, chunks_by_doc)
         if (
-            not missing_gold_chunk_ids
+            _requires_retrievable_content(case)
+            and not missing_gold_chunk_ids
             and gold_content_chunks
             and not _gold_content_overlap_terms(case.query, gold_content_chunks)
         ):
@@ -137,6 +174,24 @@ def _check_cases(cases: list[EvalCase], chunks: list[Any]) -> dict[str, Any]:
                 score=round(low_overlap_ratio, 4),
             )
         )
+    uncovered_seeded_overlay_doc_ids = sorted(
+        {
+            chunk.doc_id
+            for chunk in chunks
+            if _metadata_origin_value(chunk) == "seeded_overlay"
+        }
+        - gold_doc_id_set
+    )
+    if uncovered_seeded_overlay_doc_ids:
+        flags.append(
+            _flag(
+                case_id="__corpus__",
+                split=split,
+                flag_type="seeded_overlay_doc_not_covered",
+                score=len(uncovered_seeded_overlay_doc_ids),
+                details={"doc_ids": uncovered_seeded_overlay_doc_ids},
+            )
+        )
     return {
         "split": split,
         "case_count": len(cases),
@@ -159,16 +214,23 @@ def _combine_reports(reports: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
-def _write_reports(report: dict[str, Any]) -> dict[str, Any]:
+def _write_reports(
+    report: dict[str, Any],
+    *,
+    report_json_path: Path | None = None,
+    report_md_path: Path | None = None,
+) -> dict[str, Any]:
     blocking_flags = _blocking_flags(report.get("flags", []))
     report = {**report, "blocking_flags": blocking_flags, "passed": not blocking_flags}
-    LEAKAGE_REPORT_JSON.parent.mkdir(parents=True, exist_ok=True)
-    LEAKAGE_REPORT_JSON.write_text(
+    json_path = report_json_path or LEAKAGE_REPORT_JSON
+    md_path = report_md_path or LEAKAGE_REPORT_MD
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(
         json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
-    LEAKAGE_REPORT_MD.parent.mkdir(parents=True, exist_ok=True)
-    LEAKAGE_REPORT_MD.write_text(_format_markdown(report), encoding="utf-8")
+    md_path.parent.mkdir(parents=True, exist_ok=True)
+    md_path.write_text(_format_markdown(report), encoding="utf-8")
     return report
 
 
@@ -229,6 +291,12 @@ def _gold_content_chunks(
     return list(selected.values())
 
 
+def _requires_retrievable_content(case: EvalCase) -> bool:
+    if case.query_type.value == "permission_denied":
+        return False
+    return case.gold_condition != "PERMISSION_BLOCKED"
+
+
 def _sentences(text: str) -> list[str]:
     return [sentence.strip() for sentence in text.replace("\n", " ").split(".") if sentence.strip()]
 
@@ -258,11 +326,30 @@ def _blocking_flags(flags: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return [flag for flag in flags if flag.get("blocking", True)]
 
 
+def _metadata_origin_value(chunk: Any) -> str | None:
+    value = getattr(chunk, "metadata_origin", None)
+    if value is None:
+        return None
+    return getattr(value, "value", str(value))
+
+
 def _chunks_for_cases(cases: list[EvalCase]) -> list[Any]:
     chunks: list[Any] = []
     for eval_split in {case.eval_split for case in cases}:
         chunks.extend(load_chunks_for_split(eval_split))
     return chunks
+
+
+def _chunks_from_corpus(corpus_dir: Path, *, overlay_path: Path | None) -> list[Chunk]:
+    raw_documents = load_corpus(corpus_dir)
+    parsed_documents = []
+    for raw_doc in raw_documents:
+        suffix = Path(raw_doc.source_path).suffix.lower()
+        parser = parse_text_document if suffix == ".txt" else parse_markdown_document
+        parsed_documents.append(parser(raw_doc))
+    overlay = load_metadata_overlay(overlay_path)
+    apply_metadata_overlay(parsed_documents, overlay, corpus_root=corpus_dir)
+    return chunk_documents(parsed_documents)
 
 
 def parse_args() -> argparse.Namespace:
@@ -271,6 +358,11 @@ def parse_args() -> argparse.Namespace:
     group.add_argument("--all", action="store_true")
     group.add_argument("--split", choices=[split.value for split in EvalSplit])
     group.add_argument("--input", type=Path)
+    parser.add_argument("--corpus", type=Path)
+    parser.add_argument("--overlay", type=Path)
+    parser.add_argument("--report-json", type=Path)
+    parser.add_argument("--report-md", type=Path)
+    parser.add_argument("--no-update-cases", action="store_true")
     return parser.parse_args()
 
 
@@ -279,7 +371,11 @@ def main() -> None:
     report = check_leakage(
         split=args.split,
         input_path=args.input,
-        update_cases=True,
+        corpus_dir=args.corpus,
+        overlay_path=args.overlay,
+        update_cases=not args.no_update_cases,
+        report_json_path=args.report_json,
+        report_md_path=args.report_md,
     )
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
 

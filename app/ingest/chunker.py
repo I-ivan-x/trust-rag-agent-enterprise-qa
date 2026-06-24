@@ -232,6 +232,8 @@ def _build_chunk(metadata: DocumentMetadata, segment: _ChunkSegment, chunk_index
         metadata_origin=metadata.metadata_origin,
         conflict_group_id=metadata.conflict_group_id,
         is_authoritative=metadata.is_authoritative,
+        overlay_relation_note=metadata.overlay_relation_note,
+        policy_ref=metadata.policy_ref,
     )
 
 

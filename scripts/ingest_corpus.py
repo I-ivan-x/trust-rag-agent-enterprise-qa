@@ -131,6 +131,8 @@ def write_chunk_manifest_jsonl(path: Path, chunks: list[Chunk]) -> None:
                 "hard_negative_group_id": chunk.hard_negative_group_id,
                 "metadata_origin": chunk.metadata_origin.value,
                 "overlay_applied": chunk.metadata_origin.value == "overlay",
+                "overlay_relation_note": chunk.overlay_relation_note,
+                "policy_ref": chunk.policy_ref,
             }
             for chunk in chunks
         ],

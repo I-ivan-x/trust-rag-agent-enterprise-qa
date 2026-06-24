@@ -384,7 +384,10 @@ def write_public_manifest(corpus_dir: Path, overlay_path: Path | None) -> Path:
                 "metadata_origin": metadata.metadata_origin.value,
                 "tags": metadata.tags,
                 "superseded_by": metadata.superseded_by,
-                "overlay_relation_note": _overlay_relation_note(metadata),
+                "overlay_relation_note": metadata.overlay_relation_note
+                or _overlay_relation_note(metadata),
+                "policy_ref": metadata.policy_ref,
+                "conflict_group_id": metadata.conflict_group_id,
                 "section_titles": _section_titles(parsed_doc.sections),
             }
         )

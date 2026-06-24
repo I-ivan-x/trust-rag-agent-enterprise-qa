@@ -35,6 +35,8 @@ class DocumentMetadata(BaseModel):
     superseded_by: str | None = None
     conflict_group_id: str | None = None
     is_authoritative: bool = False
+    overlay_relation_note: Any | None = None
+    policy_ref: str | None = None
 
     corpus_source: CorpusSource = CorpusSource.synthetic_fixture
     source_origin: SourceOrigin = SourceOrigin.generated

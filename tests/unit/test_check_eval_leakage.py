@@ -127,3 +127,114 @@ def test_hard_negative_high_title_overlap_is_non_blocking(
     assert report["passed"] is True
     assert report["flags"][0]["flag_type"] == "high_title_overlap"
     assert report["flags"][0]["blocking"] is False
+
+
+def test_check_eval_leakage_can_use_corpus_overlay(
+    tmp_path: Path,
+) -> None:
+    corpus = tmp_path / "corpus"
+    _write_seeded_doc(corpus / "active" / "sop-alpha.md")
+    overlay_path = corpus / "overlay" / "metadata_overlay.yaml"
+    overlay_path.parent.mkdir(parents=True, exist_ok=True)
+    overlay_path.write_text(
+        """seed: 1
+defaults:
+  status: active
+  access_level: internal
+documents: []
+""",
+        encoding="utf-8",
+    )
+    eval_path = tmp_path / "ops_runbook_action_v1_eval.jsonl"
+    eval_path.write_text(
+        json.dumps(
+            {
+                "case_id": "ora-test",
+                "split": "fixture",
+                "query": "Which remediation token is supported?",
+                "query_type": "fact_lookup",
+                "expected_behavior": "answer",
+                "gold_doc_ids": ["sop-alpha"],
+                "requires_citation": True,
+                "gold_condition": "CONFIG_VIOLATION",
+                "gold_action": "open_remediation_ticket",
+                "authorized": True,
+                "expected_tier": "approval",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    report = leakage_script.check_leakage(
+        input_path=eval_path,
+        corpus_dir=corpus,
+        overlay_path=overlay_path,
+        update_cases=False,
+        report_json_path=tmp_path / "report.json",
+        report_md_path=tmp_path / "report.md",
+    )
+
+    assert report["passed"] is True
+    assert report["flags"] == []
+
+
+def test_check_eval_leakage_flags_missing_gold_doc_with_corpus(
+    tmp_path: Path,
+) -> None:
+    corpus = tmp_path / "corpus"
+    _write_seeded_doc(corpus / "active" / "sop-alpha.md")
+    eval_path = tmp_path / "ops_runbook_action_v1_eval.jsonl"
+    eval_path.write_text(
+        json.dumps(
+            {
+                "case_id": "ora-test",
+                "split": "fixture",
+                "query": "Which remediation token is supported?",
+                "query_type": "fact_lookup",
+                "expected_behavior": "answer",
+                "gold_doc_ids": ["missing-doc"],
+                "requires_citation": True,
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    report = leakage_script.check_leakage(
+        input_path=eval_path,
+        corpus_dir=corpus,
+        update_cases=False,
+        report_json_path=tmp_path / "report.json",
+        report_md_path=tmp_path / "report.md",
+    )
+
+    assert report["passed"] is False
+    assert "missing_gold_doc" in [flag["flag_type"] for flag in report["blocking_flags"]]
+
+
+def _write_seeded_doc(path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        f"""---
+doc_id: sop-alpha
+title: Alpha Evidence
+doc_type: public_doc
+status: active
+version: q3-test
+access_level: internal
+allowed_roles: [admin, editor]
+language: en
+source_path: {path.as_posix()}
+corpus_source: public_external
+source_origin: generated
+source_license_note: Seeded overlay fixture.
+metadata_origin: seeded_overlay
+---
+
+# Alpha Evidence
+
+This seeded document supports the remediation token used by the eval case.
+""",
+        encoding="utf-8",
+    )

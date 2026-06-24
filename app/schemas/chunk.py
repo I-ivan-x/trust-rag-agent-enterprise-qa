@@ -34,6 +34,8 @@ class Chunk(BaseModel):
     metadata_origin: MetadataOrigin = MetadataOrigin.native
     conflict_group_id: str | None = None
     is_authoritative: bool = False
+    overlay_relation_note: object | None = None
+    policy_ref: str | None = None
 
     @field_validator("chunk_id", "doc_id", "text")
     @classmethod
@@ -53,4 +55,3 @@ class Chunk(BaseModel):
 class ChunkConfig(BaseModel):
     chunk_max_tokens: int = Field(default=500, gt=0)
     chunk_overlap_tokens: int = Field(default=80, ge=0)
-

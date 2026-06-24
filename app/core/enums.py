@@ -47,6 +47,7 @@ class SourceOrigin(StrEnum):
 class MetadataOrigin(StrEnum):
     native = "native"
     overlay = "overlay"
+    seeded_overlay = "seeded_overlay"
 
 
 class QueryType(StrEnum):
