@@ -309,3 +309,44 @@ framework mapping 一页     —— 自研 orchestrator ↔ LangGraph 概念对�
 8. §0 三句话逐从句可指到 run_id；
 9. tag v1.0-q2-agentic-eval。
 ```
+
+------
+
+## 10. Q3：动作治理 Agent（信任层从答案 → 动作）
+
+新主线：把 Q1/Q2 建好的信任机器（四道 gate + validator + audit trace + headline 合约）
+从守 *答案* 升级到守 *有副作用的动作*——evidence-aware 运维 copilot（读 K8s runbook/policy →
+判异常条件 → 提议治理动作 → 风险分级治理执行）。设计冻结见 `Q3_ACTION_GOVERNANCE_DESIGN.md`。
+缘起：Q2 的 agent 是无副作用的检索恢复器、零增益证伪，"体现不出 agent"。Q3 给它真实副作用动作。
+
+继承纪律：单 agent（N-08 扩展到动作层）；headline 只引真实 run；负结果三段式归档（taxonomy 续 F10–F13）。
+四项已拍板：本地 MCP server / 风险分级自治 / Web 动作控制台 / 四动作白名单
+（`flag_stale` `open_remediation_ticket` `send_alert` `escalate_to_human`）。
+
+| 编号 | 负责人 | 任务 | 状态 / ref |
+| --- | --- | --- | --- |
+| Q3-P1 | Codex | 条件检测器（gate 信号 → ops 条件，纯规则） | ✅ `4023e7d`（`SPEC_Q3_P1_P2.md` §1） |
+| Q3-P2 | Codex | 本地 MCP server + 四 sink + executor（副作用机制，与 MCP 传输解耦） | ✅ `ec8cf0d`（同 SPEC §2） |
+| Q3-P3 | Codex | validator 动作层约束（白名单/风险层代码表/前置门/越权强制升级/预算/去重）+ 风险分级路由 + 人审 commit 流 | ⏳ `SPEC_Q3_P3_P4.md` §1 |
+| Q3-P4 | Codex | 双控制器（rule / llm）治理动作选择（复用 P3-03/05 消融框架） | ⏳ `SPEC_Q3_P3_P4.md` §2 |
+| Q3-P5 | Codex + Owner | `ops_runbook_action_v1` 语料 + gold + 泄漏检查 | 🟡 底座抓取 ✅ `560dbf2`（K8s 21 篇）；overlay 合成 + 14 条 gold 待 Owner 核草表（`SPEC_Q3_P5_CORPUS.md`） |
+| Q3-P6 | Codex | 动作级指标 + 归因 + pass^k（复用 P3-06/10） | ⏳ |
+| Q3-P7 | Owner + Claude | 对比 run（rule vs llm，k=3）+ 报告（三段式 + taxonomy 扩展） | ⏳ |
+| Q3-P8 | Codex | Web 动作控制台（读→判→动→治 时间线 + 待审队列 + 审计链 + 越权拦截日志） | ⏳ |
+| Q3-P9 | Claude + Owner | README / EVALUATION_REPORT / TECHNICAL_DESIGN（ADR-012~014）更新 + tag `v2.0-q3-action-governance` | ⏳ |
+
+不可砍底线（期中 scope review 见设计 §12）：validator 动作约束、`unauthorized_action_blocked=1.00`、
+F11/F13=0、动作级归因、审计链、headline eligibility 纪律、单 agent。
+
+### Q3 最终验收（Q3 Gate）
+
+```text
+1. 动作治理层端到端可跑：读→判→动→治，副作用落受控 sink + 全程 trace；
+2. 双控制器（rule vs llm）治理动作消融落盘；
+3. 动作级归因 + pass^k 落盘；
+4. 防刷三指标联报：unauthorized_action_blocked=1.00 × action_precision@authorized × over_escalation_rate；
+5. F11/F13=0（无证据/越权执行为零）实测验证；
+6. Web 动作控制台可演示 读→判→动→治 + 待审 + 审计链；
+7. §0 三句话逐从句可指到 run_id；
+8. tag v2.0-q3-action-governance。
+```
