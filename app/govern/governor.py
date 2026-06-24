@@ -9,7 +9,7 @@ from app.govern.conditions import (
     ConditionReport,
     GovernanceAction,
 )
-from app.govern.controller import GovernanceControllerContext
+from app.govern.context import GovernanceControllerContext
 from app.govern.executor import execute_governance_action
 from app.govern.sinks import ActionRecord, ActionSink
 from app.govern.validator import (

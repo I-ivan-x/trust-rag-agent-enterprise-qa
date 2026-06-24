@@ -9,7 +9,6 @@ from app.govern.conditions import (
     GovernanceAction,
     OpsCondition,
 )
-from app.govern.controller import GovernanceRuleController
 from app.govern.governor import govern
 from app.govern.sinks import LocalJsonlSink
 from app.govern.validator import (
@@ -123,7 +122,7 @@ def test_govern_no_op_when_no_condition(tmp_path: Path) -> None:
         _report(None),
         _pass_result(),
         ActorContext(role="admin"),
-        GovernanceRuleController(),
+        _Controller(GovernanceAction.no_op),
         LocalJsonlSink(tmp_path),
     )
 
@@ -138,7 +137,7 @@ def test_govern_auto_commits(tmp_path: Path) -> None:
         _report(OpsCondition.stale_procedure, stale_doc_ids=["doc-a"]),
         _pass_result(),
         ActorContext(role="editor"),
-        GovernanceRuleController(),
+        _Controller(GovernanceAction.flag_stale),
         LocalJsonlSink(tmp_path),
     )
 
@@ -153,7 +152,7 @@ def test_govern_approval_pending(tmp_path: Path) -> None:
         _report(OpsCondition.config_violation, violating_doc_ids=["doc-a"]),
         _pass_result(),
         ActorContext(role="admin"),
-        GovernanceRuleController(),
+        _Controller(GovernanceAction.open_remediation_ticket),
         LocalJsonlSink(tmp_path),
     )
 
@@ -168,7 +167,7 @@ def test_govern_terminal_escalates(tmp_path: Path) -> None:
         _report(OpsCondition.permission_blocked, authorized_actor=False),
         _pass_result(),
         ActorContext(role="viewer"),
-        GovernanceRuleController(),
+        _Controller(GovernanceAction.escalate_to_human),
         LocalJsonlSink(tmp_path),
     )
 
@@ -184,7 +183,7 @@ def test_approve_pending_commits(tmp_path: Path) -> None:
         _report(OpsCondition.config_violation, violating_doc_ids=["doc-a"]),
         _pass_result(),
         ActorContext(role="admin"),
-        GovernanceRuleController(),
+        _Controller(GovernanceAction.open_remediation_ticket),
         sink,
     )
 
@@ -202,7 +201,7 @@ def test_reject_pending_drops(tmp_path: Path) -> None:
         _report(OpsCondition.config_violation, violating_doc_ids=["doc-a"]),
         _pass_result(),
         ActorContext(role="admin"),
-        GovernanceRuleController(),
+        _Controller(GovernanceAction.open_remediation_ticket),
         sink,
     )
 
@@ -218,6 +217,23 @@ def _proposal(
     args: dict | None = None,
 ) -> GovernanceProposal:
     return GovernanceProposal(action=action, args=args or {}, source="test")
+
+
+class _Controller:
+    controller_source = "test"
+
+    def __init__(self, action: GovernanceAction) -> None:
+        self.action = action
+
+    def select(self, report, context) -> GovernanceProposal:
+        del report
+        args = {"evidence_citations": context.evidence_citations}
+        return GovernanceProposal(
+            action=self.action,
+            args=args,
+            source="test",
+            controller_source=self.controller_source,
+        )
 
 
 def _report(

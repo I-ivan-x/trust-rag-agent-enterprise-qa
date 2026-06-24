@@ -8,7 +8,8 @@ from app.govern.conditions import (
     RiskTier,
     detect_conditions,
 )
-from app.govern.controller import GovernanceControllerContext, GovernanceRuleController
+from app.govern.context import GovernanceControllerContext
+from app.govern.controller import GovernanceRuleController
 from app.govern.executor import execute_governance_action
 from app.govern.governor import GovernanceOutcome, govern
 from app.govern.llm_controller import GovernanceLLMController
