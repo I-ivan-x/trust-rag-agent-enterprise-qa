@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -58,11 +58,7 @@ class ActionResult:
     query: str
     pass_result: RetrievalPassResult | None = None
     terminal_reason: str | None = None
-    warnings: list[str] = None
-
-    def __post_init__(self) -> None:
-        if self.warnings is None:
-            self.warnings = []
+    warnings: list[str] = field(default_factory=list)
 
 
 def materialize_proposal(
@@ -84,7 +80,10 @@ def materialize_proposal(
 
     if proposal.action == ActionType.filtered_retrieval:
         args = dict(proposal.args)
-        args.setdefault("filters", _tightening_filters(pass_result))
+        args["filters"] = _merge_tightening_filters(
+            pass_result,
+            args.get("filters"),
+        )
         return proposal.model_copy(update={"args": args})
 
     if proposal.action == ActionType.present_conflict_set:
@@ -174,6 +173,34 @@ def _tightening_filters(pass_result: RetrievalPassResult) -> dict[str, Any]:
         "status": DocumentStatus.active.value,
         "exclude_doc_ids": sorted(excluded),
     }
+
+
+def _merge_tightening_filters(
+    pass_result: RetrievalPassResult,
+    proposed_filters: Any,
+) -> Any:
+    if proposed_filters is not None and not isinstance(proposed_filters, dict):
+        return proposed_filters
+    defaults = _tightening_filters(pass_result)
+    if not proposed_filters:
+        return defaults
+
+    merged = dict(proposed_filters)
+    if merged.get("status") is None:
+        merged["status"] = defaults["status"]
+
+    proposed_excludes = merged.get("exclude_doc_ids")
+    if proposed_excludes is None:
+        merged["exclude_doc_ids"] = defaults["exclude_doc_ids"]
+    elif isinstance(proposed_excludes, list):
+        try:
+            proposed_set = set(proposed_excludes)
+        except TypeError:
+            return merged
+        merged["exclude_doc_ids"] = sorted(
+            proposed_set | set(defaults["exclude_doc_ids"])
+        )
+    return merged
 
 
 def _conflict_doc_ids(pass_result: RetrievalPassResult) -> list[str]:

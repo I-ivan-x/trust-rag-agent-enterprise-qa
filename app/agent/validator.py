@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -40,8 +41,8 @@ _NONTERMINAL_ACTIONS = {
 
 
 class ActionBudget(BaseModel):
-    max_nonterminal_actions: int = Field(default=2, ge=0)
-    consumed_nonterminal_actions: int = Field(default=0, ge=0)
+    max_nonterminal_actions: int = Field(default=2, ge=0, le=2)
+    consumed_nonterminal_actions: int = Field(default=0, ge=0, le=2)
     used_action_types: list[ActionType] = Field(default_factory=list)
 
     @property
@@ -95,7 +96,9 @@ def validate(
     return ValidationResult(ok=True)
 
 
-def _validate_filters(filters: dict) -> ValidationResult:
+def _validate_filters(filters: Any) -> ValidationResult:
+    if not isinstance(filters, dict):
+        return _reject("filters_must_be_object")
     unknown = set(filters) - _FILTER_WHITELIST
     if unknown:
         return _reject(f"filter_field_not_allowed:{','.join(sorted(unknown))}")
@@ -110,6 +113,12 @@ def _validate_filters(filters: dict) -> ValidationResult:
     exclude_doc_ids = filters.get("exclude_doc_ids")
     if exclude_doc_ids is not None and not isinstance(exclude_doc_ids, list):
         return _reject("exclude_doc_ids_must_be_list")
+    if exclude_doc_ids is not None and not all(
+        isinstance(doc_id, str) for doc_id in exclude_doc_ids
+    ):
+        return _reject("exclude_doc_ids_must_be_strings")
+    if status is None and not exclude_doc_ids:
+        return _reject("filtered_retrieval_requires_tightening_filter")
     return ValidationResult(ok=True)
 
 

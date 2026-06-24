@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
+import pytest
+
 from app.agent.actions import ActionProposal, execute_action, materialize_proposal
 from app.agent.controller import RuleController
 from app.agent.diagnosis import ActionType, DiagnosisReport, FailureType
@@ -38,7 +40,7 @@ def test_rule_controller_branches_and_cooccurrence_prefers_b() -> None:
     assert (
         controller.select(
             _diag(
-                FailureType.policy_and_weak_recall,
+                FailureType.policy_crowding,
                 [
                     ActionType.rewrite_query,
                     ActionType.filtered_retrieval,
@@ -105,6 +107,11 @@ def test_validator_rejects_illegal_action_and_budget_exhaustion() -> None:
     assert exhausted.reject_reason == "budget_exhausted"
 
 
+def test_action_budget_is_hard_capped_at_two_nonterminal_actions() -> None:
+    with pytest.raises(ValueError):
+        ActionBudget(max_nonterminal_actions=3)
+
+
 def test_validator_rejects_permission_recovery_and_filter_widening() -> None:
     permission = _diag(
         FailureType.permission_blocked,
@@ -145,6 +152,14 @@ def test_validator_rejects_permission_recovery_and_filter_widening() -> None:
             ActionBudget(),
         ).reject_reason
         == "status_filter_must_only_allow_active"
+    )
+    assert (
+        validate(
+            ActionProposal(action=ActionType.filtered_retrieval, args={"filters": {}}),
+            policy,
+            ActionBudget(),
+        ).reject_reason
+        == "filtered_retrieval_requires_tightening_filter"
     )
 
 
@@ -233,6 +248,87 @@ def test_filtered_retrieval_action_still_regates_restricted_chunks() -> None:
     assert restricted.chunk.chunk_id not in surviving_ids
 
 
+def test_materialized_filtered_retrieval_preserves_mandatory_exclusions() -> None:
+    deprecated = make_retrieved_chunk(
+        "deprecated",
+        "old token limit",
+        doc_id="doc-old",
+        status=DocumentStatus.deprecated,
+    )
+    restricted = make_retrieved_chunk(
+        "restricted",
+        "restricted admin key",
+        doc_id="doc-secret",
+        access_level=AccessLevel.restricted,
+        allowed_roles=["security_admin"],
+    )
+    active = make_retrieved_chunk("active", "active token limit", doc_id="doc-active")
+    first_pass = _pass_result(
+        [active, deprecated, restricted],
+        acl_surviving=[active],
+        acl_blocked=[restricted],
+        deprecated=[deprecated],
+    )
+
+    proposal = materialize_proposal(
+        ActionProposal(
+            action=ActionType.filtered_retrieval,
+            args={"filters": {"status": "active", "exclude_doc_ids": ["doc-extra"]}},
+        ),
+        query="What is the token limit?",
+        pass_result=first_pass,
+    )
+
+    assert proposal.args["filters"] == {
+        "status": "active",
+        "exclude_doc_ids": ["doc-extra", "doc-old", "doc-secret"],
+    }
+
+
+def test_filtered_retrieval_regates_even_if_retriever_ignores_filters() -> None:
+    deprecated = make_retrieved_chunk(
+        "deprecated",
+        "old token limit",
+        status=DocumentStatus.deprecated,
+    )
+    restricted = make_retrieved_chunk(
+        "restricted",
+        "restricted admin key",
+        access_level=AccessLevel.restricted,
+        allowed_roles=["security_admin"],
+    )
+    active = make_retrieved_chunk("active", "active public token limit")
+    retriever = _IgnoringFilterRetriever([deprecated, restricted, active])
+
+    result = execute_action(
+        ActionProposal(
+            action=ActionType.filtered_retrieval,
+            args={"filters": {"status": "active", "exclude_doc_ids": []}},
+        ),
+        "What is the token limit?",
+        retriever,
+        MockReranker(),
+        SimpleNamespace(),
+        retrieval_options=RetrievalOptions(top_k_dense=0, top_k_sparse=3, top_n_rerank=3),
+        user_role="employee",
+        user_clearance="internal",
+    )
+
+    assert result.pass_result is not None
+    deprecated_ids = {
+        item.chunk.chunk_id for item in result.pass_result.state_decision.deprecated_chunks
+    }
+    blocked_ids = {
+        item.chunk.chunk_id for item in result.pass_result.acl_decision.blocked_chunks
+    }
+    assert deprecated_ids == {deprecated.chunk.chunk_id}
+    assert blocked_ids == {restricted.chunk.chunk_id}
+    surviving_ids = {
+        item.chunk.chunk_id for item in result.pass_result.acl_decision.surviving_chunks
+    }
+    assert surviving_ids == {"active"}
+
+
 def _diag(failure_type: FailureType, legal_actions: list[ActionType]) -> DiagnosisReport:
     return DiagnosisReport(
         evidence_decision="insufficient",
@@ -295,3 +391,13 @@ class _FakeRetriever:
         if filters and filters.get("status") == "active":
             results = [item for item in results if item.chunk.status == DocumentStatus.active]
         return results
+
+
+class _IgnoringFilterRetriever:
+    def __init__(self, chunks) -> None:
+        self.chunks = chunks
+        self.last_warnings = []
+
+    def retrieve(self, query, options, filters=None):
+        del query, options, filters
+        return self.chunks

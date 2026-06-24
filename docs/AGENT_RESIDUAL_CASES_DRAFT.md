@@ -23,7 +23,7 @@
   - sibling **nc-ratelimit-v2**（deprecated）：v2 限 45/min
 - query（缩写口语）：`whats the cap on token refreshes these days?`
 - gold 答案：60 requests/min（v3）
-- expected：failure_type=policy_and_weak_recall，legal={a,b,e}，behavior=answer
+- expected：failure_type=policy_crowding，legal={a,b,e}，behavior=answer
 
 ### AR-002 上线前置
 - 文档：
@@ -32,7 +32,7 @@
   - sibling **nc-hotfix-sop**（restricted, access=admin）：紧急热修流程
 - query：`what do i need to tick off before pushing to prod?`
 - gold 答案：green CI / staging soak ≥30min / on-call ack / rollback owner
-- expected：policy_and_weak_recall，{a,b,e}，answer
+- expected：policy_crowding，{a,b,e}，answer
 
 ### AR-003 单点登录配置
 - 文档：
@@ -41,7 +41,7 @@
   - sibling **nc-sso-admin-override**（restricted, access=admin）：管理员强制 SSO 覆盖
 - query：`how do i wire up single sign-on for my app?`
 - gold 答案：OIDC（注册 client、redirect URI、映射 email claim）
-- expected：policy_and_weak_recall，{a,b,e}，answer
+- expected：policy_crowding，{a,b,e}，answer
 
 ### AR-004 日志留存
 - 文档：
@@ -50,7 +50,7 @@
   - sibling **nc-legalhold-sop**（restricted, access=legal）：法务保全 SOP
 - query：`how long do we hang on to customer logs?`
 - gold 答案：90 天
-- expected：policy_and_weak_recall，{a,b,e}，answer
+- expected：policy_crowding，{a,b,e}，answer
 
 ### AR-005 分页
 - 文档：
@@ -59,7 +59,7 @@
   - sibling **nc-pagination-offset**（deprecated）：offset 分页
 - query：`how do i page thru a big result set?`
 - gold 答案：cursor 参数 + next_cursor 直到 null
-- expected：policy_and_weak_recall，{a,b,e}，answer
+- expected：policy_crowding，{a,b,e}，answer
 
 ### AR-006 webhook 重试
 - 文档：
@@ -68,7 +68,7 @@
   - sibling **nc-queue-ops**（restricted, access=admin）：内部队列运维
 - query：`what happens if my webhook url is down for a bit?`
 - gold 答案：指数退避重试最多 24 小时后丢弃
-- expected：policy_and_weak_recall，{a,b,e}，answer
+- expected：policy_crowding，{a,b,e}，answer
 
 ------
 
@@ -121,7 +121,7 @@
 
 | case | scenario_type | expected_failure_type | expected_legal_actions |
 | --- | --- | --- | --- |
-| AR-001..006 | cooccurrence | policy_and_weak_recall | a,b,e |
+| AR-001..006 | cooccurrence | policy_crowding | a,b,e |
 | AR-007,008 | weak_recall | weak_recall | a,e |
 | AR-009 | policy_crowding | policy_crowding | b,e |
 | AR-010 | conflict | conflict | d,e |

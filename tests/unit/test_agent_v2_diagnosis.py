@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 from app.agent.diagnosis import ActionType, FailureType, diagnose
 from app.core.enums import AccessLevel, DocumentStatus
 from app.guards.acl_gate import ACLGateDecision
@@ -24,6 +27,16 @@ def test_diagnosis_sufficient_has_no_recovery_actions() -> None:
     assert report.evidence_decision == "sufficient"
     assert report.failure_type == FailureType.no_recovery
     assert report.legal_actions == []
+
+
+def test_failure_type_space_is_frozen_to_p3_actions() -> None:
+    assert {failure.value for failure in FailureType} == {
+        "PERMISSION_BLOCKED",
+        "CONFLICT",
+        "POLICY_CROWDING",
+        "WEAK_RECALL",
+        "NO_RECOVERY",
+    }
 
 
 def test_diagnosis_permission_blocked_is_terminal() -> None:
@@ -148,7 +161,7 @@ def test_diagnosis_weak_recall_allows_rewrite() -> None:
     ]
 
 
-def test_diagnosis_policy_and_weak_recall_coexistence_allows_a_b_e() -> None:
+def test_diagnosis_policy_crowding_and_weak_signal_allows_a_b_e() -> None:
     active = make_retrieved_chunk(
         "active",
         "current token limit",
@@ -178,7 +191,7 @@ def test_diagnosis_policy_and_weak_recall_coexistence_allows_a_b_e() -> None:
         )
     )
 
-    assert report.failure_type == FailureType.policy_and_weak_recall
+    assert report.failure_type == FailureType.policy_crowding
     assert report.legal_actions == [
         ActionType.rewrite_query,
         ActionType.filtered_retrieval,
@@ -200,6 +213,50 @@ def test_diagnosis_no_recovery_defaults_to_refuse() -> None:
 
     assert report.failure_type == FailureType.no_recovery
     assert report.legal_actions == [ActionType.refuse_with_explanation]
+
+
+def test_current_p3_09_precheck_cases_match_report_anchor() -> None:
+    json_path = Path("data/eval_runs/p3-09-diagnostic-precheck/diagnostic_precheck.json")
+    report_path = Path("docs/P3_09_DIAGNOSTIC_PRECHECK.md")
+
+    payload = json.loads(json_path.read_text(encoding="utf-8"))
+    cases = payload["cases"]
+    report_rows = _p3_09_report_rows(report_path)
+
+    assert len(cases) == 33
+    assert len(report_rows) == 33
+    assert payload["summary"]["llm_call_count"] == 0
+    assert payload["summary"]["llm_usage_total_tokens"] == 0
+    assert (
+        payload["summary"]["residual_action_profile"]["action_b_filtered_retrieval"][
+            "gold_doc_recoverable_count"
+        ]
+        == 0
+    )
+
+    for record in cases:
+        key = (record["split"], record["case_id"])
+        expected = report_rows[key]
+        FailureType(record["failure_type"])
+        for action in record["legal_actions"]:
+            ActionType(action)
+
+        assert record["failure_type"] == expected["failure_type"]
+        assert _legal_key(record["legal_actions"]) == expected["legal_actions"]
+        assert record["signals"]["clean_active_count"] == expected["clean"]
+        policy_count = (
+            record["signals"]["deprecated_neighbor_count"]
+            + record["signals"]["restricted_neighbor_count"]
+        )
+        assert policy_count == expected["policy"]
+        assert record["signals"]["entity_miss"] is expected["entity_miss"]
+        assert record["action_a"]["legal_triggered"] is expected["a"]
+        assert record["action_b"]["legal_triggered"] is expected["b_legal"]
+        assert record["action_b"]["recoverable"] is expected["b_save"]
+        assert record["action_b"]["gold_doc_recoverable"] is False
+        assert record["action_d"]["conflict_surface"] is expected["d_surface"]
+        assert record["action_d"]["legal_triggered"] is expected["d_legal"]
+        assert record["gold_doc_hit_at_5"] is expected["gold_doc_at_5"]
 
 
 def _pass_result(
@@ -244,3 +301,45 @@ def _pass_result(
             entity_miss=entity_miss,
         ),
     )
+
+
+def _p3_09_report_rows(path: Path) -> dict[tuple[str, str], dict]:
+    rows: dict[tuple[str, str], dict] = {}
+    in_table = False
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        if raw_line.startswith("| split | case_id |"):
+            in_table = True
+            continue
+        if not in_table or raw_line.startswith("| ---"):
+            continue
+        if not raw_line.startswith("| `"):
+            continue
+        cells = [cell.strip() for cell in raw_line.strip("|").split("|")]
+        split = cells[0].strip("`")
+        case_id = cells[1].strip("`")
+        rows[(split, case_id)] = {
+            "failure_type": cells[2].strip("`"),
+            "legal_actions": cells[3].strip("`"),
+            "clean": int(cells[4]),
+            "policy": int(cells[5]),
+            "entity_miss": _bool_cell(cells[6]),
+            "a": _bool_cell(cells[7]),
+            "b_legal": _bool_cell(cells[8]),
+            "b_save": _bool_cell(cells[9]),
+            "d_surface": _bool_cell(cells[10]),
+            "d_legal": _bool_cell(cells[11]),
+            "gold_doc_at_5": _bool_cell(cells[12]),
+        }
+    return rows
+
+
+def _legal_key(actions: list[str]) -> str:
+    return ",".join(actions) if actions else "none"
+
+
+def _bool_cell(value: str) -> bool:
+    if value == "True":
+        return True
+    if value == "False":
+        return False
+    raise AssertionError(f"not a boolean cell: {value}")

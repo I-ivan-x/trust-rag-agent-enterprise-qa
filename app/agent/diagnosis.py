@@ -20,7 +20,6 @@ class ActionType(StrEnum):
 class FailureType(StrEnum):
     permission_blocked = "PERMISSION_BLOCKED"
     conflict = "CONFLICT"
-    policy_and_weak_recall = "POLICY_CROWDING_AND_WEAK_RECALL"
     policy_crowding = "POLICY_CROWDING"
     weak_recall = "WEAK_RECALL"
     no_recovery = "NO_RECOVERY"
@@ -123,7 +122,7 @@ def diagnose(
     )
 
     if signal_policy_crowding and signal_weak_recall:
-        failure_type = FailureType.policy_and_weak_recall
+        failure_type = FailureType.policy_crowding
         legal_actions = [
             ActionType.rewrite_query,
             ActionType.filtered_retrieval,

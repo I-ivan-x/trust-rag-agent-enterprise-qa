@@ -225,7 +225,7 @@ def test_llm_controller_always_illegal_degrades_to_rule_actions() -> None:
 
 def test_rule_controller_ignores_context_regression() -> None:
     diagnosis = _diag(
-        FailureType.policy_and_weak_recall,
+        FailureType.policy_crowding,
         [
             ActionType.rewrite_query,
             ActionType.filtered_retrieval,

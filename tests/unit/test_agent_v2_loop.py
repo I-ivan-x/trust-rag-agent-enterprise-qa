@@ -50,8 +50,21 @@ def test_agentic_v2_cooccurrence_takes_b_then_answers() -> None:
     assert result.budget_consumed == 1
     assert result.action_trajectory[0]["chosen_action"] == "filtered_retrieval"
     assert result.action_trajectory[0]["post_action_evidence_decision"] == "sufficient"
+    assert result.action_trajectory[0]["action_outcome"] == "evidence_sufficient"
+    assert result.action_trajectory[0]["budget_before"] == 0
+    assert result.action_trajectory[0]["budget_after"] == 1
     assert result.trace_fields["agent_version"] == "v2"
     assert result.trace_fields["controller_source"] == "rule"
+    assert result.trace_fields["action_sequence"] == ["filtered_retrieval"]
+    assert result.trace_fields["action_outcomes"] == [
+        {
+            "step": 1,
+            "action": "filtered_retrieval",
+            "trigger": "POLICY_CROWDING",
+            "outcome": "evidence_sufficient",
+        }
+    ]
+    assert result.trace_fields["validator_rejections"] == []
 
 
 def test_agentic_v2_budget_exhaustion_terminates_without_looping() -> None:
@@ -68,6 +81,15 @@ def test_agentic_v2_budget_exhaustion_terminates_without_looping() -> None:
     assert result.budget_consumed == 0
     assert result.action_trajectory[0]["validator_ok"] is False
     assert result.action_trajectory[0]["validator_reject_reason"] == "budget_exhausted"
+    assert result.action_trajectory[0]["action_outcome"] == "validator_rejected"
+    assert result.trace_fields["validator_rejections"] == [
+        {
+            "step": 1,
+            "action": "rewrite_query",
+            "reason": "budget_exhausted",
+            "controller_source": "rule",
+        }
+    ]
 
 
 def test_agentic_v2_validator_reject_is_traced() -> None:
@@ -86,6 +108,7 @@ def test_agentic_v2_validator_reject_is_traced() -> None:
     assert (
         result.action_trajectory[0]["validator_reject_reason"] == "action_not_legal_for_diagnosis"
     )
+    assert result.trace_fields["action_sequence"] == ["filtered_retrieval"]
 
 
 def test_agentic_v2_trace_fields_are_complete_on_terminal_refusal() -> None:
@@ -109,6 +132,8 @@ def test_agentic_v2_trace_fields_are_complete_on_terminal_refusal() -> None:
     assert trace["budget_consumed"] == 0
     assert trace["terminal_reason"] == "refuse"
     assert trace["action_trajectory"][0]["diagnosis_failure_type"] == "PERMISSION_BLOCKED"
+    assert trace["action_sequence"] == ["refuse_with_explanation"]
+    assert trace["action_trajectory"][0]["action_outcome"] == "refuse"
 
 
 def test_final_agentic_v2_can_run_through_eval_mock_path(tmp_path) -> None:
