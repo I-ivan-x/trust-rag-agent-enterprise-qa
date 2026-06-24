@@ -327,10 +327,10 @@ framework mapping 一页     —— 自研 orchestrator ↔ LangGraph 概念对�
 | --- | --- | --- | --- |
 | Q3-P1 | Codex | 条件检测器（gate 信号 → ops 条件，纯规则） | ✅ `4023e7d`（`SPEC_Q3_P1_P2.md` §1） |
 | Q3-P2 | Codex | 本地 MCP server + 四 sink + executor（副作用机制，与 MCP 传输解耦） | ✅ `ec8cf0d`（同 SPEC §2） |
-| Q3-P3 | Codex | validator 动作层约束（白名单/风险层代码表/前置门/越权强制升级/预算/去重）+ 风险分级路由 + 人审 commit 流 | ⏳ `SPEC_Q3_P3_P4.md` §1 |
-| Q3-P4 | Codex | 双控制器（rule / llm）治理动作选择（复用 P3-03/05 消融框架） | ⏳ `SPEC_Q3_P3_P4.md` §2 |
-| Q3-P5 | Codex + Owner | `ops_runbook_action_v1` 语料 + gold + 泄漏检查 | 🟡 底座抓取 ✅ `560dbf2`（K8s 21 篇）；overlay 合成 + 14 条 gold 待 Owner 核草表（`SPEC_Q3_P5_CORPUS.md`） |
-| Q3-P6 | Codex | 动作级指标 + 归因 + pass^k（复用 P3-06/10） | ⏳ |
+| Q3-P3 | Codex | validator 动作层约束（白名单/风险层代码表/前置门/越权强制升级/预算/去重）+ 风险分级路由 + 人审 commit 流 | ✅ `b6bf6df` / `9dd53a0`（`SPEC_Q3_P3_P4.md` §1） |
+| Q3-P4 | Codex | 双控制器（rule / llm）治理动作选择（复用 P3-03/05 消融框架） | ✅ `b6bf6df`（同 SPEC §2，25 测试） |
+| Q3-P5 | Codex + Owner | `ops_runbook_action_v1` 语料 + gold + 泄漏检查 | ✅ `560dbf2`（K8s 21 篇）/ `f408a8b`（14 条 gold + overlay + annotations，Owner 已核草表） |
+| Q3-P6 | Codex | 动作级指标 + 归因 + pass^k（复用 P3-06/10） | ⏳ `SPEC_Q3_P6.md`（指标族 + F10–F13 + compute_govern_passk） |
 | Q3-P7 | Owner + Claude | 对比 run（rule vs llm，k=3）+ 报告（三段式 + taxonomy 扩展） | ⏳ |
 | Q3-P8 | Codex | Web 动作控制台（读→判→动→治 时间线 + 待审队列 + 审计链 + 越权拦截日志） | ⏳ |
 | Q3-P9 | Claude + Owner | README / EVALUATION_REPORT / TECHNICAL_DESIGN（ADR-012~014）更新 + tag `v2.0-q3-action-governance` | ⏳ |
