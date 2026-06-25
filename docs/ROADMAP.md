@@ -365,9 +365,9 @@ run manifest + CI 硬门）为薄辅。明确砍掉：harness 大重构、run-co
 | --- | --- | --- | --- |
 | Q4-P1 | Codex | 死路/过度升级零 token 诊断 → `Q4_P1_DIAGNOSTIC.md` | ✅ `8400a45`（真实向量复算：flag_stale 100% 检测漏，根因 A superseded_by 丢/B 不读 overlay_relation_note；过度升级 4 例伪 PERMISSION_BLOCKED） |
 | Q4-P2 | Owner + Codex | 评测集扩到 ~36 + dev/test 留出 + 泄漏检查 + 预注册成功标准（时间戳） | 🟡 出题+留出+预注册 ✅ `590aa1b`（22 新题：test 20 `ora-t01..t20` + dev-add 2；总 36，家族各≥5，越权 6，stale 两型；`Q4_P2_PREREGISTER.md` 时间戳已固化）；待 Codex 注册 split + leakage 双向校验 |
-| Q4-P3 | Codex | 检测修复 + 选择/路由校准 + 全分支单测（validator 不动） | ⏳ `SPEC_Q4_P2_P3.md` §2 |
-| Q4-P4 | Codex | 仅 dev 迭代至 triad=True → 冻结配置写入 manifest | ⏳ |
-| Q4-P5 | Codex | 留出 test k=3 真实 run `q4-p5-selection-calibrated` → 达 Q4 Gate | ⏳ |
+| Q4-P3 | Codex | 检测修复 + 选择/路由校准 + 全分支单测（validator 不动） | ✅ `44239ba`（根因 A superseded_by 透传 / B overlay_relation_note stale / 伪 permission 修复；审计：validator 零 diff、阈值未动、改的旧断言=解锁 bug、test 仅改 query；dev triad=True margin 薄 0.615） |
+| Q4-P4 | Codex | 仅 dev 迭代至 triad 稳定（k=3）→ 冻结配置 | ⏳ `SPEC_Q4_P4_P5.md` §1（先修残留 R1 stale 精度 / R2 治理本地 insufficient，不碰共享 gate） |
+| Q4-P5 | Codex + Claude | 留出 test k=3 真实 run `q4-p5-selection-calibrated` → 达 Q4 Gate + 报告 | ⏳ `SPEC_Q4_P4_P5.md` §2（moment of truth；透明披露 test 修复偏离） |
 | Q4-P6 | Codex | OTel/OpenInference trace 导出器 + 映射单测 | ⏳ |
 | Q4-P7 | Codex | run manifest + CI 回归硬门 | ⏳ |
 | Q4-P8 | Claude + Owner | README / EVALUATION_REPORT(before→after) / TECHNICAL_DESIGN(ADR-015/016) + tag `v3.0-q4-reliability` | ⏳ |
