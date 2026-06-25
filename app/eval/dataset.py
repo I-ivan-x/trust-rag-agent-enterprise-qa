@@ -18,7 +18,17 @@ _CASE_FILE_BY_SPLIT = {
     EvalSplit.obfuscated: "obfuscated_eval.jsonl",
     EvalSplit.redteam: "redteam_eval.jsonl",
     EvalSplit.agent_residual: "agent_residual_eval.jsonl",
+    EvalSplit.ops_dev: "ops_runbook_action_v1_dev_additions.jsonl",
+    EvalSplit.ops_test: "ops_runbook_action_v1_test.jsonl",
 }
+
+# The Q4 ops dev SET is two physical files: the original 14 (authored before P7/P1,
+# tagged split=external) plus 2 dev additions (split=ops_dev). The held-out ops test
+# set is a single file and must never be loaded during P3/P4 calibration.
+_OPS_DEV_FILES = (
+    "ops_runbook_action_v1_eval.jsonl",
+    "ops_runbook_action_v1_dev_additions.jsonl",
+)
 
 _CHUNK_FILE_BY_SPLIT = {
     EvalSplit.fixture: Path("data/generated/chunks.jsonl"),
@@ -27,6 +37,8 @@ _CHUNK_FILE_BY_SPLIT = {
     EvalSplit.obfuscated: Path("data/generated/public/chunks.jsonl"),
     EvalSplit.redteam: Path("data/generated/redteam/chunks.jsonl"),
     EvalSplit.agent_residual: Path("data/generated/agent_residual/chunks.jsonl"),
+    EvalSplit.ops_dev: Path("data/generated/ops_runbook/chunks.jsonl"),
+    EvalSplit.ops_test: Path("data/generated/ops_runbook/chunks.jsonl"),
 }
 
 _STOPWORDS = {
@@ -63,6 +75,12 @@ def eval_path_for_split(split: EvalSplit, base_dir: Path | None = None) -> Path:
     return base / _CASE_FILE_BY_SPLIT[split]
 
 
+def ops_dev_eval_paths(base_dir: Path | None = None) -> list[Path]:
+    """Physical files that make up the Q4 ops dev set (original 14 + 2 additions)."""
+    base = base_dir or get_settings().gold_eval_dir
+    return [base / name for name in _OPS_DEV_FILES]
+
+
 def chunk_path_for_split(split: EvalSplit) -> Path:
     return _CHUNK_FILE_BY_SPLIT[split]
 
@@ -75,6 +93,12 @@ def load_eval_cases(
 ) -> list[EvalCase]:
     if input_path is not None:
         return [EvalCase.model_validate(record) for record in read_jsonl(input_path)]
+    if split is not None and EvalSplit(split) is EvalSplit.ops_dev:
+        # ops_dev is a logical set spanning two physical files.
+        cases: list[EvalCase] = []
+        for path in ops_dev_eval_paths(base_dir):
+            cases.extend(EvalCase.model_validate(record) for record in read_jsonl(path))
+        return cases
     if split is None:
         cases: list[EvalCase] = []
         for eval_split in EvalSplit:

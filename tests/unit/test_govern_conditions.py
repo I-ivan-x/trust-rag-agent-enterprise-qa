@@ -18,16 +18,39 @@ from app.workflow.state import RetrievalPassResult
 from tests.helpers import make_retrieved_chunk
 
 
-def test_detect_permission_blocked_from_acl() -> None:
+def test_detect_permission_blocked_when_acl_starves_evidence() -> None:
+    # An authorized actor whose evidence became insufficient *because* ACL filtering
+    # removed needed chunks is genuinely permission blocked.
     blocked = make_retrieved_chunk("blocked", "restricted runbook")
     report = detect_conditions(
-        _pass_result(reranked=[blocked], acl_blocked=[blocked]),
+        _pass_result(reranked=[blocked], acl_blocked=[blocked], evidence_sufficient=False),
         ActorContext(role="editor"),
     )
 
-    assert report.conditions == [OpsCondition.permission_blocked]
+    assert OpsCondition.permission_blocked in report.conditions
     assert report.authorized_actor is True
     assert report.permission_blocked_count == 1
+
+
+def test_no_permission_blocked_for_irrelevant_restricted_neighbor() -> None:
+    # Q4-P3 fix: an authorized actor with sufficient evidence whose only blocked chunk
+    # is an irrelevant restricted neighbor must NOT raise PERMISSION_BLOCKED (this was
+    # the Q4-P1 over-escalation root cause).
+    surviving = make_retrieved_chunk("ok", "current rollout guidance", doc_id="doc-ok")
+    blocked = make_retrieved_chunk("blocked", "unrelated restricted runbook", doc_id="doc-x")
+    report = detect_conditions(
+        _pass_result(
+            reranked=[surviving, blocked],
+            acl_surviving=[surviving],
+            acl_blocked=[blocked],
+            evidence_sufficient=True,
+        ),
+        ActorContext(role="editor"),
+    )
+
+    assert OpsCondition.permission_blocked not in report.conditions
+    assert report.conditions == []
+    assert report.authorized_actor is True
 
 
 def test_detect_permission_blocked_from_unauthorized() -> None:

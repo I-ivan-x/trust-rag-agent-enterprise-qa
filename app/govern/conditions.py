@@ -111,9 +111,15 @@ def detect_conditions(
     authorized_actor = _is_authorized(actor.role, requested_action, authorized_roles)
     permission_blocked_count = len(pass_result.acl_decision.blocked_chunks)
     if not authorized_actor:
+        # Real authorization failure: the actor's role lacks permission for the action.
         permission_blocked_count += 1
         _add_condition(conditions, OpsCondition.permission_blocked)
-    elif pass_result.acl_decision.blocked_chunks:
+    elif pass_result.acl_decision.blocked_chunks and evidence_decision == "insufficient":
+        # ACL filtering only counts as PERMISSION_BLOCKED when it actually starved the
+        # answer of evidence. An authorized actor whose evidence is sufficient and who
+        # merely had irrelevant restricted neighbors filtered out is NOT permission
+        # blocked -- recording it here spuriously short-circuited stale/config/xref to
+        # escalate (Q4-P1 over-escalation root cause).
         _add_condition(conditions, OpsCondition.permission_blocked)
 
     conflict_group_ids = _conflict_group_ids(pass_result)
@@ -160,7 +166,15 @@ def _is_authorized(
 def _stale_doc_ids(pass_result: RetrievalPassResult) -> list[str]:
     doc_ids: set[str] = set()
     for signal in _signals(pass_result):
+        # (a) a retrieved deprecated doc that points at its replacement, or
         if signal.status == DocumentStatus.deprecated.value and signal.superseded_by:
+            doc_ids.add(signal.doc_id)
+            continue
+        # (b) an active SOP whose overlay relation flags it as a stale procedure
+        #     (cross-references a deprecated/superseded target). The deprecated doc
+        #     itself need not be retrieved -- the active SOP is enough to trigger.
+        relation = _relation_mapping(signal.overlay_relation_note)
+        if _value(relation.get("type")) == OpsCondition.stale_procedure.value.lower():
             doc_ids.add(signal.doc_id)
     return sorted(doc_ids)
 

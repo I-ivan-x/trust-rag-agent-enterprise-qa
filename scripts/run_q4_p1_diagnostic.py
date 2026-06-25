@@ -34,13 +34,13 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from app.core.config import get_settings
 from app.eval.dataset import load_eval_cases, write_jsonl
+from app.eval.govern_runner import _clearance_value, _requested_action
 from app.govern.conditions import ActorContext, OpsCondition, detect_conditions
 from app.govern.context import GovernanceControllerContext
 from app.govern.controller import GovernanceRuleController
-from app.eval.govern_runner import _clearance_value, _requested_action
 from app.guards.evidence_gate import evidence_gate_config_from_settings
-from app.workflow.orchestrator import run_trust_gated_pass
 from app.schemas.retrieval import RetrievalOptions
+from app.workflow.orchestrator import run_trust_gated_pass
 from scripts.ingest_corpus import run_ingest
 from scripts.rebuild_indexes import rebuild_indexes
 
@@ -131,11 +131,10 @@ def main() -> None:
         records.append(_case_record(case, report, pass_result, proposal))
 
     summary = _build_summary(args.run_id, records, vector_unavailable, reranker_unavailable)
-    (run_dir / "diagnostic.json").write_text(
-        json.dumps({"summary": summary, "cases": records}, ensure_ascii=False, indent=2, sort_keys=True)
-        + "\n",
-        encoding="utf-8",
+    payload = json.dumps(
+        {"summary": summary, "cases": records}, ensure_ascii=False, indent=2, sort_keys=True
     )
+    (run_dir / "diagnostic.json").write_text(payload + "\n", encoding="utf-8")
     write_jsonl(run_dir / "diagnostic_cases.jsonl", records)
     if args.write_doc:
         args.doc_output.write_text(_markdown(summary, records), encoding="utf-8")
@@ -216,10 +215,18 @@ def _build_summary(
         "vector_unavailable": vector_unavailable,
         "reranker_unavailable": reranker_unavailable,
         "stale_gold_count": len(stale_records),
-        "stale_detection_miss_count": sum(1 for r in stale_records if r["dead_path_attribution"] == "detection_miss"),
-        "stale_routing_error_count": sum(1 for r in stale_records if r["dead_path_attribution"] == "routing_error"),
-        "stale_evidence_insufficient_count": sum(1 for r in stale_records if r["evidence_insufficient"]),
-        "stale_flagged_count": sum(1 for r in stale_records if r["proposed_action"] == "flag_stale"),
+        "stale_detection_miss_count": sum(
+            1 for r in stale_records if r["dead_path_attribution"] == "detection_miss"
+        ),
+        "stale_routing_error_count": sum(
+            1 for r in stale_records if r["dead_path_attribution"] == "routing_error"
+        ),
+        "stale_evidence_insufficient_count": sum(
+            1 for r in stale_records if r["evidence_insufficient"]
+        ),
+        "stale_flagged_count": sum(
+            1 for r in stale_records if r["proposed_action"] == "flag_stale"
+        ),
         "over_escalation_count": len(over_records),
         "over_escalation_trigger_distribution": dict(
             sorted(Counter(r["escalate_trigger"] for r in over_records).items())
@@ -236,14 +243,17 @@ def _markdown(summary: dict[str, Any], records: list[dict[str, Any]]) -> str:
         "",
         f"- run_id: `{summary['run_id']}`",
         f"- created_at: `{summary['created_at']}`",
-        f"- mode: {summary['mode']} (controller={summary['controller']}, llm_calls=0, sink_writes=0)",
+        f"- mode: {summary['mode']} "
+        f"(controller={summary['controller']}, llm_calls=0, sink_writes=0)",
         f"- vector_unavailable: {summary['vector_unavailable']}",
         f"- stale_gold: {summary['stale_gold_count']} | detection_miss: "
-        f"{summary['stale_detection_miss_count']} | routing_error: {summary['stale_routing_error_count']}",
+        f"{summary['stale_detection_miss_count']} | "
+        f"routing_error: {summary['stale_routing_error_count']}",
         f"- over_escalation_count: {summary['over_escalation_count']}",
         f"- dead_path_decision: `{summary['dead_path_decision']}`",
         "",
-        "| case | gold_cond | gold_action | detected | ev | auth_actor | proposed | stale? | dead_path | over_esc | trigger |",
+        "| case | gold_cond | gold_action | detected | ev | auth_actor | proposed "
+        "| stale? | dead_path | over_esc | trigger |",
         "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for r in records:
@@ -251,7 +261,8 @@ def _markdown(summary: dict[str, Any], records: list[dict[str, Any]]) -> str:
             f"| `{r['case_id']}` | {r['gold_condition']} | {r['gold_action']} | "
             f"`{','.join(r['detected_conditions']) or '-'}` | {r['evidence_decision']} | "
             f"{r['authorized_actor']} | {r['proposed_action']} | {r['stale_detected']} | "
-            f"{r['dead_path_attribution'] or '-'} | {r['over_escalation']} | {r['escalate_trigger'] or '-'} |"
+            f"{r['dead_path_attribution'] or '-'} | {r['over_escalation']} | "
+            f"{r['escalate_trigger'] or '-'} |"
         )
     lines.append("")
     return "\n".join(lines)

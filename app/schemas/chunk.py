@@ -22,6 +22,7 @@ class Chunk(BaseModel):
     line_end: int | None = Field(default=None, ge=1)
     parent_section_id: str | None = None
     status: DocumentStatus = DocumentStatus.active
+    superseded_by: str | None = None
     version: str
     allowed_roles: list[str] = Field(default_factory=lambda: ["employee"])
     access_level: AccessLevel = AccessLevel.internal

@@ -221,6 +221,7 @@ def _build_chunk(metadata: DocumentMetadata, segment: _ChunkSegment, chunk_index
         line_end=segment.line_end,
         parent_section_id=segment.parent_section_id,
         status=metadata.status,
+        superseded_by=metadata.superseded_by,
         version=metadata.version,
         allowed_roles=metadata.allowed_roles,
         access_level=metadata.access_level,

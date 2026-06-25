@@ -72,6 +72,8 @@ class EvalSplit(StrEnum):
     obfuscated = "obfuscated"
     redteam = "redteam"
     agent_residual = "agent_residual"
+    ops_dev = "ops_dev"
+    ops_test = "ops_test"
 
 
 class QuerySource(StrEnum):

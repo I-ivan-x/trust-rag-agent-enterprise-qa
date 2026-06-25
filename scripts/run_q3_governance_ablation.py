@@ -48,6 +48,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-root", type=Path, default=None)
     parser.add_argument("--sleep-seconds", type=float, default=0.2)
     parser.add_argument("--max-output-tokens", type=int, default=256)
+    parser.add_argument(
+        "--split",
+        default=None,
+        help=(
+            "Eval split to run (e.g. ops_dev for Q4-P4 dev calibration, ops_test for "
+            "Q4-P5 held-out). Defaults to the original 14-case ops_runbook eval file. "
+            "Do NOT pass ops_test during P3/P4."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -61,6 +70,7 @@ def main() -> None:
         output_root=args.output_root,
         sleep_seconds=args.sleep_seconds,
         max_output_tokens=args.max_output_tokens,
+        split=args.split,
     )
     print(json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True))
 
@@ -74,6 +84,7 @@ def run_q3_governance_ablation(
     output_root: Path | None = None,
     sleep_seconds: float = 0.2,
     max_output_tokens: int | None = 256,
+    split: str | None = None,
 ) -> dict[str, Any]:
     if k <= 0:
         raise ValueError("k must be positive")
@@ -95,7 +106,7 @@ def run_q3_governance_ablation(
     reranker, reranker_unavailable = _get_eval_reranker()
     vector_unavailable = not bool(index_summary.get("vector_index_built"))
 
-    cases = load_eval_cases(input_path=OPS_EVAL_PATH)
+    cases = load_eval_cases(split) if split else load_eval_cases(input_path=OPS_EVAL_PATH)
     result_rows: list[dict[str, Any]] = []
     trace_rows: list[dict[str, Any]] = []
 

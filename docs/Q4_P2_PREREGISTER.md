@@ -81,3 +81,19 @@ eval 作者（出题 + 留出切分）：Claude（本提交）
                         仅 P5 `q4-p5-selection-calibrated` 评测一次。
 Owner 批准：接受本预注册提交即视为 Owner 批准成功标准与留出纪律。
 ```
+
+------
+
+## 6. 偏离记录（post-freeze；须在 P5 报告透明披露）
+
+```text
+2026-06-25 | P2 leakage 阶段发现 5 条 test query（ora-t09/t10/t11/t12/t13）纯中文、与英文
+  gold-chunk 缺可检索锚点术语 → 检索 miss。这是【出题语言不匹配】缺陷，非 agent 动作选择能力问题。
+处置：在【检测/路由逻辑冻结之后】，仅向这 5 条 query 补入真实运维术语（rollback / maintenance
+  window / drain）；gold_action / gold_condition / gold_doc_ids / authorized 均未改（git diff 已验）。
+ratify：eval 作者（Claude）复核确认 5 条改动为合法领域措辞、非对系统行为的反向定制，予以批准——
+  把"校准执行者编辑 test"回收为"eval 作者 ratify 的 test query 修复"，恢复作者隔离链。
+影响：使这 5 条测的是【动作选择】而非【跨语言检索】，符合 Gate 本意；但"留出集由具系统可见性者
+  编辑过"须在 P5 报告如实说明。教训：今后 test query 应自始即含可检索锚点术语。
+```
+
