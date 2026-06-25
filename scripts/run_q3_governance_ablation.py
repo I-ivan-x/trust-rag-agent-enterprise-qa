@@ -33,10 +33,10 @@ from scripts.rebuild_indexes import rebuild_indexes
 SYSTEMS = ["final_governed_rule", "final_governed_llm"]
 DEFAULT_RUN_ID = "q3-p7-governance-ablation"
 OPS_EVAL_PATH = Path("data/gold_eval/ops_runbook_action_v1_eval.jsonl")
-PUBLIC_CORPUS_DIR = Path("data/public_corpus")
-PUBLIC_OVERLAY_PATH = PUBLIC_CORPUS_DIR / "overlay" / "metadata_overlay.yaml"
-PUBLIC_GENERATED_DIR = Path("data/generated/public")
-PUBLIC_CHUNKS_PATH = PUBLIC_GENERATED_DIR / "chunks.jsonl"
+OPS_CORPUS_DIR = Path("data/ops_runbook_corpus")
+OPS_OVERLAY_PATH = OPS_CORPUS_DIR / "overlay" / "metadata_overlay.yaml"
+OPS_GENERATED_DIR = Path("data/generated/ops_runbook")
+OPS_CHUNKS_PATH = OPS_GENERATED_DIR / "chunks.jsonl"
 
 
 def parse_args() -> argparse.Namespace:
@@ -157,13 +157,13 @@ def run_q3_governance_ablation(
 
 def _prepare_ops_index() -> dict[str, Any]:
     run_ingest(
-        input_dir=PUBLIC_CORPUS_DIR,
-        output_dir=PUBLIC_GENERATED_DIR,
+        input_dir=OPS_CORPUS_DIR,
+        output_dir=OPS_GENERATED_DIR,
         eval_path=None,
         review_path=None,
-        overlay_path=PUBLIC_OVERLAY_PATH,
+        overlay_path=OPS_OVERLAY_PATH,
     )
-    return rebuild_indexes(PUBLIC_CHUNKS_PATH)
+    return rebuild_indexes(OPS_CHUNKS_PATH)
 
 
 def _controller_for_system(

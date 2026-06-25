@@ -14,7 +14,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from app.core.enums import EvalSplit
+from app.core.enums import CorpusSource, EvalSplit
 from app.eval.dataset import (
     doc_titles_by_id,
     eval_path_for_split,
@@ -67,7 +67,7 @@ def check_leakage(
     for eval_split in splits:
         path = eval_path_for_split(eval_split)
         cases = load_eval_cases(eval_split)
-        chunks = load_chunks_for_split(eval_split)
+        chunks = _chunks_for_cases(cases)
         split_report = _check_cases(cases, chunks)
         split_report["path"] = path.as_posix()
         all_reports.append(split_report)
@@ -334,10 +334,25 @@ def _metadata_origin_value(chunk: Any) -> str | None:
 
 
 def _chunks_for_cases(cases: list[EvalCase]) -> list[Any]:
-    chunks: list[Any] = []
-    for eval_split in {case.eval_split for case in cases}:
-        chunks.extend(load_chunks_for_split(eval_split))
-    return chunks
+    chunks_by_id: dict[str, Any] = {}
+    for eval_split in _chunk_splits_for_cases(cases):
+        for chunk in load_chunks_for_split(eval_split):
+            chunks_by_id.setdefault(chunk.chunk_id, chunk)
+    return list(chunks_by_id.values())
+
+
+def _chunk_splits_for_cases(cases: list[EvalCase]) -> list[EvalSplit]:
+    splits = {case.eval_split for case in cases}
+    corpus_sources = {case.corpus_source for case in cases}
+    if CorpusSource.synthetic_fixture in corpus_sources:
+        splits.add(EvalSplit.fixture)
+    if CorpusSource.redteam_injection in corpus_sources:
+        splits.add(EvalSplit.redteam)
+    if CorpusSource.agent_residual in corpus_sources:
+        splits.add(EvalSplit.agent_residual)
+    if CorpusSource.hard_negative in corpus_sources:
+        splits.add(EvalSplit.hard_negative)
+    return sorted(splits, key=lambda split: split.value)
 
 
 def _chunks_from_corpus(corpus_dir: Path, *, overlay_path: Path | None) -> list[Chunk]:

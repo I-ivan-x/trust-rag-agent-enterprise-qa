@@ -45,6 +45,8 @@ K8S_LICENSE_NOTE = (
     "Kubernetes documentation from the public kubernetes/website GitHub repository; "
     "licensed under CC BY 4.0 and fetched verbatim with attribution."
 )
+DEFAULT_PUBLIC_CORPUS_DIR = Path("data/public_corpus")
+DEFAULT_OPS_CORPUS_DIR = Path("data/ops_runbook_corpus")
 K8S_PATH_ADJUSTMENTS = {
     "content/en/docs/concepts/configuration/overview.md": (
         "content/en/docs/concepts/configuration/_index.md"
@@ -396,6 +398,56 @@ def write_public_manifest(corpus_dir: Path, overlay_path: Path | None) -> Path:
     return manifest_path
 
 
+def write_combined_public_manifest(corpus_dir: Path = DEFAULT_PUBLIC_CORPUS_DIR) -> Path:
+    overlay_path = write_combined_metadata_overlay(corpus_dir)
+    return write_public_manifest(corpus_dir, overlay_path)
+
+
+def write_combined_metadata_overlay(corpus_dir: Path = DEFAULT_PUBLIC_CORPUS_DIR) -> Path | None:
+    root_overlay_path = corpus_dir / "overlay" / "metadata_overlay.yaml"
+    namespace_overlays = _namespace_overlays(corpus_dir)
+    if not namespace_overlays:
+        return root_overlay_path if root_overlay_path.exists() else None
+
+    base = _read_yaml_mapping(root_overlay_path) if root_overlay_path.exists() else {}
+    namespace_names = {namespace for namespace, _ in namespace_overlays}
+    rules = [
+        rule
+        for rule in base.get("rules", [])
+        if not _is_namespaced_pattern(str(rule.get("match", "")), namespace_names)
+    ]
+    documents = [
+        document
+        for document in base.get("documents", [])
+        if not _is_namespaced_pattern(str(document.get("path", "")), namespace_names)
+    ]
+
+    for namespace, overlay_path in namespace_overlays:
+        overlay = _read_yaml_mapping(overlay_path)
+        defaults = overlay.get("defaults", {})
+        if defaults:
+            rules.append({"match": f"{namespace}/**", **defaults})
+        for rule in overlay.get("rules", []):
+            rules.append({**rule, "match": _prefix_overlay_path(namespace, rule["match"])})
+        for document in overlay.get("documents", []):
+            documents.append(
+                {**document, "path": _prefix_overlay_path(namespace, document["path"])}
+            )
+
+    combined = {
+        **base,
+        "relation_note": _combined_relation_note(base, namespace_overlays),
+        "rules": rules,
+        "documents": documents,
+    }
+    root_overlay_path.parent.mkdir(parents=True, exist_ok=True)
+    root_overlay_path.write_text(
+        yaml.safe_dump(combined, sort_keys=False, allow_unicode=True),
+        encoding="utf-8",
+    )
+    return root_overlay_path
+
+
 def _select_doc_paths(limit: int) -> list[str]:
     if len(FASTAPI_DOC_PATHS) >= limit:
         return FASTAPI_DOC_PATHS[:limit]
@@ -741,11 +793,62 @@ def _slugify(text: str) -> str:
     return slug or "doc"
 
 
+def _namespace_overlays(corpus_dir: Path) -> list[tuple[str, Path]]:
+    if not corpus_dir.exists():
+        return []
+    overlays = []
+    for path in sorted(corpus_dir.iterdir(), key=lambda item: item.name):
+        if not path.is_dir():
+            continue
+        overlay_path = path / "overlay" / "metadata_overlay.yaml"
+        if overlay_path.exists():
+            overlays.append((path.name, overlay_path))
+    return overlays
+
+
+def _read_yaml_mapping(path: Path) -> dict[str, Any]:
+    data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    if not isinstance(data, dict):
+        raise ValueError(f"YAML overlay must be a mapping: {path}")
+    return data
+
+
+def _is_namespaced_pattern(pattern: str, namespaces: set[str]) -> bool:
+    first = pattern.replace("\\", "/").strip("/").split("/", maxsplit=1)[0]
+    return first in namespaces
+
+
+def _prefix_overlay_path(namespace: str, path: str) -> str:
+    normalized = str(path).replace("\\", "/").strip("/")
+    if normalized.startswith(f"{namespace}/"):
+        return normalized
+    return f"{namespace}/{normalized}"
+
+
+def _combined_relation_note(
+    base_overlay: dict[str, Any],
+    namespace_overlays: list[tuple[str, Path]],
+) -> str:
+    base_note = str(base_overlay.get("relation_note") or "").strip()
+    namespaces = ", ".join(namespace for namespace, _ in namespace_overlays)
+    prefix = (
+        "Combined public corpus overlay. Root buckets contain FastAPI Q1/Q2 public "
+        f"docs; namespaced overlays preserve additional corpora under: {namespaces}."
+    )
+    return f"{prefix} {base_note}".strip()
+
+
+def _default_output_dir(source: str) -> Path:
+    if source == "k8s":
+        return DEFAULT_OPS_CORPUS_DIR
+    return DEFAULT_PUBLIC_CORPUS_DIR
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Fetch public documentation corpus.")
     parser.add_argument("--source", choices=["fastapi", "k8s"], default="fastapi")
     parser.add_argument("--limit", type=int, default=40)
-    parser.add_argument("--output", type=Path, default=Path("data/public_corpus"))
+    parser.add_argument("--output", type=Path, default=None)
     parser.add_argument(
         "--skip-tree-check",
         action="store_true",
@@ -756,13 +859,18 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+    output_dir = args.output or _default_output_dir(args.source)
     if args.source == "k8s":
         summary = fetch_k8s_public_corpus(
-            output_dir=args.output,
+            output_dir=output_dir,
             verify_tree=not args.skip_tree_check,
         )
     else:
-        summary = fetch_public_corpus(limit=args.limit, output_dir=args.output)
+        summary = fetch_public_corpus(limit=args.limit, output_dir=output_dir)
+    if args.output is None:
+        summary["combined_public_corpus_manifest_path"] = write_combined_public_manifest(
+            DEFAULT_PUBLIC_CORPUS_DIR
+        ).as_posix()
     summary["fetched_at"] = datetime.now(UTC).isoformat()
     print(json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True))
 

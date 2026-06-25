@@ -2,7 +2,9 @@ import json
 from pathlib import Path
 
 import scripts.check_eval_leakage as leakage_script
+from app.core.enums import EvalSplit
 from app.schemas.chunk import Chunk
+from app.schemas.eval import EvalCase
 
 
 def _chunk(
@@ -211,6 +213,41 @@ def test_check_eval_leakage_flags_missing_gold_doc_with_corpus(
 
     assert report["passed"] is False
     assert "missing_gold_doc" in [flag["flag_type"] for flag in report["blocking_flags"]]
+
+
+def test_external_synthetic_cases_load_fixture_chunks(monkeypatch) -> None:
+    calls = []
+
+    def fake_load_chunks_for_split(split):
+        calls.append(EvalSplit(split))
+        if EvalSplit(split) is EvalSplit.fixture:
+            return [
+                _chunk(
+                    chunk_id="doc-api-auth-service-v2::chunk-0000",
+                    doc_id="doc-api-auth-service-v2",
+                    text="In v2 the access token lifetime is 30 minutes.",
+                    section_path=["Access Token Lifetime"],
+                )
+            ]
+        return []
+
+    monkeypatch.setattr(leakage_script, "load_chunks_for_split", fake_load_chunks_for_split)
+    case = EvalCase(
+        case_id="external-034",
+        split="external",
+        corpus_source="synthetic_fixture",
+        query="Do the active internal notes and API spec agree on the auth token lifetime?",
+        query_type="conflict_doc",
+        expected_behavior="report_conflict",
+        gold_doc_ids=["doc-api-auth-service-v2"],
+        gold_chunk_ids=["doc-api-auth-service-v2::chunk-0000"],
+        requires_citation=True,
+    )
+
+    chunks = leakage_script._chunks_for_cases([case])
+
+    assert calls == [EvalSplit.external, EvalSplit.fixture]
+    assert [chunk.chunk_id for chunk in chunks] == ["doc-api-auth-service-v2::chunk-0000"]
 
 
 def _write_seeded_doc(path: Path) -> None:

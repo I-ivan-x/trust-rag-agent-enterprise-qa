@@ -1,0 +1,208 @@
+seed: 43
+relation_note: Q3-P5 Kubernetes public corpus plus seeded overlay snippets for
+  ops_runbook_action_v1. Seeded snippets are synthetic and explicitly marked with
+  metadata_origin=seeded_overlay.
+defaults:
+  status: active
+  access_level: internal
+  allowed_roles:
+  - admin
+  - editor
+rules:
+- match: security/**
+  access_level: restricted
+  allowed_roles:
+  - admin
+- match: deprecated/**
+  status: deprecated
+documents:
+- path: active/001-reference-using-api-deprecation-policy.md
+  status: active
+  access_level: internal
+  overlay_relation_note:
+    type: api_deprecation_anchor
+- path: active/002-reference-using-api-deprecation-guide.md
+  status: active
+  access_level: internal
+  overlay_relation_note:
+    type: api_deprecation_anchor
+- path: active/003-concepts-security-pod-security-admission.md
+  status: active
+  access_level: internal
+  overlay_relation_note:
+    type: superseding_guidance
+    supersedes_doc_path: deprecated/021-concepts-security-pod-security-policy.md
+- path: security/004-concepts-security-pod-security-standards.md
+  status: active
+  access_level: restricted
+  policy_ref: policy-restricted-pod-security
+  overlay_relation_note:
+    type: policy_anchor
+- path: active/005-tasks-configure-pod-container-migrate-from-psp.md
+  status: active
+  access_level: internal
+  overlay_relation_note:
+    type: migration_anchor
+    supersedes_doc_path: deprecated/021-concepts-security-pod-security-policy.md
+- path: security/006-tasks-configure-pod-container-enforce-standards-namespace-labels.md
+  status: active
+  access_level: restricted
+  policy_ref: policy-restricted-pod-security
+  overlay_relation_note:
+    type: policy_anchor
+- path: security/007-tasks-configure-pod-container-enforce-standards-admission-controller.md
+  status: active
+  access_level: restricted
+  policy_ref: policy-restricted-pod-security
+  overlay_relation_note:
+    type: policy_anchor
+- path: active/008-tasks-configure-pod-container-security-context.md
+  status: active
+  access_level: internal
+  policy_ref: policy-restricted-pod-security
+  overlay_relation_note:
+    type: policy_anchor
+- path: security/009-reference-access-authn-authz-rbac.md
+  status: active
+  access_level: restricted
+  overlay_relation_note:
+    type: authorization_anchor
+- path: security/010-concepts-security-rbac-good-practices.md
+  status: active
+  access_level: restricted
+  overlay_relation_note:
+    type: least_privilege_anchor
+- path: security/011-reference-access-authn-authz-authorization.md
+  status: active
+  access_level: restricted
+  overlay_relation_note:
+    type: authorization_anchor
+- path: active/012-concepts-services-networking-endpoint-slices.md
+  status: active
+  access_level: internal
+  overlay_relation_note:
+    type: superseding_guidance
+- path: active/013-concepts-services-networking-service.md
+  status: active
+  access_level: internal
+  overlay_relation_note:
+    type: api_deprecation_anchor
+- path: active/014-concepts-workloads-controllers-deployment.md
+  status: active
+  access_level: internal
+  overlay_relation_note:
+    type: current_runbook_anchor
+- path: active/015-tasks-manage-daemon-update-daemon-set.md
+  status: active
+  access_level: internal
+  overlay_relation_note:
+    type: rollout_anchor
+- path: active/016-tasks-administer-cluster-cluster-upgrade.md
+  status: active
+  access_level: internal
+  overlay_relation_note:
+    type: upgrade_anchor
+- path: active/017-concepts-configuration.md
+  status: active
+  access_level: internal
+  policy_ref: policy-restricted-pod-security
+  overlay_relation_note:
+    type: configuration_anchor
+- path: security/018-concepts-security-security-checklist.md
+  status: active
+  access_level: restricted
+  policy_ref: policy-restricted-pod-security
+  overlay_relation_note:
+    type: security_anchor
+- path: security/019-concepts-security.md
+  status: active
+  access_level: restricted
+  overlay_relation_note:
+    type: security_context_anchor
+- path: active/020-reference-command-line-tools-reference-feature-gates.md
+  status: active
+  access_level: internal
+  overlay_relation_note:
+    type: feature_lifecycle_anchor
+- path: deprecated/021-concepts-security-pod-security-policy.md
+  status: deprecated
+  access_level: internal
+  superseded_by: active/003-concepts-security-pod-security-admission.md
+  version: kubernetes-website-release-1.24
+  overlay_relation_note:
+    type: superseded_by
+    target_doc_id: doc-public-k8s-0003-the-per-mode-level-label-indicates-which-policy-
+    target_status: active
+- path: active/sop-psp-admission-legacy.md
+  status: active
+  access_level: internal
+  overlay_relation_note:
+    type: stale_procedure
+    anchor_docs:
+    - deprecated/021-concepts-security-pod-security-policy.md
+    - active/003-concepts-security-pod-security-admission.md
+- path: active/sop-api-deprecation-checks.md
+  status: active
+  access_level: internal
+  overlay_relation_note:
+    type: stale_procedure
+    anchor_docs:
+    - active/001-reference-using-api-deprecation-policy.md
+    - active/002-reference-using-api-deprecation-guide.md
+    - active/012-concepts-services-networking-endpoint-slices.md
+    - active/013-concepts-services-networking-service.md
+- path: security/policy-restricted-pod-security.md
+  status: active
+  access_level: restricted
+  policy_ref: policy-restricted-pod-security
+  overlay_relation_note:
+    type: policy_overlay
+    anchor_docs:
+    - security/004-concepts-security-pod-security-standards.md
+    - security/006-tasks-configure-pod-container-enforce-standards-namespace-labels.md
+- path: security/sop-pod-security-violations.md
+  status: active
+  access_level: restricted
+  policy_ref: policy-restricted-pod-security
+  overlay_relation_note:
+    type: violates_policy
+    target_doc_id: sop-pod-security-violations
+    policy_doc_id: policy-restricted-pod-security
+- path: active/sop-upgrade-rollback-xref.md
+  status: active
+  access_level: internal
+  overlay_relation_note:
+    type: xref
+    target_doc_id: sop-upgrade-rollback-v1
+    target_status: missing
+- path: active/sop-upgrade-rollback-prereq.md
+  status: active
+  access_level: internal
+  overlay_relation_note:
+    type: prerequisite
+    target_doc_id: sop-upgrade-rollback-v1
+    target_status: missing
+- path: active/sop-prod-maintenance-primary.md
+  status: active
+  access_level: internal
+  allowed_roles:
+  - admin
+  overlay_relation_note:
+    type: active_active_conflict
+    paired_doc_id: sop-prod-maintenance-secondary
+- path: active/sop-prod-maintenance-secondary.md
+  status: active
+  access_level: internal
+  allowed_roles:
+  - admin
+  overlay_relation_note:
+    type: active_active_conflict
+    paired_doc_id: sop-prod-maintenance-primary
+- path: active/policy-rbac-readonly-audit-view.md
+  status: active
+  access_level: internal
+  overlay_relation_note:
+    type: policy_overlay
+    outcome: allowed
+    anchor_docs:
+    - security/010-concepts-security-rbac-good-practices.md
