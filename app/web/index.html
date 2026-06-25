@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TrustRAG Ops Console — Action Governance</title>
+<style>
+  :root {
+    --bg: #f1f5f9; --surface: #ffffff; --surface-2: #f8fafc;
+    --border: #e2e8f0; --text: #0f172a; --muted: #64748b;
+    --brand: #4f46e5; --brand-weak: #eef2ff;
+    --auto: #059669; --auto-weak: #ecfdf5;     /* committed / auto */
+    --pending: #d97706; --pending-weak: #fffbeb; /* pending_approval */
+    --escalate: #e11d48; --escalate-weak: #fff1f2; /* escalated / blocked */
+    --noop: #64748b; --noop-weak: #f1f5f9;       /* no_op */
+    --detect: #2563eb; --detect-weak: #eff6ff;   /* conditions */
+    --shadow: 0 1px 2px rgba(15,23,42,.06), 0 4px 12px rgba(15,23,42,.05);
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-font-smoothing: antialiased; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px; line-height: 1.5;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .tab, .btn, .chip, .card { transition: all .18s ease; }
+  }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; padding: 14px 24px; background: #0f172a; color: #e2e8f0;
+    position: sticky; top: 0; z-index: 10;
+  }
+  header .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: -.01em; }
+  header .brand svg { width: 22px; height: 22px; }
+  header .sub { color: #94a3b8; font-weight: 500; font-size: 12px; }
+  .failclosed {
+    display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px;
+    background: rgba(5,150,105,.15); color: #6ee7b7; border: 1px solid rgba(5,150,105,.35);
+    border-radius: 999px; font-size: 12px; font-weight: 600;
+  }
+  .failclosed .dot { width: 7px; height: 7px; border-radius: 50%; background: #34d399; }
+  main { max-width: 1180px; margin: 0 auto; padding: 22px 24px 64px; }
+  nav.tabs { display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab {
+    appearance: none; border: 1px solid var(--border); background: var(--surface);
+    color: var(--muted); padding: 9px 15px; border-radius: 999px; cursor: pointer;
+    font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 7px;
+  }
+  .tab:hover { color: var(--text); border-color: #cbd5e1; }
+  .tab.active { background: var(--brand); border-color: var(--brand); color: #fff; }
+  .tab .count { background: rgba(0,0,0,.12); border-radius: 999px; padding: 1px 7px; font-size: 11px; }
+  .tab.active .count { background: rgba(255,255,255,.22); }
+  .tab:focus-visible, .btn:focus-visible, .chip:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 2px solid var(--brand); outline-offset: 2px;
+  }
+  .view { display: none; }
+  .view.active { display: block; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+  .grid { display: grid; grid-template-columns: 360px 1fr; gap: 20px; }
+  @media (max-width: 880px) { .grid { grid-template-columns: 1fr; } }
+  .pad { padding: 18px; }
+  h2.section { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 14px; }
+  label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin: 0 0 6px; }
+  textarea, select, input {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 9px;
+    font: inherit; color: var(--text); background: var(--surface-2);
+  }
+  textarea { resize: vertical; min-height: 70px; }
+  .row { display: flex; gap: 12px; }
+  .row > div { flex: 1; }
+  .field { margin-bottom: 14px; }
+  .btn {
+    appearance: none; border: 1px solid var(--brand); background: var(--brand); color: #fff;
+    padding: 10px 16px; border-radius: 9px; cursor: pointer; font-weight: 600; font-size: 13px;
+    display: inline-flex; align-items: center; gap: 7px;
+  }
+  .btn:hover { filter: brightness(1.08); }
+  .btn.ghost { background: transparent; color: var(--text); border-color: var(--border); }
+  .btn.ghost:hover { border-color: #cbd5e1; background: var(--surface-2); }
+  .btn.ok { background: var(--auto); border-color: var(--auto); }
+  .btn.danger { background: var(--escalate); border-color: var(--escalate); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+  .chip {
+    border: 1px dashed var(--border); background: var(--surface-2); color: var(--muted);
+    padding: 7px 12px; border-radius: 999px; cursor: pointer; font-size: 12px; font-weight: 600;
+  }
+  .chip:hover { border-style: solid; color: var(--text); border-color: #cbd5e1; }
+  .chip .role { color: var(--brand); }
+  /* timeline */
+  .timeline { display: flex; flex-direction: column; gap: 0; }
+  .stage { display: grid; grid-template-columns: 34px 1fr; gap: 14px; }
+  .stage .rail { display: flex; flex-direction: column; align-items: center; }
+  .stage .node { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 13px; flex-shrink: 0; }
+  .stage .line { width: 2px; flex: 1; background: var(--border); margin: 4px 0; }
+  .stage:last-child .line { display: none; }
+  .stage .body { padding-bottom: 18px; }
+  .stage .label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .stage .headline { font-weight: 600; margin: 2px 0 6px; }
+  .n-read { background: var(--detect); } .n-detect { background: var(--detect); }
+  .n-act { background: var(--brand); } .n-govern { background: var(--noop); }
+  .pill {
+    display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 999px;
+    font-size: 12px; font-weight: 600; border: 1px solid transparent;
+  }
+  .pill.auto { background: var(--auto-weak); color: var(--auto); border-color: #a7f3d0; }
+  .pill.approval, .pill.pending_approval { background: var(--pending-weak); color: var(--pending); border-color: #fde68a; }
+  .pill.terminal, .pill.escalated { background: var(--escalate-weak); color: var(--escalate); border-color: #fecdd3; }
+  .pill.none, .pill.no_op, .pill.committed-noop { background: var(--noop-weak); color: var(--noop); border-color: var(--border); }
+  .pill.committed { background: var(--auto-weak); color: var(--auto); border-color: #a7f3d0; }
+  .pill.cond { background: var(--detect-weak); color: var(--detect); border-color: #bfdbfe; }
+  .pill.ok { background: var(--auto-weak); color: var(--auto); border-color: #a7f3d0; }
+  .pill.bad { background: var(--escalate-weak); color: var(--escalate); border-color: #fecdd3; }
+  .kv { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; }
+  .mono { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px; color: var(--muted); }
+  .empty { padding: 40px 20px; text-align: center; color: var(--muted); }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: top; }
+  th { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); background: var(--surface-2); position: sticky; top: 56px; }
+  tr:hover td { background: var(--surface-2); }
+  .banner { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 10px; margin-bottom: 16px; font-weight: 600; font-size: 13px; }
+  .banner.blocked { background: var(--escalate-weak); color: var(--escalate); border: 1px solid #fecdd3; }
+  .pending-card { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; padding: 16px; border-bottom: 1px solid var(--border); }
+  .pending-card:last-child { border-bottom: none; }
+  .toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); background: #0f172a; color: #fff; padding: 11px 18px; border-radius: 10px; font-size: 13px; font-weight: 600; opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 50; }
+  .toast.show { opacity: 1; }
+  .muted-note { color: var(--muted); font-size: 12px; margin-top: 4px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#6ee7b7" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6l8-4z"/><path d="M9 12l2 2 4-4"/></svg>
+    TrustRAG Ops Console <span class="sub">· evidence-aware action governance</span>
+  </div>
+  <span class="failclosed"><span class="dot"></span> fail-closed · validator-enforced</span>
+</header>
+
+<main>
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-view="run" role="tab">Read → Detect → Act → Govern</button>
+    <button class="tab" data-view="pending" role="tab">Pending approvals <span class="count" id="cnt-pending">0</span></button>
+    <button class="tab" data-view="audit" role="tab">Audit trail <span class="count" id="cnt-audit">0</span></button>
+    <button class="tab" data-view="blocked" role="tab">Blocked / escalated <span class="count" id="cnt-blocked">0</span></button>
+  </nav>
+
+  <!-- RUN -->
+  <section class="view active" id="view-run">
+    <div class="grid">
+      <div class="card pad">
+        <h2 class="section">Run a governance pass</h2>
+        <div class="field">
+          <label for="q">Operator query</label>
+          <textarea id="q" placeholder="e.g. Our deploy SOP still gates pods via PodSecurityPolicy admission — is that current?"></textarea>
+        </div>
+        <div class="row field">
+          <div>
+            <label for="role">Actor role</label>
+            <select id="role"><option value="admin">admin</option><option value="editor">editor</option><option value="viewer">viewer</option></select>
+          </div>
+          <div>
+            <label for="ctrl">Controller</label>
+            <select id="ctrl"><option value="rule">rule (deterministic)</option><option value="llm">llm</option></select>
+          </div>
+        </div>
+        <button class="btn" id="runBtn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 9-14 9V3z"/></svg> Run pass</button>
+        <div class="muted-note">Live demo shows the agent's <b>proposed</b> decision and its governance routing. Side effects land in an isolated demo store.</div>
+        <h2 class="section" style="margin-top:22px">Canned scenarios</h2>
+        <div class="chips" id="chips"></div>
+      </div>
+
+      <div class="card pad" id="resultPanel">
+        <div class="empty" id="resultEmpty">Run a pass to see the Read → Detect → Act → Govern trajectory.</div>
+        <div id="resultBody" style="display:none"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PENDING -->
+  <section class="view" id="view-pending">
+    <div class="card">
+      <div class="pad"><h2 class="section" style="margin:0">High-risk actions awaiting human approval</h2>
+        <div class="muted-note">Tickets and alerts are <b>proposed, not committed</b> — a human must approve before any side effect takes effect.</div>
+      </div>
+      <div id="pendingList"></div>
+    </div>
+  </section>
+
+  <!-- AUDIT -->
+  <section class="view" id="view-audit">
+    <div class="card">
+      <div class="pad"><h2 class="section" style="margin:0">Append-only action audit trail</h2></div>
+      <div id="auditTable"></div>
+    </div>
+  </section>
+
+  <!-- BLOCKED -->
+  <section class="view" id="view-blocked">
+    <div class="banner blocked"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg> fail-closed evidence: unauthorized and no-evidence actions are blocked and escalated — never committed.</div>
+    <div class="card"><div id="blockedTable"></div></div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = "/govern";
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+const SCENARIOS = [
+  { label: "Deprecated procedure", role: "admin", q: "Our deploy SOP still gates pods via PodSecurityPolicy admission — is that procedure current?" },
+  { label: "Config violation", role: "admin", q: "A deployment in our restricted-labeled namespace sets securityContext.privileged=true. What should happen?" },
+  { label: "Active-active conflict", role: "admin", q: "Two active runbooks disagree on prod etcd backup interval — 6h vs 24h. What now?" },
+  { label: "Unauthorized request", role: "viewer", q: "Open a remediation ticket for the privileged-pod violation in namespace X." },
+  { label: "Healthy / no action", role: "admin", q: "How do I perform a rolling update on a Deployment?" },
+];
+
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 2200); }
+
+function tierClass(t) { return ({auto:"auto", approval:"approval", terminal:"terminal", none:"none"})[t] || "none"; }
+function stateClass(s) { return ({committed:"committed", pending_approval:"pending_approval", escalated:"escalated", none:"none", dropped:"none"})[s] || "none"; }
+
+document.querySelectorAll(".tab").forEach(tab => tab.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  tab.classList.add("active");
+  $("#view-" + tab.dataset.view).classList.add("active");
+  if (tab.dataset.view === "pending") loadPending();
+  if (tab.dataset.view === "audit") loadAudit();
+  if (tab.dataset.view === "blocked") loadBlocked();
+}));
+
+// canned chips
+const chips = $("#chips");
+SCENARIOS.forEach(s => {
+  const b = document.createElement("button");
+  b.className = "chip"; b.innerHTML = esc(s.label) + ' <span class="role">@' + esc(s.role) + '</span>';
+  b.addEventListener("click", () => { $("#q").value = s.q; $("#role").value = s.role; runPass(); });
+  chips.appendChild(b);
+});
+
+$("#runBtn").addEventListener("click", runPass);
+
+async function runPass() {
+  const query = $("#q").value.trim();
+  if (!query) { toast("Enter a query first"); return; }
+  const btn = $("#runBtn"); btn.disabled = true; btn.textContent = "Running…";
+  try {
+    const res = await fetch(API + "/run", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ query, user_role: $("#role").value, controller: $("#ctrl").value })
+    });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    renderResult(data.result, data.trace);
+    refreshCounts();
+  } catch (e) { toast("Run failed: " + e.message); }
+  finally { btn.disabled = false; btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 9-14 9V3z"/></svg> Run pass'; }
+}
+
+function renderResult(r, t) {
+  $("#resultEmpty").style.display = "none";
+  const body = $("#resultBody"); body.style.display = "block";
+  const conds = (r.detected_conditions || []);
+  const condHtml = conds.length ? conds.map(c => `<span class="pill cond">${esc(c)}</span>`).join(" ") : '<span class="pill none">no condition</span>';
+  const cites = (t.surviving_chunk_ids || t.retrieved_chunk_ids || []).slice(0, 4);
+  const blocked = (t.blocked_chunk_ids || []);
+  const authOk = r.authorized_actor;
+  const valOk = r.validator_ok;
+  const forced = r.forced_action;
+  const state = r.approval_state || "none";
+  const govLabel = state === "committed" ? "executed (committed)"
+      : state === "pending_approval" ? "awaiting human approval"
+      : state === "escalated" ? "escalated to human" : "no action";
+
+  body.innerHTML = `
+    <div class="timeline">
+      <div class="stage">
+        <div class="rail"><div class="node n-read">1</div><div class="line"></div></div>
+        <div class="body"><div class="label">Read · retrieval</div>
+          <div class="headline">${(t.retrieved_chunk_ids||[]).length} chunks retrieved, ${(t.surviving_chunk_ids||[]).length} survived gates</div>
+          <div class="kv">${cites.map(c => `<span class="mono">${esc(c)}</span>`).join("")}
+          ${blocked.length ? `<span class="pill bad">${blocked.length} ACL-blocked</span>` : ""}</div>
+        </div>
+      </div>
+      <div class="stage">
+        <div class="rail"><div class="node n-detect">2</div><div class="line"></div></div>
+        <div class="body"><div class="label">Detect · conditions</div>
+          <div class="headline">${condHtml}</div>
+          <div class="kv"><span class="pill ${authOk?'ok':'bad'}">${authOk?'actor authorized':'actor NOT authorized'}</span>
+          <span class="pill ${r.evidence_decision==='sufficient'?'ok':'bad'}">evidence ${esc(r.evidence_decision)}</span></div>
+        </div>
+      </div>
+      <div class="stage">
+        <div class="rail"><div class="node n-act">3</div><div class="line"></div></div>
+        <div class="body"><div class="label">Act · proposed (${esc(r.controller_source)})</div>
+          <div class="headline"><span class="pill ${tierClass(r.risk_tier)}">${esc(r.proposed_action)}</span>
+          <span class="muted-note" style="display:inline">risk: ${esc(r.risk_tier)}</span></div>
+        </div>
+      </div>
+      <div class="stage">
+        <div class="rail"><div class="node n-govern">4</div></div>
+        <div class="body"><div class="label">Govern · validator + routing</div>
+          <div class="headline"><span class="pill ${valOk?'ok':'bad'}">validator ${valOk?'pass':'reject → forced '+esc(forced)}</span>
+          <span class="pill ${stateClass(state)}">${esc(govLabel)}</span></div>
+          ${r.sink_record_id ? `<div class="kv"><span class="mono">sink: ${esc(r.sink_record_id)}</span></div>` : ""}
+          ${(!authOk || r.evidence_decision==='insufficient') ? '<div class="muted-note">⛨ fail-closed: blocked from side-effect, routed to a human.</div>' : ""}
+        </div>
+      </div>
+    </div>`;
+}
+
+async function loadPending() {
+  const list = $("#pendingList");
+  try {
+    const rows = await (await fetch(API + "/pending")).json();
+    $("#cnt-pending").textContent = rows.length;
+    if (!rows.length) { list.innerHTML = '<div class="empty">No actions awaiting approval.</div>'; return; }
+    list.innerHTML = rows.map(r => `
+      <div class="pending-card" data-id="${esc(r.record_id)}">
+        <div>
+          <div class="kv"><span class="pill ${tierClass(r.risk_tier)}">${esc(r.action)}</span>
+          <span class="pill cond">${esc(r.condition||'—')}</span><span class="mono">@${esc(r.actor_role)}</span></div>
+          <div class="muted-note">docs: ${(r.doc_ids||[]).map(esc).join(", ")||'—'} · ${esc(r.record_id)}</div>
+        </div>
+        <div class="kv">
+          <button class="btn ok" onclick="decide('${esc(r.record_id)}','approve')">Approve</button>
+          <button class="btn danger" onclick="decide('${esc(r.record_id)}','reject')">Reject</button>
+        </div>
+      </div>`).join("");
+  } catch (e) { list.innerHTML = '<div class="empty">Failed to load: '+esc(e.message)+'</div>'; }
+}
+
+async function decide(id, action) {
+  try {
+    const res = await fetch(`${API}/pending/${encodeURIComponent(id)}/${action}`, { method: "POST" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    toast(action === "approve" ? "Approved → committed" : "Rejected → dropped");
+    loadPending(); refreshCounts();
+  } catch (e) { toast("Action failed: " + e.message); }
+}
+
+function recordRows(rows) {
+  return `<table><thead><tr><th>Time</th><th>Action</th><th>State</th><th>Condition</th><th>Actor</th><th>Docs</th><th>Record</th></tr></thead><tbody>
+    ${rows.map(r => `<tr>
+      <td class="mono">${esc((r.created_at||'').replace('T',' ').slice(0,19))}</td>
+      <td><span class="pill ${tierClass(r.risk_tier)}">${esc(r.action)}</span></td>
+      <td><span class="pill ${stateClass(r.approval_state)}">${esc(r.approval_state)}</span></td>
+      <td>${esc(r.condition||'—')}</td>
+      <td class="mono">@${esc(r.actor_role)}</td>
+      <td>${(r.doc_ids||[]).map(esc).join(", ")||'—'}</td>
+      <td class="mono">${esc(r.record_id)}</td>
+    </tr>`).join("")}</tbody></table>`;
+}
+
+async function loadAudit() {
+  const el = $("#auditTable");
+  try { const rows = await (await fetch(API + "/audit")).json();
+    $("#cnt-audit").textContent = rows.length;
+    el.innerHTML = rows.length ? recordRows(rows) : '<div class="empty">No actions recorded yet.</div>';
+  } catch (e) { el.innerHTML = '<div class="empty">Failed: '+esc(e.message)+'</div>'; }
+}
+
+async function loadBlocked() {
+  const el = $("#blockedTable");
+  try { const rows = await (await fetch(API + "/audit/blocked")).json();
+    $("#cnt-blocked").textContent = rows.length;
+    el.innerHTML = rows.length ? recordRows(rows) : '<div class="empty">No blocked/escalated actions — nothing has breached the gates.</div>';
+  } catch (e) { el.innerHTML = '<div class="empty">Failed: '+esc(e.message)+'</div>'; }
+}
+
+async function refreshCounts() {
+  try {
+    const [p, a, b] = await Promise.all([
+      fetch(API+"/pending").then(r=>r.json()),
+      fetch(API+"/audit").then(r=>r.json()),
+      fetch(API+"/audit/blocked").then(r=>r.json()),
+    ]);
+    $("#cnt-pending").textContent = p.length; $("#cnt-audit").textContent = a.length; $("#cnt-blocked").textContent = b.length;
+  } catch (e) {}
+}
+refreshCounts();
+</script>
+</body>
+</html>

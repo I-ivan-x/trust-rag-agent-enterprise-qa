@@ -11,3 +11,6 @@ data/generated/*
 data/traces/*
 data/eval_runs/*
 data/indexes/*
+data/action_store_demo/*
+.claude/skills/
+.claude/settings.local.json
