@@ -335,6 +335,69 @@ calibration, not a defect. Genuinely query-dependent residuals (version-referenc
 disambiguation, reranker-quality hard negatives) are deferred to Q3, not forced
 into this testbed.
 
+### ADR-012 — Q3: trust gates promoted from answers to actions
+
+**Decision.** Build an action-governance layer on top of the calibrated pipeline:
+detect ops conditions → a typed, whitelisted side-effecting action space
+(`flag_stale` / `open_remediation_ticket` / `send_alert` / `escalate_to_human`) →
+an action validator that re-runs ACL and evidence preconditions before any side
+effect, with every action written to a controlled, auditable sink. The same
+fail-closed property that guarded *answers* now guards *actions*.
+
+**Rationale.** The unsolved problem blocking enterprise agents is not tool-calling
+but trust: actions have side effects, may be unauthorized, and must be auditable.
+The project already owned the answer-side trust machinery; extending it to actions
+is low-cost and differentiated.
+
+**Measured consequence.** Real run `q3-p7-governance-ablation` (ops_runbook_action_v1,
+n=14 × k=3, both controllers): `unauthorized_action_blocked = 1.00` (n=9),
+`false_action_rate = 0.00`, F11 (no-evidence execution) = 0, F13 (unauthorized
+execution) = 0. The safety property is proven, not asserted. Usefulness is
+honestly mediocre (`action_precision ≈ 0.55`) and the anti-gaming triad
+(`unauthorized_blocked == 1.0` AND `precision@authorized ≥ 0.60` AND
+`over_escalation_rate ≤ 0.30`) is **False** on both arms, so
+`governance_headline_eligible = False` — the governance-of-governance gate refusing
+to let a mediocre selector claim a usefulness headline.
+
+**Calibration path.** The selection frontier (a dead `STALE_PROCEDURE → flag_stale`
+path; `escalate` over-used, F12 = 25; the one insufficient-evidence case not
+escalated) is structurally identical to Q2 gate calibration and can be pursued
+without weakening the validator-enforced safety guarantees.
+
+### ADR-013 — Q3: risk-tiered autonomy, not full-auto and not all-human
+
+**Decision.** Bind each action to a risk tier in a code table (not LLM-reported):
+low-risk (`flag_stale`) auto-executes; high-risk (`ticket` / `alert`) is proposed
+to a `pending_approval` queue and commits only on human approval; insufficient
+evidence or an unauthorized actor forces `escalate_to_human`.
+
+**Rationale.** Full autonomy violates fail-closed; all-human has no agent value.
+A code-enforced risk tier is the trustworthy middle, and prevents an LLM controller
+from self-reporting a low risk to bypass human review.
+
+**Measured consequence.** `q3-p7` confirmed the LLM controller cannot down-grade
+risk (tier read from the table regardless of proposal), and that `rule ≈ llm`
+(precision 0.5714 vs 0.5476; rule action-consistency 1.0 vs llm 0.9286 with no
+precision gain) — the same "LLM no better than rule" boundary as ADR-011.
+
+### ADR-014 — Q3: local controlled action sink; corpora kept isolated
+
+**Decision.** Side effects land in a local, append-only, auditable sink behind a
+replaceable interface (a local MCP server exposes the same tools); no production
+external system is written this phase. The Kubernetes ops corpus is kept in its
+own namespace, separate from the FastAPI public corpus and the external/obfuscated
+chunk stores.
+
+**Rationale.** Local sinks make action runs deterministic, reproducible, and
+secret-free; the replaceable interface keeps a real external integration a later
+packaging step. Corpus isolation protects Q1/Q2 headline-split reproducibility.
+
+**Measured consequence.** `q3-p7-governance-ablation` is fully reproducible against
+the isolated ops corpus. A regression where the ops corpus initially overwrote the
+FastAPI public corpus (breaking the external/obfuscated splits) was caught by an
+existing data-quality unit test and fixed by namespacing the two corpora — an
+instance of the governance system auditing its own evaluation substrate.
+
 ------
 
 ## 5. Measured Trade-offs — Summary

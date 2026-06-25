@@ -333,7 +333,7 @@ framework mapping 一页     —— 自研 orchestrator ↔ LangGraph 概念对�
 | Q3-P6 | Codex | 动作级指标 + 归因 + pass^k（复用 P3-06/10） | ✅ `4fee18c`（指标族 + 防刷三指标 + F10–F13 + compute_govern_passk，18 测试） |
 | Q3-P7 | Codex + Owner + Claude | 对比 run（rule vs llm，k=3）+ 报告（三段式 + taxonomy 扩展） | ✅ harness `614d548`；真实 run `q3-p7-governance-ablation`（安全层 blocked=1.00/F11=F13=0；triad=False→headline 不合格；rule≈llm；flag_stale 路死、过度升级 F12=25）；报告 ✅ EVAL Q3 节 + FAILURE F10–F13 |
 | Q3-P8 | Codex（后端）+ Claude（前端） | Web 动作控制台（读→判→动→治 时间线 + 待审队列 + 审计链 + 越权拦截日志） | ✅ 后端 `711620c`（govern_routes 六端点）；前端 `a6058dc`（`app/web/` 挂 `/console`，ui-ux-pro-max 设计系统，4 视图 + 5 canned 场景） |
-| Q3-P9 | Claude + Owner | README / EVALUATION_REPORT / TECHNICAL_DESIGN（ADR-012~014）更新 + tag `v2.0-q3-action-governance` | ⏳ |
+| Q3-P9 | Claude + Owner | README / EVALUATION_REPORT / TECHNICAL_DESIGN（ADR-012~014）更新 + tag `v2.0-q3-action-governance` | ✅ README Q3 正负行 + 控制台链接；TECHNICAL_DESIGN ADR-012~014；EVALUATION_REPORT Q3 节；taxonomy F1-F13；tag `v2.0-q3-action-governance` |
 
 不可砍底线（期中 scope review 见设计 §12）：validator 动作约束、`unauthorized_action_blocked=1.00`、
 F11/F13=0、动作级归因、审计链、headline eligibility 纪律、单 agent。
