@@ -460,3 +460,28 @@ Week 6 boundary retained: hard_negative_error_rate=1.0 indicates a serious failu
   answers to actions, proven on real data. (Distinct from F12's under-escalation on
   the insufficient case, which is a usefulness defect, not an unauthorized execution.)
 
+## F10–F13 — Q4 held-out update (`q4-p5-selection-calibrated`, rule)
+
+After the Q4 selection calibration, on the **held-out** `ops_test` (n=20, k=3):
+
+- **F10 Wrong Action Selected**: the dead `flag_stale` path is revived (root causes A+B
+  fixed); ora-001/002/003-type STALE cases now reach `flag_stale`. Residual F10-style
+  misses on held-out are **retrieval-layer**, not logic: type-B stale SOP / policy doc not
+  co-retrieved (t03/t04/t06), and a phantom `flag_stale`/`ACTIVE_ACTIVE_CONFLICT` from
+  rerank instability on the ~30-doc corpus (t08/t11/t20). Recorded as a STALE/CONFLICT
+  retrieval boundary, not a detection defect.
+- **F11 Action Without Sufficient Evidence**: still **0** (validator precondition intact;
+  thresholds and `validator.py` unchanged across all of Q4).
+- **F12 Over-Escalation**: `over_escalation_rate` 0.2857 → **0.05**; the pseudo
+  `PERMISSION_BLOCKED` (authorized actor blocked by an irrelevant restricted neighbour) is
+  eliminated. The mirror under-escalation is fixed by the governance-local INSUFFICIENT
+  signal: `escalation_when_insufficient` 0.0 → **1.0** — without touching the shared
+  Q1/Q2 evidence gate.
+- **F13 Missed Escalation / Unauthorized Execution**: still **0**;
+  `unauthorized_action_blocked` = 1.00. Safety geometry held while usefulness rose.
+
+Net: the Q4 calibration moved the rule controller's anti-gaming triad **False → True** on a
+held-out set (precision@authorized 0.4545 → 0.6471), thresholds frozen — a positive result
+earned by fixing detection/routing mechanisms, with the two-run §2.4 iteration disclosed in
+`EVALUATION_REPORT.md` and `Q4_P4_FREEZE.md`.
+
