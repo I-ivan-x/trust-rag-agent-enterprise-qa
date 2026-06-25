@@ -408,3 +408,55 @@ Week 6 boundary retained: hard_negative_error_rate=1.0 indicates a serious failu
 - reason: `grounded_correctness_false`
 - query: Swagger docs need a description for a query field; which legacy validation page is relevant?
 
+## F10 Wrong Action Selected
+
+- definition: The governance controller selects a typed action that does not match
+  the gold action for the detected condition (e.g. should `flag_stale` but
+  `escalate_to_human` / `no_op`). A selection-quality failure, not a safety breach.
+- observed evidence: `q3-p7-governance-ablation` (ops_runbook_action_v1, n=14, k=3,
+  real_run). `action_precision` rule 0.5714 / llm 0.5476. The dominant pattern: the
+  `flag_stale` path is **dead** — proposed 0 times across 18 `STALE_PROCEDURE`-gold
+  attempts; those cases fall through to `escalate`/`no_op`. The F10 strict counter = 0
+  (it scores only flag↔ticket↔alert↔send_alert confusions, not escalate/no_op
+  defaults), so the real selection loss surfaces as over-escalation (F12) and a dead
+  flag path rather than as F10 counts.
+- affected splits: ops_runbook_action_v1 only; `action_metric`, never in headline.
+- next step: revive `STALE_PROCEDURE → flag_stale`; verify the deprecated-procedure
+  condition fires under real retrieval (overlay `superseded_by` reaching the detector).
+
+## F11 Action Without Sufficient Evidence
+
+- definition: A side-effecting action is committed while `evidence_decision` is
+  insufficient (should be blocked by the validator precondition).
+- observed evidence: `q3-p7-governance-ablation` F11 = **0** on both systems. The
+  validator forces `escalate_to_human` whenever evidence is insufficient; the P6
+  metric layer independently re-checks the rows and confirms 0.
+- status: **positive / target met (=0)**. The evidence-precondition machinery proven
+  on real data, not asserted.
+
+## F12 Over-Escalation
+
+- definition: The controller proposes `escalate_to_human` when the gold action is
+  something else — safe, but it degrades usefulness (a human is paged needlessly).
+- observed evidence: `q3-p7-governance-ablation` F12 = **25**; `escalate_to_human`
+  proposed 43× with only 18 correct. `over_escalation_rate` rule 0.2857 / llm 0.3095,
+  pushing the anti-gaming triad to False. Paradoxically, on the one genuinely
+  insufficient case (ora-012) the system **failed** to escalate
+  (`escalation_when_insufficient` 0.0): the trigger fires on the wrong cases and stays
+  silent on the right one.
+- affected splits: ops_runbook_action_v1 only; `action_metric`, never in headline.
+- next step: tighten the escalate default and fix the insufficient-evidence trigger;
+  the selection-calibration frontier (structurally like Q2 gate calibration).
+
+## F13 Missed Escalation / Unauthorized Execution
+
+- definition: A side-effecting action is committed when the actor is unauthorized
+  (`authorized=False`) — the most dangerous failure (越权执行).
+- observed evidence: `q3-p7-governance-ablation` F13 = **0** on both systems;
+  `unauthorized_action_blocked` = 1.0000 over n=9 unauthorized attempts. Every
+  unauthorized request was blocked at the precondition gate and downgraded to
+  `escalate_to_human`.
+- status: **positive / target met (=0)**. The fail-closed property promoted from
+  answers to actions, proven on real data. (Distinct from F12's under-escalation on
+  the insufficient case, which is a usefulness defect, not an unauthorized execution.)
+

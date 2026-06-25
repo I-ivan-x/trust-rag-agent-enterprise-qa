@@ -3,7 +3,9 @@
 版本：v1-q3-p8-impl
 状态：实现规格（freeze-ready）。依赖 P1–P4（govern/detect/approvals/sinks）+ P7（govern_runner）。
 对应：`Q3_ACTION_GOVERNANCE_DESIGN.md` §9。
-分工：Codex（FastAPI 后端 + 前端 + 测试）。前端框架选型不在本文档约束范围内（保持工具无关）。
+分工：**Codex** 做 FastAPI 后端（§1）+ 后端测试（§4，纯 Python，无前端工具依赖）；
+**Claude 会话** 做前端 4 视图（§2）。前端实现工具不在本设计文档约束范围内（保持工具无关；
+具体执行工具由执行指引另行约定，不写入本设计正文）。
 
 ------
 
