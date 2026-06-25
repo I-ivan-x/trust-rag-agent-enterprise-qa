@@ -189,19 +189,22 @@ def _stale_doc_ids(
 ) -> list[str]:
     doc_ids: set[str] = set()
     for signal in _signals(pass_result):
-        # R1: skip stale docs that are not query-relevant (incidental neighbors). When
-        # relevance is unknown (no rerank scores) relevant_doc_ids is None -> no filtering.
-        if relevant_doc_ids is not None and signal.doc_id not in relevant_doc_ids:
-            continue
-        # (a) a retrieved deprecated doc that points at its replacement, or
+        # (a) a retrieved deprecated doc that explicitly points at its replacement is an
+        #     INTRINSIC staleness marker: a deprecated+superseded document in the retrieved
+        #     set is stale by definition, so it is NOT relevance-gated. (Q4-P5 showed the
+        #     reranker scores the single deprecated ops doc anti-correlated with relevance,
+        #     so gating branch (a) by rerank score suppressed a true stale flag.)
         if signal.status == DocumentStatus.deprecated.value and signal.superseded_by:
             doc_ids.add(signal.doc_id)
             continue
-        # (b) an active SOP whose overlay relation flags it as a stale procedure
-        #     (cross-references a deprecated/superseded target). The deprecated doc
-        #     itself need not be retrieved -- the active SOP is enough to trigger.
+        # (b) an active SOP whose overlay relation flags it as a stale procedure. This is a
+        #     generic signal that floats into unrelated queries, so R1 keeps it gated: it
+        #     only triggers when query-relevant. Unknown relevance (no rerank scores ->
+        #     relevant_doc_ids is None) means no filtering, preserving prior behaviour.
         relation = _relation_mapping(signal.overlay_relation_note)
         if _value(relation.get("type")) == OpsCondition.stale_procedure.value.lower():
+            if relevant_doc_ids is not None and signal.doc_id not in relevant_doc_ids:
+                continue
             doc_ids.add(signal.doc_id)
     return sorted(doc_ids)
 

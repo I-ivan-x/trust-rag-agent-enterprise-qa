@@ -131,6 +131,24 @@ def test_stale_fires_when_relevant() -> None:
     assert OpsCondition.stale_procedure in report.conditions
 
 
+def test_deprecated_superseded_not_relevance_gated() -> None:
+    # Branch (a): a deprecated+superseded doc is intrinsically stale and must trigger
+    # STALE_PROCEDURE even at a low rerank score (Q4-P5 run#1 correction).
+    dep = _with_signals(
+        make_retrieved_chunk(
+            "dep", "PodSecurityPolicy admission (deprecated)", doc_id="doc-psp",
+            status=DocumentStatus.deprecated, rerank_score=0.08,
+        ),
+        superseded_by="active/pod-security-admission.md",
+    )
+    report = detect_conditions(
+        _pass_result(reranked=[dep], acl_surviving=[dep]),
+        ActorContext(role="editor"),
+    )
+    assert OpsCondition.stale_procedure in report.conditions
+    assert report.stale_doc_ids == ["doc-psp"]
+
+
 def test_stale_relevance_noop_without_scores() -> None:
     sop = _with_signals(
         make_retrieved_chunk(
