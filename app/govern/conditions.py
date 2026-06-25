@@ -52,6 +52,15 @@ DEFAULT_AUTHORIZED_ROLES: dict[GovernanceAction, frozenset[str]] = {
     GovernanceAction.escalate_to_human: frozenset({"admin", "editor", "viewer"}),
 }
 
+# Govern-local rerank-relevance floor (cross-encoder score). Used ONLY inside the
+# governance condition layer to decide (R1) whether a stale_procedure SOP is actually
+# about the query and (R2) whether there is any query-relevant ops evidence at all.
+# It does NOT touch the shared Q1/Q2 evidence gate or the answer pipeline. When rerank
+# scores are absent (e.g. identity-reranker fallback) it is a no-op, preserving prior
+# behaviour. Calibrated on the ops dev set: relevant governance evidence scores >=0.87,
+# incidental/irrelevant retrievals score <=0.16; 0.5 sits in the gap.
+GOVERN_RELEVANCE_FLOOR = 0.5
+
 
 class ConditionReport(BaseModel):
     conditions: list[OpsCondition] = Field(default_factory=list)
@@ -122,11 +131,16 @@ def detect_conditions(
         # escalate (Q4-P1 over-escalation root cause).
         _add_condition(conditions, OpsCondition.permission_blocked)
 
+    relevant_doc_ids = _relevant_doc_ids(pass_result)
+
     conflict_group_ids = _conflict_group_ids(pass_result)
     if conflict_group_ids:
         _add_condition(conditions, OpsCondition.active_active_conflict)
 
-    stale_doc_ids = _stale_doc_ids(pass_result)
+    # R1: a stale_procedure SOP (or deprecated doc) only triggers STALE_PROCEDURE when it
+    # is actually relevant to the query, so an incidental stale SOP retrieved as a neighbor
+    # cannot hijack an xref/config case into flag_stale.
+    stale_doc_ids = _stale_doc_ids(pass_result, relevant_doc_ids)
     if stale_doc_ids:
         _add_condition(conditions, OpsCondition.stale_procedure)
 
@@ -138,6 +152,12 @@ def detect_conditions(
     for condition in policy_conditions:
         _add_condition(conditions, condition)
 
+    # R2: govern-local INSUFFICIENT. If no governance condition surfaced and retrieval has
+    # no query-relevant ops evidence (top rerank score below the relevance floor), escalate
+    # rather than silently no_op. This is governance-local only -- it never feeds back into
+    # the shared evidence gate or the answer pipeline.
+    if not conditions and _govern_local_insufficient(pass_result):
+        evidence_decision = "insufficient"
     if evidence_decision == "insufficient" and not conditions:
         _add_condition(conditions, OpsCondition.insufficient_evidence)
 
@@ -163,9 +183,16 @@ def _is_authorized(
     return role.strip().lower() in authorized_roles.get(requested_action, frozenset())
 
 
-def _stale_doc_ids(pass_result: RetrievalPassResult) -> list[str]:
+def _stale_doc_ids(
+    pass_result: RetrievalPassResult,
+    relevant_doc_ids: set[str] | None = None,
+) -> list[str]:
     doc_ids: set[str] = set()
     for signal in _signals(pass_result):
+        # R1: skip stale docs that are not query-relevant (incidental neighbors). When
+        # relevance is unknown (no rerank scores) relevant_doc_ids is None -> no filtering.
+        if relevant_doc_ids is not None and signal.doc_id not in relevant_doc_ids:
+            continue
         # (a) a retrieved deprecated doc that points at its replacement, or
         if signal.status == DocumentStatus.deprecated.value and signal.superseded_by:
             doc_ids.add(signal.doc_id)
@@ -177,6 +204,45 @@ def _stale_doc_ids(pass_result: RetrievalPassResult) -> list[str]:
         if _value(relation.get("type")) == OpsCondition.stale_procedure.value.lower():
             doc_ids.add(signal.doc_id)
     return sorted(doc_ids)
+
+
+def _rerank_score(result: RetrievedChunk) -> float | None:
+    score = getattr(result, "rerank_score", None)
+    return float(score) if score is not None else None
+
+
+def _relevant_doc_ids(pass_result: RetrievalPassResult) -> set[str] | None:
+    """Doc ids with a query-relevant chunk (rerank score >= floor).
+
+    Returns None when no chunk carries a rerank score (identity-reranker fallback),
+    so downstream relevance filtering becomes a no-op and prior behaviour is preserved.
+    """
+    scored = False
+    relevant: set[str] = set()
+    for result in pass_result.reranked_chunks:
+        score = _rerank_score(result)
+        if score is None:
+            continue
+        scored = True
+        if score >= GOVERN_RELEVANCE_FLOOR:
+            relevant.add(result.chunk.doc_id)
+    return relevant if scored else None
+
+
+def _govern_local_insufficient(pass_result: RetrievalPassResult) -> bool:
+    """True when surviving ops evidence has no query-relevant chunk (top score < floor).
+
+    Only meaningful when rerank scores are present; with no scores it returns False and
+    the shared evidence-gate decision stands unchanged.
+    """
+    scores = [
+        score
+        for result in pass_result.acl_decision.surviving_chunks
+        if (score := _rerank_score(result)) is not None
+    ]
+    if not scores:
+        return False
+    return max(scores) < GOVERN_RELEVANCE_FLOOR
 
 
 def _relation_conditions(
