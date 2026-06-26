@@ -368,9 +368,9 @@ run manifest + CI 硬门）为薄辅。明确砍掉：harness 大重构、run-co
 | Q4-P3 | Codex | 检测修复 + 选择/路由校准 + 全分支单测（validator 不动） | ✅ `44239ba`（根因 A superseded_by 透传 / B overlay_relation_note stale / 伪 permission 修复；审计：validator 零 diff、阈值未动、改的旧断言=解锁 bug、test 仅改 query；dev triad=True margin 薄 0.615） |
 | Q4-P4 | Codex | 仅 dev 迭代至 triad 稳定（k=3）→ 冻结配置 | ✅ `995e14c`/`Q4_P4_FREEZE.md`（R1 stale 精度 + R2 治理本地 insufficient；dev k=3 triad=True rule 0.769/llm 0.744；冻结点 39d6cb7） |
 | Q4-P5 | Codex + Claude | 留出 test k=3 真实 run `q4-p5-selection-calibrated` → 达 Q4 Gate + 报告 | ✅ **正结果达成** `25c856f`：rule triad **False→True**（prec@auth 0.4545→0.6471、over_esc→0.05、F11/F13=0），2 次 run 透明披露（§2.4 机制修正非调参）；报告 EVAL Q4 节 + FAILURE F10–F13 + 三披露 ✅ |
-| Q4-P6 | Codex | OTel/OpenInference trace 导出器 + 映射单测 | ⏳ `SPEC_Q4_P6_P7.md` §1（opt-in，内存 exporter 测试） |
-| Q4-P7 | Codex | run manifest + CI 回归硬门 | ⏳ `SPEC_Q4_P6_P7.md` §2/§3 |
-| Q4-P8 | Claude（散文✅）+ Codex（收口/tag） | README / EVAL / TECHNICAL_DESIGN(ADR-015/016) + tag `v3.0-q4-reliability` | 🟡 散文已写（ADR-015/016 + README Q4 + EVAL/FAILURE 已在 `e6a4aca`/本提交）；剩 P6/P7 后机械收口 + tag，见 `SPEC_Q4_P8.md` |
+| Q4-P6 | Codex | OTel/OpenInference trace 导出器 + 映射单测 | ✅ `4a61807`（`app/observability/otel_exporter.py` + `scripts/export_otel_trace.py`，opt-in，内存 exporter 6 测试；真实 q4-p5 导出 1140 spans） |
+| Q4-P7 | Codex | run manifest + CI 回归硬门 | ✅ `4a61807`（`app/eval/run_manifest.py` 接入 ablation；`scripts/check_release_gates.py` 6 绝对硬门 + leakage 门，真实 q4-p5 summary 全过；12 测试） |
+| Q4-P8 | Claude（散文✅）+ Codex（收口/tag） | README / EVAL / TECHNICAL_DESIGN(ADR-015/016) + tag `v3.0-q4-reliability` | ✅ 散文（ADR-015/016 + README Q4 + EVAL/FAILURE，`e6a4aca`）；P6/P7 绿后机械收口（README 观测/CI 行 + 文档表）+ tag `v3.0-q4-reliability` |
 
 ### Q4 最终验收（Q4 Gate，预注册；阈值冻结不动）
 

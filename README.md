@@ -96,6 +96,11 @@ Design rationale and the measured consequence of every major decision:
 4. **The governance system audits itself.** The hard-negative split failure was
    traced to the eval's own query design and reported as such, with the protocol
    fix documented.
+5. **Standardized, gated reliability.** Pipeline traces export to OpenInference span
+   kinds over OTLP with OpenTelemetry GenAI attributes (opt-in `--otel`); each run emits
+   a reproducibility manifest (model, index fingerprint, corpus namespace, seed, k,
+   commit SHA); and the reliability contracts (F11=0, F13=0, leakage=0, mock≠headline,
+   triad-gates-usefulness) are enforced as CI hard gates.
 
 ## Quick Start
 
@@ -168,6 +173,7 @@ Real runs require a DeepSeek-compatible API key in `.env` (see
 | [FAILURE_ANALYSIS](docs/FAILURE_ANALYSIS.md) | Failure taxonomy F1-F13 with trace evidence |
 | [Q3_ACTION_GOVERNANCE_DESIGN](docs/Q3_ACTION_GOVERNANCE_DESIGN.md) | Q3 action-governance design freeze (evidence-aware ops copilot, risk-tiered autonomy) |
 | [Q4_RELIABILITY_DESIGN](docs/Q4_RELIABILITY_DESIGN.md) / [Q4_P2_PREREGISTER](docs/Q4_P2_PREREGISTER.md) | Q4 selection-calibration (negative→positive) design, pre-registered gate, and held-out discipline |
+| [SPEC_Q4_P6_P7](docs/SPEC_Q4_P6_P7.md) | OpenInference/OTel trace exporter, run manifest, and CI hard-gate spec |
 | [HARD_NEGATIVE_ADJUDICATION](docs/HARD_NEGATIVE_ADJUDICATION.md) | Why the stress-test split collapsed, and the re-validation plan |
 | [CITATION_AUDIT](docs/CITATION_AUDIT.md) / [GUIDE](docs/CITATION_AUDIT_GUIDE.md) | Rule-based audit status, manual census, and audit protocol |
 | [EVAL_PROTOCOL](docs/EVAL_PROTOCOL.md) / [CORPUS_PROTOCOL](docs/CORPUS_PROTOCOL.md) | Author isolation and corpus governance |
