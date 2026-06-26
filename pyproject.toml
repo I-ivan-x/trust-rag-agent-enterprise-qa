@@ -25,6 +25,10 @@ sentence-transformer = [
 mcp = [
     "mcp>=1.0,<2.0",
 ]
+otel = [
+    "opentelemetry-sdk>=1.27",
+    "opentelemetry-exporter-otlp-proto-grpc>=1.27",
+]
 
 [dependency-groups]
 dev = [

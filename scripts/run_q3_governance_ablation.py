@@ -21,6 +21,7 @@ from app.eval.govern_runner import (
     run_governance_case,
 )
 from app.eval.real_pipeline import _get_eval_hybrid_retriever, _get_eval_reranker
+from app.eval.run_manifest import build_run_manifest, write_run_manifest
 from app.govern.controller import GovernanceRuleController
 from app.govern.llm_controller import GovernanceLLMController
 from app.govern.sinks import LocalJsonlSink
@@ -109,6 +110,8 @@ def run_q3_governance_ablation(
     cases = load_eval_cases(split) if split else load_eval_cases(input_path=OPS_EVAL_PATH)
     result_rows: list[dict[str, Any]] = []
     trace_rows: list[dict[str, Any]] = []
+    run_started = time.perf_counter()
+    llm_call_count = 0
 
     for run_index in range(1, k + 1):
         for system_name in selected_systems:
@@ -132,6 +135,8 @@ def run_q3_governance_ablation(
                 )
                 result_rows.append(row["result"])
                 trace_rows.append(row["trace"])
+                if system_name == "final_governed_llm":
+                    llm_call_count += 1
                 if real_run and system_name == "final_governed_llm" and sleep_seconds > 0:
                     time.sleep(sleep_seconds)
 
@@ -157,6 +162,21 @@ def run_q3_governance_ablation(
         json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
+
+    # P7: reproducibility manifest (provenance only; does not affect metrics or run behaviour).
+    manifest = build_run_manifest(
+        run_id=run_id,
+        systems=selected_systems,
+        split=split,
+        k=k,
+        mode="real" if real_run else "mock",
+        settings=settings,
+        summary=summary,
+        index_summary=index_summary,
+        latency_seconds=round(time.perf_counter() - run_started, 3),
+        cost={"llm_calls": llm_call_count, "total_tokens": None},
+    )
+    write_run_manifest(run_dir, manifest)
 
     if real_run and vector_unavailable:
         raise RuntimeError(
