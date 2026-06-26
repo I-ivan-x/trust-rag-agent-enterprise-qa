@@ -45,6 +45,7 @@ corpus (FastAPI docs subset, 50 evaluation cases). Full run inventory:
 | Contamination control | direct LLM raw **0.20** -> grounded **0.00** | The model knows some public-corpus content from training, but cannot convert that into cited evidence |
 | Final system retrieval | doc_hit@5 0.76, MRR 0.61 | External split, end-to-end |
 | Action governance (Q3) | unauthorized-action blocked **1.00**, F11/F13 **0** | Real ops run: zero unauthorized and zero no-evidence side effects; fail-closed promoted from answers to actions |
+| Action selection, calibrated (Q4) | precision@authorized 0.4545 → **0.6471** (held-out); anti-gaming triad **False → True** | The Q3 negative turned positive by fixing real defects (dead `flag_stale` path, over-escalation), thresholds frozen, F11/F13 still 0. Real but thin: clears by ~1 case (11/17); 6/17 residual is small-corpus retrieval, disclosed. Proven on a held-out set the calibration never tuned on. |
 
 ### What fails (measured, with root cause)
 
@@ -54,7 +55,7 @@ corpus (FastAPI docs subset, 50 evaluation cases). Full run inventory:
 | Agentic recovery gain | **none proven** | Q2 built the typed action space (rewrite / filter / conflict / refuse) and ran a rule-vs-LLM controller ablation (n=22): gated 0.2273 vs agentic 0.2727 — a one-case delta, rule==LLM, diagnostic-only. The calibrated system's residual failures are policy-adjudication, not retrieval-recoverable. |
 | Reranker contribution | doc_hit@5 0.80 -> **0.78** | Not proven; no rerank improvement is claimed anywhere in this project. |
 | Hard-negative stress test | error rate **1.0** | Pre-digested adjudication attributes this to an eval design flaw: all 20 queries were metadata-only templates with zero content words. Retrieval robustness is currently unknown, not bad; owner sign-off and re-validation with rewritten queries are pending. |
-| Action selection usefulness (Q3) | precision **~0.55**, anti-gaming triad **False** | The safety layer is airtight, but the controller over-escalates (F12=25) and the `flag_stale` path is dead; the triad gate correctly refuses the usefulness headline. rule≈llm — same boundary as Q2. |
+| Action selection usefulness (Q3) | precision **~0.55**, anti-gaming triad **False** | The safety layer is airtight, but the controller over-escalates (F12=25) and the `flag_stale` path is dead; the triad gate correctly refused the usefulness headline. **Resolved in Q4** (triad flipped True on a held-out set — see "What works"). rule≈llm — same boundary as Q2. |
 
 Every failure row links to a root-cause analysis in
 [FAILURE_ANALYSIS](docs/FAILURE_ANALYSIS.md) (taxonomy F1-F13) and a planned fix
@@ -166,6 +167,7 @@ Real runs require a DeepSeek-compatible API key in `.env` (see
 | [EVALUATION_REPORT](docs/EVALUATION_REPORT.md) | Week 6 results, contamination analysis, trade-off discussion, Q2 Phase 1 calibration, and the Q3 action-governance ablation |
 | [FAILURE_ANALYSIS](docs/FAILURE_ANALYSIS.md) | Failure taxonomy F1-F13 with trace evidence |
 | [Q3_ACTION_GOVERNANCE_DESIGN](docs/Q3_ACTION_GOVERNANCE_DESIGN.md) | Q3 action-governance design freeze (evidence-aware ops copilot, risk-tiered autonomy) |
+| [Q4_RELIABILITY_DESIGN](docs/Q4_RELIABILITY_DESIGN.md) / [Q4_P2_PREREGISTER](docs/Q4_P2_PREREGISTER.md) | Q4 selection-calibration (negative→positive) design, pre-registered gate, and held-out discipline |
 | [HARD_NEGATIVE_ADJUDICATION](docs/HARD_NEGATIVE_ADJUDICATION.md) | Why the stress-test split collapsed, and the re-validation plan |
 | [CITATION_AUDIT](docs/CITATION_AUDIT.md) / [GUIDE](docs/CITATION_AUDIT_GUIDE.md) | Rule-based audit status, manual census, and audit protocol |
 | [EVAL_PROTOCOL](docs/EVAL_PROTOCOL.md) / [CORPUS_PROTOCOL](docs/CORPUS_PROTOCOL.md) | Author isolation and corpus governance |

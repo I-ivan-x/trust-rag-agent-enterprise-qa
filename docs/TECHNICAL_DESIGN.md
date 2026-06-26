@@ -398,6 +398,62 @@ FastAPI public corpus (breaking the external/obfuscated splits) was caught by an
 existing data-quality unit test and fixed by namespacing the two corpora — an
 instance of the governance system auditing its own evaluation substrate.
 
+### ADR-015 — Q4: the negative turned positive, without gaming the gate
+
+**Decision.** Turn the Q3 honest-negative (mediocre action selection, anti-gaming
+triad False) into a *positive* result by fixing the real mechanical defects diagnosed
+in Q4-P1 — a dead `flag_stale` detection path and a pseudo-`PERMISSION_BLOCKED`
+over-escalation — and demonstrate the anti-gaming triad flipping False→True on a
+*held-out* test set, with thresholds frozen and `validator.py` byte-identical to the
+Q3 tag.
+
+**Rationale.** The Q3 mediocrity was a mechanical defect, not a capability ceiling
+(Q4-P1: `flag_stale` proposed 0/18 on STALE-gold, 100% a detection miss). Fixing real
+mechanisms and proving the result on a set the calibration never tuned on is the only
+credible way to claim a positive — the alternative (relaxing the triad) would betray
+the whole anti-self-deception thesis.
+
+**Measured consequence.** On the held-out `ops_test` (run `q4-p5-selection-calibrated`,
+n=20×k=3, rule controller), `action_precision@authorized` 0.4545→0.6471 (≥0.60),
+`over_escalation_rate` 0.286→0.05 (≤0.30), `escalation_when_insufficient` 0→1.0, with
+`unauthorized_action_blocked`=1.00 and F11=F13=0 unchanged ⇒ triad False→True. Root
+fixes: `chunk.superseded_by` passthrough + `overlay_relation_note.type==stale_procedure`
+detection; pseudo-permission removed; a governance-local INSUFFICIENT signal that does
+not touch the shared evidence gate. The LLM controller (pre-registered ablation) stays
+below the floor (0.588, triad False) — the same rule≈llm boundary as ADR-011/013.
+
+**Honesty.** The result is real but thin (clears by ~one case, 11/17; 6/17 residual
+errors are small-corpus retrieval instability, recorded as a STALE/CONFLICT retrieval
+boundary). The held-out test ran twice; run#1 was triad-False and the §2.4 correction
+(a superseded deprecated doc is *intrinsically* stale, not score-gated) was a mechanism
+fix — dev-neutral on precision, dev-positive on over-escalation, recovering a true
+negative — not test-tuning. Both runs are archived; the two-run iteration, the
+post-freeze repair of five test queries (query-text only, eval-author ratified), and
+the corpus limitation are disclosed in `EVALUATION_REPORT.md` and `Q4_P2_PREREGISTER.md`.
+
+### ADR-016 — Q4: standardized observability, reproducibility, and CI hard gates
+
+**Decision.** Map the existing JSONL trace to industry-standard telemetry
+(OpenInference span kinds over OTLP + OpenTelemetry GenAI semconv attributes) via a
+default-off exporter; emit a per-run reproducibility manifest (model / prompt version /
+index fingerprint / corpus namespace / seed / k / cost / commit SHA); and enforce the
+reliability contracts as CI hard gates (F11=0, F13=0, leakage=0, mock runs may not be
+headline-eligible, and a triad-False system may not claim a usefulness headline).
+
+**Rationale.** Enterprises weigh whether agent telemetry plugs into existing
+observability stacks and whether results are reproducible; contracts only count as a
+governance artifact once a machine enforces them. The pipeline maps cleanly onto the
+OpenInference taxonomy (retriever / reranker / guardrail / agent / tool spans all exist
+natively).
+
+**Measured consequence (acceptance contract; realized when P6/P7 land).** Per
+`SPEC_Q4_P6_P7.md` §1.4/§3, the exporter must assign each pipeline stage its
+OpenInference `span.kind` and the CI gate must trip on
+F11>0 / F13>0 / mock-headline / triad-False-with-headline while passing the real
+`q4-p5` summary — both enforced by unit tests. Observability is opt-in (`--otel`), so
+frozen run behaviour is unchanged. This consequence is verified by the P6/P7 test suite
+at the `v3.0-q4-reliability` tag.
+
 ------
 
 ## 5. Measured Trade-offs — Summary
