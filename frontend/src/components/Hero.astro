@@ -4,46 +4,31 @@ const after = triad.after.rule;
 ---
 
 <section data-spotlight class="spotlight relative overflow-hidden">
-  <div class="wrap py-20 sm:py-28">
-    <p class="eyebrow reveal">AI Agent · 可靠性与评测工程</p>
-    <h1 class="reveal mt-4 max-w-3xl text-4xl font-extrabold leading-[1.12] tracking-tight sm:text-[3.4rem]">
-      把 agent 做成 <span class="gradient-text">可测、可审、可回归</span> ——<br class="hidden sm:block" />
-      并敢于 <span class="gradient-text">诚实证明它哪里不行，再把它修好。</span>
+  <div class="wrap stage">
+    <p class="eyebrow reveal">TrustRAG · AI Agent 可靠性与评测工程</p>
+    <h1 class="reveal mt-6 max-w-5xl display">
+      把 agent 做成<br />
+      <span class="gradient-text">可测、可审、可回归。</span>
     </h1>
-    <p class="reveal mt-6 max-w-2xl text-lg leading-relaxed text-muted">
-      TrustRAG 是一个 fail-closed 的企业 RAG-Agent，外加一套反自欺的评测治理。
-      四个季度、四个 tag，每一个结论都指向真实 run——包括我证伪过的、以及我把负结果修成正结果的那一个。
+    <p class="reveal mt-8 max-w-2xl lead">
+      一个 fail-closed 的企业 RAG-Agent——
+      我不只让它调工具，还<span class="text-ink"> 证明了它哪里不行，再把它修好。</span>
     </p>
 
-    <div class="reveal mt-9 flex flex-wrap gap-3">
-      <a href="#live" class="pill border-brand bg-brand px-4 py-2 text-bg shadow-glow card-hover">看 agent 跑一遍 →</a>
-      <a href="#honest" class="pill border-line bg-surface px-4 py-2 text-ink card-hover">先看我哪里不行</a>
+    <div class="reveal mt-12 flex flex-col gap-8 sm:flex-row sm:items-end sm:gap-14">
+      <div>
+        <div class="num text-6xl font-extrabold text-brand sm:text-7xl"><span data-count="0">0</span></div>
+        <div class="mt-2 text-sm text-muted">越权动作执行 · 无证据执行<br /><span class="num text-faint">F13 = 0 · F11 = 0（真实留出 run）</span></div>
+      </div>
+      <div>
+        <div class="num text-6xl font-extrabold sm:text-7xl"><span data-count={after.unauthorized_action_blocked.toFixed(2)}>1.00</span></div>
+        <div class="mt-2 text-sm text-muted">越权动作拦截率<br /><span class="num text-faint">fail-closed，证据可审计</span></div>
+      </div>
     </div>
 
-    <dl class="mt-14 grid grid-cols-2 gap-4 sm:grid-cols-4">
-      <div class="reveal card card-hover glass p-5">
-        <dt class="text-xs text-muted">外部真实 run 假回答率</dt>
-        <dd class="num mt-1 text-3xl font-bold text-brand"><span data-count="0.00">0.00</span></dd>
-      </div>
-      <div class="reveal card card-hover glass p-5">
-        <dt class="text-xs text-muted">越权动作拦截 · F11/F13</dt>
-        <dd class="num mt-1 text-3xl font-bold text-brand">
-          <span data-count={after.unauthorized_action_blocked.toFixed(2)}>1.00</span><span class="text-base text-muted"> · 0/0</span>
-        </dd>
-      </div>
-      <div class="reveal card card-hover glass p-5">
-        <dt class="text-xs text-muted">反作弊 triad（留出集）</dt>
-        <dd class="mt-1 text-2xl font-bold">
-          <span class="text-escalate">False</span> <span class="text-muted">→</span> <span class="text-brand">True</span>
-        </dd>
-      </div>
-      <div class="reveal card card-hover glass p-5">
-        <dt class="text-xs text-muted">测试 / 里程碑</dt>
-        <dd class="num mt-1 text-3xl font-bold"><span data-count="364">364</span><span class="text-base text-muted"> · 4 tag</span></dd>
-      </div>
-    </dl>
-    <p class="reveal mt-4 num text-xs text-faint">
-      数字源：q4-p5-selection-calibrated（留出 ops_test, real run）· q1 外部真实 run · 364 passed / 1 skipped
-    </p>
+    <a href="#live" class="reveal scroll-cue self-start">
+      看 agent 跑一遍
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M6 13l6 6 6-6" /></svg>
+    </a>
   </div>
 </section>

@@ -43,8 +43,43 @@
   .wrap {
     @apply mx-auto max-w-content px-6;
   }
+  .read {
+    @apply mx-auto max-w-[46rem] px-6;
+  }
   .eyebrow {
-    @apply font-mono text-xs uppercase tracking-[0.18em] text-brand;
+    @apply font-mono text-xs uppercase tracking-[0.2em] text-brand sm:text-sm;
+  }
+  /* full-screen focused stage: one idea, big type, generous whitespace */
+  .stage {
+    @apply flex min-h-[88vh] flex-col justify-center py-24 sm:min-h-screen sm:py-28;
+  }
+  .display {
+    @apply text-[2.6rem] font-extrabold leading-[1.06] tracking-tight sm:text-6xl lg:text-7xl;
+  }
+  .lead {
+    @apply text-lg leading-relaxed text-muted sm:text-2xl;
+  }
+  .scroll-cue {
+    @apply mt-16 flex flex-col items-center gap-2 text-xs text-faint;
+  }
+  .scroll-cue svg {
+    animation: cue 1.8s ease-in-out infinite;
+  }
+  @keyframes cue {
+    0%,
+    100% {
+      transform: translateY(0);
+      opacity: 0.5;
+    }
+    50% {
+      transform: translateY(6px);
+      opacity: 1;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .scroll-cue svg {
+      animation: none;
+    }
   }
   .glass {
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
