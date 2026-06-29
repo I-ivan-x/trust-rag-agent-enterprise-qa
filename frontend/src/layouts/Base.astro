@@ -12,7 +12,7 @@ const { title = "TrustRAG — 可测、可审、可回归的 AI Agent" } = Astro
     <title>{title}</title>
   </head>
   <body>
-    <header class="sticky top-0 z-20 border-b border-line/70 bg-bg/80 backdrop-blur">
+    <header class="glass sticky top-0 z-20 border-b border-line/70">
       <nav class="wrap flex h-14 items-center justify-between">
         <a href="#top" class="flex items-center gap-2 font-bold tracking-tight">
           <svg viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" class="h-5 w-5"
@@ -42,13 +42,60 @@ const { title = "TrustRAG — 可测、可审、可回归的 AI Agent" } = Astro
     </footer>
 
     <script>
+      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      // staggered scroll reveal
       const io = new IntersectionObserver(
         (entries) => {
-          for (const e of entries) if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); }
+          for (const e of entries) {
+            if (!e.isIntersecting) continue;
+            const el = e.target;
+            const sibs = Array.from(el.parentElement?.querySelectorAll(":scope > .reveal") || [el]);
+            const i = Math.max(0, sibs.indexOf(el));
+            el.style.setProperty("--d", Math.min(i, 8) * 70 + "ms");
+            el.classList.add("in");
+            io.unobserve(el);
+          }
         },
-        { threshold: 0.12 },
+        { threshold: 0.12, rootMargin: "0px 0px -8% 0px" },
       );
       document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
+
+      // count-up for [data-count] (respects reduced motion)
+      const fmt = (v, dec) => (dec ? v.toFixed(dec) : Math.round(v).toString());
+      const countIO = new IntersectionObserver(
+        (entries) => {
+          for (const e of entries) {
+            if (!e.isIntersecting) continue;
+            const el = e.target;
+            countIO.unobserve(el);
+            const target = parseFloat(el.dataset.count);
+            const dec = (el.dataset.count.split(".")[1] || "").length;
+            if (reduce) { el.textContent = fmt(target, dec); continue; }
+            const dur = 1100, t0 = performance.now();
+            const tick = (t) => {
+              const p = Math.min(1, (t - t0) / dur);
+              const eased = 1 - Math.pow(1 - p, 3);
+              el.textContent = fmt(target * eased, dec);
+              if (p < 1) requestAnimationFrame(tick);
+              else el.textContent = fmt(target, dec);
+            };
+            requestAnimationFrame(tick);
+          }
+        },
+        { threshold: 0.4 },
+      );
+      document.querySelectorAll("[data-count]").forEach((el) => countIO.observe(el));
+
+      // pointer-follow spotlight
+      if (!reduce)
+        document.querySelectorAll("[data-spotlight]").forEach((el) => {
+          el.addEventListener("pointermove", (ev) => {
+            const r = el.getBoundingClientRect();
+            el.style.setProperty("--spot-x", ((ev.clientX - r.left) / r.width) * 100 + "%");
+            el.style.setProperty("--spot-y", ((ev.clientY - r.top) / r.height) * 100 + "%");
+          });
+        });
     </script>
   </body>
 </html>

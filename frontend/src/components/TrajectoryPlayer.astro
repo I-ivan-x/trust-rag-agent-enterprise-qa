@@ -1,0 +1,107 @@
+---
+import trajectories from "../data/trajectories.json";
+---
+
+<section id="live" class="border-t border-line/60 py-20">
+  <div class="wrap">
+    <p class="eyebrow reveal">看 agent 跑一遍 · 真实留出案（q4-p5）</p>
+    <h2 class="reveal mt-3 text-3xl font-bold tracking-tight">读 → 判 → 动 → 治，逐步播放</h2>
+    <p class="reveal mt-3 max-w-2xl text-muted">
+      选一个场景，看 agent 检索证据、判定条件、提议动作、再由 validator 治理执行。
+      <span class="text-escalate">越权那一例会被拦下、升级，且不留任何副作用</span>——这是 fail-closed 的看点。
+    </p>
+
+    <div class="reveal mt-8 card glass overflow-hidden">
+      <div id="tj-tabs" class="flex flex-wrap gap-2 border-b border-line/70 p-4"></div>
+      <div class="grid gap-0 md:grid-cols-[1fr_320px]">
+        <ol id="tj-stages" class="divide-y divide-line/60"></ol>
+        <aside id="tj-side" class="border-t border-line/60 bg-surface-2/40 p-5 md:border-l md:border-t-0"></aside>
+      </div>
+      <div class="flex items-center justify-between border-t border-line/70 p-4">
+        <div id="tj-meta" class="num text-xs text-faint"></div>
+        <div class="flex items-center gap-2">
+          <button id="tj-prev" class="pill pill-muted card-hover px-3 py-1.5">◀</button>
+          <button id="tj-play" class="pill pill-auto card-hover px-3 py-1.5">▶ 播放</button>
+          <button id="tj-next" class="pill pill-muted card-hover px-3 py-1.5">▶</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script define:vars={{ trajectories }}>
+  const AZ = { flag_stale: "标记过期", open_remediation_ticket: "开整改工单", send_alert: "发告警", escalate_to_human: "升级给人", no_op: "无动作" };
+  const TIER = { auto: "自动执行", approval: "需人审", terminal: "终结", none: "无" };
+  const STATE = { committed: "已提交", pending_approval: "待审批", escalated: "已升级", none: "无动作" };
+  const tierCls = (t) => ({ auto: "pill-auto", approval: "pill-pending", terminal: "pill-escalate", none: "pill-muted" })[t] || "pill-muted";
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const az = (a) => AZ[a] || a;
+
+  let cur = 0, step = 0, timer = null;
+  const tabs = document.getElementById("tj-tabs");
+  const stagesEl = document.getElementById("tj-stages");
+  const sideEl = document.getElementById("tj-side");
+  const metaEl = document.getElementById("tj-meta");
+  const playBtn = document.getElementById("tj-play");
+
+  trajectories.forEach((t, i) => {
+    const b = document.createElement("button");
+    b.className = "pill card-hover " + (t.authorized === false ? "pill-escalate" : "pill-muted");
+    b.innerHTML = `${az(t.gold_action)} <span class="opacity-70">@${t.user_role}</span>`;
+    b.onclick = () => { cur = i; step = 0; stop(); render(); };
+    tabs.appendChild(b);
+  });
+
+  function stageData(t) {
+    const blockedNote = t.govern.executed_side_effect === false && t.authorized === false;
+    return [
+      { k: "读", label: "检索", body: `检索 <b>${t.read.retrieved}</b> 片段，<b>${t.read.surviving}</b> 通过门控${t.read.blocked ? `，<span class='text-escalate'>${t.read.blocked} 被 ACL 拦</span>` : ""}`, cls: "pill-detect" },
+      { k: "判", label: "条件检测", body: (t.detect.conditions.length ? t.detect.conditions.map((c) => `<span class='pill pill-detect'>${c}</span>`).join(" ") : "<span class='pill pill-muted'>无条件</span>") + ` <span class='pill ${t.detect.authorized_actor === false ? "pill-escalate" : "pill-auto"}'>${t.detect.authorized_actor === false ? "未授权" : "已授权"}</span>`, cls: "pill-detect" },
+      { k: "动", label: `拟议动作 (${t.act.controller_source})`, body: `<span class='pill ${tierCls(t.act.risk_tier)}'>${az(t.act.proposed_action)}</span> <span class='text-muted text-xs'>风险层：${TIER[t.act.risk_tier] || t.act.risk_tier}</span>`, cls: "pill-auto" },
+      { k: "治", label: "validator + 路由", body: `<span class='pill ${t.govern.validator_ok ? "pill-auto" : "pill-escalate"}'>validator ${t.govern.validator_ok ? "通过" : "拒绝→强制 " + az(t.govern.forced_action)}</span> <span class='pill ${tierCls(t.act.risk_tier)}'>${STATE[t.govern.approval_state] || t.govern.approval_state}</span>${blockedNote ? "<div class='mt-2 text-sm text-escalate'>⛨ fail-closed：越权被拦，未落任何副作用，已升级给人。</div>" : ""}`, cls: "pill-pending" },
+    ];
+  }
+
+  function render() {
+    const t = trajectories[cur];
+    [...tabs.children].forEach((c, i) => c.setAttribute("aria-current", i === cur ? "true" : "false"));
+    [...tabs.children].forEach((c, i) => (c.style.outline = i === cur ? "2px solid rgba(52,211,153,.5)" : "none"));
+    const sd = stageData(t);
+    stagesEl.innerHTML = sd
+      .map((s, i) => {
+        const active = i <= step;
+        return `<li class="flex gap-4 p-5 transition-all duration-500 ${active ? "opacity-100" : "opacity-30"}" style="transform:${active ? "none" : "translateY(6px)"}">
+          <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full font-mono text-sm font-bold ${i === step ? "pill " + s.cls + " pulse-soft" : "border border-line text-faint"}">${s.k}</span>
+          <div><div class="text-xs uppercase tracking-wide text-muted">${s.label}</div><div class="mt-1 leading-relaxed">${s.body}</div></div>
+        </li>`;
+      })
+      .join("");
+    const blocked = t.govern.executed_side_effect === false && t.authorized === false;
+    sideEl.innerHTML = `
+      <div class="text-xs text-muted">查询（${t.user_role}）</div>
+      <p class="mt-1 leading-relaxed">${t.query}</p>
+      <div class="mt-4 text-xs text-muted">gold 动作</div>
+      <div class="mt-1"><span class="pill ${tierCls(t.act.risk_tier)}">${az(t.gold_action)}</span> ${t.correct ? '<span class="pill pill-auto">命中 ✓</span>' : '<span class="pill pill-escalate">未命中</span>'}</div>
+      <div class="mt-4 rounded-lg border ${blocked ? "border-escalate/40 bg-escalate/5" : "border-line bg-surface"} p-3 text-sm">
+        ${blocked ? '<span class="text-escalate font-semibold">越权请求被 fail-closed 拦下</span><br><span class="text-muted">executed_side_effect = false · 已升级</span>' : `<span class="text-muted">approval_state</span> <span class="num text-ink">${STATE[t.govern.approval_state] || t.govern.approval_state}</span>`}
+      </div>`;
+    metaEl.textContent = `${t.case_id} · run q4-p5 · 步 ${step + 1}/4`;
+  }
+
+  function next() { const n = stageData(trajectories[cur]).length; step = (step + 1) % n; render(); }
+  function prev() { const n = stageData(trajectories[cur]).length; step = (step - 1 + n) % n; render(); }
+  function play() {
+    if (timer) return stop();
+    playBtn.textContent = "❚❚ 暂停";
+    const tick = () => { const n = stageData(trajectories[cur]).length; if (step < n - 1) { step++; render(); } else stop(); };
+    timer = setInterval(tick, 1150);
+  }
+  function stop() { clearInterval(timer); timer = null; playBtn.textContent = "▶ 播放"; }
+
+  document.getElementById("tj-next").onclick = () => { stop(); next(); };
+  document.getElementById("tj-prev").onclick = () => { stop(); prev(); };
+  playBtn.onclick = play;
+
+  if (reduce) step = 3;
+  render();
+</script>

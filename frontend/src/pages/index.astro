@@ -2,18 +2,22 @@
 import Base from "../layouts/Base.astro";
 import Hero from "../components/Hero.astro";
 import Arc from "../components/Arc.astro";
+import TrajectoryPlayer from "../components/TrajectoryPlayer.astro";
+import Pipeline from "../components/Pipeline.astro";
 ---
 
 <Base>
   <Hero />
   <Arc />
+  <TrajectoryPlayer />
+  <Pipeline />
 
-  <!-- P2–P4 sections land here: #trust (pipeline + audit), #gate (anti-gaming triad), #honest (F1–F13), #live (trajectory player) -->
-  <section id="trust" class="border-t border-line/60 py-20">
+  <!-- P4 lands here: #gate (anti-gaming triad before/after + cheater), #honest (F1–F13 expandable) -->
+  <section id="gate" class="border-t border-line/60 py-20">
     <div class="wrap">
-      <p class="eyebrow">即将上线（P2–P4）</p>
-      <h2 class="mt-3 text-2xl font-bold text-muted">可信设计 · 反作弊门 · 诚实工程 · 交互轨迹播放器</h2>
-      <p class="mt-3 max-w-2xl text-faint">数据快照已就绪（triad / trajectories / audit），下一阶段接入这些交互区。</p>
+      <p class="eyebrow">即将上线（P4）</p>
+      <h2 class="mt-3 text-2xl font-bold text-muted">反作弊 triad 仪表盘 · 诚实工程（F1–F13）</h2>
+      <p class="mt-3 max-w-2xl text-faint">triad.json（含 Q3→Q4 before/after + 解析式作弊者对照）与 audit.json 已就绪，下一阶段接入。</p>
     </div>
   </section>
 </Base>
