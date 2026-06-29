@@ -6,23 +6,24 @@ const stack = [
 const tags = ["v0.3-q1-hard-demo", "v1.0-q2-agentic-eval", "v2.0-q3-action-governance", "v3.0-q4-reliability"];
 ---
 
-<section id="hood" class="border-t border-line/60 py-20">
-  <div class="wrap">
+<section id="hood" class="border-t border-line/40">
+  <div class="wrap stage stage-center">
     <p class="eyebrow reveal">Under the Hood</p>
-    <h2 class="reveal mt-3 text-3xl font-bold tracking-tight">真实栈 · 真实 run · 契约进 CI</h2>
-    <p class="reveal mt-3 max-w-2xl text-muted">
-      检索是真的（向量 + BM25 + RRF + BGE rerank），评测是真的（grounded-only 指标、泄漏检查、pass^k、
-      headline-eligibility 代码门）。可靠性契约 <span class="num text-ink">F11=0 · F13=0 · leakage=0 · mock≠headline · triad 守 headline</span> 作为 CI 硬门运行。
+    <h2 class="reveal measure mt-7 display-2">真实栈 · 真实 run · <span class="gradient-text">契约进 CI</span></h2>
+    <p class="reveal mx-auto mt-7 max-w-2xl lead">
+      检索是真的，评测是真的。可靠性契约
+      <span class="num text-ink">F11=0 · F13=0 · leakage=0 · mock≠headline · triad 守 headline</span>
+      作为 CI 硬门运行。
     </p>
 
-    <div class="reveal mt-8 flex flex-wrap gap-2">
+    <div class="reveal mx-auto mt-12 flex max-w-3xl flex-wrap justify-center gap-2">
       {stack.map((s) => <span class="pill pill-muted">{s}</span>)}
     </div>
 
-    <div class="reveal mt-8 grid gap-3 sm:grid-cols-4">
+    <div class="reveal mx-auto mt-10 grid w-full max-w-3xl gap-3 sm:grid-cols-4">
       {
         tags.map((t, i) => (
-          <div class="card glass card-hover p-4">
+          <div class="card glass card-hover p-4 text-left">
             <div class="num text-xs text-faint">里程碑 {i + 1}</div>
             <div class="num mt-1 text-sm font-semibold text-brand">{t}</div>
           </div>
@@ -30,12 +31,8 @@ const tags = ["v0.3-q1-hard-demo", "v1.0-q2-agentic-eval", "v2.0-q3-action-gover
       }
     </div>
 
-    <div class="reveal mt-10 card glass p-6 sm:flex sm:items-center sm:justify-between">
-      <div>
-        <div class="text-lg font-semibold">一个会自证、敢报负结果、再把它修好的 RAG-Agent</div>
-        <div class="mt-1 text-sm text-muted">单人四季度构建 · 所有数字指向真实 run</div>
-      </div>
-      <a href="#top" class="pill pill-auto card-hover mt-4 px-4 py-2 sm:mt-0">回到顶部 ↑</a>
-    </div>
+    <div class="reveal mt-16 text-2xl font-semibold sm:text-3xl">一个会自证、敢报负结果、再把它修好的 RAG-Agent</div>
+    <div class="mt-2 text-sm text-muted">单人四季度构建 · 所有数字指向真实 run</div>
+    <a href="#top" class="pill pill-auto card-hover mt-8 px-5 py-2.5">回到顶部 ↑</a>
   </div>
 </section>

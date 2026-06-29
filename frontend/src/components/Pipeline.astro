@@ -3,33 +3,29 @@ import audit from "../data/audit.json";
 import triad from "../data/triad.json";
 const blocked = audit.blocked.length;
 const stages = [
-  { k: "读", t: "检索", span: "RETRIEVER", d: "向量 + BM25 + RRF + BGE rerank", cls: "bg-detect/15 text-detect" },
-  { k: "判", t: "条件 + 四道 gate", span: "GUARDRAIL", d: "ACL · state · evidence · 越权检测", cls: "bg-detect/15 text-detect" },
-  { k: "动", t: "控制器拟议", span: "AGENT", d: "规则 / LLM 选治理动作", cls: "bg-brand/15 text-brand" },
-  { k: "治", t: "validator + 路由 + sink", span: "TOOL", d: "前置门 · 风险分级 · 审计落盘", cls: "bg-pending/15 text-pending" },
+  { k: "读", t: "检索", span: "RETRIEVER", cls: "bg-detect/15 text-detect" },
+  { k: "判", t: "条件 + 四道 gate", span: "GUARDRAIL", cls: "bg-detect/15 text-detect" },
+  { k: "动", t: "控制器拟议", span: "AGENT", cls: "bg-brand/15 text-brand" },
+  { k: "治", t: "validator + sink", span: "TOOL", cls: "bg-pending/15 text-pending" },
 ];
 ---
 
-<section id="trust" class="border-t border-line/60 py-20">
-  <div class="wrap">
+<section id="trust" class="border-t border-line/40">
+  <div class="wrap stage stage-center">
     <p class="eyebrow reveal">可信设计</p>
-    <h2 class="reveal mt-3 text-3xl font-bold tracking-tight">读 → 判 → 动 → 治：每一步都被门控、被追溯</h2>
-    <p class="reveal mt-3 max-w-2xl text-muted">
-      副作用动作要先过 ACL × 证据 × 风险层才执行；越权或无证据一律拒绝并升级。
-      每个阶段映射到 OpenInference 标准 span，可接入现有 observability stack。
-    </p>
+    <h2 class="reveal measure mt-7 display-2">每一步都被门控，<br /><span class="gradient-text">每个动作都被追溯。</span></h2>
+    <p class="reveal mx-auto mt-7 max-w-2xl lead">副作用动作要先过 ACL × 证据 × 风险层才执行；越权或无证据一律拒绝并升级。每个阶段映射到 OpenInference 标准 span。</p>
 
-    <div class="reveal mt-10 grid gap-3 md:grid-cols-4">
+    <div class="reveal mx-auto mt-14 grid max-w-4xl gap-3 md:grid-cols-4">
       {
         stages.map((s, i) => (
           <div class="relative">
-            <div class="card card-hover glass h-full p-5">
+            <div class="card card-hover glass h-full p-5 text-left">
               <div class="flex items-center justify-between">
-                <span class={`grid h-9 w-9 place-items-center rounded-full font-mono text-sm font-bold ${s.cls}`}>{s.k}</span>
+                <span class={`grid h-10 w-10 place-items-center rounded-full font-mono text-base font-bold ${s.cls}`}>{s.k}</span>
                 <span class="num rounded border border-line px-1.5 py-0.5 text-[10px] text-faint">{s.span}</span>
               </div>
-              <h3 class="mt-3 font-semibold">{s.t}</h3>
-              <p class="mt-1 text-sm text-muted">{s.d}</p>
+              <h3 class="mt-3 text-sm font-semibold">{s.t}</h3>
             </div>
             {i < stages.length - 1 && (
               <svg class="absolute -right-3 top-1/2 hidden h-3 w-6 -translate-y-1/2 md:block" viewBox="0 0 24 12">
@@ -41,24 +37,17 @@ const stages = [
       }
     </div>
 
-    <div class="reveal mt-6 grid gap-3 sm:grid-cols-4">
-      <div class="card glass p-5">
-        <div class="text-xs text-muted">越权动作执行 (F13)</div>
-        <div class="num mt-1 text-2xl font-bold text-brand">0</div>
+    <div class="reveal mt-20 flex flex-wrap items-end justify-center gap-12 sm:gap-20">
+      <div>
+        <div class="num text-5xl font-extrabold text-brand sm:text-7xl">0 · 0</div>
+        <div class="mt-3 text-sm text-muted">越权执行 (F13) · 无证据执行 (F11)</div>
       </div>
-      <div class="card glass p-5">
-        <div class="text-xs text-muted">无证据执行 (F11)</div>
-        <div class="num mt-1 text-2xl font-bold text-brand">0</div>
-      </div>
-      <div class="card glass p-5">
-        <div class="text-xs text-muted">越权动作拦截率</div>
-        <div class="num mt-1 text-2xl font-bold text-brand">{triad.after.rule.unauthorized_action_blocked.toFixed(2)}</div>
-      </div>
-      <div class="card glass p-5">
-        <div class="text-xs text-muted">留出集被拦/升级</div>
-        <div class="num mt-1 text-2xl font-bold text-escalate">{blocked}</div>
+      <div class="hidden h-16 w-px bg-line sm:block sm:h-20"></div>
+      <div>
+        <div class="num text-5xl font-extrabold sm:text-7xl">{triad.after.rule.unauthorized_action_blocked.toFixed(2)}</div>
+        <div class="mt-3 text-sm text-muted">越权动作拦截率（留出 {blocked} 例全拦）</div>
       </div>
     </div>
-    <p class="reveal mt-3 num text-xs text-faint">fail-closed 实测：q4-p5-selection-calibrated（留出 ops_test, real run）</p>
+    <p class="reveal num mt-6 text-xs text-faint">fail-closed 实测：q4-p5-selection-calibrated</p>
   </div>
 </section>

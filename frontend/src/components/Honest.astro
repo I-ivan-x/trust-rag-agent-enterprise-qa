@@ -30,26 +30,15 @@ const disclosures = [
 ];
 ---
 
-<section id="honest" class="border-t border-line/60 py-20">
+<section id="honest" class="border-t border-line/40 py-28 sm:py-36">
   <div class="wrap">
-    <p class="eyebrow reveal">诚实工程 · 这才是最强的真实性证据</p>
-    <h2 class="reveal mt-3 text-3xl font-bold tracking-tight">把负结果摊开，带根因，再修好</h2>
-
-    <div class="reveal mt-8 card glass border-brand/30 p-6">
-      <div class="flex flex-wrap items-center gap-3">
-        <span class="pill pill-escalate">Q3 · triad False</span>
-        <span class="text-muted">→</span>
-        <span class="pill pill-auto">Q4 · triad True（留出集）</span>
-      </div>
-      <p class="mt-4 leading-relaxed text-muted">
-        Q3 诚实记录了动作选择平庸（anti-gaming triad=False）。诊断发现这是<span class="text-ink">机械缺陷</span>——
-        一条检测路径死了、升级被滥用，<span class="text-ink">不是能力天花板</span>。Q4 修复真实缺陷，在
-        <span class="text-ink">校准从未见过的留出集</span>上把 triad 推到 True，<span class="text-ink">阈值冻结、validator 字节级未变、安全地板（F11/F13=0）完好</span>。
-        这是「诚实地把 agent 修到够好、且证明没作弊」。
-      </p>
+    <div class="stage-center flex flex-col">
+      <p class="eyebrow reveal">诚实工程 · 最强的真实性证据</p>
+      <h2 class="reveal measure mt-7 display-2">把负结果摊开，<br /><span class="gradient-text">带根因，再修好。</span></h2>
+      <p class="reveal mx-auto mt-7 max-w-2xl lead">很多作品集只展示正结果。这个项目展示的是「我能证明系统哪里不行，并阻止自己乱报好成绩」。</p>
     </div>
 
-    <div class="mt-8 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+    <div class="mx-auto mt-16 grid max-w-5xl gap-2 sm:grid-cols-2 lg:grid-cols-3">
       {
         taxonomy.map((f) => (
           <details class="reveal card card-hover group p-0">
@@ -68,7 +57,7 @@ const disclosures = [
       }
     </div>
 
-    <div class="reveal mt-8">
+    <div class="reveal mx-auto mt-12 max-w-3xl">
       <h3 class="text-sm font-semibold uppercase tracking-wide text-muted">透明披露（不藏）</h3>
       <ul class="mt-3 space-y-2">
         {

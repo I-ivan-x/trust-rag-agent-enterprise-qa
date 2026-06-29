@@ -2,16 +2,15 @@
 import arc from "../data/arc.json";
 ---
 
-<section id="arc" class="border-t border-line/60 py-20">
+<section id="arc" class="border-t border-line/40 py-28 sm:py-36">
   <div class="wrap">
-    <p class="eyebrow reveal">四个季度 · 一条诚实的工程线</p>
-    <h2 class="reveal mt-3 text-3xl font-bold tracking-tight">从可信 RAG，到把负结果修成正结果</h2>
-    <p class="reveal mt-3 max-w-2xl text-muted">
-      每一季都是一个独立 tag 的真实结果。负结果不藏——它们带根因（失败分类法 F1–F13）和落地的修复，
-      这才是这个项目最强的真实性证据。
-    </p>
+    <div class="stage-center flex flex-col">
+      <p class="eyebrow reveal">四个季度 · 一条诚实的工程线</p>
+      <h2 class="reveal measure mt-7 display-2">从可信 RAG，<br /><span class="gradient-text">到把负结果修成正结果</span></h2>
+      <p class="reveal mx-auto mt-7 max-w-2xl lead">每一季都是一个独立 tag 的真实结果。负结果不藏——它们带根因（F1–F13）和落地的修复。</p>
+    </div>
 
-    <ol class="mt-12 space-y-4">
+    <ol class="mx-auto mt-16 max-w-4xl space-y-4 text-left">
       {
         arc.map((c) => (
           <li class="reveal card p-6 sm:p-7">
