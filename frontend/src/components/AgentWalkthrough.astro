@@ -24,7 +24,8 @@ const N = 10; // beats
         <p id="bk-sub" class="mx-auto mt-6 max-w-2xl lead"></p>
         <div id="bk-chip" class="mt-7 flex flex-wrap justify-center gap-2"></div>
         <div id="bk-scene" class="mx-auto mt-10 w-full max-w-xl text-left"></div>
-        <div id="bk-dots" class="mt-12 flex justify-center gap-1.5"></div>
+        <div id="bk-dots" class="mt-12 flex items-center justify-center gap-2"></div>
+        <div class="mt-3 text-xs text-faint">悬停或点击圆点跳转 · 也可继续下滑</div>
       </div>
     </div>
     <div id="bk-rail" style="margin-top:-100vh">
@@ -85,9 +86,22 @@ const N = 10; // beats
 
   const $ = (id) => document.getElementById(id);
   const dots = $("bk-dots");
-  beats.forEach((_, i) => {
-    const d = document.createElement("span");
-    d.className = "h-1.5 w-1.5 rounded-full bg-line transition-all duration-300";
+  const sentinels = [...document.querySelectorAll(".bk-sent")];
+  function scrollToBeat(i) {
+    const s = sentinels[i];
+    if (!s) return;
+    const top = Math.round(s.getBoundingClientRect().top + window.scrollY);
+    window.scrollTo({ top, behavior: reduce ? "auto" : "smooth" });
+  }
+  beats.forEach((b, i) => {
+    const d = document.createElement("button");
+    d.type = "button";
+    d.className = "bk-dot h-2.5 w-2.5 cursor-pointer rounded-full bg-line transition-all duration-300 hover:bg-faint";
+    d.setAttribute("aria-label", `跳到第 ${i + 1} 步：${b.tag}`);
+    d.title = `${i + 1}. ${b.tag}`;
+    d.addEventListener("mouseenter", () => scrollToBeat(i));
+    d.addEventListener("click", () => scrollToBeat(i));
+    d.addEventListener("focus", () => scrollToBeat(i));
     dots.appendChild(d);
   });
 
@@ -107,7 +121,9 @@ const N = 10; // beats
       big.style.transition = reduce ? "none" : "opacity .5s ease, transform .5s ease";
       big.style.opacity = "1"; big.style.transform = "none";
       [...dots.children].forEach((d, k) => {
-        d.className = "h-1.5 rounded-full transition-all duration-300 " + (k === i ? "w-6 bg-brand" : "w-1.5 bg-line");
+        d.className =
+          "bk-dot h-2.5 cursor-pointer rounded-full transition-all duration-300 " +
+          (k === i ? "w-7 bg-brand" : "w-2.5 bg-line hover:bg-faint");
       });
     });
   }
