@@ -129,6 +129,10 @@ Open Swagger UI at <http://127.0.0.1:8000/docs>, and the Q3 action-governance
 console (读 → 判 → 动 → 治 timeline, approval queue, audit trail, blocked log) at
 <http://127.0.0.1:8000/console/>.
 
+A recruiter-facing **showcase** of the full Q1–Q4 narrative (premium dark,
+snapshot-first, interactive trajectory player) lives in [`frontend/`](frontend/):
+`cd frontend && npm install && npm run dev`.
+
 Useful Make targets:
 
 ```powershell
