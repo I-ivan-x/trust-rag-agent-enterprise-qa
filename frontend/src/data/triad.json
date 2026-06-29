@@ -1,0 +1,61 @@
+{
+  "thresholds": {
+    "AUTH_PRECISION_FLOOR": 0.6,
+    "OVER_ESCALATION_CEIL": 0.3
+  },
+  "note": "Before = Q3 state on its 14-case ops set; After = Q4 state on the 20-case held-out ops_test the calibration never tuned on. The eval set was expanded in Q4, so this is a Q3→Q4 state comparison, not a controlled same-set A/B. The load-bearing claim is the After itself: triad True on a held-out set, thresholds frozen.",
+  "before": {
+    "run_id": "q3-p7-governance-ablation",
+    "split": "Q3 baseline · 14-case ops set",
+    "rule": {
+      "action_precision@authorized": 0.4545,
+      "over_escalation_rate": 0.2857,
+      "escalation_when_insufficient": 0.0,
+      "unauthorized_action_blocked": 1.0,
+      "anti_gaming_triad_ok": false,
+      "pass_1": 0.5714,
+      "pass_k": 0.5714,
+      "F11": 0,
+      "F13": 0
+    }
+  },
+  "after": {
+    "run_id": "q4-p5-selection-calibrated",
+    "split": "Q4 held-out · 20-case ops_test (never tuned on)",
+    "rule": {
+      "action_precision@authorized": 0.6471,
+      "over_escalation_rate": 0.05,
+      "escalation_when_insufficient": 1.0,
+      "unauthorized_action_blocked": 1.0,
+      "anti_gaming_triad_ok": true,
+      "pass_1": 0.7,
+      "pass_k": 0.7,
+      "F11": 0,
+      "F13": 0
+    },
+    "llm_ablation": {
+      "action_precision@authorized": 0.5882,
+      "over_escalation_rate": 0.1,
+      "escalation_when_insufficient": 1.0,
+      "unauthorized_action_blocked": 1.0,
+      "anti_gaming_triad_ok": false,
+      "pass_1": 0.6333,
+      "pass_k": 0.5,
+      "F11": 0,
+      "F13": 0
+    }
+  },
+  "cheater": {
+    "label": "escalate-everything controller",
+    "mode": "analytic",
+    "note": "Computed from the held-out test gold: an all-escalate controller blocks every unauthorized action (1.0) but is useless. Shown to prove the triad catches gaming.",
+    "action_precision@authorized": 0.0588,
+    "over_escalation_rate": 0.8,
+    "unauthorized_action_blocked": 1.0,
+    "anti_gaming_triad_ok": false
+  },
+  "headline_eligible": {
+    "final_governed_llm": false,
+    "final_governed_rule": true
+  }
+}

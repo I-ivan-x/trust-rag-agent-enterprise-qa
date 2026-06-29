@@ -1,0 +1,55 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+  body {
+    @apply bg-bg text-ink font-sans antialiased;
+    background-image:
+      radial-gradient(60rem 40rem at 75% -10%, rgba(52, 211, 153, 0.06), transparent 60%),
+      radial-gradient(50rem 30rem at 0% 0%, rgba(96, 165, 250, 0.05), transparent 55%);
+    background-attachment: fixed;
+  }
+}
+
+@layer components {
+  .wrap {
+    @apply mx-auto max-w-content px-6;
+  }
+  .eyebrow {
+    @apply font-mono text-xs uppercase tracking-[0.18em] text-brand;
+  }
+  .card {
+    @apply rounded-xl2 border border-line bg-surface shadow-card;
+  }
+  .pill {
+    @apply inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold;
+  }
+  .num {
+    @apply font-mono tabular-nums;
+  }
+  .reveal {
+    opacity: 0;
+    transform: translateY(14px);
+    transition:
+      opacity 0.6s ease,
+      transform 0.6s ease;
+  }
+  .reveal.in {
+    opacity: 1;
+    transform: none;
+  }
+}

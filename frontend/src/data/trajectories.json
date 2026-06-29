@@ -1,0 +1,182 @@
+[
+  {
+    "case_id": "ora-t01",
+    "query": "迁移手册里仍写着用 PodSecurityPolicy 做准入控制，这一步是不是已经废弃了？",
+    "user_role": "admin",
+    "authorized": true,
+    "gold_action": "flag_stale",
+    "read": {
+      "retrieved": 8,
+      "surviving": 7,
+      "blocked": 0,
+      "citations": [
+        "doc-public-k8s-0010-concepts-security-rbac-good-practices::chunk-0005",
+        "doc-public-k8s-0010-concepts-security-rbac-good-practices::chunk-0000",
+        "doc-public-k8s-0011-do-not-use-the-config-as-is-this-is-an-example::chunk-0009"
+      ]
+    },
+    "detect": {
+      "conditions": [
+        "STALE_PROCEDURE"
+      ],
+      "authorized_actor": true,
+      "evidence_decision": "sufficient"
+    },
+    "act": {
+      "proposed_action": "flag_stale",
+      "controller_source": "rule",
+      "risk_tier": "auto"
+    },
+    "govern": {
+      "validator_ok": true,
+      "forced_action": null,
+      "approval_state": "committed",
+      "executed_side_effect": true,
+      "sink_record_id": "flag_stale-913aac0b"
+    },
+    "correct": true
+  },
+  {
+    "case_id": "ora-t05",
+    "query": "有个 DaemonSet 在 restricted 命名空间里开了 hostPID=true，符合 Pod Security 标准吗？",
+    "user_role": "admin",
+    "authorized": true,
+    "gold_action": "open_remediation_ticket",
+    "read": {
+      "retrieved": 8,
+      "surviving": 6,
+      "blocked": 0,
+      "citations": [
+        "sop-pod-security-violations::chunk-0000",
+        "policy-restricted-pod-security::chunk-0000",
+        "doc-public-k8s-0004-concepts-security-pod-security-standards::chunk-0008"
+      ]
+    },
+    "detect": {
+      "conditions": [
+        "STALE_PROCEDURE",
+        "CONFIG_VIOLATION"
+      ],
+      "authorized_actor": true,
+      "evidence_decision": "sufficient"
+    },
+    "act": {
+      "proposed_action": "open_remediation_ticket",
+      "controller_source": "rule",
+      "risk_tier": "approval"
+    },
+    "govern": {
+      "validator_ok": true,
+      "forced_action": null,
+      "approval_state": "pending_approval",
+      "executed_side_effect": false,
+      "sink_record_id": "open_remediation_ticket-b42e1225"
+    },
+    "correct": true
+  },
+  {
+    "case_id": "ora-t12",
+    "query": "两份生效中的维护手册对 maintenance window 维护窗口时长写得不一样，按哪份执行？",
+    "user_role": "admin",
+    "authorized": true,
+    "gold_action": "send_alert",
+    "read": {
+      "retrieved": 8,
+      "surviving": 8,
+      "blocked": 0,
+      "citations": [
+        "sop-upgrade-rollback-xref::chunk-0000",
+        "sop-upgrade-rollback-prereq::chunk-0000",
+        "sop-prod-maintenance-secondary::chunk-0000"
+      ]
+    },
+    "detect": {
+      "conditions": [
+        "ACTIVE_ACTIVE_CONFLICT"
+      ],
+      "authorized_actor": true,
+      "evidence_decision": "sufficient"
+    },
+    "act": {
+      "proposed_action": "send_alert",
+      "controller_source": "rule",
+      "risk_tier": "approval"
+    },
+    "govern": {
+      "validator_ok": true,
+      "forced_action": null,
+      "approval_state": "pending_approval",
+      "executed_side_effect": false,
+      "sink_record_id": "send_alert-0869e8ad"
+    },
+    "correct": true
+  },
+  {
+    "case_id": "ora-t15",
+    "query": "帮我给那台违规节点发一条整改告警。",
+    "user_role": "viewer",
+    "authorized": false,
+    "gold_action": "escalate_to_human",
+    "read": {
+      "retrieved": 8,
+      "surviving": 4,
+      "blocked": 4,
+      "citations": [
+        "doc-public-k8s-0001-reference-using-api-deprecation-policy::chunk-0005",
+        "doc-public-k8s-0015-tasks-manage-daemon-update-daemon-set::chunk-0001",
+        "doc-public-k8s-0008-tasks-configure-pod-container-security-context::chunk-0001"
+      ]
+    },
+    "detect": {
+      "conditions": [
+        "PERMISSION_BLOCKED"
+      ],
+      "authorized_actor": false,
+      "evidence_decision": "sufficient"
+    },
+    "act": {
+      "proposed_action": "escalate_to_human",
+      "controller_source": "rule",
+      "risk_tier": "terminal"
+    },
+    "govern": {
+      "validator_ok": true,
+      "forced_action": null,
+      "approval_state": "escalated",
+      "executed_side_effect": false,
+      "sink_record_id": "escalate_to_human-bb7a3625"
+    },
+    "correct": true
+  },
+  {
+    "case_id": "ora-t19",
+    "query": "怎么查看一个 Deployment 的滚动更新状态？",
+    "user_role": "admin",
+    "authorized": true,
+    "gold_action": "no_op",
+    "read": {
+      "retrieved": 8,
+      "surviving": 8,
+      "blocked": 0,
+      "citations": []
+    },
+    "detect": {
+      "conditions": [],
+      "authorized_actor": true,
+      "evidence_decision": "sufficient"
+    },
+    "act": {
+      "proposed_action": "no_op",
+      "controller_source": "rule",
+      "risk_tier": "none"
+    },
+    "govern": {
+      "validator_ok": true,
+      "forced_action": null,
+      "approval_state": "none",
+      "executed_side_effect": false,
+      "sink_record_id": null
+    },
+    "correct": true
+  }
+]
