@@ -51,13 +51,33 @@
   }
   /* full-screen focused stage: one idea, big type, generous whitespace */
   .stage {
-    @apply flex min-h-[88vh] flex-col justify-center py-24 sm:min-h-screen sm:py-28;
+    @apply flex min-h-[90vh] flex-col justify-center py-28 sm:min-h-screen sm:py-32;
   }
+  .stage-center {
+    @apply items-center text-center;
+  }
+  /* fluid oversized display type (Apple-grade), CJK-safe line balancing */
   .display {
-    @apply text-[2.6rem] font-extrabold leading-[1.06] tracking-tight sm:text-6xl lg:text-7xl;
+    font-size: clamp(2.7rem, 7vw, 5.75rem);
+    line-height: 1.04;
+    letter-spacing: -0.022em;
+    font-weight: 800;
+    text-wrap: balance;
+  }
+  .display-2 {
+    font-size: clamp(2.1rem, 5vw, 3.9rem);
+    line-height: 1.08;
+    letter-spacing: -0.018em;
+    font-weight: 700;
+    text-wrap: balance;
   }
   .lead {
-    @apply text-lg leading-relaxed text-muted sm:text-2xl;
+    font-size: clamp(1.12rem, 1.8vw, 1.5rem);
+    line-height: 1.6;
+    @apply text-muted;
+  }
+  .measure {
+    @apply mx-auto max-w-4xl;
   }
   .scroll-cue {
     @apply mt-16 flex flex-col items-center gap-2 text-xs text-faint;

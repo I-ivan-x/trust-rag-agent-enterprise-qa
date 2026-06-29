@@ -4,31 +4,32 @@ const after = triad.after.rule;
 ---
 
 <section data-spotlight class="spotlight relative overflow-hidden">
-  <div class="wrap stage">
+  <div class="wrap stage stage-center">
     <p class="eyebrow reveal">TrustRAG · AI Agent 可靠性与评测工程</p>
-    <h1 class="reveal mt-6 max-w-5xl display">
+    <h1 class="reveal measure mt-7 display">
       把 agent 做成<br />
       <span class="gradient-text">可测、可审、可回归。</span>
     </h1>
-    <p class="reveal mt-8 max-w-2xl lead">
-      一个 fail-closed 的企业 RAG-Agent——
-      我不只让它调工具，还<span class="text-ink"> 证明了它哪里不行，再把它修好。</span>
+    <p class="reveal mx-auto mt-8 max-w-2xl lead">
+      一个 fail-closed 的企业 RAG-Agent——我不只让它调工具，
+      还<span class="text-ink"> 证明了它哪里不行，再把它修好。</span>
     </p>
 
-    <div class="reveal mt-12 flex flex-col gap-8 sm:flex-row sm:items-end sm:gap-14">
+    <div class="reveal mt-16 flex items-end justify-center gap-12 sm:gap-20">
       <div>
-        <div class="num text-6xl font-extrabold text-brand sm:text-7xl"><span data-count="0">0</span></div>
-        <div class="mt-2 text-sm text-muted">越权动作执行 · 无证据执行<br /><span class="num text-faint">F13 = 0 · F11 = 0（真实留出 run）</span></div>
+        <div class="num text-6xl font-extrabold text-brand sm:text-8xl"><span data-count="0">0</span></div>
+        <div class="mt-3 text-sm text-muted">越权 / 无证据执行<br /><span class="num text-faint">F13 = F11 = 0</span></div>
       </div>
+      <div class="h-16 w-px bg-line sm:h-24"></div>
       <div>
-        <div class="num text-6xl font-extrabold sm:text-7xl"><span data-count={after.unauthorized_action_blocked.toFixed(2)}>1.00</span></div>
-        <div class="mt-2 text-sm text-muted">越权动作拦截率<br /><span class="num text-faint">fail-closed，证据可审计</span></div>
+        <div class="num text-6xl font-extrabold sm:text-8xl"><span data-count={after.unauthorized_action_blocked.toFixed(2)}>1.00</span></div>
+        <div class="mt-3 text-sm text-muted">越权动作拦截率<br /><span class="num text-faint">真实留出 run</span></div>
       </div>
     </div>
 
-    <a href="#live" class="reveal scroll-cue self-start">
+    <a href="#live" class="reveal scroll-cue">
       看 agent 跑一遍
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M6 13l6 6 6-6" /></svg>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M6 13l6 6 6-6" /></svg>
     </a>
   </div>
 </section>

@@ -8,26 +8,22 @@ const N = 10; // beats
 
 <section id="live" class="border-t border-line/40">
   <!-- intro -->
-  <div class="wrap stage items-start text-left">
+  <div class="wrap stage stage-center">
     <p class="eyebrow reveal">看 agent 跑一遍 · 真实留出测试案（q4-p5）</p>
-    <h2 class="reveal mt-6 display">读 → 判 → 动 → 治，<br /><span class="gradient-text">一步步看它怎么做决定。</span></h2>
-    <p class="reveal mt-8 max-w-2xl lead">向下滚动，跟着 agent 处理一个真实的运维请求——直到它遇上一个<span class="text-escalate">不该执行的越权请求。</span></p>
-    <div class="scroll-cue self-start">向下滚动<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M6 13l6 6 6-6" /></svg></div>
+    <h2 class="reveal measure mt-7 display">读 → 判 → 动 → 治，<br /><span class="gradient-text">一步步看它怎么做决定。</span></h2>
+    <p class="reveal mx-auto mt-8 max-w-2xl lead">向下滚动，跟着 agent 处理一个真实的运维请求——直到它遇上一个<span class="text-escalate">不该执行的越权请求。</span></p>
+    <div class="scroll-cue">向下滚动<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M6 13l6 6 6-6" /></svg></div>
   </div>
 
-  <!-- pinned walkthrough -->
+  <!-- pinned walkthrough: centered single-column moments -->
   <div class="relative">
     <div class="sticky top-0 flex h-screen items-center overflow-hidden">
-      <div class="wrap w-full">
-        <div class="mx-auto grid max-w-5xl items-center gap-10 lg:grid-cols-2">
-          <div>
-            <div id="bk-tag" class="num text-sm text-faint">场景 A · 提问</div>
-            <h3 id="bk-big" class="mt-4 text-3xl font-bold leading-tight sm:text-5xl"></h3>
-            <p id="bk-sub" class="mt-5 text-lg text-muted"></p>
-            <div id="bk-chip" class="mt-6"></div>
-          </div>
-          <div id="bk-scene" class="min-h-[16rem]"></div>
-        </div>
+      <div class="wrap w-full text-center">
+        <div id="bk-tag" class="eyebrow">场景 A · 提问</div>
+        <h3 id="bk-big" class="measure mt-6 display-2"></h3>
+        <p id="bk-sub" class="mx-auto mt-6 max-w-2xl lead"></p>
+        <div id="bk-chip" class="mt-7 flex flex-wrap justify-center gap-2"></div>
+        <div id="bk-scene" class="mx-auto mt-10 w-full max-w-xl text-left"></div>
         <div id="bk-dots" class="mt-12 flex justify-center gap-1.5"></div>
       </div>
     </div>
