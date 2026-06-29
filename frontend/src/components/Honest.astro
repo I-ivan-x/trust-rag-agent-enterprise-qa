@@ -1,0 +1,85 @@
+---
+const taxonomy = [
+  { c: "F1", n: "过度拒答 / 保守 gate", q: "Q1", s: "calibrated" },
+  { c: "F2", n: "权限·deprecated 门主导可答性", q: "Q1", s: "calibrated" },
+  { c: "F3", n: "hard-negative 检索混淆", q: "Q1", s: "eval-flaw" },
+  { c: "F4", n: "引用支持不足", q: "Q1·Q2", s: "measured" },
+  { c: "F5", n: "agentic no-op / rewrite 无用", q: "Q2", s: "falsified" },
+  { c: "F6", n: "参数化知识不被当 grounded", q: "Q1", s: "by-design" },
+  { c: "F7", n: "冲突策略压制回答", q: "Q1", s: "by-design" },
+  { c: "F8", n: "gold 定义 / 评测错配", q: "Q1", s: "eval-flaw" },
+  { c: "F9", n: "indirect injection 合规", q: "Q2", s: "redteam" },
+  { c: "F10", n: "选错治理动作", q: "Q3→Q4", s: "calibrated" },
+  { c: "F11", n: "无证据执行副作用", q: "Q3·Q4", s: "zero" },
+  { c: "F12", n: "过度升级", q: "Q3→Q4", s: "calibrated" },
+  { c: "F13", n: "漏升级 / 越权执行", q: "Q3·Q4", s: "zero" },
+];
+const tag = {
+  zero: { t: "实测 = 0", cls: "pill-auto" },
+  calibrated: { t: "已校准", cls: "pill-auto" },
+  falsified: { t: "诚实证伪", cls: "pill-pending" },
+  "eval-flaw": { t: "评测缺陷·已修", cls: "pill-pending" },
+  measured: { t: "计量·归因", cls: "pill-muted" },
+  "by-design": { t: "设计取舍", cls: "pill-muted" },
+  redteam: { t: "红队实测", cls: "pill-detect" },
+};
+const disclosures = [
+  "Q4 留出 test 跑了 2 次：run#1 triad False，定位 R1 机制缺陷后修正、run#2 True——是修真实机制，不是在 test 上调参；两次 run 全备份。",
+  "Q4 结果『真但薄』：只过 ~1 个 case（11/17）；6/17 残留是 ~30 篇小语料的检索不稳，如实记为检索边界。",
+  "留出集是真实锚点上的『新 query / 新 actor』泛化，非全新语料表面；5 条 test query 冻结后做过跨语言检索修复（仅文本，eval 作者已 ratify）。",
+];
+---
+
+<section id="honest" class="border-t border-line/60 py-20">
+  <div class="wrap">
+    <p class="eyebrow reveal">诚实工程 · 这才是最强的真实性证据</p>
+    <h2 class="reveal mt-3 text-3xl font-bold tracking-tight">把负结果摊开，带根因，再修好</h2>
+
+    <div class="reveal mt-8 card glass border-brand/30 p-6">
+      <div class="flex flex-wrap items-center gap-3">
+        <span class="pill pill-escalate">Q3 · triad False</span>
+        <span class="text-muted">→</span>
+        <span class="pill pill-auto">Q4 · triad True（留出集）</span>
+      </div>
+      <p class="mt-4 leading-relaxed text-muted">
+        Q3 诚实记录了动作选择平庸（anti-gaming triad=False）。诊断发现这是<span class="text-ink">机械缺陷</span>——
+        一条检测路径死了、升级被滥用，<span class="text-ink">不是能力天花板</span>。Q4 修复真实缺陷，在
+        <span class="text-ink">校准从未见过的留出集</span>上把 triad 推到 True，<span class="text-ink">阈值冻结、validator 字节级未变、安全地板（F11/F13=0）完好</span>。
+        这是「诚实地把 agent 修到够好、且证明没作弊」。
+      </p>
+    </div>
+
+    <div class="mt-8 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+      {
+        taxonomy.map((f) => (
+          <details class="reveal card card-hover group p-0">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-2 p-4">
+              <span class="flex items-center gap-2">
+                <span class="num text-sm font-bold text-faint">{f.c}</span>
+                <span class="text-sm font-medium">{f.n}</span>
+              </span>
+              <span class={`pill ${tag[f.s].cls} shrink-0`}>{tag[f.s].t}</span>
+            </summary>
+            <div class="border-t border-line/60 px-4 py-3 text-xs text-muted">
+              季度 <span class="num text-ink">{f.q}</span> · 现象→根因→下一步详见 FAILURE_ANALYSIS.md（trace 证据）。
+            </div>
+          </details>
+        ))
+      }
+    </div>
+
+    <div class="reveal mt-8">
+      <h3 class="text-sm font-semibold uppercase tracking-wide text-muted">透明披露（不藏）</h3>
+      <ul class="mt-3 space-y-2">
+        {
+          disclosures.map((d) => (
+            <li class="card glass flex gap-3 p-4 text-sm leading-relaxed text-muted">
+              <span class="text-brand">◆</span>
+              <span>{d}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </div>
+</section>
