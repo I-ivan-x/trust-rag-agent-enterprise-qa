@@ -1,0 +1,1 @@
+{"environment_ref":"q5-env-fixture-001","policy_exceptions":{"resource:payments|policy:change-control":{"status":"active","scope":"staging"}},"change_states":{},"incident_impacts":{},"initial_records":[],"tool_faults":null}
