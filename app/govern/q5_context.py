@@ -71,6 +71,11 @@ class Q5TrustedObservation(BaseModel):
     observation: dict[str, Any] | None = None
     provenance: str = Field(min_length=1)
 
+    @model_validator(mode="after")
+    def _reject_forbidden_nested_fields(self) -> Q5TrustedObservation:
+        assert_q5_no_gold_or_control_fields(self.observation)
+        return self
+
 
 class Q5DecisionContext(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -103,6 +108,7 @@ class Q5DecisionContext(BaseModel):
             field="blocked evidence opaque_chunk_id",
         )
         _require_unique(self.legal_terminal_actions, field="legal_terminal_actions")
+        assert_q5_no_gold_or_control_fields(self.model_dump(mode="json"))
         return self
 
 
@@ -202,6 +208,10 @@ def build_q5_decision_context(
 ) -> Q5DecisionContext:
     """Build a Q5 context using ACL-surviving evidence as the only text source."""
 
+    _assert_acl_partition_disjoint(
+        pass_result.acl_decision.surviving_chunks,
+        pass_result.acl_decision.blocked_chunks,
+    )
     authorized_evidence = _authorized_evidence(
         pass_result.acl_decision.surviving_chunks
     )
@@ -231,7 +241,8 @@ def build_q5_decision_context(
 def q5_prompt_payload(context: Q5DecisionContext) -> dict[str, Any]:
     """Return only explicitly reviewed fields; never dump the whole context blindly."""
 
-    return {
+    assert_q5_no_gold_or_control_fields(context.model_dump(mode="json"))
+    payload = {
         "query": context.query,
         "actor_claims": {
             "role": context.actor_claims.role,
@@ -282,10 +293,14 @@ def q5_prompt_payload(context: Q5DecisionContext) -> dict[str, Any]:
         "remaining_observation_budget": context.remaining_observation_budget,
         "remaining_terminal_budget": context.remaining_terminal_budget,
     }
+    assert_q5_no_gold_or_control_fields(payload)
+    return payload
 
 
 def build_q5_prompt(context: Q5DecisionContext) -> str:
+    assert_q5_no_gold_or_control_fields(context.model_dump(mode="json"))
     payload = q5_prompt_payload(context)
+    assert_q5_no_gold_or_control_fields(payload)
     return "\n".join(
         [
             "Choose one typed Q5 step using only the authorized runtime context below.",
@@ -450,6 +465,19 @@ def _authorized_evidence(
             )
         )
     return evidence
+
+
+def _assert_acl_partition_disjoint(
+    surviving_chunks: Sequence[RetrievedChunk],
+    blocked_chunks: Sequence[RetrievedChunk],
+) -> None:
+    surviving_ids = {result.chunk.chunk_id for result in surviving_chunks}
+    blocked_ids = {result.chunk.chunk_id for result in blocked_chunks}
+    overlap = sorted(surviving_ids & blocked_ids)
+    if overlap:
+        raise ValueError(
+            "ACL surviving_chunks and blocked_chunks overlap: " + ", ".join(overlap)
+        )
 
 
 def _blocked_metadata(

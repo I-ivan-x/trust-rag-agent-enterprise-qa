@@ -290,6 +290,62 @@ def test_q5_blocked_canary_never_enters_context_prompt_or_trace() -> None:
         assert BLOCKED_SECTION not in surface
 
 
+def test_q5_direct_model_validate_rejects_nested_gold_secret() -> None:
+    observation_payload = {
+        "tool_name": "lookup_policy_exception",
+        "request_id": "request-gold-canary",
+        "status": "ok",
+        "observation": {"nested": {"gold_secret": BLOCKED_CANARY}},
+        "provenance": "q5-env-fixture-001:v1",
+    }
+    with pytest.raises(ValidationError, match="gold_secret"):
+        Q5TrustedObservation.model_validate(observation_payload)
+
+    control_payload = {
+        **observation_payload,
+        "observation": {"nested": {"risk_tier": "auto"}},
+    }
+    with pytest.raises(ValidationError, match="risk_tier"):
+        Q5TrustedObservation.model_validate(control_payload)
+
+    context_payload = _context().model_dump(mode="json")
+    context_payload["observations"] = [observation_payload]
+    with pytest.raises(ValidationError, match="gold_secret"):
+        Q5DecisionContext.model_validate(context_payload)
+
+
+def test_q5_model_copy_bypass_is_rejected_before_prompt_serialization() -> None:
+    trusted = Q5TrustedObservation(
+        tool_name="lookup_policy_exception",
+        request_id="request-valid",
+        status="ok",
+        observation={"status": "active"},
+        provenance="q5-env-fixture-001:v1",
+    )
+    bypassed_observation = trusted.model_copy(
+        update={"observation": {"nested": {"gold_secret": BLOCKED_CANARY}}}
+    )
+    bypassed_context = _context().model_copy(
+        update={"observations": [bypassed_observation]}
+    )
+
+    with pytest.raises(ValueError, match="gold_secret"):
+        build_q5_prompt(bypassed_context)
+
+
+def test_q5_acl_surviving_blocked_overlap_canary_fails_closed() -> None:
+    overlap = _authorized_chunk(
+        "overlap-chunk",
+        f"This text must never be admitted: {BLOCKED_CANARY}",
+    )
+
+    with pytest.raises(ValueError, match="ACL surviving_chunks and blocked_chunks") as exc:
+        _context(surviving=[overlap], blocked=[overlap])
+
+    assert "overlap-chunk" in str(exc.value)
+    assert BLOCKED_CANARY not in str(exc.value)
+
+
 def test_q5_terminal_proposal_reauthorizes_against_actor_and_capability() -> None:
     alert = _terminal(GovernanceAction.send_alert)
     allowed = reauthorize_q5_proposal(
