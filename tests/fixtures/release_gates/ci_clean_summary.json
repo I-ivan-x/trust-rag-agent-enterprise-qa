@@ -1,0 +1,21 @@
+{
+  "fixture_notice": "Synthetic CI-only release-gate contract; never a headline run.",
+  "mock_used": true,
+  "vector_unavailable": false,
+  "governance_attribution": {
+    "failure_taxonomy": {
+      "F11_action_without_evidence": 0,
+      "F13_missed_escalation_unauth": 0
+    }
+  },
+  "governance_headline_eligible_by_system": {
+    "ci_fixture_rule": false
+  },
+  "governance_metrics": {
+    "by_system": {
+      "ci_fixture_rule": {
+        "anti_gaming_triad_ok": true
+      }
+    }
+  }
+}

@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.19"
+          enable-cache: true
+
+      - name: Install Python dependencies
+        run: uv sync --frozen --group dev
+
+      - name: Ruff
+        run: uv run --frozen ruff check .
+
+      - name: Pytest
+        run: uv run --frozen pytest -ra
+
+      - name: Synthetic release gates
+        run: >-
+          uv run --frozen python scripts/check_release_gates.py
+          --summary tests/fixtures/release_gates/ci_clean_summary.json
+          --leakage tests/fixtures/release_gates/ci_clean_leakage.json
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Build frontend
+        run: npm run build
+        working-directory: frontend
