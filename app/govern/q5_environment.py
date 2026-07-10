@@ -35,7 +35,7 @@ class Q5ReadOnlyEnvironment:
 
     @property
     def provenance(self) -> str:
-        return f"{self.environment_ref}:{self.state_version}"
+        return f"q5-env:{self.state_version}"
 
     def policy_exception(self, resource_ref: str, policy_ref: str) -> dict[str, Any] | None:
         keys = (

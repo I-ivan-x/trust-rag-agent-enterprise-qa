@@ -4,37 +4,51 @@ from __future__ import annotations
 
 import json
 import re
-from collections.abc import Iterable, Mapping
+from collections.abc import Mapping
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from app.govern.q5_context import (
+    Q5_CHANGE_REF_PATTERN,
+    Q5_POLICY_REF_PATTERN,
+    Q5_REFERENCE_SUFFIX_PATTERN,
+    Q5_RESOURCE_REF_PATTERN,
     Q5DecisionContext,
     assert_q5_no_gold_or_control_fields,
 )
 from app.schemas.q5_task import Q5ObservationTool, Q5TaskInput
 
-_REFERENCE_PATTERN = re.compile(r"[a-z][a-z0-9_.-]*:[a-z0-9_./:-]+", re.IGNORECASE)
+_REFERENCE_PATTERN = re.compile(
+    rf"(?<![A-Za-z0-9_.:/-])"
+    rf"(?:resource|policy|change):{Q5_REFERENCE_SUFFIX_PATTERN}"
+    rf"(?![A-Za-z0-9_.:/-])"
+)
+_REFERENCE_FIELD_PATTERNS: Mapping[str, re.Pattern[str]] = {
+    "resource_ref": re.compile(Q5_RESOURCE_REF_PATTERN),
+    "policy_ref": re.compile(Q5_POLICY_REF_PATTERN),
+    "change_ref": re.compile(Q5_CHANGE_REF_PATTERN),
+}
+_REFERENCE_PATTERNS = tuple(_REFERENCE_FIELD_PATTERNS.values())
 
 
 class LookupPolicyExceptionArgs(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    resource_ref: str = Field(min_length=1)
-    policy_ref: str = Field(min_length=1)
+    resource_ref: str = Field(pattern=Q5_RESOURCE_REF_PATTERN)
+    policy_ref: str = Field(pattern=Q5_POLICY_REF_PATTERN)
 
 
 class InspectChangeStateArgs(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    change_ref: str = Field(min_length=1)
+    change_ref: str = Field(pattern=Q5_CHANGE_REF_PATTERN)
 
 
 class InspectIncidentImpactArgs(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    resource_ref: str = Field(min_length=1)
+    resource_ref: str = Field(pattern=Q5_RESOURCE_REF_PATTERN)
 
 
 class Q5ValidatedToolCall(BaseModel):
@@ -115,34 +129,47 @@ def q5_allowed_tool_argument_values(
     task: Q5TaskInput,
     context: Q5DecisionContext,
 ) -> frozenset[str]:
-    values = {str(value) for value in task.resource_refs}
-    values.update(str(value) for value in context.resource_refs)
+    values = _valid_references(task.resource_refs)
+    values.update(_valid_references(context.resource_refs))
     for evidence in context.authorized_evidence:
-        values.update({evidence.chunk_id, evidence.doc_id})
-        values.update(_REFERENCE_PATTERN.findall(evidence.text_excerpt))
+        values.update(_references_from_text(evidence.text_excerpt))
         if evidence.relation_summary:
-            values.update(_strings_from_relation(evidence.relation_summary))
+            values.update(_references_from_relation(evidence.relation_summary))
     for observation in context.observations:
-        values.update(_nested_strings(observation.observation))
-    return frozenset(value for value in values if value)
+        values.update(_references_from_fields(observation.observation))
+    return frozenset(values)
 
 
-def _strings_from_relation(summary: str) -> set[str]:
+def _references_from_relation(summary: str) -> set[str]:
     try:
         parsed = json.loads(summary)
     except (json.JSONDecodeError, TypeError):
-        return set(_REFERENCE_PATTERN.findall(summary))
-    return _nested_strings(parsed)
+        return set()
+    return _references_from_fields(parsed)
 
 
-def _nested_strings(value: Any) -> set[str]:
-    strings: set[str] = set()
-    if isinstance(value, str):
-        strings.add(value)
-    elif isinstance(value, Mapping):
-        for nested in value.values():
-            strings.update(_nested_strings(nested))
-    elif isinstance(value, Iterable) and not isinstance(value, (bytes, bytearray)):
+def _references_from_fields(value: Any) -> set[str]:
+    references: set[str] = set()
+    if isinstance(value, Mapping):
+        for key, nested in value.items():
+            pattern = _REFERENCE_FIELD_PATTERNS.get(str(key))
+            if pattern is not None and isinstance(nested, str) and pattern.fullmatch(nested):
+                references.add(nested)
+            elif isinstance(nested, (Mapping, list, tuple)):
+                references.update(_references_from_fields(nested))
+    elif isinstance(value, (list, tuple)):
         for nested in value:
-            strings.update(_nested_strings(nested))
-    return strings
+            references.update(_references_from_fields(nested))
+    return references
+
+
+def _references_from_text(text: str) -> set[str]:
+    return {match.group(0) for match in _REFERENCE_PATTERN.finditer(text)}
+
+
+def _valid_references(values: list[str]) -> set[str]:
+    return {str(value) for value in values if _is_valid_reference(str(value))}
+
+
+def _is_valid_reference(value: str) -> bool:
+    return any(pattern.fullmatch(value) for pattern in _REFERENCE_PATTERNS)

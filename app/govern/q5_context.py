@@ -33,6 +33,14 @@ from app.workflow.state import RetrievalPassResult
 Q5_EXCERPT_CHAR_LIMIT = 600
 Q5_AUTHORIZED_TEXT_CHAR_LIMIT = 4_000
 Q5_RELATION_SUMMARY_CHAR_LIMIT = 400
+Q5_REFERENCE_SUFFIX_PATTERN = (
+    r"[A-Za-z0-9](?:[A-Za-z0-9_.:/-]{0,126}[A-Za-z0-9])?"
+)
+Q5_RESOURCE_REF_PATTERN = rf"^resource:{Q5_REFERENCE_SUFFIX_PATTERN}$"
+Q5_POLICY_REF_PATTERN = rf"^policy:{Q5_REFERENCE_SUFFIX_PATTERN}$"
+Q5_CHANGE_REF_PATTERN = rf"^change:{Q5_REFERENCE_SUFFIX_PATTERN}$"
+Q5_TRUSTED_IDENTIFIER_PATTERN = r"^[a-z][a-z0-9_.-]{0,63}$"
+Q5_AUDIT_IDENTIFIER_PATTERN = r"^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"
 
 
 class Q5AuthorizedEvidence(BaseModel):
@@ -60,21 +68,87 @@ class Q5BlockedEvidenceMetadata(BaseModel):
     block_reason: Literal["acl_denied"] = "acl_denied"
 
 
+class Q5PolicyExceptionObservation(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    observation_type: Literal["policy_exception"] = "policy_exception"
+    resource_ref: str = Field(pattern=Q5_RESOURCE_REF_PATTERN)
+    policy_ref: str = Field(pattern=Q5_POLICY_REF_PATTERN)
+    status: Literal["active", "expired", "missing"]
+    scope: str | None = Field(
+        default=None,
+        pattern=Q5_TRUSTED_IDENTIFIER_PATTERN,
+        max_length=64,
+    )
+
+
+class Q5ChangeStateObservation(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    observation_type: Literal["change_state"] = "change_state"
+    change_ref: str = Field(pattern=Q5_CHANGE_REF_PATTERN)
+    status: Literal["planned", "in_progress", "completed", "unknown"]
+
+
+class Q5IncidentImpactObservation(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    observation_type: Literal["incident_impact"] = "incident_impact"
+    resource_ref: str = Field(pattern=Q5_RESOURCE_REF_PATTERN)
+    status: Literal["none", "degraded", "outage", "unknown"]
+
+
+Q5TypedObservation = (
+    Q5PolicyExceptionObservation
+    | Q5ChangeStateObservation
+    | Q5IncidentImpactObservation
+)
+_TRUSTED_OBSERVATION_MODEL_BY_TOOL: Mapping[
+    Q5ObservationTool,
+    type[BaseModel],
+] = MappingProxyType(
+    {
+        Q5ObservationTool.lookup_policy_exception: Q5PolicyExceptionObservation,
+        Q5ObservationTool.inspect_change_state: Q5ChangeStateObservation,
+        Q5ObservationTool.inspect_incident_impact: Q5IncidentImpactObservation,
+    }
+)
+
+
 class Q5TrustedObservation(BaseModel):
     """Sanitized observation slice allowed to enter the decision context."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     tool_name: Q5ObservationTool
-    request_id: str = Field(min_length=1)
+    request_id: str = Field(pattern=Q5_AUDIT_IDENTIFIER_PATTERN)
     status: Literal["ok", "not_found", "timeout", "invalid"]
     observation: dict[str, Any] | None = None
-    provenance: str = Field(min_length=1)
+    provenance: str = Field(pattern=Q5_AUDIT_IDENTIFIER_PATTERN)
 
     @model_validator(mode="after")
-    def _reject_forbidden_nested_fields(self) -> Q5TrustedObservation:
+    def _validate_trusted_payload(self) -> Q5TrustedObservation:
         assert_q5_no_gold_or_control_fields(self.observation)
+        if self.status in {"timeout", "invalid"} and self.observation is not None:
+            raise ValueError(f"{self.status} observation must not contain a payload")
+        if self.observation is not None:
+            _TRUSTED_OBSERVATION_MODEL_BY_TOOL[self.tool_name].model_validate(
+                self.observation
+            )
         return self
+
+
+def assert_q5_trusted_observations_valid(
+    observations: Iterable[Q5TrustedObservation],
+) -> None:
+    """Revalidate trusted payloads at every serialization boundary."""
+
+    for observation in observations:
+        if isinstance(observation, BaseModel):
+            payload = observation.model_dump(mode="json")
+        else:
+            payload = observation
+        Q5TrustedObservation.model_validate(payload)
 
 
 class Q5DecisionContext(BaseModel):
@@ -112,6 +186,7 @@ class Q5DecisionContext(BaseModel):
         _require_unique(self.resource_refs, field="resource_refs")
         _require_unique(self.available_tools, field="available_tools")
         _require_unique(self.legal_terminal_actions, field="legal_terminal_actions")
+        assert_q5_trusted_observations_valid(self.observations)
         assert_q5_no_gold_or_control_fields(self.model_dump(mode="json"))
         return self
 
@@ -249,6 +324,7 @@ def build_q5_decision_context(
 def q5_prompt_payload(context: Q5DecisionContext) -> dict[str, Any]:
     """Return only explicitly reviewed fields; never dump the whole context blindly."""
 
+    assert_q5_trusted_observations_valid(context.observations)
     assert_q5_no_gold_or_control_fields(context.model_dump(mode="json"))
     payload = {
         "query": context.query,
@@ -308,6 +384,7 @@ def q5_prompt_payload(context: Q5DecisionContext) -> dict[str, Any]:
 
 
 def build_q5_prompt(context: Q5DecisionContext) -> str:
+    assert_q5_trusted_observations_valid(context.observations)
     assert_q5_no_gold_or_control_fields(context.model_dump(mode="json"))
     payload = q5_prompt_payload(context)
     assert_q5_no_gold_or_control_fields(payload)

@@ -6,9 +6,15 @@ import time
 from enum import StrEnum
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from app.govern.q5_context import Q5TrustedObservation
+from app.govern.q5_context import (
+    Q5ChangeStateObservation,
+    Q5IncidentImpactObservation,
+    Q5PolicyExceptionObservation,
+    Q5TrustedObservation,
+    Q5TypedObservation,
+)
 from app.govern.q5_environment import Q5ReadOnlyEnvironment
 from app.govern.q5_tool_validator import Q5ValidatedToolCall
 from app.schemas.q5_task import Q5ObservationTool
@@ -19,39 +25,6 @@ class Q5ToolStatus(StrEnum):
     not_found = "not_found"
     timeout = "timeout"
     invalid = "invalid"
-
-
-class Q5PolicyExceptionObservation(BaseModel):
-    model_config = ConfigDict(extra="forbid", frozen=True)
-
-    observation_type: Literal["policy_exception"] = "policy_exception"
-    resource_ref: str
-    policy_ref: str
-    status: Literal["active", "expired", "missing"]
-    scope: str | None = None
-
-
-class Q5ChangeStateObservation(BaseModel):
-    model_config = ConfigDict(extra="forbid", frozen=True)
-
-    observation_type: Literal["change_state"] = "change_state"
-    change_ref: str
-    status: Literal["planned", "in_progress", "completed", "unknown"]
-
-
-class Q5IncidentImpactObservation(BaseModel):
-    model_config = ConfigDict(extra="forbid", frozen=True)
-
-    observation_type: Literal["incident_impact"] = "incident_impact"
-    resource_ref: str
-    status: Literal["none", "degraded", "outage", "unknown"]
-
-
-Q5TypedObservation = (
-    Q5PolicyExceptionObservation
-    | Q5ChangeStateObservation
-    | Q5IncidentImpactObservation
-)
 
 
 class Q5ToolResult(BaseModel):
@@ -197,8 +170,7 @@ class Q5ToolExecutor:
                 ),
             )
         untrusted_text = _optional_text(entry.pop("untrusted_text", None))
-        status = str(entry.get("status", "missing"))
-        if status not in {"active", "expired", "missing"}:
+        if not _has_only_fields(entry, {"status", "scope"}):
             return self._result(
                 call.tool,
                 request_id,
@@ -206,16 +178,30 @@ class Q5ToolExecutor:
                 None,
                 untrusted_text=untrusted_text,
             )
+        try:
+            observation = Q5PolicyExceptionObservation(
+                resource_ref=resource_ref,
+                policy_ref=policy_ref,
+                status=entry.get("status", "missing"),
+                scope=entry.get("scope"),
+            )
+        except ValidationError:
+            return self._result(
+                call.tool,
+                request_id,
+                Q5ToolStatus.invalid,
+                None,
+                untrusted_text=_join_untrusted_text(
+                    untrusted_text,
+                    _optional_text(entry.get("scope")),
+                    _optional_text(entry.get("status")),
+                ),
+            )
         return self._result(
             call.tool,
             request_id,
             Q5ToolStatus.ok,
-            Q5PolicyExceptionObservation(
-                resource_ref=resource_ref,
-                policy_ref=policy_ref,
-                status=status,
-                scope=_optional_text(entry.get("scope")),
-            ),
+            observation,
             untrusted_text=untrusted_text,
         )
 
@@ -234,8 +220,7 @@ class Q5ToolExecutor:
                 Q5ChangeStateObservation(change_ref=change_ref, status="unknown"),
             )
         untrusted_text = _optional_text(entry.pop("untrusted_text", None))
-        status = str(entry.get("status", "unknown"))
-        if status not in {"planned", "in_progress", "completed", "unknown"}:
+        if not _has_only_fields(entry, {"status"}):
             return self._result(
                 call.tool,
                 request_id,
@@ -243,11 +228,27 @@ class Q5ToolExecutor:
                 None,
                 untrusted_text=untrusted_text,
             )
+        try:
+            observation = Q5ChangeStateObservation(
+                change_ref=change_ref,
+                status=entry.get("status", "unknown"),
+            )
+        except ValidationError:
+            return self._result(
+                call.tool,
+                request_id,
+                Q5ToolStatus.invalid,
+                None,
+                untrusted_text=_join_untrusted_text(
+                    untrusted_text,
+                    _optional_text(entry.get("status")),
+                ),
+            )
         return self._result(
             call.tool,
             request_id,
             Q5ToolStatus.ok,
-            Q5ChangeStateObservation(change_ref=change_ref, status=status),
+            observation,
             untrusted_text=untrusted_text,
         )
 
@@ -266,8 +267,7 @@ class Q5ToolExecutor:
                 Q5IncidentImpactObservation(resource_ref=resource_ref, status="unknown"),
             )
         untrusted_text = _optional_text(entry.pop("untrusted_text", None))
-        status = str(entry.get("status", "unknown"))
-        if status not in {"none", "degraded", "outage", "unknown"}:
+        if not _has_only_fields(entry, {"status"}):
             return self._result(
                 call.tool,
                 request_id,
@@ -275,11 +275,27 @@ class Q5ToolExecutor:
                 None,
                 untrusted_text=untrusted_text,
             )
+        try:
+            observation = Q5IncidentImpactObservation(
+                resource_ref=resource_ref,
+                status=entry.get("status", "unknown"),
+            )
+        except ValidationError:
+            return self._result(
+                call.tool,
+                request_id,
+                Q5ToolStatus.invalid,
+                None,
+                untrusted_text=_join_untrusted_text(
+                    untrusted_text,
+                    _optional_text(entry.get("status")),
+                ),
+            )
         return self._result(
             call.tool,
             request_id,
             Q5ToolStatus.ok,
-            Q5IncidentImpactObservation(resource_ref=resource_ref, status=status),
+            observation,
             untrusted_text=untrusted_text,
         )
 
@@ -307,3 +323,12 @@ def _optional_text(value: Any) -> str | None:
         return None
     text = str(value).strip()
     return text or None
+
+
+def _has_only_fields(entry: dict[str, Any], allowed: set[str]) -> bool:
+    return set(entry).issubset(allowed)
+
+
+def _join_untrusted_text(*values: str | None) -> str | None:
+    texts = list(dict.fromkeys(value for value in values if value))
+    return "\n".join(texts) if texts else None

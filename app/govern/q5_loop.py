@@ -22,7 +22,11 @@ from app.govern.q5_context import (
 )
 from app.govern.q5_environment import Q5ReadOnlyEnvironment
 from app.govern.q5_llm_policy import Q5LLMAgentPolicy
-from app.govern.q5_policy import Q5AgentPolicy, Q5PolicyModel
+from app.govern.q5_policy import (
+    Q5AgentPolicy,
+    Q5PolicyDecisionEvent,
+    Q5PolicyModel,
+)
 from app.govern.q5_router import (
     Q5MissingStateType,
     Q5RouteDecision,
@@ -87,6 +91,7 @@ class Q5AgentResult(BaseModel):
     q4_validation: GovValidationResult
     record: ActionRecord | None = None
     tool_events: list[Q5ToolEvent] = Field(default_factory=list)
+    policy_events: list[Q5PolicyDecisionEvent] = Field(default_factory=list)
     otel_spans: list[dict] = Field(default_factory=list)
     trajectory: list[Q5TrajectoryEvent] = Field(default_factory=list)
     context_traces: list[dict] = Field(default_factory=list)
@@ -102,6 +107,11 @@ class Q5AgentResult(BaseModel):
             raise ValueError("observation_count must match tool events")
         if self.step_count != self.observation_count + self.terminal_proposal_count:
             raise ValueError("step count must equal observation plus terminal count")
+        expected_policy_steps = list(range(1, len(self.policy_events) + 1))
+        if [event.step_index for event in self.policy_events] != expected_policy_steps:
+            raise ValueError("policy event step indexes must be contiguous")
+        if not self.policy_events or len(self.policy_events) > 3:
+            raise ValueError("result must contain one to three policy events")
         return self
 
 
@@ -118,6 +128,7 @@ class Q5AgentRuntime:
 class _LoopState:
     observations: list[Q5TrustedObservation]
     tool_events: list[Q5ToolEvent]
+    policy_events: list[Q5PolicyDecisionEvent]
     spans: list[dict]
     trajectory: list[Q5TrajectoryEvent]
     context_traces: list[dict]
@@ -152,6 +163,7 @@ def run_q5_agent(
     state = _LoopState(
         observations=[],
         tool_events=[],
+        policy_events=[],
         spans=[],
         trajectory=[],
         context_traces=[build_q5_context_trace(context, context_version=1)],
@@ -162,6 +174,18 @@ def run_q5_agent(
     for step_index in range(1, 4):
         policy_step = policy.decide(context)
         state.llm_calls += int(policy_step.llm_called)
+        state.policy_events.append(
+            Q5PolicyDecisionEvent(
+                step_index=step_index,
+                context_version=context_version,
+                policy_source=policy_step.policy_source,
+                parse_status=policy_step.parse_status,
+                error_reason=policy_step.error_reason,
+                raw_payload_sha256=policy_step.raw_payload_sha256,
+                accepted_proposal=policy_step.proposal,
+                llm_called=policy_step.llm_called,
+            )
+        )
         if policy_step.proposal is None:
             reason = policy_step.error_reason or policy_step.parse_status
             state.trajectory.append(
@@ -599,6 +623,7 @@ def _finalize(
         q4_validation=q4_validation,
         record=record,
         tool_events=list(state.tool_events),
+        policy_events=list(state.policy_events),
         otel_spans=list(state.spans),
         trajectory=list(state.trajectory),
         context_traces=list(state.context_traces),
