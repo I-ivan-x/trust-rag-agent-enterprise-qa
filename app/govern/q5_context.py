@@ -83,6 +83,8 @@ class Q5DecisionContext(BaseModel):
     query: str = Field(min_length=1)
     actor_claims: Q5ActorClaims
     requested_capability: RequestedCapability
+    resource_refs: list[str] = Field(default_factory=list)
+    available_tools: list[Q5ObservationTool] = Field(default_factory=list)
     conditions: list[OpsCondition] = Field(default_factory=list)
     evidence_decision: Literal["sufficient", "insufficient"]
     authorized_evidence: list[Q5AuthorizedEvidence] = Field(default_factory=list)
@@ -107,6 +109,8 @@ class Q5DecisionContext(BaseModel):
             (item.opaque_chunk_id for item in self.blocked_evidence_metadata),
             field="blocked evidence opaque_chunk_id",
         )
+        _require_unique(self.resource_refs, field="resource_refs")
+        _require_unique(self.available_tools, field="available_tools")
         _require_unique(self.legal_terminal_actions, field="legal_terminal_actions")
         assert_q5_no_gold_or_control_fields(self.model_dump(mode="json"))
         return self
@@ -202,6 +206,8 @@ def build_q5_decision_context(
     conditions: Sequence[OpsCondition],
     evidence_decision: Literal["sufficient", "insufficient"],
     condition_legal_actions: Sequence[GovernanceAction],
+    resource_refs: Sequence[str] = (),
+    available_tools: Sequence[Q5ObservationTool] = (),
     observations: Sequence[Q5TrustedObservation] = (),
     remaining_observation_budget: int = 2,
     remaining_terminal_budget: int = 1,
@@ -225,6 +231,8 @@ def build_q5_decision_context(
         query=pass_result.query,
         actor_claims=actor_claims,
         requested_capability=requested_capability,
+        resource_refs=list(resource_refs),
+        available_tools=list(available_tools),
         conditions=list(conditions),
         evidence_decision=evidence_decision,
         authorized_evidence=authorized_evidence,
@@ -250,6 +258,8 @@ def q5_prompt_payload(context: Q5DecisionContext) -> dict[str, Any]:
             "department": context.actor_claims.department,
         },
         "requested_capability": context.requested_capability.value,
+        "resource_refs": list(context.resource_refs),
+        "available_tools": [tool.value for tool in context.available_tools],
         "conditions": [condition.value for condition in context.conditions],
         "evidence_decision": context.evidence_decision,
         "authorized_evidence": [
@@ -409,6 +419,8 @@ def build_q5_context_trace(
     trace: dict[str, Any] = {
         "context_version": context_version,
         "requested_capability": context.requested_capability.value,
+        "resource_refs": list(context.resource_refs),
+        "available_tools": [tool.value for tool in context.available_tools],
         "conditions": [condition.value for condition in context.conditions],
         "evidence_decision": context.evidence_decision,
         "authorized_evidence_ids": [
@@ -512,7 +524,7 @@ def _relation_summary(relation: Any) -> str | None:
 
 def _role_terminal_actions(role: str) -> frozenset[GovernanceAction]:
     normalized = role.strip().lower()
-    actions = {GovernanceAction.no_op}
+    actions = {GovernanceAction.no_op, GovernanceAction.escalate_to_human}
     for action, roles in DEFAULT_AUTHORIZED_ROLES.items():
         if normalized in roles:
             actions.add(action)
