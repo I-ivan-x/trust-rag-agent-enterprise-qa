@@ -1,12 +1,14 @@
 # Technical Design — TrustRAG Enterprise QA
 
-Status: Q1 closeout + Q2 Phases 1–3. Decision records are append-only: Q2 work
-adds ADR-009 … ADR-011 and never rewrites the Q1 ADRs (ADR-001 … ADR-008).
+Status: Q1-Q4 closeout at `v3.0-q4-reliability`. Decision records are
+append-only: Q2 adds ADR-009 … ADR-011, Q3 adds ADR-012 … ADR-014, and Q4 adds
+ADR-015 … ADR-016 without rewriting earlier ADRs.
 
 Q1 numbers come from Week 6 real runs (DeepSeek `deepseek-v4-flash`,
-`bge-small-en-v1.5` embedding, `bge-reranker-base`); the Q2 ADRs cite the Phase 1
-calibration, Phase 2 judge/red-team, and Phase 3 agent-ablation runs. Run
-inventory: [EVALUATION_REPORT.md](EVALUATION_REPORT.md).
+`bge-small-en-v1.5` embedding, `bge-reranker-base`); the Q2-Q4 ADRs cite the
+Phase 1 calibration, Phase 2 judge/red-team, Phase 3 agent-ablation, Q3
+governance ablation, and Q4 held-out selection-calibration runs. Run inventory:
+[EVALUATION_REPORT.md](EVALUATION_REPORT.md).
 
 ------
 

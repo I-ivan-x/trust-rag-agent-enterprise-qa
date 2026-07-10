@@ -1,9 +1,13 @@
-# TrustRAG Showcase — 前端作品 demo 规划（planning, not built yet）
+# TrustRAG Showcase — 前端作品 demo 规划与实现状态
 
 版本：v0-plan
-状态：规划稿，待 Owner 拍板关键岔路（§9）后再开工。
+状态：已实现为 `frontend/` Astro + Tailwind snapshot showcase；本文件保留为 v1 规划与实现依据。
 目标读者：招聘方 / 面试官（非运维用户）。这是**作品展示站**，不是 Q3 那个运行时控制台。
 前端用 `ui-ux-pro-max-skill`（Claude 侧驱动其设计系统生成器）。
+
+实现状态（2026-06-29）：`frontend/src/data/{triad,trajectories,audit,arc}.json`
+已落地，页面入口为 `frontend/src/pages/index.astro`；v2 聚焦重构见 `SHOWCASE_PLAN_V2.md`，
+最终交接入口见 `LATEST_RESULTS_AND_DEMO.md`。
 
 ------
 

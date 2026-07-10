@@ -3,6 +3,9 @@
 招聘向高级作品站，讲完整 Q1–Q4 叙事。Astro + Tailwind，**snapshot-first**（数据来自真实 run，
 独立部署随时可看），暗色 premium 技术风。中文界面。
 
+项目总整理见仓库根的 `docs/LATEST_RESULTS_AND_DEMO.md`。运行时控制台仍由 FastAPI 挂在
+`/console/`；本目录是对外展示用的静态 showcase。
+
 ## 开发
 
 ```bash

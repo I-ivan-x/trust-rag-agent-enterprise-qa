@@ -173,6 +173,9 @@ Real runs require a DeepSeek-compatible API key in `.env` (see
 | Document | Content |
 | --- | --- |
 | [TECHNICAL_DESIGN](docs/TECHNICAL_DESIGN.md) | Threat model and ADRs with measured consequences |
+| [LATEST_RESULTS_AND_DEMO](docs/LATEST_RESULTS_AND_DEMO.md) | Latest Q1-Q4 outcome summary plus the two web demo entry points (`/console/` and `frontend/`) |
+| [ENGINEERING_DISCIPLINE](docs/ENGINEERING_DISCIPLINE.md) | Evidence-backed record of planning, scope control, evaluation discipline, AI collaboration, and delivery efficiency |
+| [Q5_ADAPTIVE_AGENT_DESIGN](docs/Q5_ADAPTIVE_AGENT_DESIGN.md) | Active Q5 plan: selective hybrid Agent, semantic decision frontier, bounded observation loop, and outcome-based eval |
 | [EVALUATION_REPORT](docs/EVALUATION_REPORT.md) | Week 6 results, contamination analysis, trade-off discussion, Q2 Phase 1 calibration, and the Q3 action-governance ablation |
 | [FAILURE_ANALYSIS](docs/FAILURE_ANALYSIS.md) | Failure taxonomy F1-F13 with trace evidence |
 | [Q3_ACTION_GOVERNANCE_DESIGN](docs/Q3_ACTION_GOVERNANCE_DESIGN.md) | Q3 action-governance design freeze (evidence-aware ops copilot, risk-tiered autonomy) |
@@ -181,7 +184,7 @@ Real runs require a DeepSeek-compatible API key in `.env` (see
 | [HARD_NEGATIVE_ADJUDICATION](docs/HARD_NEGATIVE_ADJUDICATION.md) | Why the stress-test split collapsed, and the re-validation plan |
 | [CITATION_AUDIT](docs/CITATION_AUDIT.md) / [GUIDE](docs/CITATION_AUDIT_GUIDE.md) | Rule-based audit status, manual census, and audit protocol |
 | [EVAL_PROTOCOL](docs/EVAL_PROTOCOL.md) / [CORPUS_PROTOCOL](docs/CORPUS_PROTOCOL.md) | Author isolation and corpus governance |
-| [ROADMAP](docs/ROADMAP.md) | Q1 closeout plus Q2 plan: gate calibration, anchored LLM judge, red-team split, typed-action agent |
+| [ROADMAP](docs/ROADMAP.md) | Q1-Q5 evolution: trustworthy RAG, typed actions, action governance, reliability calibration, and adaptive hybrid Agent |
 
 ## Data Sources and Boundaries
 

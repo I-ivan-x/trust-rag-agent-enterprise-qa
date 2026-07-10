@@ -97,8 +97,12 @@ number is guarded by a code contract, not discipline.
 ## Pointers
 
 - Honest results & trade-offs: `README.md`, `docs/EVALUATION_REPORT.md`
+- Latest outcome + web demo handoff: `docs/LATEST_RESULTS_AND_DEMO.md`
+- Engineering discipline + execution evidence: `docs/ENGINEERING_DISCIPLINE.md`
+- Active Q5 design + implementation handoff: `docs/Q5_ADAPTIVE_AGENT_DESIGN.md`, `docs/Q5_IMPLEMENTATION_HANDOFF.md`
 - Failure taxonomy F1–F13 with trace evidence: `docs/FAILURE_ANALYSIS.md`
 - Design decisions (ADR-001…016) with measured consequences: `docs/TECHNICAL_DESIGN.md`
 - Q4 negative→positive design + pre-registration: `docs/Q4_RELIABILITY_DESIGN.md`, `docs/Q4_P2_PREREGISTER.md`
-- Demo: `uvicorn app.main:app` → `/console/` (read→detect→act→govern console), `/docs` (Swagger)
+- Runtime demo: `uvicorn app.main:app` → `/console/` (read→detect→act→govern console), `/docs` (Swagger)
+- Recruiter-facing web demo: `cd frontend && npm run dev` → Astro/Tailwind snapshot showcase
 - Tags: `v0.3-q1-hard-demo` · `v1.0-q2-agentic-eval` · `v2.0-q3-action-governance` · `v3.0-q4-reliability`

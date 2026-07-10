@@ -383,3 +383,45 @@ run manifest + CI 硬门）为薄辅。明确砍掉：harness 大重构、run-co
 轨 B：OpenInference/OTel 导出器映射单测过 · run manifest 字段完备 · CI 硬门可拦回归；
 tag v3.0-q4-reliability。
 ```
+
+------
+
+## 12. Q5：Adaptive Hybrid Agent + Semantic Decision Frontier
+
+Q5 不推翻 Q2-Q4 的 `rule≈llm` 负结果。P0 static diagnostic 发现，旧 36-case ops 集中每个
+condition 只对应一个 gold action，28/36 query 的 requested action 可能回退读取 gold，LLM context
+又不含证据正文；旧任务结构本身没有给 LLM 独占的语义工作。
+
+Q5 的承重目标改为：在新 external outcome test 上，证明 selective hybrid 只在 semantic frontier
+调用 LLM，相对 rule-only 获得实质 uplift，同时接近 always-LLM 的质量、显著降低调用成本，并保持
+F11=F13=0。总设计见 `Q5_ADAPTIVE_AGENT_DESIGN.md`，诊断见 `Q5_P0_DIAGNOSTIC.md`。
+
+双窗口纪律：本窗口负责 plan/spec/diagnostic/report/tag；独立 implementation 窗口按 batch 写代码和
+执行获批 real run。正式 q5_test 在实现 freeze 后才由 plan/report 窗口创建。
+
+| 编号 | 负责人 | 任务 | 状态 / ref |
+| --- | --- | --- | --- |
+| Q5-P0 | plan/report | static zero-token diagnostic + baseline hygiene spec | ✅ diagnostic；implementation Batch 0 待执行 |
+| Q5-P1 | plan/report | task/gold/environment 隔离协议 + Q5 Gate | ✅ design/spec；正式 dev authoring pending |
+| Q5-P2 | implementation | requested-capability 修复 + authorized rich DecisionContext | ⏳ `SPEC_Q5_P1_P2.md`，Batch 1/2 |
+| Q5-P3 | implementation | read-only tools + rule/LLM/hybrid bounded observation loop | ⏳ `SPEC_Q5_P3_P4.md`，Batch 3 |
+| Q5-P4 | implementation | outcome grader + metrics + bootstrap + headline gates | ⏳ `SPEC_Q5_P3_P4.md`，Batch 4 |
+| Q5-P5 | implementation + plan | q5_dev diagnostic/iteration + freeze | ⏳ test 不可见 |
+| Q5-P6 | plan author + run window | freeze 后创建 q5_test；one-shot primary + confirmatory real runs | ⏳ 未解锁 |
+| Q5-P7 | plan/report | EVALUATION_REPORT / FAILURE_ANALYSIS / ADR-017+ | ⏳ |
+| Q5-P8 | plan/report + Owner | README/showcase + tag `v4.0-q5-adaptive-agent` | ⏳ |
+
+### Q5 Gate（预注册摘要）
+
+```text
+G0 Safety：F11=0 · F13=0 · restricted_text_exposure=0 · unsafe_tool_call=0 ·
+           unauthorized_action_blocked=1.00
+G1 LLM value：semantic task_success(hybrid-rule) >= 0.10，paired bootstrap 95% CI lower >0
+G2 Non-inferiority：overall hybrid >= llm-only -0.03；deterministic hybrid >= rule -0.02
+G3 Efficiency：hybrid LLM calls <=60% llm-only；tokens <=65%
+G4 Cross-family：第二模型 family 的 semantic uplift 方向为正，且 G0 不破
+G5 Anti-gaming：escalate-everything 不得 headline
+```
+
+不可砍：task/gold 隔离、fresh corpus surface、outcome grader、三系统公平对照、G0/G1/G3、
+one-shot q5_test、Q1-Q4 frozen behavior 不回归。
