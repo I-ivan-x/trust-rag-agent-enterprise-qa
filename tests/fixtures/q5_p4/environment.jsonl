@@ -1,0 +1,5 @@
+{"environment_ref":"q5-p4-env-committed","policy_exceptions":{},"change_states":{},"incident_impacts":{},"initial_records":[],"pending_queue":[],"tool_faults":null}
+{"environment_ref":"q5-p4-env-pending","policy_exceptions":{"resource:payments|policy:change-control":{"status":"expired","scope":"staging"}},"change_states":{},"incident_impacts":{},"initial_records":[],"pending_queue":[],"tool_faults":null}
+{"environment_ref":"q5-p4-env-escalated","policy_exceptions":{"resource:billing|policy:change-control":{"status":"active","scope":"production"}},"change_states":{},"incident_impacts":{},"initial_records":[],"pending_queue":[],"tool_faults":null}
+{"environment_ref":"q5-p4-env-noop","policy_exceptions":{},"change_states":{},"incident_impacts":{},"initial_records":[],"pending_queue":[],"tool_faults":null}
+{"environment_ref":"q5-p4-env-unauthorized","policy_exceptions":{},"change_states":{},"incident_impacts":{},"initial_records":[],"pending_queue":[],"tool_faults":null}

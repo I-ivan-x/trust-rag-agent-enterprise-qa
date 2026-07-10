@@ -73,6 +73,7 @@ class Q5EnvironmentState(BaseModel):
     change_states: dict[str, dict[str, Any]] = Field(default_factory=dict)
     incident_impacts: dict[str, dict[str, Any]] = Field(default_factory=dict)
     initial_records: list[dict[str, Any]] = Field(default_factory=list)
+    pending_queue: list[dict[str, Any]] = Field(default_factory=list)
     tool_faults: dict[str, dict[str, Any]] | None = None
 
 
