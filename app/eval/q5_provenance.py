@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from pathlib import Path
 from typing import Any, Literal
 
@@ -116,29 +117,22 @@ class Q5VerifiedRunManifest(BaseModel):
 
 
 def canonical_q5_model_family(identity: Q5ModelIdentity) -> str:
-    """Canonicalize provider aliases using attested type and endpoint evidence."""
+    """Resolve one family from model, type, provider, and endpoint evidence."""
 
-    provider = identity.provider.lower().replace("-", "_").strip()
-    host = _normalized_endpoint_host(identity.base_url_host)
-    family_host = host.partition(":")[0]
-    if family_host == "deepseek.com" or family_host.endswith(".deepseek.com"):
-        return "deepseek"
-    if identity.instance_type.endswith(".DeepSeekLLMClient"):
-        return "deepseek"
-    if identity.instance_type.endswith(".XiaomiLLMClient"):
-        return "xiaomi"
-    aliases = {
-        "openai": "openai_compatible",
-        "openai_compatible": "openai_compatible",
-        "deepseek": "deepseek",
-        "xiaomi": "xiaomi",
-        "mimo": "xiaomi",
+    evidence = _q5_model_family_evidence(identity)
+    families = {
+        family
+        for source_families in evidence.values()
+        for family in source_families
     }
-    if provider in aliases:
-        return aliases[provider]
-    if identity.instance_type.endswith(".OpenAICompatibleLLMClient"):
-        return "openai_compatible"
-    return provider
+    if len(families) > 1:
+        detail = ", ".join(
+            f"{source}={sorted(source_families)}"
+            for source, source_families in sorted(evidence.items())
+            if source_families
+        )
+        raise ValueError(f"conflicting Q5 model-family evidence: {detail}")
+    return next(iter(families), "unresolved")
 
 
 def q5_model_deployment_fingerprint(
@@ -179,10 +173,99 @@ def validate_q5_cross_family_identities(
         raise ValueError(
             "Q5 primary and confirmatory identities alias the same model deployment"
         )
+    if "unresolved" in primary_families | confirmatory_families:
+        raise ValueError("Q5 cross-family confirmation has insufficient family evidence")
     if primary_families & confirmatory_families:
         raise ValueError(
             "Q5 primary and confirmatory runs must use distinct canonical model families"
         )
+
+
+def _q5_model_family_evidence(
+    identity: Q5ModelIdentity,
+) -> dict[str, set[str]]:
+    provider = identity.provider.lower().replace("-", "_").strip()
+    instance_type = identity.instance_type.strip()
+    family_host = _normalized_endpoint_host(identity.base_url_host).partition(":")[0]
+    provider_families = {
+        "deepseek": "deepseek",
+        "xiaomi": "xiaomi",
+        "mimo": "xiaomi",
+        "qwen": "qwen",
+        "dashscope": "qwen",
+        "alibaba": "qwen",
+        "anthropic": "anthropic",
+        "claude": "anthropic",
+        "google": "google",
+        "gemini": "google",
+        "mistral": "mistral",
+        "xai": "xai",
+        "grok": "xai",
+        "meta": "meta",
+        "llama": "meta",
+        "cohere": "cohere",
+    }
+    provider_family = provider_families.get(provider)
+    instance_family = None
+    if instance_type.endswith(".DeepSeekLLMClient"):
+        instance_family = "deepseek"
+    elif instance_type.endswith(".XiaomiLLMClient"):
+        instance_family = "xiaomi"
+    endpoint_family = _q5_endpoint_family(family_host)
+    return {
+        "model_name": _q5_model_name_families(identity.model_name),
+        "instance_type": {instance_family} if instance_family else set(),
+        "provider": {provider_family} if provider_family else set(),
+        "endpoint_host": {endpoint_family} if endpoint_family else set(),
+    }
+
+
+def _q5_model_name_families(model_name: str) -> set[str]:
+    tokens = set(re.findall(r"[a-z0-9]+", model_name.lower()))
+    families: set[str] = set()
+    if any(token.startswith("deepseek") for token in tokens):
+        families.add("deepseek")
+    if any(token.startswith(("mimo", "xiaomi")) for token in tokens):
+        families.add("xiaomi")
+    if any(token.startswith(("qwen", "qwq")) for token in tokens):
+        families.add("qwen")
+    if any(
+        token.startswith(("gpt", "chatgpt")) or token in {"o1", "o3", "o4"}
+        for token in tokens
+    ):
+        families.add("openai")
+    if any(token.startswith("claude") for token in tokens):
+        families.add("anthropic")
+    if any(token.startswith("gemini") for token in tokens):
+        families.add("google")
+    if any(token.startswith("llama") for token in tokens):
+        families.add("meta")
+    if any(
+        token.startswith(("mistral", "mixtral", "codestral")) for token in tokens
+    ):
+        families.add("mistral")
+    if any(token.startswith("grok") for token in tokens):
+        families.add("xai")
+    if any(token.startswith("cohere") for token in tokens):
+        families.add("cohere")
+    return families
+
+
+def _q5_endpoint_family(host: str) -> str | None:
+    endpoint_suffixes = {
+        "deepseek": ("deepseek.com",),
+        "openai": ("api.openai.com",),
+        "qwen": ("dashscope.aliyuncs.com",),
+        "anthropic": ("api.anthropic.com",),
+        "google": ("generativelanguage.googleapis.com",),
+        "mistral": ("api.mistral.ai",),
+        "xai": ("api.x.ai",),
+        "cohere": ("api.cohere.com",),
+    }
+    for family, suffixes in endpoint_suffixes.items():
+        if any(host == suffix or host.endswith(f".{suffix}") for suffix in suffixes):
+            return family
+    return None
 
 
 def derive_q5_model_identity(model: Any) -> Q5ModelIdentity:

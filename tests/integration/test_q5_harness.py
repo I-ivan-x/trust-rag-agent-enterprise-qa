@@ -92,12 +92,12 @@ class SameProviderAlternateMockPolicyModel(Q5DeterministicMockPolicyModel):
 
 class OpenAIAliasMockPolicyModel(Q5DeterministicMockPolicyModel):
     provider = "openai"
-    model_name = "shared-openai-compatible-model"
+    model_name = "gpt-4o"
 
 
 class OpenAICompatibleAliasMockPolicyModel(Q5DeterministicMockPolicyModel):
     provider = "openai_compatible"
-    model_name = "shared-openai-compatible-model"
+    model_name = "gpt-4o"
 
 
 def test_q5_synthetic_mock_harness_runs_and_grades_all_three_systems(
@@ -560,7 +560,7 @@ def test_q5_dual_model_summary_rejects_wrong_role_same_model_and_tamper(
         role="confirmatory",
         model=SameProviderAlternateMockPolicyModel(),
     )
-    with pytest.raises(ValueError, match="distinct canonical model families"):
+    with pytest.raises(ValueError, match="insufficient family evidence"):
         summarize_q5_model_roles(
             primary.run_dir,
             same_provider.run_dir,
