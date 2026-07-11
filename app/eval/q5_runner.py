@@ -747,11 +747,10 @@ def _validate_q5_raw_artifacts(
         label="policy_events.jsonl",
         require_every_trial=True,
     )
-    trajectory_by_trial = _index_step_rows(
+    trajectory_by_trial = _index_trajectory_rows(
         artifacts["trajectory.jsonl"],
         expected_keys=expected_keys,
         label="trajectory.jsonl",
-        require_every_trial=True,
     )
     span_by_trial = _index_span_rows(
         artifacts["otel_spans.jsonl"], expected_keys=expected_keys
@@ -845,9 +844,14 @@ def _validate_q5_raw_artifacts(
         ]:
             raise ValueError(f"Q5 policy event ledger mismatch: {key}")
         trajectory = trajectory_by_trial[key]
-        if [item["step_index"] for item in policy] != [
-            item["step_index"] for item in trajectory
-        ]:
+        policy_steps = [int(item["step_index"]) for item in policy]
+        trajectory_steps = sorted(
+            {int(item["step_index"]) for item in trajectory}
+        )
+        if (
+            not set(policy_steps).issubset(trajectory_steps)
+            or max(trajectory_steps) > len(policy_steps) + 1
+        ):
             raise ValueError(f"Q5 policy/trajectory step matrix mismatch: {key}")
         if sum(item.get("event_type") == "terminal" for item in trajectory) != 1:
             raise ValueError(f"Q5 trial must have exactly one terminal trajectory: {key}")
@@ -1063,6 +1067,85 @@ def _index_step_rows(
         missing = sorted(expected_keys - set(grouped))
         if missing:
             raise ValueError(f"Q5 {label} has missing trial keys: {missing}")
+    return grouped
+
+
+def _index_trajectory_rows(
+    rows: list[Any],
+    *,
+    expected_keys: set[str],
+    label: str,
+) -> dict[str, list[dict[str, Any]]]:
+    """Index audit events while allowing an explicit failure plus safe terminal.
+
+    A rejected tool or policy error and its synthesized safe terminal share the
+    policy step.  A tool timeout may place the terminal at the immediately next
+    step without another policy call.  Both shapes are emitted by the bounded
+    loop and remain within the three-step budget.
+    """
+
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    seen: set[tuple[str, int, str]] = set()
+    valid_event_types = {"policy_error", "tool_rejected", "observation", "terminal"}
+    for row in rows:
+        if not isinstance(row, dict):
+            raise ValueError(f"Q5 {label} row must be an object")
+        key = _safe_trial_key(row, label=label)
+        if key not in expected_keys:
+            raise ValueError(f"Q5 {label} has extra trial key: {key}")
+        if type(row.get("step_index")) is not int:
+            raise ValueError(f"Q5 {label} has a non-integer step index: {key}")
+        step_index = int(row["step_index"])
+        event_type = str(row.get("event_type") or "")
+        unique_key = (key, step_index, event_type)
+        if (
+            not 1 <= step_index <= 3
+            or event_type not in valid_event_types
+            or unique_key in seen
+        ):
+            raise ValueError(
+                f"Q5 {label} has duplicate/invalid event: "
+                f"{key}|{step_index}|{event_type}"
+            )
+        seen.add(unique_key)
+        grouped.setdefault(key, []).append(row)
+
+    missing = sorted(expected_keys - set(grouped))
+    if missing:
+        raise ValueError(f"Q5 {label} has missing trial keys: {missing}")
+    for key, values in grouped.items():
+        values.sort(key=lambda item: int(item["step_index"]))
+        steps = sorted({int(item["step_index"]) for item in values})
+        if steps != list(range(1, max(steps) + 1)):
+            raise ValueError(f"Q5 {label} has non-contiguous steps: {key}")
+        terminal_positions = [
+            index
+            for index, item in enumerate(values)
+            if item.get("event_type") == "terminal"
+        ]
+        if terminal_positions != [len(values) - 1]:
+            raise ValueError(f"Q5 {label} terminal must be unique and final: {key}")
+        by_step: dict[int, list[str]] = {}
+        for item in values:
+            by_step.setdefault(int(item["step_index"]), []).append(
+                str(item["event_type"])
+            )
+        for step_index, event_types in by_step.items():
+            if len(event_types) > 2:
+                raise ValueError(f"Q5 {label} has too many events at {key}|{step_index}")
+            if len(event_types) == 2 and event_types not in (
+                ["policy_error", "terminal"],
+                ["tool_rejected", "terminal"],
+            ):
+                raise ValueError(
+                    f"Q5 {label} has invalid same-step event pair at "
+                    f"{key}|{step_index}: {event_types}"
+                )
+            if step_index < max(steps) and event_types != ["observation"]:
+                raise ValueError(
+                    f"Q5 {label} has non-observation before terminal step: "
+                    f"{key}|{step_index}"
+                )
     return grouped
 
 
