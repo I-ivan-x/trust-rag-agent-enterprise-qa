@@ -1,0 +1,18 @@
+{
+  "adversarial_index_policy": "isolated_not_in_default_namespace",
+  "adversarial_namespace": "q5_dev_adversarial_v1",
+  "dataset": "q5_dev",
+  "default_namespace": "q5_dev_public_v1",
+  "disclosure": "All document prose is purpose-authored synthetic evaluation content. Current policy, change, and incident states live only in environment.jsonl.",
+  "document_content_origin": "generated_synthetic",
+  "environment_state_origin": "deterministic_synthetic",
+  "license": "CC0-1.0",
+  "schema_version": "q5-corpus-provenance-v1",
+  "surfaces": [
+    "adversarial/injection_samples",
+    "public/change_lifecycle",
+    "public/governance_basics",
+    "public/incident_impact",
+    "public/policy_exceptions"
+  ]
+}

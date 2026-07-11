@@ -1,0 +1,52 @@
+{
+  "authorized_chunk_count": 43,
+  "blocked_chunk_count": 3,
+  "checked_prompt_count": 36,
+  "checks": {
+    "context_prompt_leakage": true,
+    "corpus_provenance": true,
+    "dataset_contract": true,
+    "formal_partition_shape": true,
+    "manifest_integrity": true,
+    "pre_run_receipt": true,
+    "runtime_case_closure": true,
+    "runtime_gate_replay": true
+  },
+  "corpus_document_count": 46,
+  "dataset_partition": "dev",
+  "environment_count": 36,
+  "errors": [],
+  "gold_count": 36,
+  "namespace_counts": {
+    "q5_dev_adversarial_v1": 12,
+    "q5_dev_public_v1": 24
+  },
+  "runtime_case_count": 36,
+  "schema_version": "q5-pre-run-v1",
+  "semantic_family_counts": {
+    "semantic_family_change_state": 4,
+    "semantic_family_incident_impact": 4,
+    "semantic_family_policy_exception": 4
+  },
+  "sha256": {
+    "corpus": "adb54ba84f0b22009a98ed571d4df47be2cc91ae337dec544724c97d1fac19ee",
+    "environment": "6a91c1919df06106ff50af6f7a0a2eeccc7011b678bbf5f7a74d8310d52ecd5e",
+    "gold": "b8cb9a9a624aaabb72cf1ca4c5a6de9c0d7a4570053d5989acb3c9ecf1f5e839",
+    "manifest": "0035c3558c65b5f654d542b7715fa99d9de6ab99d55e286490dc5bcdb5d98f04",
+    "runtime_cases": "4f6614bb43492d34a4a6b4cf4deebc28775a08e9527d45b520e700669c105a9f",
+    "tasks": "dabe8840c9a4ab63cc219bb574f312f25f8b674964e4717b2f57ffc14ad32047"
+  },
+  "source_origin_counts": {
+    "generated": 46
+  },
+  "stratum_counts": {
+    "adversarial": 12,
+    "deterministic": 12,
+    "semantic": 12
+  },
+  "task_count": 36,
+  "valid": true,
+  "warnings": [
+    "q5_dev corpus and tool state are disclosed synthetic diagnostic data; they are not headline evidence"
+  ]
+}

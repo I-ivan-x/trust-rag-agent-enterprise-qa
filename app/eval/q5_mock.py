@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from typing import Any
 
 
@@ -51,9 +52,19 @@ class Q5DeterministicMockPolicyModel:
                     "inspect_policy_exception",
                 )
             status = _observation_status(observation)
+            requested_scope = _requested_scope(context)
+            observed_scope = _observation_scope(observation)
+            active_scope_matches = bool(
+                status == "active"
+                and (
+                    requested_scope is None
+                    or observed_scope is None
+                    or requested_scope == observed_scope
+                )
+            )
             action = (
                 "escalate_to_human"
-                if status == "active"
+                if active_scope_matches
                 else "open_remediation_ticket"
             )
             return _terminal(
@@ -76,11 +87,29 @@ class Q5DeterministicMockPolicyModel:
                     evidence_ids,
                     "inspect_change_state",
                 )
-            action = "flag_stale" if "stale_procedure" in conditions else "open_remediation_ticket"
+            status = _observation_status(observation)
+            if observation is not None and status in {"planned", "unknown"}:
+                return _terminal(
+                    "escalate_to_human",
+                    evidence_ids,
+                    "change_state_needs_review",
+                )
+            action = (
+                "flag_stale"
+                if "stale_procedure" in conditions
+                else "open_remediation_ticket"
+            )
             return _terminal(
                 _legal_or_escalate(action, legal_actions),
                 evidence_ids,
                 "stale_state_applied",
+            )
+
+        if "broken_xref" in conditions:
+            return _terminal(
+                _legal_or_escalate("open_remediation_ticket", legal_actions),
+                evidence_ids,
+                "broken_reference_applied",
             )
 
         if "active_active_conflict" in conditions:
@@ -92,11 +121,23 @@ class Q5DeterministicMockPolicyModel:
                     evidence_ids,
                     "inspect_incident_impact",
                 )
-            action = (
-                "send_alert"
-                if _observation_status(observation) in {"degraded", "outage"}
-                else "escalate_to_human"
-            )
+            if observation is None:
+                action = "send_alert"
+            else:
+                impacted = _observation_status(observation) in {
+                    "degraded",
+                    "outage",
+                }
+                non_production = _requested_scope(context) in {
+                    "development",
+                    "sandbox",
+                    "staging",
+                }
+                action = (
+                    "send_alert"
+                    if impacted and not non_production
+                    else "escalate_to_human"
+                )
             return _terminal(
                 _legal_or_escalate(action, legal_actions),
                 evidence_ids,
@@ -137,6 +178,24 @@ def _observation_status(observation: dict[str, Any] | None) -> str:
         return str(observation["status"])
     payload = observation.get("observation")
     return str(payload.get("status", "unknown")) if isinstance(payload, dict) else "unknown"
+
+
+def _observation_scope(observation: dict[str, Any] | None) -> str | None:
+    if observation is None:
+        return None
+    payload = observation.get("observation")
+    if not isinstance(payload, dict):
+        return None
+    scope = payload.get("scope")
+    return str(scope).lower() if isinstance(scope, str) and scope else None
+
+
+def _requested_scope(context: dict[str, Any]) -> str | None:
+    query = str(context.get("query") or "").lower()
+    for scope in ("production", "staging", "sandbox", "development"):
+        if re.search(rf"\b{scope}\b", query):
+            return scope
+    return None
 
 
 def _first_ref(context: dict[str, Any], prefix: str) -> str | None:
