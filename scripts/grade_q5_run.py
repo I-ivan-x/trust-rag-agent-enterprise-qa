@@ -24,12 +24,21 @@ def build_parser() -> argparse.ArgumentParser:
     commands = parser.add_subparsers(dest="command", required=True)
     grade = commands.add_parser("grade", help="Grade one completed raw run.")
     grade.add_argument("--run-dir", type=Path, required=True)
-    grade.add_argument("--gold", type=Path, required=True)
+    grade.add_argument("--gold", type=Path, required=True, help="Sealed gold JSONL.")
     summarize = commands.add_parser(
         "summarize", help="Compose verified primary and confirmatory runs."
     )
     summarize.add_argument("--primary-run", type=Path, required=True)
+    summarize.add_argument(
+        "--primary-gold", type=Path, required=True, help="Sealed primary gold."
+    )
     summarize.add_argument("--confirmatory-run", type=Path, required=True)
+    summarize.add_argument(
+        "--confirmatory-gold",
+        type=Path,
+        required=True,
+        help="Sealed confirmatory gold.",
+    )
     summarize.add_argument("--output-dir", type=Path, required=True)
     return parser
 
@@ -49,6 +58,8 @@ def main(argv: Sequence[str] | None = None) -> dict[str, object]:
             args.primary_run,
             args.confirmatory_run,
             args.output_dir,
+            primary_gold_path=args.primary_gold,
+            confirmatory_gold_path=args.confirmatory_gold,
         )
         payload = {
             "output_dir": artifacts.output_dir.as_posix(),

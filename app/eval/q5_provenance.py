@@ -9,6 +9,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from app.eval.q5_dataset import load_q5_gold
 from app.eval.q5_metrics import (
     Q5_ESCALATE_EVERYTHING_CONTROL,
     compute_q5_metrics,
@@ -104,12 +105,84 @@ class Q5VerifiedRunManifest(BaseModel):
     graded_manifest_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     summary_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     gates_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    gold_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    model_identities: list[Q5ModelIdentity] = Field(min_length=1)
     provider_model_pairs: list[str] = Field(min_length=1)
     git_commit_sha: str = Field(pattern=r"^[0-9a-f]{40}$")
     prompt_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     mode: str
     mock_used: bool
     real_run: bool
+
+
+def canonical_q5_model_family(identity: Q5ModelIdentity) -> str:
+    """Canonicalize provider aliases using attested type and endpoint evidence."""
+
+    provider = identity.provider.lower().replace("-", "_").strip()
+    host = _normalized_endpoint_host(identity.base_url_host)
+    family_host = host.partition(":")[0]
+    if family_host == "deepseek.com" or family_host.endswith(".deepseek.com"):
+        return "deepseek"
+    if identity.instance_type.endswith(".DeepSeekLLMClient"):
+        return "deepseek"
+    if identity.instance_type.endswith(".XiaomiLLMClient"):
+        return "xiaomi"
+    aliases = {
+        "openai": "openai_compatible",
+        "openai_compatible": "openai_compatible",
+        "deepseek": "deepseek",
+        "xiaomi": "xiaomi",
+        "mimo": "xiaomi",
+    }
+    if provider in aliases:
+        return aliases[provider]
+    if identity.instance_type.endswith(".OpenAICompatibleLLMClient"):
+        return "openai_compatible"
+    return provider
+
+
+def q5_model_deployment_fingerprint(
+    identity: Q5ModelIdentity,
+) -> tuple[str, str, str]:
+    """Provider-independent deployment key used to reject alias relabeling."""
+
+    return (
+        identity.instance_type.strip().lower(),
+        _normalized_endpoint_host(identity.base_url_host),
+        identity.model_name.strip().lower(),
+    )
+
+
+def validate_q5_cross_family_identities(
+    primary: list[Q5ModelIdentity],
+    confirmatory: list[Q5ModelIdentity],
+) -> None:
+    """Require one internally consistent and genuinely distinct family per role."""
+
+    if not primary or not confirmatory:
+        raise ValueError("Q5 dual-model runs require complete model identities")
+    primary_families = {canonical_q5_model_family(identity) for identity in primary}
+    confirmatory_families = {
+        canonical_q5_model_family(identity) for identity in confirmatory
+    }
+    if len(primary_families) != 1 or len(confirmatory_families) != 1:
+        raise ValueError("each Q5 model role must resolve to exactly one model family")
+    primary_deployments = {
+        q5_model_deployment_fingerprint(identity) for identity in primary
+    }
+    confirmatory_deployments = {
+        q5_model_deployment_fingerprint(identity) for identity in confirmatory
+    }
+    if len(primary_deployments) != 1 or len(confirmatory_deployments) != 1:
+        raise ValueError("each Q5 model role must resolve to exactly one deployment")
+    if primary_deployments & confirmatory_deployments:
+        raise ValueError(
+            "Q5 primary and confirmatory identities alias the same model deployment"
+        )
+    if primary_families & confirmatory_families:
+        raise ValueError(
+            "Q5 primary and confirmatory runs must use distinct canonical model families"
+        )
 
 
 def derive_q5_model_identity(model: Any) -> Q5ModelIdentity:
@@ -181,7 +254,10 @@ def verify_q5_raw_artifact_closure(run_dir: Path | str) -> dict[str, Any]:
     return manifest
 
 
-def verify_q5_graded_run(run_dir: Path | str) -> Q5VerifiedRunManifest:
+def verify_q5_graded_run(
+    run_dir: Path | str,
+    gold_path: Path | str,
+) -> Q5VerifiedRunManifest:
     root = Path(run_dir)
     actual_files = {path.name for path in root.iterdir()}
     expected = Q5_RAW_ARTIFACT_FILES | Q5_GRADED_ARTIFACT_FILES
@@ -198,7 +274,7 @@ def verify_q5_graded_run(run_dir: Path | str) -> Q5VerifiedRunManifest:
         raw_hashes,
         expected_names=Q5_RAW_ARTIFACT_FILES - {"hashes.json"},
     )
-    from app.eval.q5_runner import verify_q5_raw_trial_matrix
+    from app.eval.q5_runner import grade_q5_artifact_rows, verify_q5_raw_trial_matrix
 
     raw_artifacts = verify_q5_raw_trial_matrix(root, manifest=raw_manifest)
     graded_hashes = q5_read_json(root / "graded_hashes.json")
@@ -231,12 +307,26 @@ def verify_q5_graded_run(run_dir: Path | str) -> Q5VerifiedRunManifest:
         or any(character not in "0123456789abcdef" for character in graded_dataset_hashes["gold"])
     ):
         raise ValueError("Q5 graded dataset hash provenance mismatch")
+    sealed_gold_path = Path(gold_path)
+    sealed_gold_sha256 = q5_sha256_file(sealed_gold_path)
+    if graded_dataset_hashes["gold"] != sealed_gold_sha256:
+        raise ValueError("Q5 sealed gold hash mismatch")
+    sealed_gold = load_q5_gold(sealed_gold_path)
     graded_rows = q5_read_jsonl(root / "graded_rows.jsonl")
     analytic_rows = q5_read_jsonl(root / "analytic_controls.jsonl")
     if graded_manifest.get("graded_row_count") != len(graded_rows):
         raise ValueError("Q5 graded manifest row count mismatch")
     if graded_manifest.get("analytic_control_row_count") != len(analytic_rows):
         raise ValueError("Q5 analytic-control row count mismatch")
+    expected_grading = grade_q5_artifact_rows(
+        manifest=raw_manifest,
+        raw_artifacts=raw_artifacts,
+        gold=sealed_gold,
+    )
+    if graded_rows != expected_grading.graded_rows:
+        raise ValueError("Q5 graded rows do not match sealed-gold regrading")
+    if analytic_rows != expected_grading.analytic_control_rows:
+        raise ValueError("Q5 analytic controls do not match sealed-gold regrading")
     raw_by_trial = {
         _trial_tuple(row): row for row in raw_artifacts["results.jsonl"]
     }
@@ -318,6 +408,10 @@ def verify_q5_graded_run(run_dir: Path | str) -> Q5VerifiedRunManifest:
             "raw_manifest_sha256": raw_manifest_hash,
             "git_commit_sha": raw_manifest["git_commit_sha"],
             "prompt_sha256": raw_manifest["prompt"]["sha256"],
+            "gold_sha256": sealed_gold_sha256,
+            "model_identity_sha256": sorted(
+                identity.identity_sha256 for identity in validated_identities
+            ),
             "provider_model_pairs": provider_model_pairs,
         }
     ]
@@ -348,6 +442,8 @@ def verify_q5_graded_run(run_dir: Path | str) -> Q5VerifiedRunManifest:
         graded_manifest_sha256=q5_sha256_file(root / "graded_manifest.json"),
         summary_sha256=q5_sha256_file(root / "summary.json"),
         gates_sha256=q5_sha256_file(root / "gates.json"),
+        gold_sha256=sealed_gold_sha256,
+        model_identities=validated_identities,
         provider_model_pairs=provider_model_pairs,
         git_commit_sha=str(raw_manifest["git_commit_sha"]),
         prompt_sha256=str(raw_manifest["prompt"]["sha256"]),
@@ -416,6 +512,10 @@ def _trial_tuple(row: dict[str, Any]) -> tuple[str, str, int]:
         str(row.get("system") or ""),
         int(row.get("run_index") or 0),
     )
+
+
+def _normalized_endpoint_host(value: str | None) -> str:
+    return (value or "").strip().lower().rstrip(".")
 
 
 def _verify_hash_mapping(

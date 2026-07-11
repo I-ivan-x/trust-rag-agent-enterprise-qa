@@ -9,8 +9,14 @@ import pytest
 
 from app.core.enums import CorpusSource, SourceOrigin
 from app.eval.q5_dataset import load_q5_environment, load_q5_tasks
+from app.eval.q5_metrics import (
+    Q5_ESCALATE_EVERYTHING_CONTROL,
+    compute_q5_metrics,
+    evaluate_q5_gates,
+)
 from app.eval.q5_mock import Q5DeterministicMockPolicyModel
 from app.eval.q5_provenance import verify_q5_graded_run
+from app.eval.q5_report import render_q5_report
 from app.eval.q5_runner import (
     Q5RunSettings,
     Q5RuntimeCaseInput,
@@ -70,13 +76,28 @@ class SpoofRealModel:
         return prompt
 
 
-class AlternateMockPolicyModel(Q5DeterministicMockPolicyModel):
-    provider = "deterministic_mock_alternate"
-    model_name = "q5-runtime-policy-v2"
+class DeepSeekMockPolicyModel(Q5DeterministicMockPolicyModel):
+    provider = "deepseek"
+    model_name = "deepseek-synthetic-policy"
+
+
+class XiaomiMockPolicyModel(Q5DeterministicMockPolicyModel):
+    provider = "xiaomi"
+    model_name = "xiaomi-synthetic-policy"
 
 
 class SameProviderAlternateMockPolicyModel(Q5DeterministicMockPolicyModel):
     model_name = "q5-runtime-policy-v2"
+
+
+class OpenAIAliasMockPolicyModel(Q5DeterministicMockPolicyModel):
+    provider = "openai"
+    model_name = "shared-openai-compatible-model"
+
+
+class OpenAICompatibleAliasMockPolicyModel(Q5DeterministicMockPolicyModel):
+    provider = "openai_compatible"
+    model_name = "shared-openai-compatible-model"
 
 
 def test_q5_synthetic_mock_harness_runs_and_grades_all_three_systems(
@@ -84,6 +105,10 @@ def test_q5_synthetic_mock_harness_runs_and_grades_all_three_systems(
 ) -> None:
     assert "gold" not in inspect.signature(run_q5_tasks).parameters
     assert tuple(inspect.signature(grade_q5_run).parameters) == (
+        "run_dir",
+        "gold_path",
+    )
+    assert tuple(inspect.signature(verify_q5_graded_run).parameters) == (
         "run_dir",
         "gold_path",
     )
@@ -395,29 +420,72 @@ def test_q5_grader_rejects_extra_raw_artifact(tmp_path: Path) -> None:
         grade_q5_run(raw.run_dir, gold_path)
 
 
-def test_q5_dual_model_summary_verifies_hashes_roles_and_distinct_models(
+@pytest.mark.parametrize("target", ["graded_rows", "analytic_control"])
+def test_q5_sealed_gold_regrading_rejects_self_consistent_graded_tamper(
     tmp_path: Path,
+    target: str,
 ) -> None:
-    primary, _ = _single_case_graded_run(
+    graded, gold_path = _single_case_graded_run(
         tmp_path,
-        run_id="q5-dual-primary",
+        run_id=f"q5-sealed-regrade-{target}",
         role="primary",
         model=Q5DeterministicMockPolicyModel(),
     )
-    confirmatory, _ = _single_case_graded_run(
+    _rewrite_graded_artifacts_with_tamper(graded.run_dir, target=target)
+
+    with pytest.raises(ValueError, match="sealed-gold regrading"):
+        verify_q5_graded_run(graded.run_dir, gold_path)
+
+
+def test_q5_verifier_rejects_modified_or_replaced_sealed_gold(tmp_path: Path) -> None:
+    graded, gold_path = _single_case_graded_run(
+        tmp_path,
+        run_id="q5-sealed-gold-mismatch",
+        role="primary",
+        model=Q5DeterministicMockPolicyModel(),
+    )
+    payload = json.loads(gold_path.read_text(encoding="utf-8"))
+    payload["gold_reason_tags"].append("post_grade_replacement")
+    gold_path.write_text(
+        json.dumps(payload, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="sealed gold hash mismatch"):
+        verify_q5_graded_run(graded.run_dir, gold_path)
+
+
+def test_q5_dual_model_summary_verifies_hashes_roles_and_distinct_models(
+    tmp_path: Path,
+) -> None:
+    primary, primary_gold = _single_case_graded_run(
+        tmp_path,
+        run_id="q5-dual-primary",
+        role="primary",
+        model=DeepSeekMockPolicyModel(),
+    )
+    confirmatory, confirmatory_gold = _single_case_graded_run(
         tmp_path,
         run_id="q5-dual-confirmatory",
         role="confirmatory",
-        model=AlternateMockPolicyModel(),
+        model=XiaomiMockPolicyModel(),
     )
     combined = summarize_q5_model_roles(
         primary.run_dir,
         confirmatory.run_dir,
         tmp_path / "combined",
+        primary_gold_path=primary_gold,
+        confirmatory_gold_path=confirmatory_gold,
     )
-    verified = verify_q5_dual_summary(combined.output_dir)
+    verified = verify_q5_dual_summary(
+        combined.output_dir,
+        primary_gold_path=primary_gold,
+        confirmatory_gold_path=confirmatory_gold,
+    )
 
     assert len(verified["ledger"]) == 2
+    assert verified["ledger"][0]["canonical_model_families"] == ["deepseek"]
+    assert verified["ledger"][1]["canonical_model_families"] == ["xiaomi"]
     assert verified["gates"]["verified_run_count_by_model_role"] == {
         "confirmatory": 1,
         "primary": 1,
@@ -440,65 +508,99 @@ def test_q5_dual_model_summary_verifies_hashes_roles_and_distinct_models(
         encoding="utf-8",
     )
     with pytest.raises(ValueError, match="model-role provenance"):
-        verify_q5_dual_summary(combined.output_dir)
+        verify_q5_dual_summary(
+            combined.output_dir,
+            primary_gold_path=primary_gold,
+            confirmatory_gold_path=confirmatory_gold,
+        )
 
 
 def test_q5_dual_model_summary_rejects_wrong_role_same_model_and_tamper(
     tmp_path: Path,
 ) -> None:
-    primary, _ = _single_case_graded_run(
+    primary, primary_gold = _single_case_graded_run(
         tmp_path,
         run_id="q5-negative-primary",
         role="primary",
         model=Q5DeterministicMockPolicyModel(),
     )
-    wrong_role, _ = _single_case_graded_run(
+    wrong_role, wrong_role_gold = _single_case_graded_run(
         tmp_path,
         run_id="q5-negative-wrong-role",
         role="primary",
-        model=AlternateMockPolicyModel(),
+        model=DeepSeekMockPolicyModel(),
     )
     with pytest.raises(ValueError, match="confirmatory model role"):
         summarize_q5_model_roles(
             primary.run_dir,
             wrong_role.run_dir,
             tmp_path / "wrong-role-combined",
+            primary_gold_path=primary_gold,
+            confirmatory_gold_path=wrong_role_gold,
         )
 
-    same_model, _ = _single_case_graded_run(
+    same_model, same_model_gold = _single_case_graded_run(
         tmp_path,
         run_id="q5-negative-same-model",
         role="confirmatory",
         model=Q5DeterministicMockPolicyModel(),
     )
-    with pytest.raises(ValueError, match="distinct models"):
+    with pytest.raises(ValueError, match="same model deployment"):
         summarize_q5_model_roles(
             primary.run_dir,
             same_model.run_dir,
             tmp_path / "same-model-combined",
+            primary_gold_path=primary_gold,
+            confirmatory_gold_path=same_model_gold,
         )
 
-    same_provider, _ = _single_case_graded_run(
+    same_provider, same_provider_gold = _single_case_graded_run(
         tmp_path,
         run_id="q5-negative-same-provider",
         role="confirmatory",
         model=SameProviderAlternateMockPolicyModel(),
     )
-    with pytest.raises(ValueError, match="distinct provider families"):
+    with pytest.raises(ValueError, match="distinct canonical model families"):
         summarize_q5_model_roles(
             primary.run_dir,
             same_provider.run_dir,
             tmp_path / "same-provider-combined",
+            primary_gold_path=primary_gold,
+            confirmatory_gold_path=same_provider_gold,
         )
 
     summary_path = wrong_role.run_dir / "summary.json"
     summary_path.write_text(summary_path.read_text(encoding="utf-8") + " ", encoding="utf-8")
     with pytest.raises(ValueError, match="hash mismatch"):
-        verify_q5_graded_run(wrong_role.run_dir)
+        verify_q5_graded_run(wrong_role.run_dir, wrong_role_gold)
+
+
+def test_q5_dual_summary_rejects_openai_provider_aliases(tmp_path: Path) -> None:
+    primary, primary_gold = _single_case_graded_run(
+        tmp_path,
+        run_id="q5-openai-alias-primary",
+        role="primary",
+        model=OpenAIAliasMockPolicyModel(),
+    )
+    confirmatory, confirmatory_gold = _single_case_graded_run(
+        tmp_path,
+        run_id="q5-openai-alias-confirmatory",
+        role="confirmatory",
+        model=OpenAICompatibleAliasMockPolicyModel(),
+    )
+
+    with pytest.raises(ValueError, match="distinct canonical model families"):
+        summarize_q5_model_roles(
+            primary.run_dir,
+            confirmatory.run_dir,
+            tmp_path / "openai-alias-combined",
+            primary_gold_path=primary_gold,
+            confirmatory_gold_path=confirmatory_gold,
+        )
 
 
 def test_q5_missing_control_artifact_is_not_verifiable(tmp_path: Path) -> None:
-    graded, _ = _single_case_graded_run(
+    graded, gold_path = _single_case_graded_run(
         tmp_path,
         run_id="q5-missing-control",
         role="primary",
@@ -507,7 +609,7 @@ def test_q5_missing_control_artifact_is_not_verifiable(tmp_path: Path) -> None:
     graded.analytic_controls_path.unlink()
 
     with pytest.raises(ValueError, match="artifact closure mismatch"):
-        verify_q5_graded_run(graded.run_dir)
+        verify_q5_graded_run(graded.run_dir, gold_path)
 
 
 def test_q5_execution_and_grading_clis_run_synthetic_fixture(tmp_path: Path) -> None:
@@ -562,6 +664,70 @@ def test_q5_execution_and_grading_clis_run_synthetic_fixture(tmp_path: Path) -> 
     assert run_payload["trial_count"] == 3
     assert grade_payload["row_count"] == 3
     assert Path(str(grade_payload["summary"])).is_file()
+
+
+def _rewrite_graded_artifacts_with_tamper(run_dir: Path, *, target: str) -> None:
+    manifest = _json(run_dir / "manifest.json")
+    graded_rows = _jsonl(run_dir / "graded_rows.jsonl")
+    analytic_rows = _jsonl(run_dir / "analytic_controls.jsonl")
+    if target == "graded_rows":
+        graded_rows[0]["task_success"] = not graded_rows[0]["task_success"]
+    elif target == "analytic_control":
+        analytic_rows[0]["task_success"] = not analytic_rows[0]["task_success"]
+    else:  # pragma: no cover - test helper guard
+        raise ValueError(f"unknown graded tamper target: {target}")
+
+    metrics = compute_q5_metrics(
+        [*graded_rows, *analytic_rows],
+        k=int(manifest["k"]),
+        seed=int(manifest["seed"]),
+        bootstrap_resamples=int(manifest["bootstrap"]["resamples"]),
+    )
+    control = metrics["by_system"].pop(Q5_ESCALATE_EVERYTHING_CONTROL)
+    summary_path = run_dir / "summary.json"
+    summary = _json(summary_path)
+    summary.update(metrics)
+    summary["analytic_controls"] = {Q5_ESCALATE_EVERYTHING_CONTROL: control}
+    role = str(manifest["model"]["role"])
+    summary["by_model_role"] = {
+        role: {
+            "by_system": metrics["by_system"],
+            "comparisons": metrics["comparisons"],
+        }
+    }
+    gates = evaluate_q5_gates(summary)
+    graded_manifest_path = run_dir / "graded_manifest.json"
+    graded_manifest = _json(graded_manifest_path)
+    graded_manifest["headline_eligible"] = gates["q5_headline_eligible"]
+    graded_manifest["run_valid"] = gates["run_valid"]
+
+    _write_test_jsonl(run_dir / "graded_rows.jsonl", graded_rows)
+    _write_test_jsonl(run_dir / "analytic_controls.jsonl", analytic_rows)
+    _write_test_json(summary_path, summary)
+    _write_test_json(run_dir / "gates.json", gates)
+    (run_dir / "report.md").write_text(
+        render_q5_report(summary, gates),
+        encoding="utf-8",
+    )
+    _write_test_json(graded_manifest_path, graded_manifest)
+    graded_paths = [
+        run_dir / "graded_rows.jsonl",
+        run_dir / "analytic_controls.jsonl",
+        summary_path,
+        run_dir / "gates.json",
+        run_dir / "report.md",
+        graded_manifest_path,
+    ]
+    _write_test_json(
+        run_dir / "graded_hashes.json",
+        {
+            "schema_version": "q5-graded-artifact-hashes-v1",
+            "artifacts": {
+                path.name: hashlib.sha256(path.read_bytes()).hexdigest()
+                for path in graded_paths
+            },
+        },
+    )
 
 
 def _single_case_raw_run(
@@ -701,6 +867,20 @@ def _jsonl(path: Path) -> list[dict]:
         for line in path.read_text(encoding="utf-8").splitlines()
         if line.strip()
     ]
+
+
+def _write_test_json(path: Path, payload) -> None:
+    path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+
+def _write_test_jsonl(path: Path, rows: list[dict]) -> None:
+    path.write_text(
+        "".join(json.dumps(row, sort_keys=True) + "\n" for row in rows),
+        encoding="utf-8",
+    )
 
 
 def _key(case_id: str, system: str, run_index: int) -> str:

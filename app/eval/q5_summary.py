@@ -11,8 +11,11 @@ from pydantic import BaseModel, ConfigDict
 from app.eval.q5_metrics import evaluate_q5_gates
 from app.eval.q5_provenance import (
     Q5VerifiedRunManifest,
+    canonical_q5_model_family,
+    q5_model_deployment_fingerprint,
     q5_read_json,
     q5_sha256_file,
+    validate_q5_cross_family_identities,
     verify_q5_graded_run,
 )
 from app.eval.q5_report import render_q5_report
@@ -45,11 +48,17 @@ def summarize_q5_model_roles(
     primary_run_dir: Path | str,
     confirmatory_run_dir: Path | str,
     output_dir: Path | str,
+    *,
+    primary_gold_path: Path | str,
+    confirmatory_gold_path: Path | str,
 ) -> Q5DualSummaryArtifacts:
     """Compose primary/confirmatory runs only after full provenance verification."""
 
-    primary = verify_q5_graded_run(primary_run_dir)
-    confirmatory = verify_q5_graded_run(confirmatory_run_dir)
+    primary = verify_q5_graded_run(primary_run_dir, primary_gold_path)
+    confirmatory = verify_q5_graded_run(
+        confirmatory_run_dir,
+        confirmatory_gold_path,
+    )
     _validate_dual_sources(primary, confirmatory)
     primary_raw = q5_read_json(primary.run_dir / "manifest.json")
     confirmatory_raw = q5_read_json(confirmatory.run_dir / "manifest.json")
@@ -113,11 +122,20 @@ def summarize_q5_model_roles(
         manifest_path=manifest_path,
         hashes_path=hashes_path,
     )
-    verify_q5_dual_summary(root)
+    verify_q5_dual_summary(
+        root,
+        primary_gold_path=primary_gold_path,
+        confirmatory_gold_path=confirmatory_gold_path,
+    )
     return artifacts
 
 
-def verify_q5_dual_summary(output_dir: Path | str) -> dict[str, Any]:
+def verify_q5_dual_summary(
+    output_dir: Path | str,
+    *,
+    primary_gold_path: Path | str,
+    confirmatory_gold_path: Path | str,
+) -> dict[str, Any]:
     root = Path(output_dir)
     actual = {path.name for path in root.iterdir()}
     if actual != set(Q5_DUAL_SUMMARY_FILES):
@@ -146,7 +164,10 @@ def verify_q5_dual_summary(output_dir: Path | str) -> dict[str, Any]:
         raise ValueError("Q5 dual-summary ledger provenance mismatch")
     if manifest.get("source_runs") != ledger:
         raise ValueError("Q5 dual-summary manifest provenance mismatch")
-    verified_sources = [verify_q5_graded_run(entry["run_dir"]) for entry in ledger]
+    verified_sources = [
+        verify_q5_graded_run(ledger[0]["run_dir"], primary_gold_path),
+        verify_q5_graded_run(ledger[1]["run_dir"], confirmatory_gold_path),
+    ]
     if [_ledger_entry(source) for source in verified_sources] != ledger:
         raise ValueError("Q5 dual-summary source run hashes changed")
     primary, confirmatory = verified_sources
@@ -268,18 +289,10 @@ def _validate_dual_sources(
         raise ValueError("Q5 dual-model source commits do not match")
     if primary.prompt_sha256 != confirmatory.prompt_sha256:
         raise ValueError("Q5 dual-model prompt hashes do not match")
-    if set(primary.provider_model_pairs) & set(confirmatory.provider_model_pairs):
-        raise ValueError("Q5 primary and confirmatory runs must use distinct models")
-    primary_providers = {
-        pair.split("::", 1)[0] for pair in primary.provider_model_pairs
-    }
-    confirmatory_providers = {
-        pair.split("::", 1)[0] for pair in confirmatory.provider_model_pairs
-    }
-    if primary_providers & confirmatory_providers:
-        raise ValueError(
-            "Q5 primary and confirmatory runs must use distinct provider families"
-        )
+    validate_q5_cross_family_identities(
+        primary.model_identities,
+        confirmatory.model_identities,
+    )
 
 
 def _validate_matching_experiment(
@@ -317,6 +330,22 @@ def _ledger_entry(source: Q5VerifiedRunManifest) -> dict[str, Any]:
         "graded_manifest_sha256": source.graded_manifest_sha256,
         "summary_sha256": source.summary_sha256,
         "gates_sha256": source.gates_sha256,
+        "gold_sha256": source.gold_sha256,
+        "model_identities": [
+            identity.model_dump(mode="json") for identity in source.model_identities
+        ],
+        "canonical_model_families": sorted(
+            {
+                canonical_q5_model_family(identity)
+                for identity in source.model_identities
+            }
+        ),
+        "model_deployments": sorted(
+            [
+                list(q5_model_deployment_fingerprint(identity))
+                for identity in source.model_identities
+            ]
+        ),
         "provider_model_pairs": source.provider_model_pairs,
         "git_commit_sha": source.git_commit_sha,
         "prompt_sha256": source.prompt_sha256,

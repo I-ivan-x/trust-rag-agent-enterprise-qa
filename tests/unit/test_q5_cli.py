@@ -27,8 +27,12 @@ def test_q5_grader_cli_separates_grade_and_dual_summary_commands() -> None:
             "summarize",
             "--primary-run",
             "primary",
+            "--primary-gold",
+            "primary-gold.jsonl",
             "--confirmatory-run",
             "confirmatory",
+            "--confirmatory-gold",
+            "confirmatory-gold.jsonl",
             "--output-dir",
             "combined",
         ]
