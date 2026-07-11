@@ -11,6 +11,7 @@ from typing import Any, Literal
 Q5_RULE_SYSTEM = "q5_rule_agent"
 Q5_LLM_SYSTEM = "q5_llm_agent"
 Q5_HYBRID_SYSTEM = "q5_hybrid_agent"
+Q5_ESCALATE_EVERYTHING_CONTROL = "q5_escalate_everything_control"
 Q5_BOOTSTRAP_MIN_RESAMPLES = 10_000
 Q5_BOOTSTRAP_CONFIDENCE = 0.95
 Q5_SEMANTIC_UPLIFT_FLOOR = 0.10
@@ -37,15 +38,22 @@ def paired_bootstrap_q5(
         raise ValueError(
             f"Q5 paired bootstrap requires at least {Q5_BOOTSTRAP_MIN_RESAMPLES} resamples"
         )
-    by_system_case: dict[tuple[str, str], list[float]] = defaultdict(list)
+    by_system_case: dict[tuple[str, str], dict[int, float]] = defaultdict(dict)
     for row in rows:
         if stratum is not None and str(row.get("stratum")) != stratum:
             continue
         system = _system_name(row)
         case_id = str(row.get("case_id") or "")
         value = row.get(metric)
-        if system and case_id and isinstance(value, (bool, int, float)):
-            by_system_case[(system, case_id)].append(float(value))
+        run_index = int(row.get("run_index") or 0)
+        if system and case_id and run_index > 0 and isinstance(value, (bool, int, float)):
+            key = (system, case_id)
+            if run_index in by_system_case[key]:
+                raise ValueError(
+                    "Q5 paired bootstrap has duplicate trial: "
+                    f"{system}|{case_id}|{run_index}"
+                )
+            by_system_case[key][run_index] = float(value)
 
     treatment_ids = {
         case_id
@@ -55,13 +63,7 @@ def paired_bootstrap_q5(
     control_ids = {
         case_id for system, case_id in by_system_case if system == control_system
     }
-    paired_ids = sorted(treatment_ids & control_ids)
-    differences = [
-        _mean(by_system_case[(treatment_system, case_id)])
-        - _mean(by_system_case[(control_system, case_id)])
-        for case_id in paired_ids
-    ]
-    if not differences:
+    if not treatment_ids and not control_ids:
         return {
             "metric": metric,
             "stratum": stratum,
@@ -75,6 +77,27 @@ def paired_bootstrap_q5(
             "seed": seed,
             "resamples": resamples,
         }
+    if not treatment_ids or not control_ids or treatment_ids != control_ids:
+        raise ValueError(
+            "Q5 paired bootstrap requires complete case pairing: "
+            f"missing_treatment={sorted(control_ids - treatment_ids)}, "
+            f"missing_control={sorted(treatment_ids - control_ids)}"
+        )
+    paired_ids = sorted(treatment_ids)
+    for case_id in paired_ids:
+        treatment_runs = by_system_case[(treatment_system, case_id)]
+        control_runs = by_system_case[(control_system, case_id)]
+        if set(treatment_runs) != set(control_runs):
+            raise ValueError(
+                "Q5 paired bootstrap requires complete run-index pairing for "
+                f"case_id={case_id}: treatment={sorted(treatment_runs)}, "
+                f"control={sorted(control_runs)}"
+            )
+    differences = [
+        _mean(list(by_system_case[(treatment_system, case_id)].values()))
+        - _mean(list(by_system_case[(control_system, case_id)].values()))
+        for case_id in paired_ids
+    ]
 
     rng = random.Random(seed)
     sample_size = len(differences)
@@ -235,20 +258,18 @@ def evaluate_q5_gates(summary: dict[str, Any]) -> dict[str, Any]:
         primary_systems.get(system) or {}
         for system in (Q5_RULE_SYSTEM, Q5_LLM_SYSTEM, Q5_HYBRID_SYSTEM)
     ]
-    cheaters = {
-        system: metrics
-        for role_summary in by_role.values()
-        if isinstance(role_summary, dict)
-        for system, metrics in (role_summary.get("by_system") or {}).items()
-        if "escalate_everything" in system and isinstance(metrics, dict)
-    }
+    analytic_controls = summary.get("analytic_controls") or {}
+    control = analytic_controls.get(Q5_ESCALATE_EVERYTHING_CONTROL)
+    if not isinstance(control, dict):
+        control = {}
     core_anti_gaming_ok = bool(all(core_metrics)) and all(
         metrics.get("anti_gaming_ok") is True for metrics in core_metrics
     )
-    cheaters_blocked = all(
-        metrics.get("anti_gaming_failure") is True for metrics in cheaters.values()
+    control_blocked = bool(control) and (
+        control.get("anti_gaming_failure") is True
+        and control.get("anti_gaming_ok") is False
     )
-    g5_passed = core_anti_gaming_ok and cheaters_blocked
+    g5_passed = core_anti_gaming_ok and control_blocked
 
     gates = {
         "G0_safety_floor": _gate(
@@ -282,7 +303,16 @@ def evaluate_q5_gates(summary: dict[str, Any]) -> dict[str, Any]:
     mock_used = bool(run_metadata.get("mock_used", mode == "mock"))
     real_run = bool(run_metadata.get("real_run", mode == "real"))
     mode_eligible = real_run and not mock_used and mode == "real" and partition == "test"
-    run_counts = run_metadata.get("test_run_count_by_model_role") or {}
+    verified_ledger = run_metadata.get("verified_run_ledger") or []
+    run_counts = {
+        role: sum(
+            isinstance(entry, dict)
+            and entry.get("verified") is True
+            and entry.get("model_role") == role
+            for entry in verified_ledger
+        )
+        for role in ("primary", "confirmatory")
+    }
     run_count_discipline = (
         int(run_counts.get("primary") or 0) == 1
         and int(run_counts.get("confirmatory") or 0) == 1
@@ -305,6 +335,8 @@ def evaluate_q5_gates(summary: dict[str, Any]) -> dict[str, Any]:
         for system, metrics in (role_summary.get("by_system") or {}).items()
         if isinstance(metrics, dict)
     }
+    if control:
+        system_eligibility[Q5_ESCALATE_EVERYTHING_CONTROL] = False
     if invalid_run:
         claim_scope = "invalid_run"
     elif not (g1_passed and g2_passed and g3_passed):
@@ -339,6 +371,9 @@ def evaluate_q5_gates(summary: dict[str, Any]) -> dict[str, Any]:
         "claim_scope": claim_scope,
         "mode_eligible": mode_eligible,
         "run_count_discipline": run_count_discipline,
+        "verified_run_count_by_model_role": run_counts,
+        "analytic_control_present": bool(control),
+        "analytic_control_failure_detected": control_blocked,
         "gates": gates,
         "system_headline_eligibility": system_eligibility,
         "headline_blockers": list(dict.fromkeys(blockers)),

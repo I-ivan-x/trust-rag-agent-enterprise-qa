@@ -6,6 +6,7 @@ import pytest
 
 from app.eval.q5_metrics import (
     Q5_BOOTSTRAP_MIN_RESAMPLES,
+    Q5_ESCALATE_EVERYTHING_CONTROL,
     Q5_HYBRID_SYSTEM,
     Q5_LLM_SYSTEM,
     Q5_RULE_SYSTEM,
@@ -99,6 +100,29 @@ def test_q5_paired_bootstrap_is_case_paired_and_seed_reproducible() -> None:
             resamples=9_999,
         )
 
+    with pytest.raises(ValueError, match="complete case pairing"):
+        paired_bootstrap_q5(
+            rows[:-1],
+            treatment_system=Q5_HYBRID_SYSTEM,
+            control_system=Q5_RULE_SYSTEM,
+            seed=17,
+            resamples=Q5_BOOTSTRAP_MIN_RESAMPLES,
+        )
+
+    incomplete_runs = [
+        _graded_row("case-a", Q5_RULE_SYSTEM, success=False, run_index=1),
+        _graded_row("case-a", Q5_RULE_SYSTEM, success=False, run_index=2),
+        _graded_row("case-a", Q5_HYBRID_SYSTEM, success=True, run_index=1),
+    ]
+    with pytest.raises(ValueError, match="complete run-index pairing"):
+        paired_bootstrap_q5(
+            incomplete_runs,
+            treatment_system=Q5_HYBRID_SYSTEM,
+            control_system=Q5_RULE_SYSTEM,
+            seed=17,
+            resamples=Q5_BOOTSTRAP_MIN_RESAMPLES,
+        )
+
 
 def test_q5_metrics_cover_outcome_safety_efficiency_and_consistency() -> None:
     rows = [
@@ -148,13 +172,16 @@ def test_q5_metrics_cover_outcome_safety_efficiency_and_consistency() -> None:
 
 
 def test_q5_metrics_report_every_f11_through_f17_failure() -> None:
-    row = _graded_row("failure-case", Q5_HYBRID_SYSTEM, success=False)
-    for code in range(11, 18):
-        row[f"F{code}"] = True
-    row["restricted_text_exposure_count"] = 1
-    row["unsafe_tool_call_count"] = 1
+    rows = []
+    for system in (Q5_RULE_SYSTEM, Q5_LLM_SYSTEM, Q5_HYBRID_SYSTEM):
+        row = _graded_row("failure-case", system, success=False)
+        for code in range(11, 18):
+            row[f"F{code}"] = True
+        row["restricted_text_exposure_count"] = 1
+        row["unsafe_tool_call_count"] = 1
+        rows.append(row)
     metrics = compute_q5_metrics(
-        [row],
+        rows,
         k=1,
         seed=29,
         bootstrap_resamples=Q5_BOOTSTRAP_MIN_RESAMPLES,
@@ -238,7 +265,23 @@ def _headline_summary() -> dict:
             "mock_used": False,
             "real_run": True,
             "dataset_partition": "test",
-            "test_run_count_by_model_role": {"primary": 1, "confirmatory": 1},
+            "verified_run_ledger": [
+                {"verified": True, "model_role": "primary", "run_id": "p"},
+                {
+                    "verified": True,
+                    "model_role": "confirmatory",
+                    "run_id": "c",
+                },
+            ],
+        },
+        "analytic_controls": {
+            Q5_ESCALATE_EVERYTHING_CONTROL: {
+                "anti_gaming_ok": False,
+                "anti_gaming_failure": True,
+                "task_success": 0.2,
+                "escalation_rate": 1.0,
+                "over_escalation_rate": 0.8,
+            }
         },
         "by_model_role": {
             "primary": {
@@ -286,10 +329,27 @@ def test_q5_primary_and_confirmatory_run_count_discipline_is_strict() -> None:
     summary = _headline_summary()
     assert evaluate_q5_gates(summary)["q5_headline_eligible"] is True
 
-    summary["run_metadata"]["test_run_count_by_model_role"]["primary"] = 2
+    summary["run_metadata"]["verified_run_ledger"].append(
+        {"verified": True, "model_role": "primary", "run_id": "p2"}
+    )
     gates = evaluate_q5_gates(summary)
     assert gates["run_count_discipline"] is False
     assert gates["q5_headline_eligible"] is False
+
+
+def test_q5_run_counts_ignore_unverified_self_reported_settings() -> None:
+    summary = _headline_summary()
+    summary["run_metadata"]["test_run_count_by_model_role"] = {
+        "primary": 99,
+        "confirmatory": 0,
+    }
+    gates = evaluate_q5_gates(summary)
+
+    assert gates["verified_run_count_by_model_role"] == {
+        "primary": 1,
+        "confirmatory": 1,
+    }
+    assert gates["run_count_discipline"] is True
 
 
 def test_q5_escalate_everything_cheater_is_explicitly_headline_ineligible() -> None:
@@ -322,3 +382,14 @@ def test_q5_escalate_everything_cheater_is_explicitly_headline_ineligible() -> N
         "q5_escalate_everything": cheater
     }
     assert evaluate_q5_gates(cheater_only)["q5_headline_eligible"] is False
+
+
+def test_q5_missing_analytic_control_fails_g5_and_is_reported() -> None:
+    summary = _headline_summary()
+    summary.pop("analytic_controls")
+    gates = evaluate_q5_gates(summary)
+
+    assert gates["gates"]["G5_anti_gaming"]["passed"] is False
+    assert gates["analytic_control_present"] is False
+    assert gates["analytic_control_failure_detected"] is False
+    assert gates["q5_headline_eligible"] is False

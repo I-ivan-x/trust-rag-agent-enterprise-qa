@@ -31,6 +31,23 @@ def render_q5_report(summary: dict[str, Any], gates: dict[str, Any]) -> str:
                 tokens=int(metrics.get("total_tokens") or 0),
             )
         )
+    control = (summary.get("analytic_controls") or {}).get(
+        "q5_escalate_everything_control"
+    )
+    lines.extend(["", "## Analytic control", ""])
+    if isinstance(control, dict):
+        lines.extend(
+            [
+                "- Control: `q5_escalate_everything_control`",
+                f"- Task success: `{float(control.get('task_success') or 0.0):.4f}`",
+                f"- Escalation rate: `{float(control.get('escalation_rate') or 0.0):.4f}`",
+                "- Over-escalation rate: "
+                f"`{float(control.get('over_escalation_rate') or 0.0):.4f}`",
+                f"- Anti-gaming failure detected: `{control.get('anti_gaming_failure') is True}`",
+            ]
+        )
+    else:
+        lines.append("- Missing control: anti-gaming failure; G5 must fail.")
     lines.extend(["", "## Gates", ""])
     for name, gate in (gates.get("gates") or {}).items():
         status = "PASS" if gate.get("passed") else "FAIL"
