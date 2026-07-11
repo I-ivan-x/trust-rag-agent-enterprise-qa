@@ -42,6 +42,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--provider", default="mock")
     parser.add_argument("--model")
+    parser.add_argument("--temperature", type=float)
+    parser.add_argument("--max-output-tokens", type=int)
+    parser.add_argument("--timeout-seconds", type=float)
+    parser.add_argument(
+        "--thinking-mode",
+        choices=("enabled", "disabled"),
+        help="DeepSeek-only; controlled Q5 runs pass disabled explicitly.",
+    )
     parser.add_argument(
         "--systems",
         nargs="+",
@@ -63,6 +71,10 @@ def main(argv: Sequence[str] | None = None) -> dict[str, object]:
         model = get_llm_client(
             args.provider,
             model_name=args.model,
+            temperature=args.temperature,
+            max_output_tokens=args.max_output_tokens,
+            timeout=args.timeout_seconds,
+            thinking_mode=args.thinking_mode,
             purpose="q5_policy",
         )
     settings = Q5RunSettings(

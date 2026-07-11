@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Protocol
+from typing import Any, Literal, Protocol
 from urllib.parse import urlsplit
 
 import httpx
@@ -36,6 +36,7 @@ class OpenAICompatibleLLMClient:
         timeout: float | None = None,
         max_output_tokens: int | None = None,
         temperature: float | None = None,
+        thinking_mode: Literal["enabled", "disabled"] | None = None,
         purpose: str = "answer",
     ) -> None:
         settings = get_settings()
@@ -55,6 +56,7 @@ class OpenAICompatibleLLMClient:
         self.temperature = (
             temperature if temperature is not None else settings.llm_temperature
         )
+        self.thinking_mode = thinking_mode
         if not self.api_key:
             raise LLMClientError(
                 f"Missing API key for LLM provider '{provider}'. Configure the provider "
@@ -83,6 +85,7 @@ class OpenAICompatibleLLMClient:
             "llm_model_name": self.model_name,
             "is_mock_llm": False,
             "base_url_host": self.base_url_host,
+            "thinking_mode": self.thinking_mode,
         }
 
     def generate(self, prompt: str) -> str:
@@ -102,6 +105,8 @@ class OpenAICompatibleLLMClient:
             ],
             "response_format": {"type": "json_object"},
         }
+        if self.thinking_mode is not None:
+            payload["thinking"] = {"type": self.thinking_mode}
         url = self._chat_completions_url()
         try:
             response = httpx.post(
@@ -149,6 +154,7 @@ class DeepSeekLLMClient(OpenAICompatibleLLMClient):
         timeout: float | None = None,
         max_output_tokens: int | None = None,
         temperature: float | None = None,
+        thinking_mode: Literal["enabled", "disabled"] | None = None,
         purpose: str = "answer",
     ) -> None:
         settings = get_settings()
@@ -160,6 +166,7 @@ class DeepSeekLLMClient(OpenAICompatibleLLMClient):
             timeout=timeout,
             max_output_tokens=max_output_tokens,
             temperature=temperature,
+            thinking_mode=thinking_mode,
             purpose=purpose,
         )
 
@@ -203,6 +210,8 @@ def get_llm_client(
     model_name: str | None = None,
     max_output_tokens: int | None = None,
     temperature: float | None = None,
+    timeout: float | None = None,
+    thinking_mode: Literal["enabled", "disabled"] | None = None,
     purpose: str = "answer",
 ) -> BaseLLMClient:
     settings = get_settings()
@@ -216,13 +225,20 @@ def get_llm_client(
             model_name=model_name,
             max_output_tokens=max_output_tokens,
             temperature=temperature,
+            timeout=timeout,
+            thinking_mode=thinking_mode,
             purpose=purpose,
+        )
+    if thinking_mode is not None:
+        raise ValueError(
+            "thinking_mode is supported only by the explicit DeepSeek client"
         )
     if selected_provider in {"xiaomi", "mimo"}:
         return XiaomiLLMClient(
             model_name=model_name,
             max_output_tokens=max_output_tokens,
             temperature=temperature,
+            timeout=timeout,
             purpose=purpose,
         )
     if selected_provider in {"openai", "openai_compatible"}:
@@ -231,6 +247,7 @@ def get_llm_client(
             model_name=model_name,
             max_output_tokens=max_output_tokens,
             temperature=temperature,
+            timeout=timeout,
             purpose=purpose,
         )
     raise ValueError(f"Unsupported LLM provider: {selected_provider}")

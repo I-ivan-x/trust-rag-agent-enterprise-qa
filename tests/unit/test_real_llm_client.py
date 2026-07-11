@@ -65,6 +65,42 @@ def test_generate_parses_openai_response(monkeypatch: pytest.MonkeyPatch) -> Non
     assert str(captured["url"]).endswith("/v1/chat/completions")
 
 
+def test_deepseek_q5_request_explicitly_disables_thinking(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, object] = {}
+
+    class _Resp:
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict:
+            return {"choices": [{"message": {"content": "{}"}}]}
+
+    def fake_post(url, headers, json, timeout):  # noqa: A002
+        captured["payload"] = json
+        return _Resp()
+
+    monkeypatch.setattr(httpx, "post", fake_post)
+    client = DeepSeekLLMClient(
+        api_key="unit-test-key",
+        model_name="deepseek-v4-flash",
+        temperature=0.0,
+        max_output_tokens=512,
+        timeout=30.0,
+        thinking_mode="disabled",
+        purpose="q5_policy",
+    )
+
+    client.generate("return json")
+
+    payload = captured["payload"]
+    assert isinstance(payload, dict)
+    assert payload["thinking"] == {"type": "disabled"}
+    assert payload["temperature"] == 0.0
+    assert payload["max_tokens"] == 512
+
+
 def test_http_error_excludes_key(monkeypatch: pytest.MonkeyPatch) -> None:
     request = httpx.Request("POST", "https://api.deepseek.com/v1/chat/completions")
     response = httpx.Response(401, request=request)

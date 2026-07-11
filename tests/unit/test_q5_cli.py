@@ -12,9 +12,17 @@ def test_q5_runtime_cli_has_no_gold_surface_and_exposes_execution_inputs() -> No
     destinations = {action.dest for action in parser._actions}
 
     assert "gold" not in destinations
-    assert {"tasks", "environment", "runtime_cases", "mode", "model_role"} <= (
-        destinations
-    )
+    assert {
+        "tasks",
+        "environment",
+        "runtime_cases",
+        "mode",
+        "model_role",
+        "temperature",
+        "max_output_tokens",
+        "timeout_seconds",
+        "thinking_mode",
+    } <= destinations
 
 
 def test_q5_grader_cli_separates_grade_and_dual_summary_commands() -> None:
