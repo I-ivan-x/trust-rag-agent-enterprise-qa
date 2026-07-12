@@ -22,6 +22,7 @@ from app.eval.q5_dataset import (
 from app.eval.q5_metrics import (
     Q5_BOOTSTRAP_MIN_RESAMPLES,
     Q5_ESCALATE_EVERYTHING_CONTROL,
+    classify_q5_cost_basis,
     compute_q5_metrics,
     evaluate_q5_gates,
 )
@@ -30,6 +31,15 @@ from app.eval.q5_outcome import (
     apply_q5_environment_transition,
     grade_q5_final_state,
     q5_outcome_environment_from_runtime,
+)
+from app.eval.q5_protocol import (
+    Q5_PROTOCOL_V2,
+    Q5ProtocolVersion,
+    resolve_q5_artifact_protocol,
+)
+from app.eval.q5_protocol_v1 import (
+    Q5PolicyDecisionEventV1,
+    Q5StructuredProposalV1,
 )
 from app.eval.q5_provenance import (
     Q5ModelIdentity,
@@ -328,6 +338,11 @@ def grade_q5_run(run_dir: Path | str, gold_path: Path | str) -> Q5GradedRunArtif
     """Join gold only after execution and grade observable final-state assertions."""
 
     root = Path(run_dir)
+    protocol = resolve_q5_artifact_protocol(_read_json(root / "manifest.json"))
+    if protocol.version is not Q5ProtocolVersion.v2:
+        raise ValueError(
+            "Q5 v1 runs are verification-only and cannot be regraded or overwritten"
+        )
     manifest = verify_q5_raw_artifact_closure(root)
     manifest_path = root / "manifest.json"
     raw_artifacts = verify_q5_raw_trial_matrix(root, manifest=manifest)
@@ -404,7 +419,7 @@ def grade_q5_run(run_dir: Path | str, gold_path: Path | str) -> Q5GradedRunArtif
     _write_json(gates_path, gates)
     report_path.write_text(render_q5_report(summary, gates), encoding="utf-8")
     graded_manifest = {
-        "schema_version": "q5-graded-manifest-v1",
+        "schema_version": Q5_PROTOCOL_V2.graded_manifest_schema,
         "run_id": manifest["run_id"],
         "graded_at": datetime.now(UTC).isoformat(),
         "raw_manifest_sha256": _sha256_file(manifest_path),
@@ -459,6 +474,10 @@ def grade_q5_artifact_rows(
 ) -> Q5PureGradingResult:
     """Purely derive graded and analytic-control rows from raw state plus gold."""
 
+    protocol = resolve_q5_artifact_protocol(manifest)
+    if protocol.version is not Q5ProtocolVersion.v2:
+        raise ValueError("Q5 v2 grader cannot grade v1 artifacts")
+
     raw_rows = list(raw_artifacts["results.jsonl"])
     before_rows = _indexed_environment_rows(
         list(raw_artifacts["environment_before.json"])
@@ -501,7 +520,7 @@ def grade_q5_artifact_rows(
         observed_tools = {str(value) for value in raw.get("observed_tools") or []}
         completed_tools = completed_tools_by_trial.get(key, set())
         required = set(case_gold.required_observations)
-        observed_required = len(required & observed_tools)
+        attempted_required = len(required & observed_tools)
         completed_required = len(required & completed_tools)
         action = str(raw.get("final_action") or "")
         terminal_correct = action in set(case_gold.allowed_terminal_actions)
@@ -545,10 +564,14 @@ def grade_q5_artifact_rows(
                 ),
                 "required_observations": list(case_gold.required_observations),
                 "required_observation_count": len(required),
-                "observed_required_count": observed_required,
+                "observed_required_count": completed_required,
                 "completed_required_observation_count": completed_required,
+                "attempted_required_observation_count": attempted_required,
                 "required_observation_recall": (
-                    observed_required / len(required) if required else 1.0
+                    completed_required / len(required) if required else 1.0
+                ),
+                "attempted_required_observation_recall": (
+                    attempted_required / len(required) if required else 1.0
                 ),
                 "terminal_action_correct": terminal_correct,
                 "task_success": final_state.task_success,
@@ -619,8 +642,8 @@ def _validate_q5_raw_artifacts(
 ) -> None:
     if not isinstance(manifest, dict):
         raise ValueError("Q5 manifest must be an object")
-    if manifest.get("schema_version") != "q5-run-manifest-v1":
-        raise ValueError("unsupported Q5 run manifest schema")
+    protocol = resolve_q5_artifact_protocol(manifest)
+    is_v2 = protocol.version is Q5ProtocolVersion.v2
     if manifest.get("mode") not in {"mock", "dev", "real"}:
         raise ValueError("Q5 manifest mode is invalid")
     if type(manifest.get("mock_used")) is not bool or type(
@@ -638,7 +661,7 @@ def _validate_q5_raw_artifacts(
     prompt_manifest = manifest.get("prompt")
     if (
         not isinstance(prompt_manifest, dict)
-        or prompt_manifest.get("version") != Q5_PROMPT_VERSION
+        or prompt_manifest.get("version") != protocol.prompt_version
         or not _is_sha256(prompt_manifest.get("sha256"))
     ):
         raise ValueError("Q5 manifest prompt version/hash is invalid")
@@ -785,7 +808,7 @@ def _validate_q5_raw_artifacts(
 
     for key in sorted(expected_keys):
         result = result_rows[key]
-        for field in (
+        integer_fields = (
             "llm_calls",
             "model_error_count",
             "observation_count",
@@ -796,9 +819,13 @@ def _validate_q5_raw_artifacts(
             "forbidden_field_exposure_count",
             "unsafe_tool_call_count",
             "invalid_tool_proposal_count",
-            "tool_schema_invalid_count",
-            "premature_terminal_count",
-        ):
+        )
+        if is_v2:
+            integer_fields += (
+                "tool_schema_invalid_count",
+                "premature_terminal_count",
+            )
+        for field in integer_fields:
             if type(result.get(field)) is not int or int(result[field]) < 0:
                 raise ValueError(f"Q5 trial has invalid integer evidence: {key}:{field}")
         prompt_hashes = result.get("prompt_hashes")
@@ -815,11 +842,12 @@ def _validate_q5_raw_artifacts(
             value = result.get(field)
             if isinstance(value, bool) or not isinstance(value, (int, float)) or value < 0:
                 raise ValueError(f"Q5 trial has invalid numeric evidence: {key}:{field}")
-        for field in (
+        cost_fields = (
             "cost_usd",
             "estimated_cost_usd",
             "all_cache_miss_cost_upper_usd",
-        ):
+        ) if is_v2 else ("cost_usd",)
+        for field in cost_fields:
             value = result.get(field)
             if value is not None and (
                 isinstance(value, bool)
@@ -829,16 +857,19 @@ def _validate_q5_raw_artifacts(
                 raise ValueError(
                     f"Q5 trial has invalid optional cost evidence: {key}:{field}"
                 )
-        if result.get("billing_cost_status") not in {
-            "not_applicable",
-            "provider_billed",
-            "provider_not_reported",
-        }:
-            raise ValueError(f"Q5 trial billing-cost status is invalid: {key}")
-        for field in ("pricing_source", "pricing_as_of"):
-            value = result.get(field)
-            if value is not None and (not isinstance(value, str) or not value):
-                raise ValueError(f"Q5 trial pricing provenance is invalid: {key}:{field}")
+        if is_v2:
+            if result.get("billing_cost_status") not in {
+                "not_applicable",
+                "provider_billed",
+                "provider_not_reported",
+            }:
+                raise ValueError(f"Q5 trial billing-cost status is invalid: {key}")
+            for field in ("pricing_source", "pricing_as_of"):
+                value = result.get(field)
+                if value is not None and (not isinstance(value, str) or not value):
+                    raise ValueError(
+                        f"Q5 trial pricing provenance is invalid: {key}:{field}"
+                    )
         if result.get("usage_source") not in {
             "none",
             "audited_estimate",
@@ -868,7 +899,7 @@ def _validate_q5_raw_artifacts(
                 if result.get(field) != expected:
                     raise ValueError(f"Q5 trial model identity field mismatch: {key}:{field}")
             actual_calls[str(identity_hash)] += calls
-            if identity.trusted_real_client and calls > 0:
+            if is_v2 and identity.trusted_real_client and calls > 0:
                 billing_status = result.get("billing_cost_status")
                 billed_cost = result.get("cost_usd")
                 if billing_status == "provider_billed":
@@ -910,7 +941,7 @@ def _validate_q5_raw_artifacts(
                     or result.get("pricing_as_of") != expected_pricing.pricing_as_of
                 ):
                     raise ValueError(f"Q5 real trial pricing provenance mismatch: {key}")
-            elif result.get("billing_cost_status") != "not_applicable":
+            elif is_v2 and result.get("billing_cost_status") != "not_applicable":
                 raise ValueError(f"Q5 non-billed trial has billing provenance: {key}")
         if len(prompt_hashes) != calls:
             raise ValueError(f"Q5 prompt-call evidence count mismatch: {key}")
@@ -931,9 +962,11 @@ def _validate_q5_raw_artifacts(
             raise ValueError(f"Q5 observed tool ledger mismatch: {key}")
         policy = policy_by_trial[key]
         for policy_event in policy:
-            Q5PolicyDecisionEvent.model_validate(
-                _without_trial_identity(policy_event)
-            )
+            event_payload = _without_trial_identity(policy_event)
+            if is_v2:
+                Q5PolicyDecisionEvent.model_validate(event_payload)
+            else:
+                Q5PolicyDecisionEventV1.model_validate(event_payload)
         if sum(item.get("llm_called") is True for item in policy) != calls:
             raise ValueError(f"Q5 policy/model call evidence mismatch: {key}")
         if [
@@ -963,23 +996,25 @@ def _validate_q5_raw_artifacts(
                 or tool_event.get("status") != trajectory_event.get("tool_status")
             ):
                 raise ValueError(f"Q5 tool/trajectory observation mismatch: {key}")
-        expected_invalid_tools = sum(
-            item.get("event_type") == "tool_rejected" for item in trajectory
-        )
-        expected_schema_invalid = sum(
-            item.get("event_type") != "terminal"
-            and item.get("reason_code") == "tool_schema_invalid"
-            for item in trajectory
-        )
-        if int(result["invalid_tool_proposal_count"]) != expected_invalid_tools:
-            raise ValueError(f"Q5 invalid-tool count mismatch: {key}")
-        if int(result["tool_schema_invalid_count"]) != expected_schema_invalid:
-            raise ValueError(f"Q5 tool-schema-invalid count mismatch: {key}")
-        expected_premature = int(
-            result.get("fallback_reason") == "premature_terminal_unresolved_state"
-        )
-        if int(result["premature_terminal_count"]) != expected_premature:
-            raise ValueError(f"Q5 premature-terminal count mismatch: {key}")
+        if is_v2:
+            expected_invalid_tools = sum(
+                item.get("event_type") == "tool_rejected" for item in trajectory
+            )
+            expected_schema_invalid = sum(
+                item.get("event_type") != "terminal"
+                and item.get("reason_code") == "tool_schema_invalid"
+                for item in trajectory
+            )
+            if int(result["invalid_tool_proposal_count"]) != expected_invalid_tools:
+                raise ValueError(f"Q5 invalid-tool count mismatch: {key}")
+            if int(result["tool_schema_invalid_count"]) != expected_schema_invalid:
+                raise ValueError(f"Q5 tool-schema-invalid count mismatch: {key}")
+            expected_premature = int(
+                result.get("fallback_reason")
+                == "premature_terminal_unresolved_state"
+            )
+            if int(result["premature_terminal_count"]) != expected_premature:
+                raise ValueError(f"Q5 premature-terminal count mismatch: {key}")
         policy_steps = [int(item["step_index"]) for item in policy]
         trajectory_steps = sorted(
             {int(item["step_index"]) for item in trajectory}
@@ -1006,7 +1041,11 @@ def _validate_q5_raw_artifacts(
         terminal_proposal = terminal.get("terminal_proposal")
         if not isinstance(terminal_proposal, dict):
             raise ValueError(f"Q5 terminal proposal is invalid: {key}")
-        parsed_terminal = Q5StructuredProposal.model_validate(terminal_proposal)
+        parsed_terminal = (
+            Q5StructuredProposal.model_validate(terminal_proposal)
+            if is_v2
+            else Q5StructuredProposalV1.model_validate(terminal_proposal)
+        )
         if parsed_terminal.kind is not Q5ProposalKind.terminal:
             raise ValueError(f"Q5 terminal event contains a non-terminal proposal: {key}")
         before = indexed["environment_before.json"][key]
@@ -1074,37 +1113,53 @@ def _validate_q5_raw_artifacts(
             int(row.get("completion_tokens") or 0) for row in result_rows.values()
         ),
         "total_tokens": sum(int(row.get("total_tokens") or 0) for row in result_rows.values()),
-        "cost_usd": _sum_optional_usage(
-            list(result_rows.values()),
-            "cost_usd",
-        ),
-        "estimated_cost_usd": _sum_optional_usage(
-            list(result_rows.values()),
-            "estimated_cost_usd",
-        ),
-        "all_cache_miss_cost_upper_usd": _sum_optional_usage(
-            list(result_rows.values()),
-            "all_cache_miss_cost_upper_usd",
-        ),
-        "pricing_sources": sorted(
-            {
-                str(row["pricing_source"])
-                for row in result_rows.values()
-                if row.get("pricing_source")
-            }
-        ),
-        "pricing_as_of_dates": sorted(
-            {
-                str(row["pricing_as_of"])
-                for row in result_rows.values()
-                if row.get("pricing_as_of")
-            }
-        ),
         "latency_ms": round(
             sum(float(row.get("latency_ms") or 0.0) for row in result_rows.values()),
             6,
         ),
     }
+    if is_v2:
+        expected_usage.update(
+            {
+                "cost_usd": _sum_optional_usage(
+                    list(result_rows.values()),
+                    "cost_usd",
+                ),
+                "estimated_cost_usd": _sum_optional_usage(
+                    list(result_rows.values()),
+                    "estimated_cost_usd",
+                ),
+                "all_cache_miss_cost_upper_usd": _sum_optional_usage(
+                    list(result_rows.values()),
+                    "all_cache_miss_cost_upper_usd",
+                ),
+                "pricing_sources": sorted(
+                    {
+                        str(row["pricing_source"])
+                        for row in result_rows.values()
+                        if row.get("pricing_source")
+                    }
+                ),
+                "pricing_as_of_dates": sorted(
+                    {
+                        str(row["pricing_as_of"])
+                        for row in result_rows.values()
+                        if row.get("pricing_as_of")
+                    }
+                ),
+                "cost_basis": _cost_basis_for_usage(
+                    list(result_rows.values())
+                ),
+            }
+        )
+    else:
+        expected_usage["cost_usd"] = round(
+            sum(
+                float(row.get("cost_usd") or 0.0)
+                for row in result_rows.values()
+            ),
+            6,
+        )
     if any(usage.get(field) != expected for field, expected in expected_usage.items()):
         raise ValueError("Q5 manifest usage totals do not match trial evidence")
     mock_used = any(identity.mock_instance for identity in identities.values())
@@ -1397,7 +1452,11 @@ def _build_escalate_everything_control_rows(
                     "required_observation_count": len(required),
                     "observed_required_count": 0,
                     "completed_required_observation_count": 0,
+                    "attempted_required_observation_count": 0,
                     "required_observation_recall": 0.0 if required else 1.0,
+                    "attempted_required_observation_recall": (
+                        0.0 if required else 1.0
+                    ),
                     "observation_count": 0,
                     "transition_valid": True,
                     "committed_side_effect": False,
@@ -1974,7 +2033,7 @@ def _build_raw_manifest(
         for run_index in range(1, settings.k + 1)
     )
     return {
-        "schema_version": "q5-run-manifest-v1",
+        "schema_version": Q5_PROTOCOL_V2.run_manifest_schema,
         "run_id": settings.run_id,
         "created_at": datetime.now(UTC).isoformat(),
         "git_commit_sha": git_commit_sha(),
@@ -2074,6 +2133,7 @@ def _build_raw_manifest(
                     if row.get("pricing_as_of")
                 }
             ),
+            "cost_basis": _cost_basis_for_usage(result_rows),
             "latency_ms": round(sum(float(row["latency_ms"]) for row in result_rows), 6),
         },
         "artifacts": {name: path.name for name, path in paths.items()},
@@ -2227,6 +2287,12 @@ def _sum_optional_usage(
             continue
         total += float(value)
     return round(total, 12)
+
+
+def _cost_basis_for_usage(
+    rows: Sequence[Mapping[str, Any]],
+) -> str:
+    return classify_q5_cost_basis([dict(row) for row in rows])
 
 
 def _token_accounting_label(

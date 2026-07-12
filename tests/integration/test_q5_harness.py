@@ -194,6 +194,8 @@ def test_q5_synthetic_mock_harness_runs_and_grades_all_three_systems(
     _assert_no_gold_keys(raw_rows)
     manifest = _json(raw.manifest_path)
     _assert_no_gold_keys(manifest)
+    assert manifest["schema_version"] == "q5-run-manifest-v2"
+    assert manifest["prompt"]["version"] == "q5-structured-policy-v2"
     assert set(manifest["dataset_hashes"]) == {
         "tasks",
         "environment",
@@ -219,6 +221,7 @@ def test_q5_synthetic_mock_harness_runs_and_grades_all_three_systems(
     assert manifest["model"]["call_evidence"][0]["successful_responses"] > 0
     assert manifest["usage"]["total_tokens"] > 0
     assert manifest["usage"]["cost_usd"] == 0.0
+    assert manifest["usage"]["cost_basis"] == "mock_nonbillable"
     assert manifest["usage"]["latency_ms"] >= 0.0
     raw_hashes = _json(raw.hashes_path)["artifacts"]
     assert set(raw_hashes) == expected_raw - {"hashes.json"}
@@ -258,6 +261,9 @@ def test_q5_synthetic_mock_harness_runs_and_grades_all_three_systems(
     gates = _json(graded.gates_path)
     graded_manifest = _json(graded.graded_manifest_path)
 
+    assert summary["schema_version"] == "q5-metrics-v2"
+    assert gates["schema_version"] == "q5-gates-v2"
+    assert graded_manifest["schema_version"] == "q5-graded-manifest-v2"
     assert graded.row_count == 45
     assert set(summary["by_system"]) == {system.value for system in Q5AgentSystem}
     for metrics in summary["by_system"].values():
@@ -271,6 +277,12 @@ def test_q5_synthetic_mock_harness_runs_and_grades_all_three_systems(
         assert metrics["unsafe_tool_call_count"] == 0
         assert metrics["pass_1"] == metrics["pass_3"] == 1.0
         assert metrics["trajectory_consistency"] == 1.0
+    assert summary["by_system"][Q5AgentSystem.rule.value]["cost_basis"] == (
+        "zero_call"
+    )
+    assert summary["by_system"][Q5AgentSystem.llm.value]["cost_basis"] == (
+        "mock_nonbillable"
+    )
     assert summary["comparisons"]["paired_bootstrap_ci"]["resamples"] == 10_000
     control = summary["analytic_controls"]["q5_escalate_everything_control"]
     assert control["anti_gaming_failure"] is True
@@ -483,10 +495,24 @@ def test_q5_verifier_accepts_loop_generated_timeout_and_safe_terminal(
     graded = grade_q5_run(raw.run_dir, gold_path)
     verified = verify_q5_graded_run(graded.run_dir, gold_path)
     rows = _jsonl(raw.results_path)
+    graded_rows = _jsonl(graded.graded_rows_path)
+    summary = _json(graded.summary_path)
 
     assert verified.run_id == "q5-loop-timeout"
     assert all(row["fallback_reason"] == "tool_timeout" for row in rows)
     assert all(row["final_action"] == "escalate_to_human" for row in rows)
+    assert all(
+        row["completed_required_observation_count"] == 0
+        and row["attempted_required_observation_count"] == 1
+        and row["required_observation_recall"] == 0.0
+        and row["attempted_required_observation_recall"] == 1.0
+        for row in graded_rows
+    )
+    assert all(
+        metrics["required_observation_recall"] == 0.0
+        and metrics["attempted_required_observation_recall"] == 1.0
+        for metrics in summary["by_system"].values()
+    )
     assert {
         (row["event_type"], row["step_index"], row.get("tool_status"))
         for row in _jsonl(raw.run_dir / "trajectory.jsonl")

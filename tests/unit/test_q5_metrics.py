@@ -10,6 +10,7 @@ from app.eval.q5_metrics import (
     Q5_HYBRID_SYSTEM,
     Q5_LLM_SYSTEM,
     Q5_RULE_SYSTEM,
+    classify_q5_cost_basis,
     compute_q5_metrics,
     evaluate_q5_gates,
     paired_bootstrap_q5,
@@ -36,6 +37,8 @@ def _graded_row(
         "terminal_action_correct": success,
         "required_observation_count": 1,
         "observed_required_count": int(success),
+        "completed_required_observation_count": int(success),
+        "attempted_required_observation_count": int(success),
         "transition_valid": True,
         "final_action": "open_remediation_ticket" if success else "escalate_to_human",
         "correct_escalation": False,
@@ -61,6 +64,8 @@ def _graded_row(
         "cost_usd": 0.0,
         "estimated_cost_usd": 0.0,
         "all_cache_miss_cost_upper_usd": 0.0,
+        "model_mock_instance": system != Q5_RULE_SYSTEM,
+        "billing_cost_status": "not_applicable",
         "latency_ms": 1.0,
         "observation_count": 1,
         "route": "llm" if system != Q5_RULE_SYSTEM else "rule",
@@ -174,6 +179,8 @@ def test_q5_metrics_cover_outcome_safety_efficiency_and_consistency() -> None:
     assert hybrid["F11"] == hybrid["F13"] == hybrid["F17"] == 0
     assert hybrid["pass_1"] == 1.0
     assert hybrid["trajectory_consistency"] == 1.0
+    assert hybrid["cost_basis"] == "mock_nonbillable"
+    assert metrics["by_system"][Q5_RULE_SYSTEM]["cost_basis"] == "zero_call"
     assert metrics["comparisons"]["semantic_uplift_hybrid_vs_rule"] == 1.0
     assert (
         metrics["comparisons"]["semantic_uplift_metric"]
@@ -266,6 +273,10 @@ def _safe_metrics(
     return {
         "task_success": task_success,
         "task_success_by_stratum": {
+            "semantic": semantic,
+            "deterministic": deterministic,
+        },
+        "trajectory_qualified_success_by_stratum": {
             "semantic": semantic,
             "deterministic": deterministic,
         },
@@ -390,6 +401,53 @@ def test_q5_g1_rejects_task_success_bootstrap_label() -> None:
 
     assert gates["gates"]["G1_llm_necessary_value"]["passed"] is False
     assert gates["q5_headline_eligible"] is False
+
+
+def test_q5_g4_rejects_fallback_only_confirmatory_task_uplift() -> None:
+    summary = _headline_summary()
+    confirmatory = summary["by_model_role"]["confirmatory"]["by_system"]
+    confirmatory[Q5_RULE_SYSTEM][
+        "trajectory_qualified_success_by_stratum"
+    ]["semantic"] = 0.50
+    confirmatory[Q5_HYBRID_SYSTEM][
+        "trajectory_qualified_success_by_stratum"
+    ]["semantic"] = 0.50
+
+    gates = evaluate_q5_gates(summary)
+    g4 = gates["gates"]["G4_cross_family_confirmation"]
+
+    assert confirmatory[Q5_HYBRID_SYSTEM]["task_success_by_stratum"]["semantic"] > (
+        confirmatory[Q5_RULE_SYSTEM]["task_success_by_stratum"]["semantic"]
+    )
+    assert g4["metric"] == "trajectory_qualified_success"
+    assert g4["passed"] is False
+    assert gates["q5_headline_eligible"] is False
+
+
+def test_q5_cost_basis_distinguishes_billing_modes() -> None:
+    zero_call = _graded_row("case-a", Q5_RULE_SYSTEM, success=True)
+    mock = _graded_row("case-a", Q5_LLM_SYSTEM, success=True)
+    billed = deepcopy(mock)
+    billed.update(
+        {
+            "model_mock_instance": False,
+            "billing_cost_status": "provider_billed",
+            "cost_usd": 0.01,
+        }
+    )
+    estimated = deepcopy(billed)
+    estimated.update(
+        {
+            "billing_cost_status": "provider_not_reported",
+            "cost_usd": None,
+            "estimated_cost_usd": 0.009,
+        }
+    )
+
+    assert classify_q5_cost_basis([zero_call]) == "zero_call"
+    assert classify_q5_cost_basis([mock]) == "mock_nonbillable"
+    assert classify_q5_cost_basis([billed]) == "provider_billed"
+    assert classify_q5_cost_basis([estimated]) == "estimated"
 
 
 def test_q5_f17_or_restricted_exposure_invalidates_entire_run() -> None:

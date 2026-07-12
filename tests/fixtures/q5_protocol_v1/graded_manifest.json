@@ -1,0 +1,19 @@
+{
+  "analytic_control_row_count": 1,
+  "dataset_hashes": {
+    "environment": "b14cdbd1331a46dee853a93f5e0334de463d3ceceae6ff59c09706ec54f7c2aa",
+    "gold": "b49ed6f52cc97dfc41b82367bb38e7dbe5151f23a9f041669284b72b803ae88d",
+    "runtime_inputs": "993c686a7fb3ed1c096a80d6672a4a3e4b8993f11f36a2d2714bcb8ddb819289",
+    "tasks": "1e0ae5b297d9d16007fdb4b26d9e50f496096a494ce398feaf82563b7f4d2eeb"
+  },
+  "gate_source_sha256": "f039a41f1ab17bf19525008ef2b2d1d52b7c6c6c51a1d7351027356ef208d705",
+  "graded_at": "2026-07-12T04:34:07.696251+00:00",
+  "graded_row_count": 3,
+  "grader_source_sha256": "16c84d009567958ca317e1c44a88e451269d4954f0222e0a0678f62d918a596e",
+  "headline_eligible": false,
+  "metrics_source_sha256": "f039a41f1ab17bf19525008ef2b2d1d52b7c6c6c51a1d7351027356ef208d705",
+  "raw_manifest_sha256": "592e99c7119713d87c468dae94bd4e9115f9e1752be9dfafaf78686cb0737971",
+  "run_id": "q5-v1-compact",
+  "run_valid": true,
+  "schema_version": "q5-graded-manifest-v1"
+}

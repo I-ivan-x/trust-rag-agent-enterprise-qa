@@ -9,6 +9,7 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict
 
 from app.eval.q5_metrics import evaluate_q5_gates
+from app.eval.q5_protocol_v1 import evaluate_q5_gates_v1, render_q5_report_v1
 from app.eval.q5_provenance import (
     Q5VerifiedRunManifest,
     canonical_q5_model_family,
@@ -81,7 +82,7 @@ def summarize_q5_model_roles(
         confirmatory_summary,
         ledger,
     )
-    gates = evaluate_q5_gates(combined)
+    gates = _evaluate_gates_for_protocol(primary.protocol_version, combined)
 
     root = Path(output_dir)
     if root.exists() and any(root.iterdir()):
@@ -95,7 +96,10 @@ def summarize_q5_model_roles(
     hashes_path = root / "combined_hashes.json"
     _write_json(summary_path, combined)
     _write_json(gates_path, gates)
-    report_path.write_text(render_q5_report(combined, gates), encoding="utf-8")
+    report_path.write_text(
+        _render_report_for_protocol(primary.protocol_version, combined, gates),
+        encoding="utf-8",
+    )
     _write_json(ledger_path, {"schema_version": "q5-verified-ledger-v1", "runs": ledger})
     combined_manifest = _combined_manifest_payload(
         primary,
@@ -194,7 +198,7 @@ def verify_q5_dual_summary(
     )
     if summary != expected_summary:
         raise ValueError("Q5 dual-summary metrics/model-role provenance mismatch")
-    if gates != evaluate_q5_gates(summary):
+    if gates != _evaluate_gates_for_protocol(primary.protocol_version, summary):
         raise ValueError("Q5 dual-summary gates are not reproducible")
     if manifest != _combined_manifest_payload(
         primary,
@@ -206,7 +210,7 @@ def verify_q5_dual_summary(
         raise ValueError("Q5 dual-summary manifest source provenance mismatch")
     if (root / "combined_report.md").read_text(
         encoding="utf-8"
-    ) != render_q5_report(summary, gates):
+    ) != _render_report_for_protocol(primary.protocol_version, summary, gates):
         raise ValueError("Q5 dual-summary report is not reproducible")
     return {"summary": summary, "gates": gates, "ledger": ledger}
 
@@ -260,6 +264,7 @@ def _combined_manifest_payload(
         "schema_version": "q5-dual-summary-manifest-v1",
         "source_runs": ledger,
         "shared_provenance": {
+            "protocol_version": primary.protocol_version,
             "git_commit_sha": primary.git_commit_sha,
             "prompt_sha256": primary.prompt_sha256,
             "dataset_hashes": primary_raw["dataset_hashes"],
@@ -285,6 +290,8 @@ def _validate_dual_sources(
         )
     if primary.run_id == confirmatory.run_id:
         raise ValueError("Q5 dual-model source run_ids must be distinct")
+    if primary.protocol_version != confirmatory.protocol_version:
+        raise ValueError("Q5 dual-model source protocol versions do not match")
     if primary.git_commit_sha != confirmatory.git_commit_sha:
         raise ValueError("Q5 dual-model source commits do not match")
     if primary.prompt_sha256 != confirmatory.prompt_sha256:
@@ -293,6 +300,29 @@ def _validate_dual_sources(
         primary.model_identities,
         confirmatory.model_identities,
     )
+
+
+def _evaluate_gates_for_protocol(
+    protocol_version: str,
+    summary: dict[str, Any],
+) -> dict[str, Any]:
+    if protocol_version == "v1":
+        return evaluate_q5_gates_v1(summary)
+    if protocol_version == "v2":
+        return evaluate_q5_gates(summary)
+    raise ValueError(f"unsupported Q5 protocol version: {protocol_version}")
+
+
+def _render_report_for_protocol(
+    protocol_version: str,
+    summary: dict[str, Any],
+    gates: dict[str, Any],
+) -> str:
+    if protocol_version == "v1":
+        return render_q5_report_v1(summary, gates)
+    if protocol_version == "v2":
+        return render_q5_report(summary, gates)
+    raise ValueError(f"unsupported Q5 protocol version: {protocol_version}")
 
 
 def _validate_matching_experiment(
@@ -352,6 +382,7 @@ def _ledger_entry(source: Q5VerifiedRunManifest) -> dict[str, Any]:
         "mode": source.mode,
         "mock_used": source.mock_used,
         "real_run": source.real_run,
+        "protocol_version": source.protocol_version,
     }
 
 

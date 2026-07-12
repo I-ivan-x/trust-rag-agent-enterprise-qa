@@ -1,0 +1,98 @@
+[
+  {
+    "case_id": "q5-p4-committed",
+    "environment": {
+      "change_states": {},
+      "environment_ref": "q5-p4-env-committed",
+      "incident_impacts": {},
+      "pending_queue": [],
+      "policy_exceptions": {},
+      "records": [
+        {
+          "action": "flag_stale",
+          "actor_role": "admin",
+          "approval_state": "committed",
+          "condition": "STALE_PROCEDURE",
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "dedup_key": "46fffb56b14ce3bb",
+          "doc_ids": [
+            "doc-q5-p4-committed"
+          ],
+          "evidence_citations": [
+            "chunk-q5-p4-committed"
+          ],
+          "record_id": "q5-46fffb56b14c",
+          "risk_tier": "auto"
+        }
+      ],
+      "tool_faults": null
+    },
+    "run_index": 1,
+    "sha256": "70a59c6788d53af423fd3732b507b22a942ff435165f3e7a7e16dfa777482137",
+    "system": "q5_rule_agent"
+  },
+  {
+    "case_id": "q5-p4-committed",
+    "environment": {
+      "change_states": {},
+      "environment_ref": "q5-p4-env-committed",
+      "incident_impacts": {},
+      "pending_queue": [],
+      "policy_exceptions": {},
+      "records": [
+        {
+          "action": "flag_stale",
+          "actor_role": "admin",
+          "approval_state": "committed",
+          "condition": "STALE_PROCEDURE",
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "dedup_key": "46fffb56b14ce3bb",
+          "doc_ids": [
+            "doc-q5-p4-committed"
+          ],
+          "evidence_citations": [
+            "chunk-q5-p4-committed"
+          ],
+          "record_id": "q5-46fffb56b14c",
+          "risk_tier": "auto"
+        }
+      ],
+      "tool_faults": null
+    },
+    "run_index": 1,
+    "sha256": "70a59c6788d53af423fd3732b507b22a942ff435165f3e7a7e16dfa777482137",
+    "system": "q5_llm_agent"
+  },
+  {
+    "case_id": "q5-p4-committed",
+    "environment": {
+      "change_states": {},
+      "environment_ref": "q5-p4-env-committed",
+      "incident_impacts": {},
+      "pending_queue": [],
+      "policy_exceptions": {},
+      "records": [
+        {
+          "action": "flag_stale",
+          "actor_role": "admin",
+          "approval_state": "committed",
+          "condition": "STALE_PROCEDURE",
+          "created_at": "1970-01-01T00:00:00+00:00",
+          "dedup_key": "46fffb56b14ce3bb",
+          "doc_ids": [
+            "doc-q5-p4-committed"
+          ],
+          "evidence_citations": [
+            "chunk-q5-p4-committed"
+          ],
+          "record_id": "q5-46fffb56b14c",
+          "risk_tier": "auto"
+        }
+      ],
+      "tool_faults": null
+    },
+    "run_index": 1,
+    "sha256": "70a59c6788d53af423fd3732b507b22a942ff435165f3e7a7e16dfa777482137",
+    "system": "q5_hybrid_agent"
+  }
+]

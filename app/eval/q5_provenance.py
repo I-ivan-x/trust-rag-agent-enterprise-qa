@@ -17,6 +17,16 @@ from app.eval.q5_metrics import (
     evaluate_q5_gates,
 )
 from app.eval.q5_mock import Q5DeterministicMockPolicyModel
+from app.eval.q5_protocol import (
+    Q5ProtocolVersion,
+    resolve_q5_artifact_protocol,
+)
+from app.eval.q5_protocol_v1 import (
+    compute_q5_metrics_v1,
+    evaluate_q5_gates_v1,
+    grade_q5_artifact_rows_v1,
+    render_q5_report_v1,
+)
 from app.eval.q5_report import render_q5_report
 from app.llm.llm_client import (
     DeepSeekLLMClient,
@@ -114,6 +124,7 @@ class Q5VerifiedRunManifest(BaseModel):
     mode: str
     mock_used: bool
     real_run: bool
+    protocol_version: Literal["v1", "v2"]
 
 
 def canonical_q5_model_family(identity: Q5ModelIdentity) -> str:
@@ -359,7 +370,6 @@ def verify_q5_graded_run(
     )
     from app.eval.q5_runner import grade_q5_artifact_rows, verify_q5_raw_trial_matrix
 
-    raw_artifacts = verify_q5_raw_trial_matrix(root, manifest=raw_manifest)
     graded_hashes = q5_read_json(root / "graded_hashes.json")
     _verify_hash_mapping(
         root,
@@ -367,6 +377,15 @@ def verify_q5_graded_run(
         expected_names=Q5_GRADED_ARTIFACT_FILES - {"graded_hashes.json"},
     )
     graded_manifest = q5_read_json(root / "graded_manifest.json")
+    summary = q5_read_json(root / "summary.json")
+    gates = q5_read_json(root / "gates.json")
+    protocol = resolve_q5_artifact_protocol(
+        raw_manifest,
+        graded_manifest=graded_manifest,
+        summary=summary,
+        gates=gates,
+    )
+    raw_artifacts = verify_q5_raw_trial_matrix(root, manifest=raw_manifest)
     if graded_manifest.get("raw_manifest_sha256") != q5_sha256_file(
         root / "manifest.json"
     ):
@@ -401,11 +420,18 @@ def verify_q5_graded_run(
         raise ValueError("Q5 graded manifest row count mismatch")
     if graded_manifest.get("analytic_control_row_count") != len(analytic_rows):
         raise ValueError("Q5 analytic-control row count mismatch")
-    expected_grading = grade_q5_artifact_rows(
-        manifest=raw_manifest,
-        raw_artifacts=raw_artifacts,
-        gold=sealed_gold,
-    )
+    if protocol.version is Q5ProtocolVersion.v1:
+        expected_grading = grade_q5_artifact_rows_v1(
+            manifest=raw_manifest,
+            raw_artifacts=raw_artifacts,
+            gold=sealed_gold,
+        )
+    else:
+        expected_grading = grade_q5_artifact_rows(
+            manifest=raw_manifest,
+            raw_artifacts=raw_artifacts,
+            gold=sealed_gold,
+        )
     if graded_rows != expected_grading.graded_rows:
         raise ValueError("Q5 graded rows do not match sealed-gold regrading")
     if analytic_rows != expected_grading.analytic_control_rows:
@@ -439,16 +465,27 @@ def verify_q5_graded_run(
         actual_controls.add(key)
     if actual_controls != expected_controls:
         raise ValueError("Q5 analytic-control trial-key matrix mismatch")
-    summary = q5_read_json(root / "summary.json")
-    gates = q5_read_json(root / "gates.json")
     if summary.get("run_id") != raw_manifest.get("run_id"):
         raise ValueError("Q5 summary run_id provenance mismatch")
-    recomputed = compute_q5_metrics(
-        [*graded_rows, *analytic_rows],
-        k=int(raw_manifest["k"]),
-        seed=int(raw_manifest["seed"]),
-        bootstrap_resamples=int(raw_manifest["bootstrap"]["resamples"]),
-    )
+    metric_kwargs = {
+        "k": int(raw_manifest["k"]),
+        "seed": int(raw_manifest["seed"]),
+        "bootstrap_resamples": int(raw_manifest["bootstrap"]["resamples"]),
+    }
+    if protocol.version is Q5ProtocolVersion.v1:
+        recomputed = compute_q5_metrics_v1(
+            [*graded_rows, *analytic_rows],
+            **metric_kwargs,
+        )
+        expected_gates = evaluate_q5_gates_v1(summary)
+        expected_report = render_q5_report_v1(summary, gates)
+    else:
+        recomputed = compute_q5_metrics(
+            [*graded_rows, *analytic_rows],
+            **metric_kwargs,
+        )
+        expected_gates = evaluate_q5_gates(summary)
+        expected_report = render_q5_report(summary, gates)
     control = recomputed["by_system"].pop(Q5_ESCALATE_EVERYTHING_CONTROL, None)
     if control is None:
         raise ValueError("Q5 graded run is missing escalate-everything analytic control")
@@ -467,11 +504,9 @@ def verify_q5_graded_run(
         Q5_ESCALATE_EVERYTHING_CONTROL
     ) != control:
         raise ValueError("Q5 summary analytic-control provenance mismatch")
-    if gates != evaluate_q5_gates(summary):
+    if gates != expected_gates:
         raise ValueError("Q5 gates are not reproducible from the verified summary")
-    if (root / "report.md").read_text(encoding="utf-8") != render_q5_report(
-        summary, gates
-    ):
+    if (root / "report.md").read_text(encoding="utf-8") != expected_report:
         raise ValueError("Q5 report is not reproducible from summary and gates")
     role = str(raw_manifest.get("model", {}).get("role") or "")
     identities = raw_manifest.get("model", {}).get("identities") or []
@@ -533,6 +568,7 @@ def verify_q5_graded_run(
         mode=str(raw_manifest["mode"]),
         mock_used=bool(raw_manifest["mock_used"]),
         real_run=bool(raw_manifest["real_run"]),
+        protocol_version=protocol.version.value,
     )
 
 
