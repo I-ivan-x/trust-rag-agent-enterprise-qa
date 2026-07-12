@@ -2,7 +2,7 @@
 
 版本：v1
 日期：2026-07-12
-状态：**PRIMARY REAL-DEV K=3 AUTHORIZED**
+状态：**NOT FREEZE READY - BATCH 5-D NEGATIVE**
 
 ------
 
@@ -123,3 +123,20 @@ primary q5_dev v2 real run。real run 使用完整三个系统、`k=3`。
 preflight 升级必须验证每个 run index 的 case/system 完整性和无重复 trial；费用/token 只作运行
 观测，不得再作为 validity blocker。该批准不包含 Xiaomi、q5_test、confirmatory run、
 implementation freeze、release tag 或 headline claim。
+
+------
+
+## 6. Batch 5-D 最终裁决
+
+唯一 real run `q5-dev-v2-real-deepseek-v4-flash-2224fc4-primary-k3` 有效、完整并通过 protocol-v2
+验签，但 **NOT FREEZE READY**：
+
+- G0/G2/G5 通过，G1/G3 失败，G4 未执行；
+- trajectory-qualified semantic uplift `0.083333`，低于 `0.10`；
+- call/token ratio 为 `0.627586 / 0.708355`，均超过冻结线；
+- required observation recall 为 1.00，F17/schema-invalid/invalid-transition 均为 0；
+- 13 条三调用轨迹造成额外调用，其中 `s04` 六条轨迹 observation budget exhausted；
+- LLM-only 与 Hybrid 在 5 个 semantic case 上各稳定失败 3/3。
+
+本状态覆盖第 5 节的运行授权。禁止创建 q5_test、freeze、Xiaomi/confirmatory 或 headline；下一阶段
+按 `Q5_P5_REAL_DEV_V2_NEGATIVE_DIAGNOSTIC.md` 与 `SPEC_Q5_P5_E_AGENT_VALIDITY.md` 继续 P5。

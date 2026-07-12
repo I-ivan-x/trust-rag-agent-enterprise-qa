@@ -80,8 +80,9 @@
 - 有效预注册修订为 `Q5_P5_PREREG_AMENDMENT_V2.md`；
 - Batch 5-C3 已由 `6f8c749` 完成并通过 plan/report 独立审核；
 - synthetic k=3 的 G3 call/token ratio 为 `0.590909 / 0.646985`，质量、安全和 observation 无退化；
-- 下一动作是 Batch 5-D：先升级 zero-request preflight 的严格 k=3 topology，再生成同 commit mock
-  锚点；机械门全部通过后执行唯一一次 DeepSeek primary real run，三个系统、`k=3`；
+- Batch 5-D 唯一 DeepSeek real-dev 已完成并有效验签，但 G1/G3 失败，裁决为 NOT FREEZE READY；
+- 下一动作是 Batch 5-E：observation idempotency、强规则可解性审计、real-artifact replay diagnostics
+  与 protocol-v3 groundwork；该批 external/LLM requests 必须为 0；
 - 费用/token 仅作 observability，不得限制样本、k、复验或 validity；
 - q5_test、confirmatory run、freeze 和 tag 继续锁定。
 

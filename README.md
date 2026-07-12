@@ -177,7 +177,9 @@ Real runs require a DeepSeek-compatible API key in `.env` (see
 | [ENGINEERING_DISCIPLINE](docs/ENGINEERING_DISCIPLINE.md) | Evidence-backed record of planning, scope control, evaluation discipline, AI collaboration, and delivery efficiency |
 | [Q5_ADAPTIVE_AGENT_DESIGN](docs/Q5_ADAPTIVE_AGENT_DESIGN.md) | Active Q5 plan: selective hybrid Agent, semantic decision frontier, bounded observation loop, and outcome-based eval |
 | [Q5_P5_PREREG_AMENDMENT_V2](docs/Q5_P5_PREREG_AMENDMENT_V2.md) | Test-before-seeing amendment for protocol-v2, trajectory-qualified gates, counterfactual q5_dev, and v1 artifact preservation |
-| [Q5_P5_DEV_V2_READINESS](docs/Q5_P5_DEV_V2_READINESS.md) | C1R/C3 audits, v2 authoring receipt, synthetic k=3 evidence, and primary real-dev authorization |
+| [Q5_P5_DEV_V2_READINESS](docs/Q5_P5_DEV_V2_READINESS.md) | C1R/C3 audits, v2 authoring receipt, and the failed primary real-dev freeze decision |
+| [Q5_P5_REAL_DEV_V2_NEGATIVE_DIAGNOSTIC](docs/Q5_P5_REAL_DEV_V2_NEGATIVE_DIAGNOSTIC.md) | Real trajectory diagnosis: repeated observations, fixed-table semantics, G1/G3 failure, and v3 direction |
+| [SPEC_Q5_P5_E_AGENT_VALIDITY](docs/SPEC_Q5_P5_E_AGENT_VALIDITY.md) | Large implementation batch for observation idempotency, strong-rule audit, replay diagnostics, and protocol-v3 groundwork |
 | [EVALUATION_REPORT](docs/EVALUATION_REPORT.md) | Week 6 results, contamination analysis, trade-off discussion, Q2 Phase 1 calibration, and the Q3 action-governance ablation |
 | [FAILURE_ANALYSIS](docs/FAILURE_ANALYSIS.md) | Failure taxonomy F1-F13 with trace evidence |
 | [Q3_ACTION_GOVERNANCE_DESIGN](docs/Q3_ACTION_GOVERNANCE_DESIGN.md) | Q3 action-governance design freeze (evidence-aware ops copilot, risk-tiered autonomy) |

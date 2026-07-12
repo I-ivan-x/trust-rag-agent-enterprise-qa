@@ -198,7 +198,8 @@ Git 历史中的多条链路都保持了相似结构：
   因而不能创建新 release tag。
 - Q5 v2 synthetic k=3 首次因 G3 token ratio `0.65233` 被锁；C3 在不改数据、Gold、Gate、路由或
   baseline 的条件下压缩 schema annotation metadata，复验降至 `0.646985` 后才解锁 DeepSeek real-dev。
-  q5_test 与 headline 仍继续锁定。
+  唯一 real-dev 随后仍因 G1/G3 失败被裁定 NOT FREEZE READY；项目停止追加 real run，并继续锁定
+  q5_test、confirmatory 与 headline。这避免了用 synthetic 成功替代真实模型证据。
 - Q4 held-out 结果真实但样本薄、同语料表面且运行过两次；它展示纪律，但不能替代下一轮独立外部评测。
 
 这些缺口不推翻前面的执行证据，但它们构成下一阶段启动前的 P0：先让仓库当前状态重新符合项目自己
