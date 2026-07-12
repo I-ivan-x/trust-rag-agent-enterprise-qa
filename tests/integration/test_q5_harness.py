@@ -194,8 +194,8 @@ def test_q5_synthetic_mock_harness_runs_and_grades_all_three_systems(
     _assert_no_gold_keys(raw_rows)
     manifest = _json(raw.manifest_path)
     _assert_no_gold_keys(manifest)
-    assert manifest["schema_version"] == "q5-run-manifest-v2"
-    assert manifest["prompt"]["version"] == "q5-structured-policy-v2"
+    assert manifest["schema_version"] == "q5-run-manifest-v3"
+    assert manifest["prompt"]["version"] == "q5-structured-policy-v3"
     assert set(manifest["dataset_hashes"]) == {
         "tasks",
         "environment",
@@ -261,9 +261,15 @@ def test_q5_synthetic_mock_harness_runs_and_grades_all_three_systems(
     gates = _json(graded.gates_path)
     graded_manifest = _json(graded.graded_manifest_path)
 
-    assert summary["schema_version"] == "q5-metrics-v2"
-    assert gates["schema_version"] == "q5-gates-v2"
-    assert graded_manifest["schema_version"] == "q5-graded-manifest-v2"
+    assert summary["schema_version"] == "q5-metrics-v3"
+    assert gates["schema_version"] == "q5-gates-v3"
+    assert graded_manifest["schema_version"] == "q5-graded-manifest-v3"
+    for metrics in summary["by_system"].values():
+        assert "duplicate_successful_observation_count" in metrics
+        assert "post_observation_terminal_rate" in metrics
+        assert "within_policy_adaptation_accuracy" in metrics
+        assert "cross_policy_semantic_sensitivity" in metrics
+        assert "fixed_table_solvability" in metrics
     assert graded.row_count == 45
     assert set(summary["by_system"]) == {system.value for system in Q5AgentSystem}
     for metrics in summary["by_system"].values():
@@ -499,7 +505,10 @@ def test_q5_verifier_accepts_loop_generated_timeout_and_safe_terminal(
     summary = _json(graded.summary_path)
 
     assert verified.run_id == "q5-loop-timeout"
-    assert all(row["fallback_reason"] == "tool_timeout" for row in rows)
+    assert all(
+        row["fallback_reason"] == "premature_terminal_unresolved_state"
+        for row in rows
+    )
     assert all(row["final_action"] == "escalate_to_human" for row in rows)
     assert all(
         row["completed_required_observation_count"] == 0

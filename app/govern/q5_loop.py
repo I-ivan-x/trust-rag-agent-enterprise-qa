@@ -37,6 +37,7 @@ from app.govern.q5_router import (
 from app.govern.q5_rule_policy import Q5RuleAgentPolicy
 from app.govern.q5_tool_validator import (
     q5_allowed_tool_argument_values,
+    q5_completed_observation_key,
     validate_q5_tool_call,
 )
 from app.govern.q5_tools import Q5ToolEvent, Q5ToolExecutor, Q5ToolStatus
@@ -122,6 +123,12 @@ class Q5AgentResult(BaseModel):
     terminal_proposal_count: Literal[1] = 1
     step_count: int = Field(ge=1, le=3)
     llm_calls: int = Field(ge=0)
+    duplicate_successful_observation_count: int = Field(ge=0)
+    post_observation_terminal_rate: float | None = Field(
+        default=None,
+        ge=0.0,
+        le=1.0,
+    )
     fallback_reason: str | None = None
 
     @model_validator(mode="after")
@@ -155,7 +162,11 @@ class _LoopState:
     spans: list[dict]
     trajectory: list[Q5TrajectoryEvent]
     context_traces: list[dict]
+    completed_observation_keys: set[str]
     llm_calls: int = 0
+    duplicate_successful_observation_count: int = 0
+    terminal_only_prompt_count: int = 0
+    terminal_selected_from_terminal_only: int = 0
 
 
 def run_q5_agent(
@@ -190,11 +201,14 @@ def run_q5_agent(
         spans=[],
         trajectory=[],
         context_traces=[build_q5_context_trace(context, context_version=1)],
+        completed_observation_keys=set(),
     )
     tool_executor = Q5ToolExecutor(runtime.environment)
     context_version = 1
 
     for step_index in range(1, 4):
+        if context.terminal_only:
+            state.terminal_only_prompt_count += 1
         policy_step = policy.decide(context)
         state.llm_calls += int(policy_step.llm_called)
         state.policy_events.append(
@@ -238,6 +252,8 @@ def run_q5_agent(
 
         proposal = policy_step.proposal
         if proposal.kind is Q5ProposalKind.terminal:
+            if context.terminal_only:
+                state.terminal_selected_from_terminal_only += 1
             return _finalize(
                 system=system,
                 route=route,
@@ -251,34 +267,6 @@ def run_q5_agent(
                 policy_source=policy_step.policy_source,
                 step_index=step_index,
                 context_version=context_version,
-            )
-
-        if len(state.observations) >= max_observations:
-            state.trajectory.append(
-                Q5TrajectoryEvent(
-                    step_index=step_index,
-                    context_version=context_version,
-                    event_type="tool_rejected",
-                    policy_source=policy_step.policy_source,
-                    reason_code="observation_budget_exhausted",
-                    proposal_kind=proposal.kind,
-                    tool=proposal.tool,
-                )
-            )
-            return _finalize(
-                system=system,
-                route=route,
-                task=task,
-                pass_result=pass_result,
-                report=report,
-                runtime=runtime,
-                context=context,
-                state=state,
-                proposal=_safe_escalation(context, "budget_exhausted"),
-                policy_source=policy_step.policy_source,
-                step_index=step_index,
-                context_version=context_version,
-                fallback_reason="observation_budget_exhausted",
             )
 
         authorization = reauthorize_q5_proposal(
@@ -330,11 +318,70 @@ def run_q5_agent(
                 authorization=authorization,
             )
 
+        completed_key = q5_completed_observation_key(
+            tool_validation.call.tool,
+            tool_validation.call.args,
+        )
+        if completed_key in state.completed_observation_keys:
+            state.duplicate_successful_observation_count += 1
+            return _reject_tool_and_escalate(
+                reason="duplicate_successful_observation",
+                system=system,
+                route=route,
+                task=task,
+                pass_result=pass_result,
+                report=report,
+                runtime=runtime,
+                context=context,
+                state=state,
+                proposal=proposal,
+                policy_source=policy_step.policy_source,
+                step_index=step_index,
+                context_version=context_version,
+                authorization=authorization,
+            )
+        if context.terminal_only:
+            return _reject_tool_and_escalate(
+                reason="terminal_only_observation_rejected",
+                system=system,
+                route=route,
+                task=task,
+                pass_result=pass_result,
+                report=report,
+                runtime=runtime,
+                context=context,
+                state=state,
+                proposal=proposal,
+                policy_source=policy_step.policy_source,
+                step_index=step_index,
+                context_version=context_version,
+                authorization=authorization,
+            )
+        if len(state.observations) >= max_observations:
+            return _reject_tool_and_escalate(
+                reason="observation_budget_exhausted",
+                system=system,
+                route=route,
+                task=task,
+                pass_result=pass_result,
+                report=report,
+                runtime=runtime,
+                context=context,
+                state=state,
+                proposal=proposal,
+                policy_source=policy_step.policy_source,
+                step_index=step_index,
+                context_version=context_version,
+                authorization=authorization,
+            )
+
         execution = tool_executor.execute(tool_validation.call)
         state.tool_events.append(execution.event)
         state.spans.append(execution.span_payload)
         trusted_observation = execution.result.trusted_context_slice()
         state.observations.append(trusted_observation)
+        if execution.result.status in {Q5ToolStatus.ok, Q5ToolStatus.not_found}:
+            state.completed_observation_keys.add(completed_key)
         state.trajectory.append(
             Q5TrajectoryEvent(
                 step_index=step_index,
@@ -349,6 +396,11 @@ def run_q5_agent(
             )
         )
 
+        terminal_only = bool(q5_required_state_tools(context)) and not (
+            q5_unresolved_state_tools(
+                context.model_copy(update={"observations": state.observations})
+            )
+        )
         context = _build_context(
             task,
             pass_result,
@@ -356,12 +408,13 @@ def run_q5_agent(
             condition_legal_actions,
             observations=state.observations,
             remaining_observations=max_observations - len(state.observations),
+            terminal_only=terminal_only,
         )
         context_version += 1
         state.context_traces.append(
             build_q5_context_trace(context, context_version=context_version)
         )
-        if execution.result.status in {Q5ToolStatus.timeout, Q5ToolStatus.invalid}:
+        if execution.result.status is Q5ToolStatus.invalid:
             return _finalize(
                 system=system,
                 route=route,
@@ -473,24 +526,32 @@ def _route_facts(task: Q5TaskInput, context: Q5DecisionContext) -> Q5RouteFacts:
     )
 
 
+def q5_required_state_tools(
+    context: Q5DecisionContext,
+) -> frozenset[Q5ObservationTool]:
+    """Derive required observation types from runtime-visible facts only."""
+
+    conditions = frozenset(context.conditions)
+    available_tools = frozenset(context.available_tools)
+    return frozenset(
+        tool
+        for triggering_conditions, tool in _DYNAMIC_STATE_REQUIREMENTS
+        if conditions & triggering_conditions and tool in available_tools
+    )
+
+
 def q5_unresolved_state_tools(
     context: Q5DecisionContext,
 ) -> frozenset[Q5ObservationTool]:
     """Derive unresolved dynamic state from runtime-visible context facts only."""
 
-    conditions = frozenset(context.conditions)
-    available_tools = frozenset(context.available_tools)
     observed_tools = frozenset(
         observation.tool_name
         for observation in context.observations
         if observation.status in {"ok", "not_found"}
     )
     return frozenset(
-        tool
-        for triggering_conditions, tool in _DYNAMIC_STATE_REQUIREMENTS
-        if conditions & triggering_conditions
-        and tool in available_tools
-        and tool not in observed_tools
+        tool for tool in q5_required_state_tools(context) if tool not in observed_tools
     )
 
 
@@ -502,6 +563,7 @@ def _build_context(
     *,
     observations: list[Q5TrustedObservation],
     remaining_observations: int,
+    terminal_only: bool = False,
 ) -> Q5DecisionContext:
     return build_q5_decision_context(
         pass_result,
@@ -513,6 +575,7 @@ def _build_context(
         evidence_decision=report.evidence_decision,
         condition_legal_actions=condition_legal_actions,
         observations=observations,
+        terminal_only=terminal_only,
         remaining_observation_budget=remaining_observations,
         remaining_terminal_budget=1,
     )
@@ -679,6 +742,15 @@ def _finalize(
         terminal_proposal_count=1,
         step_count=terminal_step_index,
         llm_calls=state.llm_calls,
+        duplicate_successful_observation_count=(
+            state.duplicate_successful_observation_count
+        ),
+        post_observation_terminal_rate=(
+            state.terminal_selected_from_terminal_only
+            / state.terminal_only_prompt_count
+            if state.terminal_only_prompt_count
+            else None
+        ),
         fallback_reason=fallback_reason,
     )
 

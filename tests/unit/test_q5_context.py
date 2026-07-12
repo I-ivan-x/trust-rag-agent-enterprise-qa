@@ -226,7 +226,7 @@ def test_q5_context_preserves_chunk_ids_for_citations() -> None:
     assert '"chunk_id": "cite-b"' in prompt
 
 
-def test_q5_prompt_v2_exposes_machine_derived_tool_contracts() -> None:
+def test_q5_prompt_v3_exposes_machine_derived_tool_contracts() -> None:
     context = _context(
         resource_refs=["resource:payments", "policy:change-control"],
         available_tools=[Q5ObservationTool.lookup_policy_exception],
@@ -262,7 +262,7 @@ def test_q5_prompt_v2_exposes_machine_derived_tool_contracts() -> None:
         "policy_ref": ["policy:change-control"],
         "resource_ref": ["resource:payments"],
     }
-    assert "PROTOCOL: q5-structured-policy-v2" in prompt
+    assert "PROTOCOL: q5-structured-policy-v3" in prompt
     assert "OBSERVE BRANCH" in prompt
     assert "TERMINAL BRANCH" in prompt
     assert "short_enum" not in prompt

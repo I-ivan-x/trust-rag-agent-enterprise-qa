@@ -41,7 +41,7 @@ Q5_POLICY_REF_PATTERN = rf"^policy:{Q5_REFERENCE_SUFFIX_PATTERN}$"
 Q5_CHANGE_REF_PATTERN = rf"^change:{Q5_REFERENCE_SUFFIX_PATTERN}$"
 Q5_TRUSTED_IDENTIFIER_PATTERN = r"^[a-z][a-z0-9_.-]{0,63}$"
 Q5_AUDIT_IDENTIFIER_PATTERN = r"^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"
-Q5_STRUCTURED_POLICY_VERSION = "q5-structured-policy-v2"
+Q5_STRUCTURED_POLICY_VERSION = "q5-structured-policy-v3"
 
 
 class Q5AuthorizedEvidence(BaseModel):
@@ -168,6 +168,7 @@ class Q5DecisionContext(BaseModel):
     )
     observations: list[Q5TrustedObservation] = Field(default_factory=list)
     legal_terminal_actions: list[GovernanceAction] = Field(default_factory=list)
+    terminal_only: bool = False
     remaining_observation_budget: int = Field(ge=0, le=2)
     remaining_terminal_budget: int = Field(ge=0, le=1)
 
@@ -291,6 +292,7 @@ def build_q5_decision_context(
     resource_refs: Sequence[str] = (),
     available_tools: Sequence[Q5ObservationTool] = (),
     observations: Sequence[Q5TrustedObservation] = (),
+    terminal_only: bool = False,
     remaining_observation_budget: int = 2,
     remaining_terminal_budget: int = 1,
 ) -> Q5DecisionContext:
@@ -321,6 +323,7 @@ def build_q5_decision_context(
         blocked_evidence_metadata=blocked_metadata,
         observations=list(observations),
         legal_terminal_actions=legal_actions,
+        terminal_only=terminal_only,
         remaining_observation_budget=remaining_observation_budget,
         remaining_terminal_budget=remaining_terminal_budget,
     )
@@ -335,8 +338,15 @@ def q5_prompt_payload(context: Q5DecisionContext) -> dict[str, Any]:
 
     assert_q5_trusted_observations_valid(context.observations)
     assert_q5_no_gold_or_control_fields(context.model_dump(mode="json"))
+    prompt_tools = [] if context.terminal_only else list(context.available_tools)
     payload = {
         "protocol_version": Q5_STRUCTURED_POLICY_VERSION,
+        "allowed_proposal_kinds": (
+            [Q5ProposalKind.terminal.value]
+            if context.terminal_only
+            else [Q5ProposalKind.observe.value, Q5ProposalKind.terminal.value]
+        ),
+        "terminal_only": context.terminal_only,
         "query": context.query,
         "actor_claims": {
             "role": context.actor_claims.role,
@@ -345,8 +355,8 @@ def q5_prompt_payload(context: Q5DecisionContext) -> dict[str, Any]:
         },
         "requested_capability": context.requested_capability.value,
         "resource_refs": list(context.resource_refs),
-        "available_tools": [tool.value for tool in context.available_tools],
-        "tool_contracts": q5_tool_contracts(context),
+        "available_tools": [tool.value for tool in prompt_tools],
+        "tool_contracts": [] if context.terminal_only else q5_tool_contracts(context),
         "conditions": [condition.value for condition in context.conditions],
         "evidence_decision": context.evidence_decision,
         "authorized_evidence": [
@@ -399,18 +409,30 @@ def build_q5_prompt(context: Q5DecisionContext) -> str:
     assert_q5_no_gold_or_control_fields(context.model_dump(mode="json"))
     payload = q5_prompt_payload(context)
     assert_q5_no_gold_or_control_fields(payload)
+    branch_contract = (
+        [
+            "TERMINAL-ONLY STATE: required runtime observations are complete; "
+            "kind=observe is forbidden.",
+            "TERMINAL BRANCH: kind=terminal; tool=null; args={}; action must be one "
+            "legal_terminal_action.",
+        ]
+        if context.terminal_only
+        else [
+            "OBSERVE BRANCH: kind=observe; action=null; select one available tool; "
+            "args must contain exactly every required field from that tool's args_schema, "
+            "use only that field's grounded_reference_values, and include no additional "
+            "properties.",
+            "TERMINAL BRANCH: kind=terminal; tool=null; args={}; action must be one "
+            "legal_terminal_action.",
+        ]
+    )
     return "\n".join(
         [
             f"PROTOCOL: {Q5_STRUCTURED_POLICY_VERSION}",
             "Choose exactly one typed Q5 branch using only the authorized runtime context.",
             "Return one JSON object only; never include chain-of-thought, authorization, "
             "or risk fields.",
-            "OBSERVE BRANCH: kind=observe; action=null; select one available tool; "
-            "args must contain "
-            "exactly every required field from that tool's args_schema, use only that field's "
-            "grounded_reference_values, and include no additional properties.",
-            "TERMINAL BRANCH: kind=terminal; tool=null; args={}; action must be one "
-            "legal_terminal_action.",
+            *branch_contract,
             "Both branches require evidence_chunk_ids, a concrete lowercase reason_code, and a "
             "one-line reason_summary. Placeholder reason codes are invalid.",
             "The exact seven output fields are kind, tool, args, action, evidence_chunk_ids, "
@@ -528,6 +550,7 @@ def build_q5_context_trace(
         "legal_terminal_actions": [
             action.value for action in context.legal_terminal_actions
         ],
+        "terminal_only": context.terminal_only,
         "remaining_observation_budget": context.remaining_observation_budget,
         "remaining_terminal_budget": context.remaining_terminal_budget,
     }

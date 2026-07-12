@@ -13,6 +13,8 @@ from tests.integration.test_q5_harness import _single_case_graded_run
 
 V1_FIXTURE_ROOT = Path("tests/fixtures/q5_protocol_v1")
 _V1_EMPTY_ARTIFACTS = {"otel_spans.jsonl", "tool_events.jsonl"}
+V2_FIXTURE_ROOT = Path("tests/fixtures/q5_protocol_v2")
+_V2_EMPTY_ARTIFACTS = {"otel_spans.jsonl", "tool_events.jsonl"}
 
 
 def test_q5_committed_v1_artifact_fixture_is_verifiable(tmp_path: Path) -> None:
@@ -26,10 +28,21 @@ def test_q5_committed_v1_artifact_fixture_is_verifiable(tmp_path: Path) -> None:
     assert verified.real_run is False
 
 
-def test_q5_new_v2_artifact_is_verifiable(tmp_path: Path) -> None:
+def test_q5_committed_v2_artifact_fixture_is_verifiable(tmp_path: Path) -> None:
+    run_dir, gold_path = _materialize_v2_fixture(tmp_path)
+
+    verified = verify_q5_graded_run(run_dir, gold_path)
+
+    assert verified.protocol_version == "v2"
+    assert verified.run_id == "q5-v2-compact"
+    assert verified.mock_used is True
+    assert verified.real_run is False
+
+
+def test_q5_new_v3_artifact_is_verifiable(tmp_path: Path) -> None:
     graded, gold_path = _single_case_graded_run(
         tmp_path,
-        run_id="q5-v2-versioned",
+        run_id="q5-v3-versioned",
         role="primary",
         model=Q5DeterministicMockPolicyModel(),
     )
@@ -40,12 +53,12 @@ def test_q5_new_v2_artifact_is_verifiable(tmp_path: Path) -> None:
     summary = _json(graded.run_dir / "summary.json")
     gates = _json(graded.run_dir / "gates.json")
 
-    assert verified.protocol_version == "v2"
-    assert raw_manifest["schema_version"] == "q5-run-manifest-v2"
-    assert raw_manifest["prompt"]["version"] == "q5-structured-policy-v2"
-    assert graded_manifest["schema_version"] == "q5-graded-manifest-v2"
-    assert summary["schema_version"] == "q5-metrics-v2"
-    assert gates["schema_version"] == "q5-gates-v2"
+    assert verified.protocol_version == "v3"
+    assert raw_manifest["schema_version"] == "q5-run-manifest-v3"
+    assert raw_manifest["prompt"]["version"] == "q5-structured-policy-v3"
+    assert graded_manifest["schema_version"] == "q5-graded-manifest-v3"
+    assert summary["schema_version"] == "q5-metrics-v3"
+    assert gates["schema_version"] == "q5-gates-v3"
 
 
 def test_q5_v1_artifacts_are_verification_only_for_current_grader(
@@ -60,7 +73,7 @@ def test_q5_v1_artifacts_are_verification_only_for_current_grader(
     assert _file_hashes(run_dir) == before
 
 
-@pytest.mark.parametrize("raw_protocol", ["v1", "v2"])
+@pytest.mark.parametrize("raw_protocol", ["v1", "v3"])
 def test_q5_cross_protocol_graded_recompute_is_rejected(
     tmp_path: Path,
     raw_protocol: str,
@@ -71,7 +84,7 @@ def test_q5_cross_protocol_graded_recompute_is_rejected(
     else:
         graded, gold_path = _single_case_graded_run(
             tmp_path,
-            run_id="q5-v2-cross-protocol",
+        run_id="q5-v3-cross-protocol",
             role="primary",
             model=Q5DeterministicMockPolicyModel(),
         )
@@ -121,6 +134,20 @@ def _materialize_v1_fixture(tmp_path: Path) -> tuple[Path, Path]:
         (run_dir / filename).write_bytes(b"")
     gold_path = tmp_path / "q5-v1-compact-gold.jsonl"
     gold_path.write_bytes(_legacy_fixture_bytes(V1_FIXTURE_ROOT / "gold.jsonl"))
+    return run_dir, gold_path
+
+
+def _materialize_v2_fixture(tmp_path: Path) -> tuple[Path, Path]:
+    run_dir = tmp_path / "q5-v2-compact"
+    run_dir.mkdir()
+    for source in V2_FIXTURE_ROOT.iterdir():
+        if source.name in {"gold.jsonl", "README.md"}:
+            continue
+        (run_dir / source.name).write_bytes(_legacy_fixture_bytes(source))
+    for filename in _V2_EMPTY_ARTIFACTS:
+        (run_dir / filename).write_bytes(b"")
+    gold_path = tmp_path / "q5-v2-compact-gold.jsonl"
+    gold_path.write_bytes(_legacy_fixture_bytes(V2_FIXTURE_ROOT / "gold.jsonl"))
     return run_dir, gold_path
 
 

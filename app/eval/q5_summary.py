@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict
 
 from app.eval.q5_metrics import evaluate_q5_gates
 from app.eval.q5_protocol_v1 import evaluate_q5_gates_v1, render_q5_report_v1
+from app.eval.q5_protocol_v2 import evaluate_q5_gates_v2, render_q5_report_v2
 from app.eval.q5_provenance import (
     Q5VerifiedRunManifest,
     canonical_q5_model_family,
@@ -309,6 +310,8 @@ def _evaluate_gates_for_protocol(
     if protocol_version == "v1":
         return evaluate_q5_gates_v1(summary)
     if protocol_version == "v2":
+        return evaluate_q5_gates_v2(summary)
+    if protocol_version == "v3":
         return evaluate_q5_gates(summary)
     raise ValueError(f"unsupported Q5 protocol version: {protocol_version}")
 
@@ -321,6 +324,8 @@ def _render_report_for_protocol(
     if protocol_version == "v1":
         return render_q5_report_v1(summary, gates)
     if protocol_version == "v2":
+        return render_q5_report_v2(summary, gates)
+    if protocol_version == "v3":
         return render_q5_report(summary, gates)
     raise ValueError(f"unsupported Q5 protocol version: {protocol_version}")
 

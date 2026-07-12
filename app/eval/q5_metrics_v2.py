@@ -156,7 +156,7 @@ def compute_q5_metrics(
     )
     comparisons = _comparisons(by_system, bootstrap)
     return {
-        "schema_version": "q5-metrics-v3",
+        "schema_version": "q5-metrics-v2",
         "metric_type": "q5_outcome",
         "k": k,
         "seed": seed,
@@ -369,7 +369,7 @@ def evaluate_q5_gates(summary: dict[str, Any]) -> dict[str, Any]:
     if not run_count_discipline:
         blockers.append("model_role_run_count_discipline")
     return {
-        "schema_version": "q5-gates-v3",
+        "schema_version": "q5-gates-v2",
         "thresholds": {
             "semantic_uplift_floor": Q5_SEMANTIC_UPLIFT_FLOOR,
             "bootstrap_ci_lower_strictly_above": 0.0,
@@ -485,16 +485,6 @@ def _system_metrics(rows: list[dict[str, Any]], *, k: int) -> dict[str, Any]:
         "premature_terminal_count": sum(
             int(row.get("premature_terminal_count") or 0) for row in rows
         ),
-        "duplicate_successful_observation_count": sum(
-            int(row.get("duplicate_successful_observation_count") or 0)
-            for row in rows
-        ),
-        "post_observation_terminal_rate": _mean_present(
-            row.get("post_observation_terminal_rate") for row in rows
-        ),
-        "within_policy_adaptation_accuracy": None,
-        "cross_policy_semantic_sensitivity": None,
-        "fixed_table_solvability": None,
         "terminal_action_correct": _ratio(
             sum(row.get("terminal_action_correct") is True for row in rows),
             trial_count,
@@ -735,15 +725,6 @@ def classify_q5_cost_basis(rows: list[dict[str, Any]]) -> str:
 
 def _mean(values: list[float]) -> float:
     return sum(values) / len(values) if values else 0.0
-
-
-def _mean_present(values: Any) -> float | None:
-    present = [
-        float(value)
-        for value in values
-        if isinstance(value, (int, float)) and not isinstance(value, bool)
-    ]
-    return _rounded(_mean(present)) if present else None
 
 
 def _quantile(values: list[float], probability: float) -> float:

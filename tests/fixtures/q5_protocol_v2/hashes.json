@@ -1,0 +1,14 @@
+{
+  "artifacts": {
+    "environment_after.json": "6a710dc04f86a413cdbdcf66ff7a3d2b7fed6f7306f7f6ed6ece05b1256eb860",
+    "environment_before.json": "990200e6782d9a298bc14df00a27b77af69752c0fbc348a4f629159b34ce98f4",
+    "manifest.json": "9120a3ad3002d3b03e542cf5587f93698a4356301352ef91ca282f554915a652",
+    "otel_spans.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "policy_events.jsonl": "0bd248b20cb8f77fb840dcdad988c764d5f4bfa07e70beaf96fe71c5abcb2fa1",
+    "results.jsonl": "393ab98e3f0343eb50c5bddf808a2d07e14859eeda691de06e011f8de112cddd",
+    "terminal_events.jsonl": "a149c4e6f8e5f28526e82ec66b77b8193f4db47b47aefd78d67b6039b8247fd2",
+    "tool_events.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "trajectory.jsonl": "ab17e1a59a278e2a8d337445382e7c2e5ddf7ad9d1107e81081c23e08a9c8a2d"
+  },
+  "schema_version": "q5-artifact-hashes-v1"
+}

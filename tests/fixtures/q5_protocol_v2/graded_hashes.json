@@ -1,0 +1,11 @@
+{
+  "artifacts": {
+    "analytic_controls.jsonl": "c1c5e049e1779e81f0ce734cd12456f08db17d343299f7ac32eac9e6d5c1915d",
+    "gates.json": "03790c531539a6148a9949d540a40106d7b0c8e7ed40d2c86d818bfd8afdc17d",
+    "graded_manifest.json": "f8c2bb60d9caff6a642dd609f4c08976640c31dcadaf44020d0968ecff55e9c9",
+    "graded_rows.jsonl": "52558a98e0569c587e7d21f76bad7b8cb4e4929037181664e830fdbdcb461a17",
+    "report.md": "2c74a3ae00ea3b217b2ded200449f116917c46deece6bc79df28f338a249cfff",
+    "summary.json": "b1ed3820b0120773d5bf28583fc59db08bdf29e51bee1ca626ef0ff1ea22bc01"
+  },
+  "schema_version": "q5-graded-artifact-hashes-v1"
+}

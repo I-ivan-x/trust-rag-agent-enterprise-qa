@@ -11,6 +11,7 @@ from typing import Any
 class Q5ProtocolVersion(StrEnum):
     v1 = "v1"
     v2 = "v2"
+    v3 = "v3"
 
 
 @dataclass(frozen=True)
@@ -39,9 +40,18 @@ Q5_PROTOCOL_V2 = Q5ProtocolSpec(
     gates_schema="q5-gates-v2",
     prompt_version="q5-structured-policy-v2",
 )
+Q5_PROTOCOL_V3 = Q5ProtocolSpec(
+    version=Q5ProtocolVersion.v3,
+    run_manifest_schema="q5-run-manifest-v3",
+    graded_manifest_schema="q5-graded-manifest-v3",
+    metrics_schema="q5-metrics-v3",
+    gates_schema="q5-gates-v3",
+    prompt_version="q5-structured-policy-v3",
+)
 _PROTOCOL_BY_RUN_SCHEMA = {
     Q5_PROTOCOL_V1.run_manifest_schema: Q5_PROTOCOL_V1,
     Q5_PROTOCOL_V2.run_manifest_schema: Q5_PROTOCOL_V2,
+    Q5_PROTOCOL_V3.run_manifest_schema: Q5_PROTOCOL_V3,
 }
 
 

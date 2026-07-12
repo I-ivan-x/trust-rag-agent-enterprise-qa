@@ -175,6 +175,23 @@ def q5_tool_args_model(tool: Q5ObservationTool) -> type[BaseModel]:
     return _ARG_MODEL_BY_TOOL[tool]
 
 
+def q5_completed_observation_key(
+    tool: Q5ObservationTool,
+    args: Mapping[str, Any],
+) -> str:
+    """Return the canonical idempotency key for one validated observation call."""
+
+    parsed = q5_tool_args_model(tool).model_validate(dict(args))
+    canonical_args = parsed.model_dump(mode="json")
+    assert_q5_no_gold_or_control_fields(canonical_args)
+    return tool.value + "|" + json.dumps(
+        canonical_args,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+
+
 def q5_canonical_tool_args_schema(tool: Q5ObservationTool) -> dict[str, Any]:
     """Derive the compact prompt schema from the runtime Pydantic validator."""
 

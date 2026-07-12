@@ -341,7 +341,7 @@ def test_q5_three_agents_share_environment_tools_and_validator_contract() -> Non
         ),
     ],
 )
-def test_q5_each_valid_tool_contract_completes_context_v2_before_terminal(
+def test_q5_each_valid_tool_contract_completes_context_v3_before_terminal(
     condition: OpsCondition,
     capability: RequestedCapability,
     tool: Q5ObservationTool,
@@ -374,8 +374,13 @@ def test_q5_each_valid_tool_contract_completes_context_v2_before_terminal(
     assert result.fallback_reason is None
     assert result.observation_count == 1
     assert [trace["context_version"] for trace in result.context_traces] == [1, 2]
-    assert "q5-structured-policy-v2" in model.prompts[0]
-    assert tool.value in model.prompts[1]
+    assert "q5-structured-policy-v3" in model.prompts[0]
+    assert tool.value in model.prompts[0]
+    assert "TERMINAL-ONLY STATE" in model.prompts[1]
+    assert '"allowed_proposal_kinds": ["terminal"]' in model.prompts[1]
+    assert '"tool_contracts": []' in model.prompts[1]
+    assert result.duplicate_successful_observation_count == 0
+    assert result.post_observation_terminal_rate == 1.0
 
 
 def test_q5_hybrid_deterministic_case_avoids_llm() -> None:
@@ -510,8 +515,32 @@ def test_q5_illegal_action_is_explicit_and_safely_escalated() -> None:
 
 
 def test_q5_observation_budget_is_two_plus_one_terminal() -> None:
-    model = QueueModel([_observe_payload(), _observe_payload(), _observe_payload()])
-    result, _ = _run(Q5AgentSystem.llm, model=model)
+    refs = ["resource:one", "resource:two", "resource:three"]
+    model = QueueModel(
+        [
+            _typed_observe_payload(
+                Q5ObservationTool.inspect_incident_impact,
+                {"resource_ref": ref},
+            )
+            for ref in refs
+        ]
+    )
+    task = _task(
+        capability=RequestedCapability.investigate,
+        resource_refs=refs,
+        available_tools=[Q5ObservationTool.inspect_incident_impact],
+    )
+    report = ConditionReport(
+        conditions=[],
+        authorized_actor=True,
+        evidence_decision="sufficient",
+    )
+    result, _ = _run(
+        Q5AgentSystem.llm,
+        model=model,
+        task=task,
+        report=report,
+    )
 
     assert result.final_action is GovernanceAction.escalate_to_human
     assert result.fallback_reason == "observation_budget_exhausted"
@@ -521,20 +550,105 @@ def test_q5_observation_budget_is_two_plus_one_terminal() -> None:
     assert len(result.tool_events) == len(result.otel_spans) == 2
 
 
-def test_q5_timeout_is_traced_context_rebuilt_and_safely_escalated() -> None:
-    model = QueueModel([_observe_payload()])
+def test_q5_timeout_does_not_complete_key_and_identical_retry_can_succeed() -> None:
+    class FlakyEnvironment:
+        def __init__(self, delegate: Q5ReadOnlyEnvironment) -> None:
+            self.delegate = delegate
+            self.fault_checks = 0
+
+        @property
+        def environment_ref(self) -> str:
+            return self.delegate.environment_ref
+
+        @property
+        def state_version(self) -> str:
+            return self.delegate.state_version
+
+        @property
+        def provenance(self) -> str:
+            return self.delegate.provenance
+
+        def tool_fault(self, tool: Q5ObservationTool):
+            self.fault_checks += 1
+            return {"status": "timeout"} if self.fault_checks == 1 else None
+
+        def policy_exception(self, resource_ref: str, policy_ref: str):
+            return self.delegate.policy_exception(resource_ref, policy_ref)
+
+        def change_state(self, change_ref: str):
+            return self.delegate.change_state(change_ref)
+
+        def incident_impact(self, resource_ref: str):
+            return self.delegate.incident_impact(resource_ref)
+
+    model = QueueModel(
+        [
+            _observe_payload(),
+            _observe_payload(),
+            _terminal_payload(GovernanceAction.open_remediation_ticket),
+        ]
+    )
     result, _ = _run(
         Q5AgentSystem.llm,
         model=model,
-        environment=_environment(timeout=True),
+        environment=FlakyEnvironment(_environment()),  # type: ignore[arg-type]
     )
 
-    assert result.final_action is GovernanceAction.escalate_to_human
-    assert result.fallback_reason == "tool_timeout"
+    assert result.final_action is GovernanceAction.open_remediation_ticket
+    assert result.fallback_reason is None
     assert result.tool_events[0].status.value == "timeout"
+    assert result.tool_events[1].status.value == "ok"
     assert result.trajectory[0].reason_code == "tool_timeout"
-    assert len(result.context_traces) == 2
-    assert result.step_count == 2
+    assert len(result.context_traces) == 3
+    assert result.step_count == 3
+    assert result.duplicate_successful_observation_count == 0
+    assert result.post_observation_terminal_rate == 1.0
+
+
+def test_q5_completed_observation_rejects_exact_duplicate_without_execution() -> None:
+    model = QueueModel([_observe_payload(), _observe_payload()])
+    result, _ = _run(Q5AgentSystem.llm, model=model)
+
+    assert result.final_action is GovernanceAction.escalate_to_human
+    assert result.fallback_reason == "duplicate_successful_observation"
+    assert len(result.tool_events) == 1
+    assert result.duplicate_successful_observation_count == 1
+    assert result.post_observation_terminal_rate == 0.0
+
+
+def test_q5_same_tool_with_different_args_is_not_a_duplicate() -> None:
+    refs = ["resource:one", "resource:two"]
+    model = QueueModel(
+        [
+            _typed_observe_payload(
+                Q5ObservationTool.inspect_incident_impact,
+                {"resource_ref": ref},
+            )
+            for ref in refs
+        ]
+        + [_terminal_payload(GovernanceAction.no_op)]
+    )
+    task = _task(
+        capability=RequestedCapability.investigate,
+        resource_refs=refs,
+        available_tools=[Q5ObservationTool.inspect_incident_impact],
+    )
+    report = ConditionReport(
+        conditions=[],
+        authorized_actor=True,
+        evidence_decision="sufficient",
+    )
+    result, _ = _run(
+        Q5AgentSystem.llm,
+        model=model,
+        task=task,
+        report=report,
+    )
+
+    assert result.final_action is GovernanceAction.no_op
+    assert len(result.tool_events) == 2
+    assert result.duplicate_successful_observation_count == 0
+    assert result.post_observation_terminal_rate is None
 
 
 def test_q5_terminal_stops_loop_and_forbids_later_tools() -> None:

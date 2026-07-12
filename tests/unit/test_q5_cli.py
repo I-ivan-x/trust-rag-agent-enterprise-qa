@@ -62,11 +62,11 @@ def test_q5_run_settings_reject_self_reported_provider_and_run_counts(tmp_path) 
         )
 
 
-def test_q5_run_settings_pin_structured_policy_v2(tmp_path) -> None:
-    settings = Q5RunSettings(output_root=tmp_path, run_id="prompt-v2")
+def test_q5_run_settings_pin_structured_policy_v3(tmp_path) -> None:
+    settings = Q5RunSettings(output_root=tmp_path, run_id="prompt-v3")
 
-    assert settings.prompt_version == Q5_PROMPT_VERSION == "q5-structured-policy-v2"
-    with pytest.raises(ValueError, match="q5-structured-policy-v2"):
+    assert settings.prompt_version == Q5_PROMPT_VERSION == "q5-structured-policy-v3"
+    with pytest.raises(ValueError, match="q5-structured-policy-v3"):
         Q5RunSettings(
             output_root=tmp_path,
             run_id="stale-prompt",

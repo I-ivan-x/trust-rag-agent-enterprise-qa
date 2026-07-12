@@ -1,0 +1,47 @@
+[
+  {
+    "case_id": "q5-p4-committed",
+    "environment": {
+      "change_states": {},
+      "environment_ref": "q5-p4-env-committed",
+      "incident_impacts": {},
+      "pending_queue": [],
+      "policy_exceptions": {},
+      "records": [],
+      "tool_faults": null
+    },
+    "run_index": 1,
+    "sha256": "e380135aef7184e7fd8353b7437ef2611c7265829a5273ad697c17fc077a84fc",
+    "system": "q5_rule_agent"
+  },
+  {
+    "case_id": "q5-p4-committed",
+    "environment": {
+      "change_states": {},
+      "environment_ref": "q5-p4-env-committed",
+      "incident_impacts": {},
+      "pending_queue": [],
+      "policy_exceptions": {},
+      "records": [],
+      "tool_faults": null
+    },
+    "run_index": 1,
+    "sha256": "e380135aef7184e7fd8353b7437ef2611c7265829a5273ad697c17fc077a84fc",
+    "system": "q5_llm_agent"
+  },
+  {
+    "case_id": "q5-p4-committed",
+    "environment": {
+      "change_states": {},
+      "environment_ref": "q5-p4-env-committed",
+      "incident_impacts": {},
+      "pending_queue": [],
+      "policy_exceptions": {},
+      "records": [],
+      "tool_faults": null
+    },
+    "run_index": 1,
+    "sha256": "e380135aef7184e7fd8353b7437ef2611c7265829a5273ad697c17fc077a84fc",
+    "system": "q5_hybrid_agent"
+  }
+]

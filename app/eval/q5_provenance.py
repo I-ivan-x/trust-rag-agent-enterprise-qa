@@ -27,6 +27,12 @@ from app.eval.q5_protocol_v1 import (
     grade_q5_artifact_rows_v1,
     render_q5_report_v1,
 )
+from app.eval.q5_protocol_v2 import (
+    compute_q5_metrics_v2,
+    evaluate_q5_gates_v2,
+    grade_q5_artifact_rows_v2,
+    render_q5_report_v2,
+)
 from app.eval.q5_report import render_q5_report
 from app.llm.llm_client import (
     DeepSeekLLMClient,
@@ -124,7 +130,7 @@ class Q5VerifiedRunManifest(BaseModel):
     mode: str
     mock_used: bool
     real_run: bool
-    protocol_version: Literal["v1", "v2"]
+    protocol_version: Literal["v1", "v2", "v3"]
 
 
 def canonical_q5_model_family(identity: Q5ModelIdentity) -> str:
@@ -426,6 +432,12 @@ def verify_q5_graded_run(
             raw_artifacts=raw_artifacts,
             gold=sealed_gold,
         )
+    elif protocol.version is Q5ProtocolVersion.v2:
+        expected_grading = grade_q5_artifact_rows_v2(
+            manifest=raw_manifest,
+            raw_artifacts=raw_artifacts,
+            gold=sealed_gold,
+        )
     else:
         expected_grading = grade_q5_artifact_rows(
             manifest=raw_manifest,
@@ -479,6 +491,13 @@ def verify_q5_graded_run(
         )
         expected_gates = evaluate_q5_gates_v1(summary)
         expected_report = render_q5_report_v1(summary, gates)
+    elif protocol.version is Q5ProtocolVersion.v2:
+        recomputed = compute_q5_metrics_v2(
+            [*graded_rows, *analytic_rows],
+            **metric_kwargs,
+        )
+        expected_gates = evaluate_q5_gates_v2(summary)
+        expected_report = render_q5_report_v2(summary, gates)
     else:
         recomputed = compute_q5_metrics(
             [*graded_rows, *analytic_rows],

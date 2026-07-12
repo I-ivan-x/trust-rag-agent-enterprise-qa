@@ -1,0 +1,100 @@
+{
+  "artifact_row_counts": {
+    "environment_after.json": 3,
+    "environment_before.json": 3,
+    "otel_spans.jsonl": 0,
+    "policy_events.jsonl": 3,
+    "results.jsonl": 3,
+    "terminal_events.jsonl": 3,
+    "tool_events.jsonl": 0,
+    "trajectory.jsonl": 3
+  },
+  "artifacts": {
+    "environment_after": "environment_after.json",
+    "environment_before": "environment_before.json",
+    "otel_spans": "otel_spans.jsonl",
+    "policy_events": "policy_events.jsonl",
+    "results": "results.jsonl",
+    "terminal_events": "terminal_events.jsonl",
+    "tool_events": "tool_events.jsonl",
+    "trajectory": "trajectory.jsonl"
+  },
+  "bootstrap": {
+    "confidence": 0.95,
+    "method": "case_id_paired_percentile",
+    "resamples": 10000,
+    "seed": 41
+  },
+  "case_ids": [
+    "q5-p4-committed"
+  ],
+  "corpus_namespaces": [
+    "q5_fixture_p4"
+  ],
+  "created_at": "2026-07-12T15:56:09.839375+00:00",
+  "dataset_hashes": {
+    "environment": "b14cdbd1331a46dee853a93f5e0334de463d3ceceae6ff59c09706ec54f7c2aa",
+    "runtime_inputs": "993c686a7fb3ed1c096a80d6672a4a3e4b8993f11f36a2d2714bcb8ddb819289",
+    "tasks": "1e0ae5b297d9d16007fdb4b26d9e50f496096a494ce398feaf82563b7f4d2eeb"
+  },
+  "dataset_partition": "fixture",
+  "expected_trial_count": 3,
+  "git_commit_sha": "81c993d9796fbd56433fa30cd0671de6a357e502",
+  "k": 1,
+  "mock_used": true,
+  "mode": "mock",
+  "model": {
+    "call_evidence": [
+      {
+        "identity_sha256": "94a128cfffa786ab9ddd7aba8c3a58d8a3bb6ebd05e36caf7cc6bf717035f6b2",
+        "llm_calls": 1,
+        "successful_responses": 1
+      }
+    ],
+    "identities": [
+      {
+        "base_url_host": null,
+        "identity_kind": "known_mock",
+        "identity_sha256": "94a128cfffa786ab9ddd7aba8c3a58d8a3bb6ebd05e36caf7cc6bf717035f6b2",
+        "instance_type": "app.eval.q5_mock.Q5DeterministicMockPolicyModel",
+        "mock_instance": true,
+        "model_name": "q5-runtime-policy-v1",
+        "provider": "deterministic_mock",
+        "trusted_real_client": false
+      }
+    ],
+    "role": "primary"
+  },
+  "prompt": {
+    "sha256": "e3b55ce556234a5b3f79fcf4f09c9dfcfd8bcaa8cf8c985a9ea5f2daa9dff296",
+    "version": "q5-structured-policy-v2"
+  },
+  "real_run": false,
+  "run_id": "q5-v2-compact",
+  "schema_version": "q5-run-manifest-v2",
+  "seed": 41,
+  "systems": [
+    "q5_rule_agent",
+    "q5_llm_agent",
+    "q5_hybrid_agent"
+  ],
+  "trial_count": 3,
+  "trial_key_sha256": "6b29b7c3c4717ae9a29cf7002167f041e74112625a17ef76f7c647eb1bf6e602",
+  "usage": {
+    "all_cache_miss_cost_upper_usd": 0.0,
+    "completion_tokens": 21,
+    "cost_basis": "mock_nonbillable",
+    "cost_currency": "USD",
+    "cost_usd": 0.0,
+    "estimated_cost_usd": 0.0,
+    "latency_ms": 3.7109,
+    "latency_unit": "ms",
+    "llm_calls": 1,
+    "pricing_as_of_dates": [],
+    "pricing_sources": [],
+    "prompt_tokens": 165,
+    "successful_llm_calls": 1,
+    "token_accounting": "estimated_whitespace",
+    "total_tokens": 186
+  }
+}
