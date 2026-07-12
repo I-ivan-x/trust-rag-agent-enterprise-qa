@@ -1,0 +1,15 @@
+{
+  "paths": {
+    "corpus": "data/q5/dev/corpus",
+    "environment": "data/q5/dev/environment.jsonl",
+    "gold": "data/q5/dev/gold.jsonl",
+    "tasks": "data/q5/dev/tasks.jsonl"
+  },
+  "schema_version": "q5-dataset-manifest-v1",
+  "sha256": {
+    "corpus": "adb54ba84f0b22009a98ed571d4df47be2cc91ae337dec544724c97d1fac19ee",
+    "environment": "6a91c1919df06106ff50af6f7a0a2eeccc7011b678bbf5f7a74d8310d52ecd5e",
+    "gold": "b8cb9a9a624aaabb72cf1ca4c5a6de9c0d7a4570053d5989acb3c9ecf1f5e839",
+    "tasks": "dabe8840c9a4ab63cc219bb574f312f25f8b674964e4717b2f57ffc14ad32047"
+  }
+}

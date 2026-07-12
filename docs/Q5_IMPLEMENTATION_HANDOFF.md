@@ -1,7 +1,7 @@
 # Q5 Implementation Window Handoff
 
-版本：v1
-日期：2026-07-10
+版本：v2
+日期：2026-07-10；同步：2026-07-12
 用途：新窗口的唯一执行入口
 
 ------
@@ -71,6 +71,17 @@
 | 6 | freeze 后 q5_test one-shot real run | artifacts only，停止，回报 |
 
 不得把多个 batch 合成一个大提交。每批 review 通过后才进入下一批。
+
+### 当前交接状态（2026-07-12）
+
+- Batch 0-4、5-C1、5-C1R 已完成并通过 plan/report 审核；
+- protocol-v1 历史 artifact 由冻结 verifier 复算，活动协议为 protocol-v2；
+- 正式 q5_dev v2 由 plan/report 窗口 author，v1 数据归档在 `data/q5/archive/dev-v1/`；
+- 有效预注册修订为 `Q5_P5_PREREG_AMENDMENT_V2.md`；
+- synthetic k=3 已证明质量、观察与安全路径成立，但 G3 token ratio 为 `0.65233`，高于冻结上限 `0.65`；
+- 下一动作仅为 Batch 5-C3：压缩由同一 Pydantic validator 导出的 prompt tool schema 表示，随后重跑 synthetic k=3；
+- 只有 synthetic G3 通过且 plan/report 复核后，才批准完整 q5_dev v2 primary real run；
+- q5_test、confirmatory run、freeze 和 tag 继续锁定。
 
 ------
 

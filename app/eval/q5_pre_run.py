@@ -9,8 +9,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from collections import Counter
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
 from typing import Any, Literal
 
@@ -35,13 +36,14 @@ from app.govern.q5_context import (
     build_q5_context_trace,
     build_q5_decision_context,
     build_q5_prompt,
+    q5_prompt_payload,
 )
 from app.govern.validator import legal_actions_for_report
 from app.guards.acl_gate import apply_acl_gate
 from app.guards.conflict_detector import detect_minimal_conflict
 from app.guards.document_state_gate import apply_document_state_gate
 from app.guards.evidence_gate import apply_evidence_gate
-from app.schemas.q5_task import Q5_GOLD_ONLY_FIELDS, RequestedCapability
+from app.schemas.q5_task import Q5_GOLD_ONLY_FIELDS, Q5TaskInput, RequestedCapability
 
 Q5_DEV_EXPECTED_STRATA: Mapping[str, int] = {
     "deterministic": 12,
@@ -75,6 +77,26 @@ _VALID_ASSERTION_OPERATORS = {
     "length_equals",
     "count_equals",
 }
+_COUNTERFACTUAL_TAG_PREFIX = "counterfactual_group_"
+_SEMANTIC_QUERY_STATE_PATTERNS: Mapping[str, tuple[re.Pattern[str], ...]] = {
+    "lookup_policy_exception": (
+        re.compile(r"\b(?:active|expired|missing)\b", re.IGNORECASE),
+        re.compile(
+            r"\b(?:production|staging|sandbox)\s+exception\b",
+            re.IGNORECASE,
+        ),
+    ),
+    "inspect_change_state": (
+        re.compile(
+            r"\b(?:completed|planned|in[_ -]?progress|unknown)\b",
+            re.IGNORECASE,
+        ),
+    ),
+    "inspect_incident_impact": (
+        re.compile(r"\b(?:outage|degraded|unknown)\b", re.IGNORECASE),
+        re.compile(r"\bno\s+(?:current\s+)?impact\b", re.IGNORECASE),
+    ),
+}
 
 
 class Q5PreRunReport(BaseModel):
@@ -82,7 +104,7 @@ class Q5PreRunReport(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    schema_version: Literal["q5-pre-run-v1"] = "q5-pre-run-v1"
+    schema_version: Literal["q5-pre-run-v2"] = "q5-pre-run-v2"
     dataset_partition: Literal["dev", "test"]
     valid: bool
     task_count: int = Field(ge=0)
@@ -128,6 +150,8 @@ def check_q5_pre_run(
         "runtime_case_closure": True,
         "runtime_gate_replay": True,
         "context_prompt_leakage": True,
+        "semantic_state_nondisclosure": True,
+        "semantic_counterfactual_pairs": True,
         "corpus_provenance": True,
         "manifest_integrity": True,
         "pre_run_receipt": True,
@@ -174,6 +198,47 @@ def check_q5_pre_run(
         for tag in row.gold_reason_tags
         if tag.startswith("semantic_family_")
     )
+    counterfactual_groups: dict[
+        str,
+        list[tuple[str, tuple[str, ...], tuple[str, ...], str]],
+    ] = {}
+    for row in gold.values():
+        if row.stratum.value != "semantic":
+            continue
+        if dataset_partition != "dev":
+            continue
+        group_tags = [
+            tag.removeprefix(_COUNTERFACTUAL_TAG_PREFIX)
+            for tag in row.gold_reason_tags
+            if tag.startswith(_COUNTERFACTUAL_TAG_PREFIX)
+        ]
+        family_tags = [
+            tag for tag in row.gold_reason_tags if tag.startswith("semantic_family_")
+        ]
+        if len(group_tags) != 1 or len(family_tags) != 1:
+            fail(
+                "semantic_counterfactual_pairs",
+                f"{row.case_id} must declare one counterfactual group and family",
+            )
+            continue
+        counterfactual_groups.setdefault(group_tags[0], []).append(
+            (
+                row.case_id,
+                tuple(
+                    sorted(
+                        str(getattr(action, "value", action))
+                        for action in row.allowed_terminal_actions
+                    )
+                ),
+                tuple(
+                    sorted(
+                        str(getattr(tool, "value", tool))
+                        for tool in row.required_observations
+                    )
+                ),
+                family_tags[0],
+            )
+        )
     if dataset_partition == "dev":
         if dict(stratum_counts) != dict(Q5_DEV_EXPECTED_STRATA):
             fail(
@@ -190,6 +255,27 @@ def check_q5_pre_run(
                 f"{dict(Q5_DEV_EXPECTED_SEMANTIC_FAMILIES)}, "
                 f"got {dict(semantic_family_counts)}",
             )
+        if len(counterfactual_groups) != 6:
+            fail(
+                "semantic_counterfactual_pairs",
+                "q5_dev must contain exactly six semantic counterfactual groups",
+            )
+        for group, members in sorted(counterfactual_groups.items()):
+            actions = {member[1] for member in members}
+            tools = {member[2] for member in members}
+            families = {member[3] for member in members}
+            if (
+                len(members) != 2
+                or len(actions) != 2
+                or len(tools) != 1
+                or not next(iter(tools), ())
+                or len(families) != 1
+            ):
+                fail(
+                    "semantic_counterfactual_pairs",
+                    f"counterfactual group {group} must be a two-case, "
+                    "action-divergent, single-family/single-tool pair",
+                )
     expected_namespace_prefix = f"q5_{dataset_partition}"
     for task in tasks:
         if not task.corpus_namespace.lower().replace("-", "_").startswith(
@@ -242,6 +328,15 @@ def check_q5_pre_run(
                 "corpus_provenance",
                 "q5_dev environment origin disclosure must be deterministic_synthetic",
             )
+        if dataset_partition == "dev" and (
+            provenance.get("dataset_version") != "v2"
+            or provenance.get("semantic_design")
+            != "six_action_divergent_counterfactual_pairs"
+        ):
+            fail(
+                "corpus_provenance",
+                "q5_dev provenance must declare the v2 counterfactual semantic design",
+            )
         warnings.append(
             "q5_dev corpus and tool state are disclosed synthetic diagnostic data; "
             "they are not headline evidence"
@@ -281,6 +376,17 @@ def check_q5_pre_run(
                 "formal_partition_shape",
                 f"{task.case_id} observation requirement exceeds task budget",
             )
+        if case_gold.stratum.value == "semantic":
+            disclosed = q5_semantic_query_state_disclosures(
+                task,
+                required_tools=required,
+            )
+            if disclosed:
+                fail(
+                    "semantic_state_nondisclosure",
+                    f"{task.case_id} query exposes dynamic state markers: "
+                    + ", ".join(disclosed),
+                )
         _validate_gold_assertions(case_gold.final_state_assertions, task.case_id, fail)
 
         pass_result = runtime_case.pass_result
@@ -370,6 +476,7 @@ def check_q5_pre_run(
                 remaining_observation_budget=task.max_observation_steps,
                 remaining_terminal_budget=1,
             )
+            prompt_payload = q5_prompt_payload(context)
             prompt = build_q5_prompt(context)
             trace = json.dumps(
                 build_q5_context_trace(context, context_version=1),
@@ -385,6 +492,18 @@ def check_q5_pre_run(
         checked_prompt_count += 1
         authorized_chunk_count += len(context.authorized_evidence)
         blocked_chunk_count += len(context.blocked_evidence_metadata)
+        for contract in prompt_payload["tool_contracts"]:
+            required_fields = contract["args_schema"].get("required") or []
+            grounded = contract["grounded_reference_values"]
+            missing_grounding = [
+                field for field in required_fields if not grounded.get(field)
+            ]
+            if missing_grounding:
+                fail(
+                    "runtime_case_closure",
+                    f"{task.case_id} tool {contract['tool']} has ungrounded required args: "
+                    + ", ".join(missing_grounding),
+                )
         if any(
             len(item.text_excerpt) > Q5_EXCERPT_CHAR_LIMIT
             for item in context.authorized_evidence
@@ -497,6 +616,23 @@ def check_q5_pre_run(
             "errors": [*report.errors, f"pre_run_receipt: {receipt_error}"],
         }
     )
+
+
+def q5_semantic_query_state_disclosures(
+    task: Q5TaskInput,
+    *,
+    required_tools: Iterable[Any],
+) -> list[str]:
+    """Return dynamic-state markers disclosed by a semantic task query."""
+
+    disclosures: set[str] = set()
+    for tool in required_tools:
+        tool_name = str(getattr(tool, "value", tool))
+        for pattern in _SEMANTIC_QUERY_STATE_PATTERNS.get(tool_name, ()):
+            match = pattern.search(task.query)
+            if match is not None:
+                disclosures.add(match.group(0).lower())
+    return sorted(disclosures)
 
 
 def _empty_report(

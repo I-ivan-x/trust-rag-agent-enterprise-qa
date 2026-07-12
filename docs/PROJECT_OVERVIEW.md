@@ -99,7 +99,9 @@ number is guarded by a code contract, not discipline.
 - Honest results & trade-offs: `README.md`, `docs/EVALUATION_REPORT.md`
 - Latest outcome + web demo handoff: `docs/LATEST_RESULTS_AND_DEMO.md`
 - Engineering discipline + execution evidence: `docs/ENGINEERING_DISCIPLINE.md`
-- Active Q5 design + implementation handoff: `docs/Q5_ADAPTIVE_AGENT_DESIGN.md`, `docs/Q5_IMPLEMENTATION_HANDOFF.md`
+- Active Q5 design + implementation handoff: `docs/Q5_ADAPTIVE_AGENT_DESIGN.md`,
+  `docs/Q5_P5_PREREG_AMENDMENT_V2.md`, `docs/Q5_P5_DEV_V2_READINESS.md`,
+  `docs/Q5_IMPLEMENTATION_HANDOFF.md`
 - Failure taxonomy F1–F13 with trace evidence: `docs/FAILURE_ANALYSIS.md`
 - Design decisions (ADR-001…016) with measured consequences: `docs/TECHNICAL_DESIGN.md`
 - Q4 negative→positive design + pre-registration: `docs/Q4_RELIABILITY_DESIGN.md`, `docs/Q4_P2_PREREGISTER.md`

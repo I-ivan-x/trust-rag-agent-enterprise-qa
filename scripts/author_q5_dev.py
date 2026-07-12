@@ -1,5 +1,5 @@
 # ruff: noqa: E402
-"""Author the frozen 36-case q5_dev dataset and its static pre-run receipt."""
+"""Author the formal 36-case q5_dev v2 dataset and static pre-run receipt."""
 
 from __future__ import annotations
 
@@ -47,9 +47,9 @@ from app.schemas.q5_task import (
 from app.schemas.retrieval import RetrievedChunk
 from app.workflow.state import RetrievalPassResult
 
-AUTHOR = "q5-plan-report-v1"
-PUBLIC_NAMESPACE = "q5_dev_public_v1"
-ADVERSARIAL_NAMESPACE = "q5_dev_adversarial_v1"
+AUTHOR = "q5-plan-report-v2"
+PUBLIC_NAMESPACE = "q5_dev_public_v2"
+ADVERSARIAL_NAMESPACE = "q5_dev_adversarial_v2"
 ALL_ACTIONS = tuple(action.value for action in GovernanceAction)
 _CAPABILITY_ACTION = {
     RequestedCapability.document_maintenance: GovernanceAction.flag_stale,
@@ -585,8 +585,8 @@ def _semantic_specs() -> list[CaseSpec]:
         _policy_semantic(
             "s01",
             (
-                "For the production checkout exporter, resolve the active staging "
-                "exception before remediation."
+                "For the production checkout exporter, inspect the current policy "
+                "exception state before deciding remediation."
             ),
             "resource:checkout-exporter",
             "policy:change-control",
@@ -594,42 +594,55 @@ def _semantic_specs() -> list[CaseSpec]:
             scope="staging",
             action=GovernanceAction.open_remediation_ticket,
             tools=policy_tool,
+            counterfactual_group="policy_scope_a",
         ),
         _policy_semantic(
             "s02",
-            "For the production settlement worker, inspect its production exception before acting.",
+            (
+                "For the production settlement worker, inspect the current policy "
+                "exception state before deciding remediation."
+            ),
             "resource:settlement-worker",
             "policy:change-control",
             status="active",
             scope="production",
             action=GovernanceAction.escalate_to_human,
             tools=policy_tool,
+            counterfactual_group="policy_scope_a",
         ),
         _policy_semantic(
             "s03",
-            "For the staging invoice renderer, check whether its exception has expired.",
+            (
+                "For the production invoice renderer, inspect the current policy "
+                "exception state before deciding remediation."
+            ),
             "resource:invoice-renderer",
             "policy:deployment-window",
-            status="expired",
-            scope="staging",
-            action=GovernanceAction.open_remediation_ticket,
+            status="active",
+            scope="production",
+            action=GovernanceAction.escalate_to_human,
             tools=policy_tool,
+            counterfactual_group="policy_scope_b",
         ),
         _policy_semantic(
             "s04",
-            "For the production tax calculator, determine whether a sandbox exception covers it.",
+            (
+                "For the production tax calculator, inspect the current policy "
+                "exception state before deciding remediation."
+            ),
             "resource:tax-calculator",
             "policy:change-control",
             status="active",
             scope="sandbox",
             action=GovernanceAction.open_remediation_ticket,
             tools=policy_tool,
+            counterfactual_group="policy_scope_b",
         ),
         _change_semantic(
             "s05",
             (
-                "Decide whether to flag the old checkout failover runbook after its "
-                "migration completed."
+                "Review whether the checkout failover runbook should be flagged using "
+                "the current migration state."
             ),
             "resource:checkout-failover-runbook",
             "change:checkout-failover-v2",
@@ -638,12 +651,13 @@ def _semantic_specs() -> list[CaseSpec]:
             action=GovernanceAction.flag_stale,
             capability=RequestedCapability.document_maintenance,
             tools=change_tool,
+            counterfactual_group="change_stale",
         ),
         _change_semantic(
             "s06",
             (
-                "Review the current search recovery runbook while its replacement "
-                "change is only planned."
+                "Review whether the search recovery runbook should be flagged using "
+                "the current replacement-change state."
             ),
             "resource:search-recovery-runbook",
             "change:search-recovery-v3",
@@ -652,10 +666,14 @@ def _semantic_specs() -> list[CaseSpec]:
             action=GovernanceAction.escalate_to_human,
             capability=RequestedCapability.document_maintenance,
             tools=change_tool,
+            counterfactual_group="change_stale",
         ),
         _change_semantic(
             "s07",
-            "Resolve the missing data-export prerequisite after the enabling change completed.",
+            (
+                "Review whether the data-export prerequisite issue is actionable using "
+                "the current enabling-change state."
+            ),
             "resource:data-export-prereq",
             "change:data-export-enable",
             relation_type="missing_prereq",
@@ -663,10 +681,14 @@ def _semantic_specs() -> list[CaseSpec]:
             action=GovernanceAction.open_remediation_ticket,
             capability=RequestedCapability.remediation_management,
             tools=change_tool,
+            counterfactual_group="change_prerequisite",
         ),
         _change_semantic(
             "s08",
-            "Review the missing cache warmup prerequisite while its change is only planned.",
+            (
+                "Review whether the cache warmup prerequisite issue is actionable using "
+                "the current enabling-change state."
+            ),
             "resource:cache-warmup-prereq",
             "change:cache-warmup-v2",
             relation_type="missing_prereq",
@@ -674,6 +696,7 @@ def _semantic_specs() -> list[CaseSpec]:
             action=GovernanceAction.escalate_to_human,
             capability=RequestedCapability.remediation_management,
             tools=change_tool,
+            counterfactual_group="change_prerequisite",
         ),
         _incident_semantic(
             "s09",
@@ -682,6 +705,7 @@ def _semantic_specs() -> list[CaseSpec]:
             status="outage",
             action=GovernanceAction.send_alert,
             tools=incident_tool,
+            counterfactual_group="incident_outage_scope",
         ),
         _incident_semantic(
             "s10",
@@ -690,14 +714,16 @@ def _semantic_specs() -> list[CaseSpec]:
             status="degraded",
             action=GovernanceAction.escalate_to_human,
             tools=incident_tool,
+            counterfactual_group="incident_degraded_scope",
         ),
         _incident_semantic(
             "s11",
             "Inspect production notification routing impact before choosing whether to alert.",
             "resource:notification-routing-prod",
-            status="none",
-            action=GovernanceAction.escalate_to_human,
+            status="degraded",
+            action=GovernanceAction.send_alert,
             tools=incident_tool,
+            counterfactual_group="incident_degraded_scope",
         ),
         _incident_semantic(
             "s12",
@@ -706,6 +732,7 @@ def _semantic_specs() -> list[CaseSpec]:
             status="outage",
             action=GovernanceAction.escalate_to_human,
             tools=incident_tool,
+            counterfactual_group="incident_outage_scope",
         ),
     ]
 
@@ -979,6 +1006,7 @@ def _policy_semantic(
     scope: str,
     action: GovernanceAction,
     tools: tuple[Q5ObservationTool, ...],
+    counterfactual_group: str,
 ) -> CaseSpec:
     return _case(
         suffix,
@@ -992,15 +1020,21 @@ def _policy_semantic(
         _evidence(
             suffix,
             (
-                f"{resource_ref} violates {policy_ref}. Exception scope must match the "
-                "requested deployment scope; an active exception for another scope does "
-                "not cover the violation."
+                f"{resource_ref} violates {policy_ref}. The current exception state must "
+                "be observed. An active exception whose scope matches the requested "
+                "deployment pauses remediation for human review; an inactive or "
+                "nonmatching exception leaves the violation actionable."
             ),
             "public/policy_exceptions",
             relation={"type": "config_violation"},
             policy_ref=policy_ref,
         ),
-        ("semantic_family_policy_exception", f"exception_status_{status}"),
+        (
+            "semantic_family_policy_exception",
+            f"exception_status_{status}",
+            f"exception_scope_{scope}",
+            f"counterfactual_group_{counterfactual_group}",
+        ),
         tools=tools,
         environment={
             "policy_exceptions": {
@@ -1021,6 +1055,7 @@ def _change_semantic(
     action: GovernanceAction,
     capability: RequestedCapability,
     tools: tuple[Q5ObservationTool, ...],
+    counterfactual_group: str,
 ) -> CaseSpec:
     target_status = "missing" if relation_type == "missing_prereq" else None
     relation: dict[str, Any] = {"type": relation_type, "change_ref": change_ref}
@@ -1050,7 +1085,11 @@ def _change_semantic(
             "public/change_lifecycle",
             relation=relation,
         ),
-        ("semantic_family_change_state", f"change_status_{status}"),
+        (
+            "semantic_family_change_state",
+            f"change_status_{status}",
+            f"counterfactual_group_{counterfactual_group}",
+        ),
         tools=tools,
         environment={"change_states": {change_ref: {"status": status}}},
     )
@@ -1064,6 +1103,7 @@ def _incident_semantic(
     status: str,
     action: GovernanceAction,
     tools: tuple[Q5ObservationTool, ...],
+    counterfactual_group: str,
 ) -> CaseSpec:
     group = f"q5-dev-conflict-{suffix}"
     evidence = tuple(
@@ -1089,7 +1129,11 @@ def _incident_semantic(
         action,
         True,
         evidence,
-        ("semantic_family_incident_impact", f"incident_status_{status}"),
+        (
+            "semantic_family_incident_impact",
+            f"incident_status_{status}",
+            f"counterfactual_group_{counterfactual_group}",
+        ),
         tools=tools,
         environment={"incident_impacts": {resource_ref: {"status": status}}},
     )
@@ -1217,8 +1261,9 @@ def _write_corpus(root: Path, specs: list[CaseSpec]) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("\n".join(rows).rstrip() + "\n", encoding="utf-8")
     provenance = {
-        "schema_version": "q5-corpus-provenance-v1",
+        "schema_version": "q5-corpus-provenance-v2",
         "dataset": "q5_dev",
+        "dataset_version": "v2",
         "document_content_origin": "generated_synthetic",
         "environment_state_origin": "deterministic_synthetic",
         "disclosure": (
@@ -1228,6 +1273,7 @@ def _write_corpus(root: Path, specs: list[CaseSpec]) -> None:
         "default_namespace": PUBLIC_NAMESPACE,
         "adversarial_namespace": ADVERSARIAL_NAMESPACE,
         "adversarial_index_policy": "isolated_not_in_default_namespace",
+        "semantic_design": "six_action_divergent_counterfactual_pairs",
         "surfaces": sorted(titles),
         "license": "CC0-1.0",
     }

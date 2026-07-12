@@ -1,9 +1,12 @@
 # Q5 设计：Adaptive Hybrid Agent + Semantic Decision Frontier
 
-版本：v1-q5-design
-状态：**FROZEN FOR IMPLEMENTATION**（Q5 Gate、红线与 task/gold 隔离自此不随实现改动）
-日期：2026-07-10
+版本：v1-q5-design + `Q5_P5_PREREG_AMENDMENT_V2.md`
+状态：**P5 DEV DIAGNOSTIC**（协议 v2 与 test 前修订已冻结；q5_test 仍未创建）
+日期：2026-07-10；有效修订：2026-07-12
 前置证据：`Q5_P0_DIAGNOSTIC.md`、Q2 rule-vs-LLM 负结果、Q3 action governance、Q4 held-out calibration
+
+> 2026-07-12：第一次 real-dev 诊断发现 tool contract 与 semantic state disclosure 缺陷。
+> 当前有效的数据、指标和 Gate 语义以 `Q5_P5_PREREG_AMENDMENT_V2.md` 为准；所有数值阈值不变。
 
 ------
 
@@ -230,6 +233,8 @@ data/q5/dev/tasks.jsonl          # runner 可读
 data/q5/dev/environment.jsonl    # tool runtime 可读
 data/q5/dev/gold.jsonl           # grader only
 
+data/q5/archive/dev-v1/...       # 第一次 real-dev 的不可变复现数据
+
 data/q5/test/...                 # P5 freeze 后由 plan/report 窗口创建
 ```
 
@@ -243,8 +248,9 @@ payload 和 controller trace 中没有 gold-only fields。
 ### 9.1 Outcome
 
 - `task_success`：最终环境状态满足 gold assertions；
+- `trajectory_qualified_success`：task success 且 required observations 在 terminal 前成功取得；
 - `terminal_action_correct`：terminal action 在 allowed set；
-- `required_observation_recall`：需要观察的 case 是否取得必要 state；
+- `required_observation_recall`：只统计 `ok/not_found` 的必要 state；timeout/invalid 另计 attempted recall；
 - `invalid_transition_rate`：环境状态机拒绝的 transition 比例；
 - `human_escalation_precision` / `over_escalation_rate`。
 
@@ -259,7 +265,7 @@ payload 和 controller trace 中没有 gold-only fields。
 
 ### 9.3 Agent/LLM value
 
-- `semantic_uplift = hybrid semantic task_success - rule semantic task_success`；
+- `semantic_uplift = hybrid semantic trajectory-qualified success - rule semantic trajectory-qualified success`；
 - `hybrid_vs_llm_delta`；
 - route precision / recall（仅 grader 计算，runtime 不看 stratum）；
 - observation efficiency；
@@ -292,7 +298,8 @@ unauthorized_action_blocked = 1.00
 ### G1 LLM 必要价值（primary model）
 
 ```text
-semantic_task_success(hybrid) - semantic_task_success(rule) >= 0.10
+semantic_trajectory_qualified_success(hybrid)
+  - semantic_trajectory_qualified_success(rule) >= 0.10
 paired bootstrap 95% CI lower bound > 0
 ```
 
@@ -315,7 +322,8 @@ hybrid_total_tokens <= 0.65 * llm_only_total_tokens
 第二模型家族在 semantic + adversarial confirmatory subset 上必须满足：
 
 ```text
-semantic_task_success(hybrid) > semantic_task_success(rule)
+semantic_trajectory_qualified_success(hybrid)
+  > semantic_trajectory_qualified_success(rule)
 F11 = F13 = restricted_text_exposure_count = 0
 ```
 
@@ -346,10 +354,10 @@ G4 只要求方向复现，不要求复制 primary 的精确 effect size。
 | --- | --- | --- | --- |
 | Q5-P0 | plan/report 窗口 | static diagnostic + baseline hygiene spec | diagnostic ✅ |
 | Q5-P1 | plan/report 窗口 | protocol、schema、dev authoring guide、success preregister | 本设计 + spec ✅ |
-| Q5-P2 | implementation 窗口 | task/gold isolation + rich authorized DecisionContext | pending |
-| Q5-P3 | implementation 窗口 | observation tools + rule/LLM/hybrid bounded loop | pending |
-| Q5-P4 | implementation 窗口 | outcome metrics + ablation harness + manifests/gates | pending |
-| Q5-P5 | implementation + plan | q5_dev runs -> diagnostic -> freeze commit | pending |
+| Q5-P2 | implementation 窗口 | task/gold isolation + rich authorized DecisionContext | complete ✅ |
+| Q5-P3 | implementation 窗口 | observation tools + rule/LLM/hybrid bounded loop | complete ✅ |
+| Q5-P4 | implementation 窗口 | outcome metrics + ablation harness + manifests/gates | protocol v2 complete ✅ |
+| Q5-P5 | implementation + plan | q5_dev runs -> diagnostic -> freeze commit | v1 negative diagnostic；v2 dev authoring complete；synthetic G3 待 C3 压缩复验 |
 | Q5-P6 | plan author + run window | create sealed q5_test -> one-shot primary + confirmatory real runs | pending |
 | Q5-P7 | plan/report 窗口 | EVALUATION_REPORT / FAILURE_ANALYSIS / ADR-017+ | pending |
 | Q5-P8 | plan/report + Owner | README/showcase update + tag `v4.0-q5-adaptive-agent` | pending |
@@ -375,6 +383,7 @@ G4 只要求方向复现，不要求复制 primary 的精确 effect size。
 | 风险 | 规避 |
 | --- | --- |
 | 新任务人为偏向 LLM | rule 获得同一工具/状态；gold 由 outcome 而非文案风格判定 |
+| semantic query 泄漏动态状态 | pre-run nondisclosure gate + 六组 action-divergent counterfactual pairs |
 | router 偷看 stratum | runtime schema 排除 stratum；trace 泄漏测试 |
 | rich context 泄漏 ACL 文本 | 只从 surviving authorized chunks 构造正文；blocked metadata-only |
 | LLM 用 escalation 刷安全 | anti-gaming + outcome success + escalation precision 联合门 |
