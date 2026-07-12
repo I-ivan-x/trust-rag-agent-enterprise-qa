@@ -10,6 +10,7 @@ from app.govern.conditions import GovernanceAction, OpsCondition
 from app.govern.q5_context import (
     Q5_AUTHORIZED_TEXT_CHAR_LIMIT,
     Q5_EXCERPT_CHAR_LIMIT,
+    Q5_STRUCTURED_POLICY_VERSION,
     Q5AuthorizationVerdict,
     Q5DecisionContext,
     Q5StructuredProposal,
@@ -20,6 +21,7 @@ from app.govern.q5_context import (
     build_q5_prompt,
     legal_q5_terminal_actions,
     parse_q5_structured_proposal,
+    q5_prompt_payload,
     reauthorize_q5_proposal,
 )
 from app.guards.acl_gate import ACLGateDecision
@@ -119,6 +121,8 @@ def _context(
     actor: Q5ActorClaims | None = None,
     capability: RequestedCapability = RequestedCapability.remediation_management,
     condition_actions: list[GovernanceAction] | None = None,
+    resource_refs: list[str] | None = None,
+    available_tools: list[Q5ObservationTool] | None = None,
 ) -> Q5DecisionContext:
     selected_surviving = surviving if surviving is not None else [_authorized_chunk()]
     selected_blocked = blocked if blocked is not None else [_blocked_chunk()]
@@ -133,6 +137,8 @@ def _context(
             GovernanceAction.open_remediation_ticket,
             GovernanceAction.escalate_to_human,
         ],
+        resource_refs=resource_refs or [],
+        available_tools=available_tools or [],
         remaining_observation_budget=2,
         remaining_terminal_budget=1,
     )
@@ -218,6 +224,39 @@ def test_q5_context_preserves_chunk_ids_for_citations() -> None:
     assert [item.chunk_id for item in context.authorized_evidence] == ["cite-a", "cite-b"]
     assert '"chunk_id": "cite-a"' in prompt
     assert '"chunk_id": "cite-b"' in prompt
+
+
+def test_q5_prompt_v2_exposes_machine_derived_tool_contracts() -> None:
+    context = _context(
+        resource_refs=["resource:payments", "policy:change-control"],
+        available_tools=[Q5ObservationTool.lookup_policy_exception],
+    )
+    payload = q5_prompt_payload(context)
+    prompt = build_q5_prompt(context)
+
+    assert payload["protocol_version"] == Q5_STRUCTURED_POLICY_VERSION
+    assert payload["tool_contracts"][0]["tool"] == "lookup_policy_exception"
+    assert "PROTOCOL: q5-structured-policy-v2" in prompt
+    assert "OBSERVE BRANCH" in prompt
+    assert "TERMINAL BRANCH" in prompt
+    assert "short_enum" not in prompt
+
+
+def test_q5_proposal_branches_require_exact_empty_or_nonempty_args() -> None:
+    observe = _observe().model_dump(mode="json")
+    observe["args"] = {}
+    with pytest.raises(ValidationError, match="non-empty tool args"):
+        parse_q5_structured_proposal(observe)
+
+    terminal = _terminal(GovernanceAction.no_op).model_dump(mode="json")
+    terminal["args"] = {"resource_ref": "resource:payments"}
+    with pytest.raises(ValidationError, match="args to be empty"):
+        parse_q5_structured_proposal(terminal)
+
+    terminal = _terminal(GovernanceAction.no_op).model_dump(mode="json")
+    terminal["reason_code"] = "short_enum"
+    with pytest.raises(ValidationError, match="concrete code"):
+        parse_q5_structured_proposal(terminal)
 
 
 @pytest.mark.parametrize(

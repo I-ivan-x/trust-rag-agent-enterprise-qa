@@ -9,6 +9,8 @@ from app.govern.q5_context import (
 from app.govern.q5_environment import Q5ReadOnlyEnvironment
 from app.govern.q5_tool_validator import (
     q5_allowed_tool_argument_values,
+    q5_tool_args_model,
+    q5_tool_contracts,
     validate_q5_tool_call,
 )
 from app.govern.q5_tools import Q5ToolExecutor, Q5ToolStatus
@@ -137,6 +139,28 @@ def test_q5_three_read_only_tools_return_typed_observations_and_spans() -> None:
         assert execution.event.event_type == "q5_tool_call"
         assert execution.span_payload["name"].startswith("q5.tool.")
         assert execution.span_payload["attributes"]["q5.tool.read_only"] is True
+
+
+def test_q5_prompt_tool_contracts_are_generated_from_validator_models() -> None:
+    contracts = {item["tool"]: item for item in q5_tool_contracts(_context())}
+
+    for tool in Q5ObservationTool:
+        contract = contracts[tool.value]
+        schema = q5_tool_args_model(tool).model_json_schema()
+        assert contract["args_schema"] == schema
+        assert schema["additionalProperties"] is False
+        assert set(schema["required"]) == set(schema["properties"])
+
+    lookup_values = contracts["lookup_policy_exception"][
+        "grounded_reference_values"
+    ]
+    assert lookup_values == {
+        "resource_ref": ["resource:payments"],
+        "policy_ref": ["policy:change-control"],
+    }
+    assert contracts["inspect_change_state"]["grounded_reference_values"] == {
+        "change_ref": ["change:deploy-42"]
+    }
 
 
 def test_q5_tool_validator_rejects_new_entity_injection() -> None:

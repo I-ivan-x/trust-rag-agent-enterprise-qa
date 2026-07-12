@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import inspect
 import json
 from collections.abc import Sequence
+
+import pytest
 
 from app.core.enums import CorpusSource, SourceOrigin
 from app.govern.conditions import (
@@ -14,6 +17,7 @@ from app.govern.q5_environment import Q5ReadOnlyEnvironment
 from app.govern.q5_loop import (
     Q5AgentRuntime,
     Q5AgentSystem,
+    q5_unresolved_state_tools,
     run_q5_agent,
 )
 from app.govern.sinks import ActionRecord, ApprovalState
@@ -148,9 +152,13 @@ def _pass_result() -> RetrievalPassResult:
     )
 
 
-def _report(*, initially_authorized: bool = False) -> ConditionReport:
+def _report(
+    *,
+    initially_authorized: bool = False,
+    conditions: list[OpsCondition] | None = None,
+) -> ConditionReport:
     return ConditionReport(
-        conditions=[OpsCondition.config_violation],
+        conditions=conditions or [OpsCondition.config_violation],
         authorized_actor=initially_authorized,
         evidence_decision="sufficient",
         violating_doc_ids=["doc-payments-policy"],
@@ -163,6 +171,8 @@ def _environment(
     scope: str = "staging",
     timeout: bool = False,
     untrusted_text: str | None = None,
+    change_status: str = "in_progress",
+    incident_status: str = "outage",
 ) -> Q5ReadOnlyEnvironment:
     entry = {"status": exception_status, "scope": scope}
     if untrusted_text is not None:
@@ -172,8 +182,8 @@ def _environment(
         policy_exceptions={
             "resource:payments|policy:change-control": entry,
         },
-        change_states={},
-        incident_impacts={},
+        change_states={"change:deploy-42": {"status": change_status}},
+        incident_impacts={"resource:payments": {"status": incident_status}},
         initial_records=[],
         tool_faults=(
             {"lookup_policy_exception": {"status": "timeout"}} if timeout else None
@@ -210,6 +220,23 @@ def _terminal_payload(action: GovernanceAction) -> str:
             "evidence_chunk_ids": ["allowed-policy-chunk"],
             "reason_code": "terminal_decision",
             "reason_summary": "The trusted state supports this terminal action.",
+        }
+    )
+
+
+def _typed_observe_payload(
+    tool: Q5ObservationTool,
+    args: dict[str, str],
+) -> str:
+    return json.dumps(
+        {
+            "kind": "observe",
+            "tool": tool.value,
+            "args": args,
+            "action": None,
+            "evidence_chunk_ids": ["allowed-policy-chunk"],
+            "reason_code": "runtime_state_required",
+            "reason_summary": "The typed runtime state must be observed.",
         }
     )
 
@@ -283,6 +310,72 @@ def test_q5_three_agents_share_environment_tools_and_validator_contract() -> Non
     assert hybrid.route.route == "llm"
     assert rule.llm_calls == 0
     assert llm.llm_calls == hybrid.llm_calls == 2
+
+
+@pytest.mark.parametrize(
+    ("condition", "capability", "tool", "args", "terminal_action"),
+    [
+        (
+            OpsCondition.config_violation,
+            RequestedCapability.remediation_management,
+            Q5ObservationTool.lookup_policy_exception,
+            {
+                "resource_ref": "resource:payments",
+                "policy_ref": "policy:change-control",
+            },
+            GovernanceAction.open_remediation_ticket,
+        ),
+        (
+            OpsCondition.stale_procedure,
+            RequestedCapability.document_maintenance,
+            Q5ObservationTool.inspect_change_state,
+            {"change_ref": "change:deploy-42"},
+            GovernanceAction.flag_stale,
+        ),
+        (
+            OpsCondition.active_active_conflict,
+            RequestedCapability.incident_response,
+            Q5ObservationTool.inspect_incident_impact,
+            {"resource_ref": "resource:payments"},
+            GovernanceAction.send_alert,
+        ),
+    ],
+)
+def test_q5_each_valid_tool_contract_completes_context_v2_before_terminal(
+    condition: OpsCondition,
+    capability: RequestedCapability,
+    tool: Q5ObservationTool,
+    args: dict[str, str],
+    terminal_action: GovernanceAction,
+) -> None:
+    model = QueueModel(
+        [
+            _typed_observe_payload(tool, args),
+            _terminal_payload(terminal_action),
+        ]
+    )
+    task = _task(
+        capability=capability,
+        resource_refs=[
+            "resource:payments",
+            "policy:change-control",
+            "change:deploy-42",
+        ],
+        available_tools=[tool],
+    )
+    result, _ = _run(
+        Q5AgentSystem.llm,
+        model=model,
+        task=task,
+        report=_report(conditions=[condition]),
+    )
+
+    assert result.final_action is terminal_action
+    assert result.fallback_reason is None
+    assert result.observation_count == 1
+    assert [trace["context_version"] for trace in result.context_traces] == [1, 2]
+    assert "q5-structured-policy-v2" in model.prompts[0]
+    assert tool.value in model.prompts[1]
 
 
 def test_q5_hybrid_deterministic_case_avoids_llm() -> None:
@@ -394,6 +487,19 @@ def test_q5_parse_error_never_falls_back_to_rule_success() -> None:
     )
 
 
+def test_q5_empty_observation_args_fail_closed_before_tool_execution() -> None:
+    payload = json.loads(_observe_payload())
+    payload["args"] = {}
+    model = QueueModel([json.dumps(payload)])
+
+    result, _ = _run(Q5AgentSystem.llm, model=model)
+
+    assert result.final_action is GovernanceAction.escalate_to_human
+    assert result.fallback_reason == "tool_schema_invalid"
+    assert result.observation_count == 0
+    assert result.tool_events == []
+
+
 def test_q5_illegal_action_is_explicit_and_safely_escalated() -> None:
     model = QueueModel([_terminal_payload(GovernanceAction.send_alert)])
     result, _ = _run(Q5AgentSystem.llm, model=model)
@@ -440,11 +546,21 @@ def test_q5_terminal_stops_loop_and_forbids_later_tools() -> None:
     )
     result, _ = _run(Q5AgentSystem.llm, model=model)
 
-    assert result.final_action is GovernanceAction.open_remediation_ticket
+    assert result.final_action is GovernanceAction.escalate_to_human
+    assert result.fallback_reason == "premature_terminal_unresolved_state"
     assert result.step_count == 1
     assert result.observation_count == 0
     assert result.terminal_proposal_count == 1
     assert model.calls == 1
+
+
+def test_q5_unresolved_guard_uses_runtime_context_facts_only() -> None:
+    signature = inspect.signature(q5_unresolved_state_tools)
+    source = inspect.getsource(q5_unresolved_state_tools)
+
+    assert list(signature.parameters) == ["context"]
+    for forbidden in ("gold", "stratum", "required_observations", "task."):
+        assert forbidden not in source
 
 
 def test_q5_investigate_side_effect_cannot_bypass_reauthorization() -> None:

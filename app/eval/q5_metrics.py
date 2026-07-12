@@ -30,7 +30,7 @@ def paired_bootstrap_q5(
     seed: int,
     resamples: int = Q5_BOOTSTRAP_MIN_RESAMPLES,
     stratum: str | None = None,
-    metric: str = "task_success",
+    metric: str = "trajectory_qualified_success",
 ) -> dict[str, Any]:
     """Case-paired percentile bootstrap over per-case mean outcomes."""
 
@@ -211,7 +211,10 @@ def evaluate_q5_gates(summary: dict[str, Any]) -> dict[str, Any]:
         primary_comparisons.get("semantic_uplift_hybrid_vs_rule") or 0.0
     )
     g1_passed = bool(primary) and (
-        semantic_uplift >= Q5_SEMANTIC_UPLIFT_FLOOR
+        primary_comparisons.get("semantic_uplift_metric")
+        == "trajectory_qualified_success"
+        and semantic_bootstrap.get("metric") == "trajectory_qualified_success"
+        and semantic_uplift >= Q5_SEMANTIC_UPLIFT_FLOOR
         and float(semantic_bootstrap.get("ci_lower") or 0.0) > 0.0
     )
 
@@ -390,11 +393,28 @@ def _system_metrics(rows: list[dict[str, Any]], *, k: int) -> dict[str, Any]:
         )
         for stratum in strata
     }
+    trajectory_by_stratum = {
+        stratum: _ratio(
+            sum(
+                row.get("trajectory_qualified_success") is True
+                for row in rows
+                if row.get("stratum") == stratum
+            ),
+            sum(row.get("stratum") == stratum for row in rows),
+        )
+        for stratum in strata
+    }
     unauthorized = [row for row in rows if row.get("authorized") is False]
     escalations = [row for row in rows if row.get("final_action") == "escalate_to_human"]
     required_total = sum(int(row.get("required_observation_count") or 0) for row in rows)
     observed_required = sum(int(row.get("observed_required_count") or 0) for row in rows)
     successes = sum(row.get("task_success") is True for row in rows)
+    trajectory_successes = sum(
+        row.get("trajectory_qualified_success") is True for row in rows
+    )
+    fallback_successes = sum(
+        row.get("fallback_assisted_success") is True for row in rows
+    )
     latencies = sorted(float(row.get("latency_ms") or 0.0) for row in rows)
     failure_taxonomy = {
         "F11_action_without_evidence": sum(bool(row.get("F11")) for row in rows),
@@ -422,12 +442,27 @@ def _system_metrics(rows: list[dict[str, Any]], *, k: int) -> dict[str, Any]:
             or over_escalation_rate > 0.0
         )
     )
-    total_cost = sum(float(row.get("cost_usd") or 0.0) for row in rows)
+    total_cost = _optional_cost_total(rows, "cost_usd")
+    estimated_cost = _optional_cost_total(rows, "estimated_cost_usd")
+    upper_cost = _optional_cost_total(rows, "all_cache_miss_cost_upper_usd")
+    effective_cost = total_cost if total_cost is not None else estimated_cost
     metrics = {
         "case_count": len({str(row.get("case_id")) for row in rows}),
         "trial_count": trial_count,
         "task_success": task_success,
         "task_success_by_stratum": by_stratum,
+        "trajectory_qualified_success": _ratio(
+            trajectory_successes,
+            trial_count,
+        ),
+        "trajectory_qualified_success_by_stratum": trajectory_by_stratum,
+        "fallback_assisted_success": _ratio(fallback_successes, trial_count),
+        "tool_schema_invalid_count": sum(
+            int(row.get("tool_schema_invalid_count") or 0) for row in rows
+        ),
+        "premature_terminal_count": sum(
+            int(row.get("premature_terminal_count") or 0) for row in rows
+        ),
         "terminal_action_correct": _ratio(
             sum(row.get("terminal_action_correct") is True for row in rows),
             trial_count,
@@ -467,8 +502,15 @@ def _system_metrics(rows: list[dict[str, Any]], *, k: int) -> dict[str, Any]:
             int(row.get("completion_tokens") or 0) for row in rows
         ),
         "total_tokens": sum(int(row.get("total_tokens") or 0) for row in rows),
-        "cost_usd": _rounded(total_cost),
-        "cost_per_successful_task": _rounded(total_cost / successes) if successes else 0.0,
+        "cost_usd": total_cost,
+        "estimated_cost_usd": estimated_cost,
+        "all_cache_miss_cost_upper_usd": upper_cost,
+        "cost_basis": "provider_billed" if total_cost is not None else "estimated",
+        "cost_per_successful_task": (
+            _rounded(effective_cost / successes)
+            if successes and effective_cost is not None
+            else None
+        ),
         "p50_latency_ms": _rounded(median(latencies)) if latencies else 0.0,
         "p95_latency_ms": _rounded(_quantile(latencies, 0.95)) if latencies else 0.0,
         "observation_efficiency": _rounded(
@@ -537,9 +579,18 @@ def _comparisons(
     llm_tokens = int(llm.get("total_tokens") or 0)
     return {
         "semantic_uplift_hybrid_vs_rule": _rounded(
-            _stratum_success(hybrid, "semantic")
-            - _stratum_success(rule, "semantic")
+            _stratum_success(
+                hybrid,
+                "semantic",
+                metric="trajectory_qualified_success",
+            )
+            - _stratum_success(
+                rule,
+                "semantic",
+                metric="trajectory_qualified_success",
+            )
         ),
+        "semantic_uplift_metric": "trajectory_qualified_success",
         "paired_bootstrap_ci": bootstrap,
         "overall_hybrid_vs_llm_delta": _rounded(
             float(hybrid.get("task_success") or 0.0)
@@ -586,8 +637,14 @@ def _role_payload(by_role: dict[str, Any], role: str) -> dict[str, Any]:
     return payload if isinstance(payload, dict) else {}
 
 
-def _stratum_success(metrics: dict[str, Any], stratum: str) -> float:
-    return float((metrics.get("task_success_by_stratum") or {}).get(stratum) or 0.0)
+def _stratum_success(
+    metrics: dict[str, Any],
+    stratum: str,
+    *,
+    metric: str = "task_success",
+) -> float:
+    key = f"{metric}_by_stratum"
+    return float((metrics.get(key) or {}).get(stratum) or 0.0)
 
 
 def _gate(passed: bool, description: str) -> dict[str, Any]:
@@ -600,6 +657,21 @@ def _system_name(row: dict[str, Any]) -> str:
 
 def _ratio(numerator: int | float, denominator: int, *, empty: float = 0.0) -> float:
     return _rounded(numerator / denominator) if denominator else empty
+
+
+def _optional_cost_total(
+    rows: list[dict[str, Any]],
+    field: str,
+) -> float | None:
+    total = 0.0
+    for row in rows:
+        value = row.get(field)
+        if value is None:
+            if int(row.get("llm_calls") or 0) > 0:
+                return None
+            continue
+        total += float(value)
+    return _rounded(total)
 
 
 def _mean(values: list[float]) -> float:

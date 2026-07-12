@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from app.eval.q5_runner import Q5RunSettings
+from app.eval.q5_runner import Q5_PROMPT_VERSION, Q5RunSettings
 from scripts.grade_q5_run import build_parser as build_grade_parser
 from scripts.run_q5_tasks import build_parser as build_run_parser
 
@@ -59,4 +59,16 @@ def test_q5_run_settings_reject_self_reported_provider_and_run_counts(tmp_path) 
             mock_used=False,
             real_run=True,
             test_run_count_by_model_role={"primary": 1, "confirmatory": 1},
+        )
+
+
+def test_q5_run_settings_pin_structured_policy_v2(tmp_path) -> None:
+    settings = Q5RunSettings(output_root=tmp_path, run_id="prompt-v2")
+
+    assert settings.prompt_version == Q5_PROMPT_VERSION == "q5-structured-policy-v2"
+    with pytest.raises(ValueError, match="q5-structured-policy-v2"):
+        Q5RunSettings(
+            output_root=tmp_path,
+            run_id="stale-prompt",
+            prompt_version="q5-structured-policy-v1",
         )

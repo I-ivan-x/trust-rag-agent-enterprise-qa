@@ -8,7 +8,11 @@ from pathlib import Path
 import pytest
 
 from app.core.enums import CorpusSource, SourceOrigin
-from app.eval.q5_dataset import load_q5_environment, load_q5_tasks
+from app.eval.q5_dataset import (
+    Q5EnvironmentStore,
+    load_q5_environment,
+    load_q5_tasks,
+)
 from app.eval.q5_metrics import (
     Q5_ESCALATE_EVERYTHING_CONTROL,
     compute_q5_metrics,
@@ -98,6 +102,39 @@ class OpenAIAliasMockPolicyModel(Q5DeterministicMockPolicyModel):
 class OpenAICompatibleAliasMockPolicyModel(Q5DeterministicMockPolicyModel):
     provider = "openai_compatible"
     model_name = "gpt-4o"
+
+
+class InvalidAliasMockPolicyModel(Q5DeterministicMockPolicyModel):
+    def generate(self, prompt: str) -> str:
+        return json.dumps(
+            {
+                "kind": "observe",
+                "tool": "lookup_policy_exception",
+                "args": {
+                    "resource": "resource:payments",
+                    "policy_ref": "policy:change-control",
+                },
+                "action": None,
+                "evidence_chunk_ids": ["chunk-q5-p4-pending"],
+                "reason_code": "invalid_alias_probe",
+                "reason_summary": "The current policy state should be observed.",
+            }
+        )
+
+
+class PrematureTerminalMockPolicyModel(Q5DeterministicMockPolicyModel):
+    def generate(self, prompt: str) -> str:
+        return json.dumps(
+            {
+                "kind": "terminal",
+                "tool": None,
+                "args": {},
+                "action": "open_remediation_ticket",
+                "evidence_chunk_ids": ["chunk-q5-p4-pending"],
+                "reason_code": "premature_remediation",
+                "reason_summary": "Open remediation before checking current state.",
+            }
+        )
 
 
 def test_q5_synthetic_mock_harness_runs_and_grades_all_three_systems(
@@ -355,6 +392,32 @@ def test_q5_grader_marks_missing_observation_and_outcome_mismatch(
     assert row["F16"] is True
 
 
+def test_q5_trajectory_qualified_success_requires_completed_preterminal_observation(
+    tmp_path: Path,
+) -> None:
+    raw, _ = _single_case_raw_run(
+        tmp_path,
+        run_id="q5-trajectory-qualified-negative",
+    )
+    gold_row = json.loads(GOLD_PATH.read_text(encoding="utf-8").splitlines()[0])
+    gold_row["required_observations"] = ["lookup_policy_exception"]
+    gold_path = tmp_path / "trajectory-qualified-gold.jsonl"
+    gold_path.write_text(json.dumps(gold_row) + "\n", encoding="utf-8")
+
+    graded = grade_q5_run(raw.run_dir, gold_path)
+    rows = _jsonl(graded.graded_rows_path)
+    summary = _json(graded.summary_path)
+
+    assert all(row["task_success"] is True for row in rows)
+    assert all(row["trajectory_qualified_success"] is False for row in rows)
+    assert all(row["completed_required_observation_count"] == 0 for row in rows)
+    assert all(
+        metrics["task_success"] == 1.0
+        and metrics["trajectory_qualified_success"] == 0.0
+        for metrics in summary["by_system"].values()
+    )
+
+
 def test_q5_real_mode_rejects_spoofed_model_before_execution(tmp_path: Path) -> None:
     task = load_q5_tasks(TASKS_PATH)[0]
     environment = load_q5_environment(ENVIRONMENT_PATH)
@@ -379,6 +442,152 @@ def test_q5_real_mode_rejects_spoofed_model_before_execution(tmp_path: Path) -> 
     assert spoof.generate_calls == 0
     assert spoof.metadata_calls == 0
     assert not run_dir.exists()
+
+
+def test_q5_verifier_accepts_loop_generated_tool_rejection_and_safe_terminal(
+    tmp_path: Path,
+) -> None:
+    raw, gold_path = _pending_case_raw_run(
+        tmp_path,
+        run_id="q5-loop-tool-rejected",
+        model=InvalidAliasMockPolicyModel(),
+    )
+    graded = grade_q5_run(raw.run_dir, gold_path)
+    verified = verify_q5_graded_run(graded.run_dir, gold_path)
+    rows = _jsonl(raw.results_path)
+    llm_rows = [row for row in rows if row["system"] != Q5AgentSystem.rule.value]
+    trajectories = _jsonl(raw.run_dir / "trajectory.jsonl")
+
+    assert verified.run_id == "q5-loop-tool-rejected"
+    assert all(row["fallback_reason"] == "tool_schema_invalid" for row in llm_rows)
+    assert all(row["tool_schema_invalid_count"] == 1 for row in llm_rows)
+    assert all(row["final_action"] == "escalate_to_human" for row in llm_rows)
+    for system in (Q5AgentSystem.llm.value, Q5AgentSystem.hybrid.value):
+        events = [row for row in trajectories if row["system"] == system]
+        assert [event["event_type"] for event in events] == [
+            "tool_rejected",
+            "terminal",
+        ]
+        assert {event["step_index"] for event in events} == {1}
+
+
+def test_q5_verifier_accepts_loop_generated_timeout_and_safe_terminal(
+    tmp_path: Path,
+) -> None:
+    raw, gold_path = _pending_case_raw_run(
+        tmp_path,
+        run_id="q5-loop-timeout",
+        model=Q5DeterministicMockPolicyModel(),
+        timeout=True,
+    )
+    graded = grade_q5_run(raw.run_dir, gold_path)
+    verified = verify_q5_graded_run(graded.run_dir, gold_path)
+    rows = _jsonl(raw.results_path)
+
+    assert verified.run_id == "q5-loop-timeout"
+    assert all(row["fallback_reason"] == "tool_timeout" for row in rows)
+    assert all(row["final_action"] == "escalate_to_human" for row in rows)
+    assert {
+        (row["event_type"], row["step_index"], row.get("tool_status"))
+        for row in _jsonl(raw.run_dir / "trajectory.jsonl")
+        if row["system"] == Q5AgentSystem.llm.value
+    } == {("observation", 1, "timeout"), ("terminal", 2, None)}
+
+
+def test_q5_verifier_accepts_unresolved_guard_safe_terminal(tmp_path: Path) -> None:
+    raw, gold_path = _pending_case_raw_run(
+        tmp_path,
+        run_id="q5-loop-premature-terminal",
+        model=PrematureTerminalMockPolicyModel(),
+    )
+    graded = grade_q5_run(raw.run_dir, gold_path)
+    verify_q5_graded_run(graded.run_dir, gold_path)
+    llm_rows = [
+        row
+        for row in _jsonl(raw.results_path)
+        if row["system"] != Q5AgentSystem.rule.value
+    ]
+
+    assert all(
+        row["fallback_reason"] == "premature_terminal_unresolved_state"
+        for row in llm_rows
+    )
+    assert all(row["premature_terminal_count"] == 1 for row in llm_rows)
+    assert all(row["final_action"] == "escalate_to_human" for row in llm_rows)
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "illegal_same_step_pair",
+        "tool_status_mismatch",
+        "terminal_branch_args",
+        "policy_branch_args",
+    ],
+)
+def test_q5_verifier_rejects_rehashed_illegal_loop_event_mutations(
+    tmp_path: Path,
+    mutation: str,
+) -> None:
+    if mutation == "tool_status_mismatch":
+        raw, gold_path = _pending_case_raw_run(
+            tmp_path,
+            run_id=f"q5-loop-mutation-{mutation}",
+            model=Q5DeterministicMockPolicyModel(),
+            timeout=True,
+        )
+    else:
+        raw, gold_path = _pending_case_raw_run(
+            tmp_path,
+            run_id=f"q5-loop-mutation-{mutation}",
+            model=InvalidAliasMockPolicyModel(),
+        )
+
+    if mutation == "terminal_branch_args":
+        terminal_path = raw.run_dir / "terminal_events.jsonl"
+        terminals = _jsonl(terminal_path)
+        target = next(
+            row for row in terminals if row["system"] == Q5AgentSystem.llm.value
+        )
+        target["terminal_proposal"]["args"] = {
+            "resource_ref": "resource:payments"
+        }
+        _write_test_jsonl(terminal_path, terminals)
+        _refresh_raw_hash(raw.run_dir, terminal_path.name)
+    elif mutation == "policy_branch_args":
+        policy_path = raw.run_dir / "policy_events.jsonl"
+        policies = _jsonl(policy_path)
+        target = next(
+            row for row in policies if row["system"] == Q5AgentSystem.llm.value
+        )
+        target["accepted_proposal"]["kind"] = "terminal"
+        target["accepted_proposal"]["tool"] = None
+        target["accepted_proposal"]["action"] = "escalate_to_human"
+        target["accepted_proposal"]["args"] = {
+            "resource_ref": "resource:payments"
+        }
+        _write_test_jsonl(policy_path, policies)
+        _refresh_raw_hash(raw.run_dir, policy_path.name)
+    else:
+        trajectory_path = raw.run_dir / "trajectory.jsonl"
+        trajectories = _jsonl(trajectory_path)
+        target = next(
+            row
+            for row in trajectories
+            if row["system"] == Q5AgentSystem.llm.value
+            and row["event_type"]
+            == ("observation" if mutation == "tool_status_mismatch" else "tool_rejected")
+        )
+        if mutation == "tool_status_mismatch":
+            target["tool_status"] = "ok"
+        else:
+            target["event_type"] = "observation"
+            target["tool_status"] = "ok"
+        _write_test_jsonl(trajectory_path, trajectories)
+        _refresh_trajectory_result_hash(raw.run_dir, Q5AgentSystem.llm.value)
+
+    with pytest.raises(ValueError, match="trajectory|proposal|event pair"):
+        grade_q5_run(raw.run_dir, gold_path)
 
 
 @pytest.mark.parametrize("mutation", ["delete", "duplicate"])
@@ -764,6 +973,53 @@ def _single_case_raw_run(
     return raw, gold_path
 
 
+def _pending_case_raw_run(
+    tmp_path: Path,
+    *,
+    run_id: str,
+    model: Q5DeterministicMockPolicyModel,
+    timeout: bool = False,
+):
+    task = next(
+        task
+        for task in load_q5_tasks(TASKS_PATH)
+        if task.case_id == "q5-p4-pending"
+    )
+    source_environment = load_q5_environment(ENVIRONMENT_PATH)[task.environment_ref]
+    if timeout:
+        source_environment = source_environment.model_copy(
+            update={
+                "tool_faults": {
+                    "lookup_policy_exception": {"status": "timeout"}
+                }
+            }
+        )
+    environment = Q5EnvironmentStore.from_states([source_environment])
+    raw = run_q5_tasks(
+        [task],
+        environment,
+        list(Q5AgentSystem),
+        runtime_cases=_runtime_cases([task]),
+        settings=Q5RunSettings(
+            output_root=tmp_path,
+            run_id=run_id,
+            k=1,
+            seed=43,
+            bootstrap_resamples=10_000,
+            mode="mock",
+        ),
+        model_factory=lambda task, system, run_index: model,
+    )
+    gold_row = next(
+        line
+        for line in GOLD_PATH.read_text(encoding="utf-8").splitlines()
+        if json.loads(line)["case_id"] == task.case_id
+    )
+    gold_path = tmp_path / f"{run_id}-gold.jsonl"
+    gold_path.write_text(gold_row + "\n", encoding="utf-8")
+    return raw, gold_path
+
+
 def _single_case_graded_run(
     tmp_path: Path,
     *,
@@ -790,6 +1046,34 @@ def _refresh_raw_hash(run_dir: Path, filename: str) -> None:
         json.dumps(payload, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
+
+
+def _refresh_trajectory_result_hash(run_dir: Path, system: str) -> None:
+    trajectory_path = run_dir / "trajectory.jsonl"
+    trajectories = _jsonl(trajectory_path)
+    target_rows = [row for row in trajectories if row["system"] == system]
+    stripped = [
+        {
+            key: value
+            for key, value in row.items()
+            if key not in {"case_id", "system", "run_index"}
+        }
+        for row in target_rows
+    ]
+    canonical = json.dumps(
+        stripped,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    trajectory_sha256 = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+    results_path = run_dir / "results.jsonl"
+    results = _jsonl(results_path)
+    target_result = next(row for row in results if row["system"] == system)
+    target_result["trajectory_sha256"] = trajectory_sha256
+    _write_test_jsonl(results_path, results)
+    _refresh_raw_hash(run_dir, trajectory_path.name)
+    _refresh_raw_hash(run_dir, results_path.name)
 
 
 def _runtime_cases(tasks: list[Q5TaskInput]) -> dict[str, Q5RuntimeCaseInput]:

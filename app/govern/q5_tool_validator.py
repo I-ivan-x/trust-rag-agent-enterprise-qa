@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import re
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
@@ -73,11 +74,45 @@ class Q5ToolValidationResult(BaseModel):
     rejected_values: list[str] = Field(default_factory=list)
 
 
-_ARG_MODEL_BY_TOOL: Mapping[Q5ObservationTool, type[BaseModel]] = {
-    Q5ObservationTool.lookup_policy_exception: LookupPolicyExceptionArgs,
-    Q5ObservationTool.inspect_change_state: InspectChangeStateArgs,
-    Q5ObservationTool.inspect_incident_impact: InspectIncidentImpactArgs,
-}
+_ARG_MODEL_BY_TOOL: Mapping[Q5ObservationTool, type[BaseModel]] = MappingProxyType(
+    {
+        Q5ObservationTool.lookup_policy_exception: LookupPolicyExceptionArgs,
+        Q5ObservationTool.inspect_change_state: InspectChangeStateArgs,
+        Q5ObservationTool.inspect_incident_impact: InspectIncidentImpactArgs,
+    }
+)
+
+
+def q5_tool_args_model(tool: Q5ObservationTool) -> type[BaseModel]:
+    """Return the sole Pydantic source of truth for a tool's argument contract."""
+
+    return _ARG_MODEL_BY_TOOL[tool]
+
+
+def q5_tool_contracts(context: Q5DecisionContext) -> list[dict[str, Any]]:
+    """Build prompt contracts directly from the runtime validator models."""
+
+    grounded = q5_grounded_tool_argument_values(context=context)
+    contracts: list[dict[str, Any]] = []
+    for tool in context.available_tools:
+        schema = q5_tool_args_model(tool).model_json_schema()
+        if schema.get("additionalProperties") is not False:
+            raise RuntimeError(f"Q5 tool schema must forbid extra args: {tool.value}")
+        properties = schema.get("properties")
+        required = schema.get("required")
+        if not isinstance(properties, dict) or not isinstance(required, list):
+            raise RuntimeError(f"Q5 tool schema is incomplete: {tool.value}")
+        contracts.append(
+            {
+                "tool": tool.value,
+                "args_schema": schema,
+                "grounded_reference_values": {
+                    field: sorted(grounded.get(field, frozenset()))
+                    for field in properties
+                },
+            }
+        )
+    return contracts
 
 
 def validate_q5_tool_call(
@@ -101,7 +136,7 @@ def validate_q5_tool_call(
         return Q5ToolValidationResult(allowed=False, reason_code="tool_not_allowed")
 
     try:
-        parsed = _ARG_MODEL_BY_TOOL[tool].model_validate(dict(args))
+        parsed = q5_tool_args_model(tool).model_validate(dict(args))
     except (KeyError, ValidationError):
         return Q5ToolValidationResult(allowed=False, reason_code="schema_invalid")
 
@@ -109,8 +144,14 @@ def validate_q5_tool_call(
         key: str(value)
         for key, value in parsed.model_dump(mode="json").items()
     }
-    allowed_values = q5_allowed_tool_argument_values(task=task, context=context)
-    rejected = sorted({value for value in normalized.values() if value not in allowed_values})
+    allowed_values = q5_grounded_tool_argument_values(task=task, context=context)
+    rejected = sorted(
+        {
+            value
+            for field, value in normalized.items()
+            if value not in allowed_values.get(field, frozenset())
+        }
+    )
     if rejected:
         return Q5ToolValidationResult(
             allowed=False,
@@ -129,7 +170,22 @@ def q5_allowed_tool_argument_values(
     task: Q5TaskInput,
     context: Q5DecisionContext,
 ) -> frozenset[str]:
-    values = _valid_references(task.resource_refs)
+    """Backward-compatible flattened view of field-aware grounded references."""
+
+    values_by_field = q5_grounded_tool_argument_values(task=task, context=context)
+    return frozenset(
+        value for values in values_by_field.values() for value in values
+    )
+
+
+def q5_grounded_tool_argument_values(
+    *,
+    context: Q5DecisionContext,
+    task: Q5TaskInput | None = None,
+) -> Mapping[str, frozenset[str]]:
+    """Return only valid references, grouped by the argument field they may fill."""
+
+    values = _valid_references(task.resource_refs if task is not None else [])
     values.update(_valid_references(context.resource_refs))
     for evidence in context.authorized_evidence:
         values.update(_references_from_text(evidence.text_excerpt))
@@ -137,7 +193,14 @@ def q5_allowed_tool_argument_values(
             values.update(_references_from_relation(evidence.relation_summary))
     for observation in context.observations:
         values.update(_references_from_fields(observation.observation))
-    return frozenset(values)
+    return MappingProxyType(
+        {
+            field: frozenset(
+                value for value in values if pattern.fullmatch(value)
+            )
+            for field, pattern in _REFERENCE_FIELD_PATTERNS.items()
+        }
+    )
 
 
 def _references_from_relation(summary: str) -> set[str]:

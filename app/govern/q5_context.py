@@ -41,6 +41,7 @@ Q5_POLICY_REF_PATTERN = rf"^policy:{Q5_REFERENCE_SUFFIX_PATTERN}$"
 Q5_CHANGE_REF_PATTERN = rf"^change:{Q5_REFERENCE_SUFFIX_PATTERN}$"
 Q5_TRUSTED_IDENTIFIER_PATTERN = r"^[a-z][a-z0-9_.-]{0,63}$"
 Q5_AUDIT_IDENTIFIER_PATTERN = r"^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"
+Q5_STRUCTURED_POLICY_VERSION = "q5-structured-policy-v2"
 
 
 class Q5AuthorizedEvidence(BaseModel):
@@ -211,16 +212,22 @@ class Q5StructuredProposal(BaseModel):
 
     @model_validator(mode="after")
     def _validate_proposal_shape(self) -> Q5StructuredProposal:
+        assert_q5_no_gold_or_control_fields(self.args)
         if self.kind is Q5ProposalKind.observe:
             if self.tool is None or self.action is not None:
                 raise ValueError("observe proposal requires tool and forbids action")
+            if not self.args:
+                raise ValueError("observe proposal requires non-empty tool args")
         elif self.tool is not None or self.action is None:
             raise ValueError("terminal proposal requires action and forbids tool")
+        elif self.args:
+            raise ValueError("terminal proposal requires args to be empty")
 
         if "\n" in self.reason_summary or "\r" in self.reason_summary:
             raise ValueError("reason_summary must be one line")
+        if self.reason_code == "short_enum":
+            raise ValueError("reason_code must be a concrete code, not a placeholder")
         _require_unique(self.evidence_chunk_ids, field="evidence_chunk_ids")
-        assert_q5_no_gold_or_control_fields(self.args)
         return self
 
 
@@ -324,9 +331,12 @@ def build_q5_decision_context(
 def q5_prompt_payload(context: Q5DecisionContext) -> dict[str, Any]:
     """Return only explicitly reviewed fields; never dump the whole context blindly."""
 
+    from app.govern.q5_tool_validator import q5_tool_contracts
+
     assert_q5_trusted_observations_valid(context.observations)
     assert_q5_no_gold_or_control_fields(context.model_dump(mode="json"))
     payload = {
+        "protocol_version": Q5_STRUCTURED_POLICY_VERSION,
         "query": context.query,
         "actor_claims": {
             "role": context.actor_claims.role,
@@ -336,6 +346,7 @@ def q5_prompt_payload(context: Q5DecisionContext) -> dict[str, Any]:
         "requested_capability": context.requested_capability.value,
         "resource_refs": list(context.resource_refs),
         "available_tools": [tool.value for tool in context.available_tools],
+        "tool_contracts": q5_tool_contracts(context),
         "conditions": [condition.value for condition in context.conditions],
         "evidence_decision": context.evidence_decision,
         "authorized_evidence": [
@@ -390,12 +401,20 @@ def build_q5_prompt(context: Q5DecisionContext) -> str:
     assert_q5_no_gold_or_control_fields(payload)
     return "\n".join(
         [
-            "Choose one typed Q5 step using only the authorized runtime context below.",
-            "Do not provide chain-of-thought, authorization, or risk fields.",
-            "Return JSON only with exactly these fields:",
-            '{"kind":"observe|terminal","tool":null,"args":{},"action":null,'
-            '"evidence_chunk_ids":[],"reason_code":"short_enum",'
-            '"reason_summary":"one sentence"}',
+            f"PROTOCOL: {Q5_STRUCTURED_POLICY_VERSION}",
+            "Choose exactly one typed Q5 branch using only the authorized runtime context.",
+            "Return one JSON object only; never include chain-of-thought, authorization, "
+            "or risk fields.",
+            "OBSERVE BRANCH: kind=observe; action=null; select one available tool; "
+            "args must contain "
+            "exactly every required field from that tool's args_schema, use only that field's "
+            "grounded_reference_values, and include no additional properties.",
+            "TERMINAL BRANCH: kind=terminal; tool=null; args={}; action must be one "
+            "legal_terminal_action.",
+            "Both branches require evidence_chunk_ids, a concrete lowercase reason_code, and a "
+            "one-line reason_summary. Placeholder reason codes are invalid.",
+            "The exact seven output fields are kind, tool, args, action, evidence_chunk_ids, "
+            "reason_code, and reason_summary.",
             "RUNTIME_CONTEXT:",
             json.dumps(payload, ensure_ascii=False, sort_keys=True),
         ]

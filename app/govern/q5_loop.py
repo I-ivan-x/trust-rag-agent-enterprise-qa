@@ -59,6 +59,29 @@ class Q5AgentSystem(StrEnum):
     hybrid = "q5_hybrid_agent"
 
 
+_SIDE_EFFECT_ACTIONS = frozenset(
+    {
+        GovernanceAction.flag_stale,
+        GovernanceAction.open_remediation_ticket,
+        GovernanceAction.send_alert,
+    }
+)
+_DYNAMIC_STATE_REQUIREMENTS = (
+    (
+        frozenset({OpsCondition.config_violation, OpsCondition.policy_violation}),
+        Q5ObservationTool.lookup_policy_exception,
+    ),
+    (
+        frozenset({OpsCondition.stale_procedure, OpsCondition.missing_prereq}),
+        Q5ObservationTool.inspect_change_state,
+    ),
+    (
+        frozenset({OpsCondition.active_active_conflict}),
+        Q5ObservationTool.inspect_incident_impact,
+    ),
+)
+
+
 class Q5TrajectoryEvent(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -450,6 +473,27 @@ def _route_facts(task: Q5TaskInput, context: Q5DecisionContext) -> Q5RouteFacts:
     )
 
 
+def q5_unresolved_state_tools(
+    context: Q5DecisionContext,
+) -> frozenset[Q5ObservationTool]:
+    """Derive unresolved dynamic state from runtime-visible context facts only."""
+
+    conditions = frozenset(context.conditions)
+    available_tools = frozenset(context.available_tools)
+    observed_tools = frozenset(
+        observation.tool_name
+        for observation in context.observations
+        if observation.status in {"ok", "not_found"}
+    )
+    return frozenset(
+        tool
+        for triggering_conditions, tool in _DYNAMIC_STATE_REQUIREMENTS
+        if conditions & triggering_conditions
+        and tool in available_tools
+        and tool not in observed_tools
+    )
+
+
 def _build_context(
     task: Q5TaskInput,
     pass_result: RetrievalPassResult,
@@ -539,12 +583,16 @@ def _finalize(
     terminal_step_index = min(3, max(step_index, len(state.tool_events) + 1))
     effective = proposal
     authorized_ids = {item.chunk_id for item in context.authorized_evidence}
+    unresolved_tools = q5_unresolved_state_tools(context)
     if not set(proposal.evidence_chunk_ids).issubset(authorized_ids):
         fallback_reason = fallback_reason or "invalid_evidence_citation"
         effective = _safe_escalation(context, "invalid_citation")
     elif proposal.action not in context.legal_terminal_actions:
         fallback_reason = fallback_reason or "illegal_terminal_action"
         effective = _safe_escalation(context, "illegal_action")
+    elif proposal.action in _SIDE_EFFECT_ACTIONS and unresolved_tools:
+        fallback_reason = fallback_reason or "premature_terminal_unresolved_state"
+        effective = _safe_escalation(context, "unresolved_state")
 
     authorization = reauthorize_q5_proposal(
         effective,

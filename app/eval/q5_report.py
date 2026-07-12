@@ -16,15 +16,19 @@ def render_q5_report(summary: dict[str, Any], gates: dict[str, Any]) -> str:
         "",
         "## Systems",
         "",
-        "| system | task success | terminal correct | required obs recall | LLM calls | tokens |",
-        "| --- | ---: | ---: | ---: | ---: | ---: |",
+        "| system | task success | trajectory-qualified | terminal correct | "
+        "required obs recall | LLM calls | tokens |",
+        "| --- | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for system, metrics in sorted((summary.get("by_system") or {}).items()):
         lines.append(
-            "| {system} | {task:.4f} | {terminal:.4f} | {recall:.4f} | "
+            "| {system} | {task:.4f} | {qualified:.4f} | {terminal:.4f} | {recall:.4f} | "
             "{calls} | {tokens} |".format(
                 system=system,
                 task=float(metrics.get("task_success") or 0.0),
+                qualified=float(
+                    metrics.get("trajectory_qualified_success") or 0.0
+                ),
                 terminal=float(metrics.get("terminal_action_correct") or 0.0),
                 recall=float(metrics.get("required_observation_recall") or 0.0),
                 calls=int(metrics.get("llm_calls") or 0),
