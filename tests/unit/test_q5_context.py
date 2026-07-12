@@ -235,11 +235,40 @@ def test_q5_prompt_v2_exposes_machine_derived_tool_contracts() -> None:
     prompt = build_q5_prompt(context)
 
     assert payload["protocol_version"] == Q5_STRUCTURED_POLICY_VERSION
-    assert payload["tool_contracts"][0]["tool"] == "lookup_policy_exception"
+    contract = payload["tool_contracts"][0]
+    assert contract["tool"] == "lookup_policy_exception"
+    assert contract["args_schema"] == {
+        "additionalProperties": False,
+        "properties": {
+            "policy_ref": {
+                "pattern": (
+                    "^policy:[A-Za-z0-9](?:[A-Za-z0-9_.:/-]{0,126}"
+                    "[A-Za-z0-9])?$"
+                ),
+                "type": "string",
+            },
+            "resource_ref": {
+                "pattern": (
+                    "^resource:[A-Za-z0-9](?:[A-Za-z0-9_.:/-]{0,126}"
+                    "[A-Za-z0-9])?$"
+                ),
+                "type": "string",
+            },
+        },
+        "required": ["resource_ref", "policy_ref"],
+        "type": "object",
+    }
+    assert contract["grounded_reference_values"] == {
+        "policy_ref": ["policy:change-control"],
+        "resource_ref": ["resource:payments"],
+    }
     assert "PROTOCOL: q5-structured-policy-v2" in prompt
     assert "OBSERVE BRANCH" in prompt
     assert "TERMINAL BRANCH" in prompt
     assert "short_enum" not in prompt
+    assert '"additionalProperties": false' in prompt
+    assert '"title"' not in prompt
+    assert '"default"' not in prompt
 
 
 def test_q5_proposal_branches_require_exact_empty_or_nonempty_args() -> None:

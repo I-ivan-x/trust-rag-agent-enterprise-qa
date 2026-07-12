@@ -31,6 +31,92 @@ _REFERENCE_FIELD_PATTERNS: Mapping[str, re.Pattern[str]] = {
     "change_ref": re.compile(Q5_CHANGE_REF_PATTERN),
 }
 _REFERENCE_PATTERNS = tuple(_REFERENCE_FIELD_PATTERNS.values())
+_JSON_SCHEMA_ANNOTATION_KEYS = frozenset(
+    {
+        "$comment",
+        "default",
+        "deprecated",
+        "description",
+        "example",
+        "examples",
+        "readOnly",
+        "title",
+        "writeOnly",
+    }
+)
+_JSON_SCHEMA_KEYWORDS = frozenset(
+    {
+        "$anchor",
+        "$defs",
+        "$dynamicAnchor",
+        "$dynamicRef",
+        "$id",
+        "$ref",
+        "$schema",
+        "additionalProperties",
+        "allOf",
+        "anyOf",
+        "const",
+        "contains",
+        "contentEncoding",
+        "contentMediaType",
+        "contentSchema",
+        "dependentRequired",
+        "dependentSchemas",
+        "discriminator",
+        "else",
+        "enum",
+        "exclusiveMaximum",
+        "exclusiveMinimum",
+        "format",
+        "if",
+        "items",
+        "maxContains",
+        "maxItems",
+        "maxLength",
+        "maxProperties",
+        "maximum",
+        "minContains",
+        "minItems",
+        "minLength",
+        "minProperties",
+        "minimum",
+        "multipleOf",
+        "not",
+        "nullable",
+        "oneOf",
+        "pattern",
+        "patternProperties",
+        "prefixItems",
+        "properties",
+        "propertyNames",
+        "required",
+        "then",
+        "type",
+        "unevaluatedItems",
+        "unevaluatedProperties",
+        "uniqueItems",
+    }
+)
+_JSON_SCHEMA_MAPPING_KEYS = frozenset(
+    {"$defs", "dependentSchemas", "patternProperties", "properties"}
+)
+_JSON_SCHEMA_LIST_KEYS = frozenset({"allOf", "anyOf", "oneOf", "prefixItems"})
+_JSON_SCHEMA_CHILD_KEYS = frozenset(
+    {
+        "additionalProperties",
+        "contains",
+        "contentSchema",
+        "else",
+        "if",
+        "items",
+        "not",
+        "propertyNames",
+        "then",
+        "unevaluatedItems",
+        "unevaluatedProperties",
+    }
+)
 
 
 class LookupPolicyExceptionArgs(BaseModel):
@@ -89,19 +175,36 @@ def q5_tool_args_model(tool: Q5ObservationTool) -> type[BaseModel]:
     return _ARG_MODEL_BY_TOOL[tool]
 
 
+def q5_canonical_tool_args_schema(tool: Q5ObservationTool) -> dict[str, Any]:
+    """Derive the compact prompt schema from the runtime Pydantic validator."""
+
+    raw_schema = q5_tool_args_model(tool).model_json_schema()
+    schema = _compact_json_schema(raw_schema, path=tool.value)
+    properties = schema.get("properties")
+    required = schema.get("required")
+    if schema.get("type") != "object":
+        raise RuntimeError(f"Q5 tool args schema must be an object: {tool.value}")
+    if schema.get("additionalProperties") is not False:
+        raise RuntimeError(f"Q5 tool schema must forbid extra args: {tool.value}")
+    if not isinstance(properties, dict) or not isinstance(required, list):
+        raise RuntimeError(f"Q5 tool schema is incomplete: {tool.value}")
+    if (
+        len(required) != len(set(required))
+        or any(not isinstance(field, str) for field in required)
+        or not set(required).issubset(properties)
+    ):
+        raise RuntimeError(f"Q5 tool schema required fields are invalid: {tool.value}")
+    return schema
+
+
 def q5_tool_contracts(context: Q5DecisionContext) -> list[dict[str, Any]]:
     """Build prompt contracts directly from the runtime validator models."""
 
     grounded = q5_grounded_tool_argument_values(context=context)
     contracts: list[dict[str, Any]] = []
     for tool in context.available_tools:
-        schema = q5_tool_args_model(tool).model_json_schema()
-        if schema.get("additionalProperties") is not False:
-            raise RuntimeError(f"Q5 tool schema must forbid extra args: {tool.value}")
-        properties = schema.get("properties")
-        required = schema.get("required")
-        if not isinstance(properties, dict) or not isinstance(required, list):
-            raise RuntimeError(f"Q5 tool schema is incomplete: {tool.value}")
+        schema = q5_canonical_tool_args_schema(tool)
+        properties = schema["properties"]
         contracts.append(
             {
                 "tool": tool.value,
@@ -113,6 +216,66 @@ def q5_tool_contracts(context: Q5DecisionContext) -> list[dict[str, Any]]:
             }
         )
     return contracts
+
+
+def _compact_json_schema(
+    schema: Mapping[str, Any],
+    *,
+    path: str,
+) -> dict[str, Any]:
+    compact: dict[str, Any] = {}
+    for key in sorted(schema):
+        value = schema[key]
+        if key in _JSON_SCHEMA_ANNOTATION_KEYS:
+            continue
+        if key not in _JSON_SCHEMA_KEYWORDS:
+            raise RuntimeError(
+                f"unsupported Q5 JSON Schema keyword at {path}: {key}"
+            )
+        if key in _JSON_SCHEMA_MAPPING_KEYS:
+            if not isinstance(value, Mapping):
+                raise RuntimeError(f"invalid Q5 JSON Schema mapping at {path}.{key}")
+            compact[key] = {
+                str(name): _compact_json_schema_value(
+                    nested,
+                    path=f"{path}.{key}.{name}",
+                )
+                for name, nested in sorted(value.items(), key=lambda item: str(item[0]))
+            }
+        elif key in _JSON_SCHEMA_LIST_KEYS:
+            if not isinstance(value, list):
+                raise RuntimeError(f"invalid Q5 JSON Schema list at {path}.{key}")
+            compact[key] = [
+                _compact_json_schema_value(nested, path=f"{path}.{key}[{index}]")
+                for index, nested in enumerate(value)
+            ]
+        elif key in _JSON_SCHEMA_CHILD_KEYS:
+            compact[key] = _compact_json_schema_value(
+                value,
+                path=f"{path}.{key}",
+            )
+        else:
+            compact[key] = _canonical_json_value(value)
+    return compact
+
+
+def _compact_json_schema_value(value: Any, *, path: str) -> Any:
+    if isinstance(value, bool):
+        return value
+    if not isinstance(value, Mapping):
+        raise RuntimeError(f"invalid nested Q5 JSON Schema at {path}")
+    return _compact_json_schema(value, path=path)
+
+
+def _canonical_json_value(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        return {
+            str(key): _canonical_json_value(nested)
+            for key, nested in sorted(value.items(), key=lambda item: str(item[0]))
+        }
+    if isinstance(value, list):
+        return [_canonical_json_value(nested) for nested in value]
+    return value
 
 
 def validate_q5_tool_call(
