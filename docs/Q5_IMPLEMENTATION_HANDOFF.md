@@ -78,9 +78,11 @@
 - protocol-v1 历史 artifact 由冻结 verifier 复算，活动协议为 protocol-v2；
 - 正式 q5_dev v2 由 plan/report 窗口 author，v1 数据归档在 `data/q5/archive/dev-v1/`；
 - 有效预注册修订为 `Q5_P5_PREREG_AMENDMENT_V2.md`；
-- synthetic k=3 已证明质量、观察与安全路径成立，但 G3 token ratio 为 `0.65233`，高于冻结上限 `0.65`；
-- 下一动作仅为 Batch 5-C3：压缩由同一 Pydantic validator 导出的 prompt tool schema 表示，随后重跑 synthetic k=3；
-- 只有 synthetic G3 通过且 plan/report 复核后，才批准完整 q5_dev v2 primary real run；
+- Batch 5-C3 已由 `6f8c749` 完成并通过 plan/report 独立审核；
+- synthetic k=3 的 G3 call/token ratio 为 `0.590909 / 0.646985`，质量、安全和 observation 无退化；
+- 下一动作是 Batch 5-D：先升级 zero-request preflight 的严格 k=3 topology，再生成同 commit mock
+  锚点；机械门全部通过后执行唯一一次 DeepSeek primary real run，三个系统、`k=3`；
+- 费用/token 仅作 observability，不得限制样本、k、复验或 validity；
 - q5_test、confirmatory run、freeze 和 tag 继续锁定。
 
 ------

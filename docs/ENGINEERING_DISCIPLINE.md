@@ -196,8 +196,9 @@ Git 历史中的多条链路都保持了相似结构：
 - 全量测试为 517 passed / 1 skipped，但仍有 23 条 warning，需要继续清理依赖弃用、mock 提示和缓存权限问题。
 - 当前工作位于 `codex/q5-adaptive-agent`，Q5 晚于 `v3.0-q4-reliability`，但尚未通过 real-dev freeze，
   因而不能创建新 release tag。
-- Q5 v2 synthetic k=3 的质量、安全与 observation 指标通过，但 G3 token ratio 为 `0.65233`，略高于
-  `0.65` 冻结线；真实 DeepSeek run、q5_test 与 headline 均继续锁定。
+- Q5 v2 synthetic k=3 首次因 G3 token ratio `0.65233` 被锁；C3 在不改数据、Gold、Gate、路由或
+  baseline 的条件下压缩 schema annotation metadata，复验降至 `0.646985` 后才解锁 DeepSeek real-dev。
+  q5_test 与 headline 仍继续锁定。
 - Q4 held-out 结果真实但样本薄、同语料表面且运行过两次；它展示纪律，但不能替代下一轮独立外部评测。
 
 这些缺口不推翻前面的执行证据，但它们构成下一阶段启动前的 P0：先让仓库当前状态重新符合项目自己

@@ -2,7 +2,7 @@
 
 版本：v1
 日期：2026-07-12
-状态：**REAL RUN BLOCKED BY G3 SYNTHETIC DIAGNOSTIC**
+状态：**PRIMARY REAL-DEV K=3 AUTHORIZED**
 
 ------
 
@@ -60,7 +60,8 @@ Run：`q5-dev-v2-mock-c2-precommit-primary-k3`，324/324 trials，protocol-v2 �
 - G0 / G1 / G2 / G5 通过；G4 未运行；
 - required observation、tool schema、invalid transition 与 safety 路径均通过。
 
-因此数据和 Agent 机制已表现出预期方向，但在 token Gate 通过前不得授权 real run。
+因此数据和 Agent 机制已表现出预期方向，但在 token Gate 通过前不得授权 real run。本节记录的是
+C2 时点的阻断结果，后续 C3 复核与解锁见第 5 节。
 
 ------
 
@@ -88,3 +89,37 @@ Batch 5-C3 只允许：
 
 通过标准：四项质量/安全结果不退化，G3 call ratio `<=0.60`，token ratio `<=0.65`。若仍失败，
 返回 plan/report 诊断，不得直接运行 DeepSeek。
+
+------
+
+## 5. C3 独立审核与解锁
+
+Commit `6f8c749c32893504eddd4fa3aff537063a67bbdd` 审核通过：
+
+- Pydantic args model 仍为唯一 validator/schema 来源；
+- canonical compactor 只移除 title/default/description 等 annotation metadata；
+- 字段、类型、enum、pattern、required、`additionalProperties=false` 与 grounded values 保留；
+- 未识别 keyword、宽松根对象或不完整 schema 均 fail closed；
+- q5_dev、Gold、Gate、router、model policy 和 baseline 均未修改；
+- protocol-v2 graded run 在 HEAD 下独立重新验签通过。
+
+Synthetic k=3 对照：
+
+| Metric | C2 | C3 | Gate |
+| --- | ---: | ---: | ---: |
+| Hybrid / LLM-only call ratio | 0.590909 | 0.590909 | `<=0.60` |
+| Hybrid / LLM-only token ratio | 0.652343 | 0.646985 | `<=0.65` |
+| Hybrid tokens | 20,631 | 20,151 | - |
+| LLM-only tokens | 31,626 | 31,146 | - |
+
+质量、安全、trajectory、required observation 和一致性指标没有退化；G0/G1/G2/G3/G5 全部通过。
+Q5 专项独立复验为 157 passed，Ruff 与 uv lock 通过。活动 tasks/runtime/environment/Gold 的
+文件哈希与 C2 完全一致。
+
+据此批准 Batch 5-D 大闭环：先将 zero-request preflight 从旧的 k=1 拓扑升级为严格 k=3，生成并
+验签同 execution commit 的 synthetic k=3 锚点；全部机械门通过后，才执行唯一一次 DeepSeek
+primary q5_dev v2 real run。real run 使用完整三个系统、`k=3`。
+
+preflight 升级必须验证每个 run index 的 case/system 完整性和无重复 trial；费用/token 只作运行
+观测，不得再作为 validity blocker。该批准不包含 Xiaomi、q5_test、confirmatory run、
+implementation freeze、release tag 或 headline claim。
