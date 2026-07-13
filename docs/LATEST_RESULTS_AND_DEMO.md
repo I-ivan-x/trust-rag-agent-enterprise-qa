@@ -1,7 +1,7 @@
 # TrustRAG 最新成果与网页端 Demo 整理
 
-整理日期：2026-07-07
-当前收口版本：`v3.0-q4-reliability`
+整理日期：2026-07-13
+最新稳定标签：`v3.0-q4-reliability`；活动研发阶段：Q5 Agent Infra（未冻结）
 
 本文是项目最新展示入口：面向招聘展示、项目复盘、下一位协作者快速接手。完整实验细节仍以
 `EVALUATION_REPORT.md`、`FAILURE_ANALYSIS.md`、`TECHNICAL_DESIGN.md` 为准。
@@ -32,6 +32,7 @@ TrustRAG 是一个 reliability-first 的企业文档 RAG-Agent：它不只回答
 | Q3 `v2.0-q3-action-governance` | 信任层从“答案”升级到“有副作用的动作” | unauthorized-action blocked **1.00**；F11/F13 **0**；但 anti-gaming triad **False** | `Q3_ACTION_GOVERNANCE_DESIGN.md`、`SPEC_Q3_P8.md`、`FAILURE_ANALYSIS.md` |
 | Q4 `v3.0-q4-reliability` | Q3 负结果被机制修复翻成正结果 | held-out `ops_test` 上 precision@authorized **0.4545 -> 0.6471**；over-escalation **0.2857 -> 0.05**；triad **False -> True**；F11/F13 仍 **0** | `Q4_P4_FREEZE.md`、`Q4_P2_PREREGISTER.md`、`EVALUATION_REPORT.md` Q4 |
 | Q4 可靠性硬化 | 标准可观测与发布门禁落地 | q4-p5 trace 可导出 OpenInference/OTel span；run manifest；release gates 覆盖 F11/F13/leakage/mock/triad | `SPEC_Q4_P6_P7.md`、`TECHNICAL_DESIGN.md` ADR-016 |
+| Q5 protocol-v3 real-dev | Agent loop、安全与效率通过，但 LLM policy binding 未过门 | observation recall **1.00**；Hybrid call/token ratio **0.590909 / 0.644393**；安全 failures **0**；semantic uplift **0.083333**、within/cross **0.166667 / 0.333333**，NOT FREEZE READY | `Q5_P5_REAL_DEV_V3_NEGATIVE_DIAGNOSTIC.md`、`SPEC_Q5_P5_H_POLICY_SEMANTIC_BINDING.md` |
 
 短讲法：
 

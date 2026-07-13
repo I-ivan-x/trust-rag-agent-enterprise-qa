@@ -84,8 +84,9 @@
 - Batch 5-D 唯一 DeepSeek real-dev 已完成并有效验签，但 G1/G3 失败，裁决为 NOT FREEZE READY；
 - Batch 5-E 已完成：completion guard、v3 protocol、fixed-table=1.00 诊断与 replay 均通过审核；
 - plan/report 已冻结 crossed q5_dev v3、V3 amendment 与数据锚点；
-- 下一动作是 Batch 5-F：强规则 headline baseline、crossed metrics、v3 preflight 与完整 synthetic matrix；
-  该批 external/LLM requests 必须为 0；
+- Batch 5-F 与唯一 v3 DeepSeek real-dev 已完成并通过 artifact 审核，但 G1 与 crossed readiness 失败；
+- 下一动作是 Batch 5-H：dev-v4 clarity-controlled authoring、typed policy disposition、确定性 action
+  compilation、F18、protocol-v4 mock/preflight；该批 external/LLM requests 必须为 0；
 - 费用/token 仅作 observability，不得限制样本、k、复验或 validity；
 - q5_test、confirmatory run、freeze 和 tag 继续锁定。
 

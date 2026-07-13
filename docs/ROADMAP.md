@@ -408,7 +408,7 @@ v2 可被固定状态表完全解决后的第二次 test 前修订见 `Q5_P5_PRE
 | Q5-P2 | implementation | requested-capability 修复 + authorized rich DecisionContext | ✅ complete |
 | Q5-P3 | implementation | read-only tools + rule/LLM/hybrid bounded observation loop | ✅ complete |
 | Q5-P4 | implementation | outcome grader + metrics + bootstrap + headline gates | ✅ protocol v2 + v1 frozen verifier |
-| Q5-P5 | implementation + plan | q5_dev diagnostic/iteration + freeze | 🚧 Batch 5-E complete；crossed q5_dev v3 frozen；Batch 5-F integration pending |
+| Q5-P5 | implementation + plan | q5_dev diagnostic/iteration + freeze | 🚧 v3 real-dev valid negative；Batch 5-H policy semantic binding pending |
 | Q5-P6 | plan author + run window | freeze 后创建 q5_test；one-shot primary + confirmatory real runs | ⏳ 未解锁 |
 | Q5-P7 | plan/report | EVALUATION_REPORT / FAILURE_ANALYSIS / ADR-017+ | ⏳ |
 | Q5-P8 | plan/report + Owner | README/showcase + tag `v4.0-q5-adaptive-agent` | ⏳ |

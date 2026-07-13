@@ -183,6 +183,8 @@ Real runs require a DeepSeek-compatible API key in `.env` (see
 | [Q5_P5_PREREG_AMENDMENT_V3](docs/Q5_P5_PREREG_AMENDMENT_V3.md) | Frozen crossed-counterfactual contract, strong-rule baseline, v3 metrics, and readiness gates |
 | [Q5_P5_DEV_V3_AUTHORING_REPORT](docs/Q5_P5_DEV_V3_AUTHORING_REPORT.md) | q5_dev v3 pair design, hashes, fixed-table ceiling, pre-run, and zero-request mock evidence |
 | [SPEC_Q5_P5_F_V3_INTEGRATION](docs/SPEC_Q5_P5_F_V3_INTEGRATION.md) | Next large implementation batch for the strong headline rule baseline, crossed metrics, and v3 preflight |
+| [Q5_P5_REAL_DEV_V3_NEGATIVE_DIAGNOSTIC](docs/Q5_P5_REAL_DEV_V3_NEGATIVE_DIAGNOSTIC.md) | Valid v3 real-dev negative: observation succeeds, policy reason and action diverge, freeze remains locked |
+| [SPEC_Q5_P5_H_POLICY_SEMANTIC_BINDING](docs/SPEC_Q5_P5_H_POLICY_SEMANTIC_BINDING.md) | Protocol-v4 plan for grounded policy disposition IR, deterministic action compilation, F18, and clarity-controlled dev v4 |
 | [EVALUATION_REPORT](docs/EVALUATION_REPORT.md) | Week 6 results, contamination analysis, trade-off discussion, Q2 Phase 1 calibration, and the Q3 action-governance ablation |
 | [FAILURE_ANALYSIS](docs/FAILURE_ANALYSIS.md) | Failure taxonomy F1-F13 with trace evidence |
 | [Q3_ACTION_GOVERNANCE_DESIGN](docs/Q3_ACTION_GOVERNANCE_DESIGN.md) | Q3 action-governance design freeze (evidence-aware ops copilot, risk-tiered autonomy) |

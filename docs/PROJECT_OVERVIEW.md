@@ -10,8 +10,8 @@ reliability & evaluation* — I don't just wire up RAG and tool-calls, I make an
 **measurable, auditable, regression-gated, and honest about its own limits.**
 
 Built solo across four tagged quarters (Q1–Q4) plus the active Q5 Agent Infra phase,
-with a 543-test suite (542 passing, one opt-in real smoke skipped at the Q5 v3 authoring
-checkpoint). LLM work uses external models for evaluated runs; retrieval is real
+with a 553-test suite (552 passing, one opt-in real smoke skipped at the Q5 v3 real-dev
+diagnostic checkpoint). LLM work uses external models for evaluated runs; retrieval is real
 (`bge-small-en-v1.5` + `bge-reranker-base` + Qdrant + BM25/RRF).
 
 ---
@@ -103,7 +103,8 @@ number is guarded by a code contract, not discipline.
 - Active Q5 design + implementation handoff: `docs/Q5_ADAPTIVE_AGENT_DESIGN.md`,
   `docs/Q5_P5_PREREG_AMENDMENT_V2.md`, `docs/Q5_P5_PREREG_AMENDMENT_V3.md`,
   `docs/Q5_P5_DEV_V3_AUTHORING_REPORT.md`, `docs/Q5_P5_DEV_V2_READINESS.md`,
-  `docs/Q5_IMPLEMENTATION_HANDOFF.md`
+  `docs/Q5_P5_REAL_DEV_V3_NEGATIVE_DIAGNOSTIC.md`,
+  `docs/SPEC_Q5_P5_H_POLICY_SEMANTIC_BINDING.md`, `docs/Q5_IMPLEMENTATION_HANDOFF.md`
 - Failure taxonomy F1–F13 with trace evidence: `docs/FAILURE_ANALYSIS.md`
 - Design decisions (ADR-001…016) with measured consequences: `docs/TECHNICAL_DESIGN.md`
 - Q4 negative→positive design + pre-registration: `docs/Q4_RELIABILITY_DESIGN.md`, `docs/Q4_P2_PREREGISTER.md`
