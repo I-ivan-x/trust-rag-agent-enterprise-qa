@@ -39,7 +39,7 @@ def test_q5_committed_v2_artifact_fixture_is_verifiable(tmp_path: Path) -> None:
     assert verified.real_run is False
 
 
-def test_q5_new_v3_artifact_is_verifiable(tmp_path: Path) -> None:
+def test_q5_new_v4_artifact_is_verifiable(tmp_path: Path) -> None:
     graded, gold_path = _single_case_graded_run(
         tmp_path,
         run_id="q5-v3-versioned",
@@ -53,12 +53,12 @@ def test_q5_new_v3_artifact_is_verifiable(tmp_path: Path) -> None:
     summary = _json(graded.run_dir / "summary.json")
     gates = _json(graded.run_dir / "gates.json")
 
-    assert verified.protocol_version == "v3"
-    assert raw_manifest["schema_version"] == "q5-run-manifest-v3"
-    assert raw_manifest["prompt"]["version"] == "q5-structured-policy-v3"
-    assert graded_manifest["schema_version"] == "q5-graded-manifest-v3"
-    assert summary["schema_version"] == "q5-metrics-v3"
-    assert gates["schema_version"] == "q5-gates-v3"
+    assert verified.protocol_version == "v4"
+    assert raw_manifest["schema_version"] == "q5-run-manifest-v4"
+    assert raw_manifest["prompt"]["version"] == "q5-structured-policy-v4"
+    assert graded_manifest["schema_version"] == "q5-graded-manifest-v4"
+    assert summary["schema_version"] == "q5-metrics-v4"
+    assert gates["schema_version"] == "q5-gates-v4"
 
 
 def test_q5_v1_artifacts_are_verification_only_for_current_grader(

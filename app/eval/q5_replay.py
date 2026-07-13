@@ -190,6 +190,21 @@ def replay_q5_graded_run(
         )
         for system in _SEMANTIC_SYSTEMS
     }
+    f18_by_system = {
+        system: sorted(
+            {
+                str(row["case_id"])
+                for row in graded
+                if row.get("system") == system
+                and row.get("stratum") == "semantic"
+                and int(row.get("required_observation_count") or 0) > 0
+                and int(row.get("completed_required_observation_count") or 0)
+                == int(row.get("required_observation_count") or 0)
+                and row.get("terminal_action_correct") is not True
+            }
+        )
+        for system in _SEMANTIC_SYSTEMS
+    }
     report = {
         "schema_version": "q5-real-artifact-replay-v1",
         "source": {
@@ -215,6 +230,7 @@ def replay_q5_graded_run(
         "cross_policy_semantic_sensitivity": None,
         "fixed_table_solvability": fixed_table_solvability,
         "post_observation_terminal_rate": terminal_rates,
+        "F18_policy_binding_failure_case_ids": f18_by_system,
     }
     if require_batch5d_signature:
         _assert_batch5d_signature(report)

@@ -26,7 +26,9 @@ def render_q5_report(summary: dict[str, Any], gates: dict[str, Any]) -> str:
             "{within} | {cross} | {calls} | {tokens} |".format(
                 system=system,
                 task=float(metrics.get("task_success") or 0.0),
-                qualified=float(metrics.get("trajectory_qualified_success") or 0.0),
+                qualified=float(
+                    metrics.get("trajectory_qualified_success") or 0.0
+                ),
                 terminal=float(metrics.get("terminal_action_correct") or 0.0),
                 recall=float(metrics.get("required_observation_recall") or 0.0),
                 within=_pair_cell(metrics, "within_policy"),
@@ -36,7 +38,9 @@ def render_q5_report(summary: dict[str, Any], gates: dict[str, Any]) -> str:
             )
         )
     analytic_controls = summary.get("analytic_controls") or {}
-    control = analytic_controls.get("q5_escalate_everything_control")
+    control = analytic_controls.get(
+        "q5_escalate_everything_control"
+    )
     lines.extend(["", "## Analytic control", ""])
     if isinstance(control, dict):
         lines.extend(
@@ -58,7 +62,8 @@ def render_q5_report(summary: dict[str, Any], gates: dict[str, Any]) -> str:
                 "",
                 "## Fixed-table baseline diagnostic",
                 "",
-                f"- Shared runtime core: `{fixed.get('shared_runtime_core', 'missing')}`",
+                "- Shared runtime core: "
+                f"`{fixed.get('shared_runtime_core', 'missing')}`",
                 "- Fixed-table solvability: "
                 f"`{float(fixed.get('fixed_table_solvability') or 0.0):.4f}`",
                 f"- Semantic trials: `{int(fixed.get('semantic_trial_count') or 0)}`",
@@ -72,25 +77,6 @@ def render_q5_report(summary: dict[str, Any], gates: dict[str, Any]) -> str:
             "cross failures: "
             f"`{','.join(metrics.get('cross_policy_failure_case_ids') or []) or 'none'}`"
         )
-    disposition_control = analytic_controls.get("q5_disposition_always_human_review_control")
-    lines.extend(["", "## Policy binding", ""])
-    for system, metrics in sorted((summary.get("by_system") or {}).items()):
-        lines.append(
-            f"- `{system}` grounded: "
-            f"`{float(metrics.get('policy_binding_grounded_rate') or 0.0):.4f}`; "
-            "disposition/action consistency: "
-            f"`{float(metrics.get('policy_disposition_action_consistency') or 0.0):.4f}`; "
-            f"F18: `{int(metrics.get('F18') or 0)}`; failures: "
-            f"`{metrics.get('policy_binding_failures') or []}`"
-        )
-    disposition_control_rejected = (
-        isinstance(disposition_control, dict)
-        and disposition_control.get("anti_gaming_failure") is True
-    )
-    lines.append(
-        "- Always-human-review control rejected: "
-        f"`{disposition_control_rejected}`"
-    )
     lines.extend(["", "## Gates", ""])
     for name, gate in (gates.get("gates") or {}).items():
         status = "PASS" if gate.get("passed") else "FAIL"

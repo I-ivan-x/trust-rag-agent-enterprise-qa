@@ -12,6 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.eval.q5_dataset import load_q5_gold
 from app.eval.q5_metrics import (
+    Q5_ALWAYS_HUMAN_REVIEW_CONTROL,
     Q5_ESCALATE_EVERYTHING_CONTROL,
     compute_q5_metrics,
     evaluate_q5_gates,
@@ -32,6 +33,11 @@ from app.eval.q5_protocol_v2 import (
     evaluate_q5_gates_v2,
     grade_q5_artifact_rows_v2,
     render_q5_report_v2,
+)
+from app.eval.q5_protocol_v3 import (
+    compute_q5_metrics_v3,
+    evaluate_q5_gates_v3,
+    render_q5_report_v3,
 )
 from app.eval.q5_report import render_q5_report
 from app.llm.llm_client import (
@@ -130,7 +136,7 @@ class Q5VerifiedRunManifest(BaseModel):
     mode: str
     mock_used: bool
     real_run: bool
-    protocol_version: Literal["v1", "v2", "v3"]
+    protocol_version: Literal["v1", "v2", "v3", "v4"]
 
 
 def canonical_q5_model_family(identity: Q5ModelIdentity) -> str:
@@ -462,16 +468,26 @@ def verify_q5_graded_run(
     for key, raw in raw_by_trial.items():
         if any(graded_by_trial[key].get(field) != value for field, value in raw.items()):
             raise ValueError(f"Q5 graded/raw runtime provenance mismatch: {key}")
+    control_systems = (
+        {Q5_ESCALATE_EVERYTHING_CONTROL, Q5_ALWAYS_HUMAN_REVIEW_CONTROL}
+        if protocol.version is Q5ProtocolVersion.v4
+        else {Q5_ESCALATE_EVERYTHING_CONTROL}
+    )
     expected_controls = {
-        (case_id, run_index)
+        (system, case_id, run_index)
+        for system in control_systems
         for case_id in raw_manifest["case_ids"]
         for run_index in range(1, int(raw_manifest["k"]) + 1)
     }
-    actual_controls: set[tuple[str, int]] = set()
+    actual_controls: set[tuple[str, str, int]] = set()
     for row in analytic_rows:
-        if row.get("system") != Q5_ESCALATE_EVERYTHING_CONTROL:
+        if row.get("system") not in control_systems:
             raise ValueError("Q5 analytic control has an invalid system identity")
-        key = (str(row.get("case_id") or ""), int(row.get("run_index") or 0))
+        key = (
+            str(row.get("system") or ""),
+            str(row.get("case_id") or ""),
+            int(row.get("run_index") or 0),
+        )
         if key in actual_controls:
             raise ValueError(f"duplicate Q5 analytic-control row: {key}")
         actual_controls.add(key)
@@ -498,6 +514,13 @@ def verify_q5_graded_run(
         )
         expected_gates = evaluate_q5_gates_v2(summary)
         expected_report = render_q5_report_v2(summary, gates)
+    elif protocol.version is Q5ProtocolVersion.v3:
+        recomputed = compute_q5_metrics_v3(
+            [*graded_rows, *analytic_rows],
+            **metric_kwargs,
+        )
+        expected_gates = evaluate_q5_gates_v3(summary)
+        expected_report = render_q5_report_v3(summary, gates)
     else:
         recomputed = compute_q5_metrics(
             [*graded_rows, *analytic_rows],
@@ -508,8 +531,14 @@ def verify_q5_graded_run(
     control = recomputed["by_system"].pop(Q5_ESCALATE_EVERYTHING_CONTROL, None)
     if control is None:
         raise ValueError("Q5 graded run is missing escalate-everything analytic control")
+    disposition_control = recomputed["by_system"].pop(
+        Q5_ALWAYS_HUMAN_REVIEW_CONTROL,
+        None,
+    )
+    if protocol.version is Q5ProtocolVersion.v4 and disposition_control is None:
+        raise ValueError("Q5 graded run is missing disposition anti-gaming control")
     fixed_table_control = recomputed.pop("fixed_table_control", None)
-    if protocol.version is Q5ProtocolVersion.v3 and not isinstance(
+    if protocol.version in {Q5ProtocolVersion.v3, Q5ProtocolVersion.v4} and not isinstance(
         fixed_table_control,
         dict,
     ):
@@ -529,7 +558,11 @@ def verify_q5_graded_run(
         Q5_ESCALATE_EVERYTHING_CONTROL
     ) != control:
         raise ValueError("Q5 summary analytic-control provenance mismatch")
-    if protocol.version is Q5ProtocolVersion.v3 and (
+    if protocol.version is Q5ProtocolVersion.v4 and (
+        summary.get("analytic_controls") or {}
+    ).get(Q5_ALWAYS_HUMAN_REVIEW_CONTROL) != disposition_control:
+        raise ValueError("Q5 disposition-control provenance mismatch")
+    if protocol.version in {Q5ProtocolVersion.v3, Q5ProtocolVersion.v4} and (
         summary.get("analytic_controls") or {}
     ).get("q5_semantic_table_rule_control") != fixed_table_control:
         raise ValueError("Q5 fixed-table control provenance mismatch")

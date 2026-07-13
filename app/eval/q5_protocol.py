@@ -12,6 +12,7 @@ class Q5ProtocolVersion(StrEnum):
     v1 = "v1"
     v2 = "v2"
     v3 = "v3"
+    v4 = "v4"
 
 
 @dataclass(frozen=True)
@@ -48,10 +49,19 @@ Q5_PROTOCOL_V3 = Q5ProtocolSpec(
     gates_schema="q5-gates-v3",
     prompt_version="q5-structured-policy-v3",
 )
+Q5_PROTOCOL_V4 = Q5ProtocolSpec(
+    version=Q5ProtocolVersion.v4,
+    run_manifest_schema="q5-run-manifest-v4",
+    graded_manifest_schema="q5-graded-manifest-v4",
+    metrics_schema="q5-metrics-v4",
+    gates_schema="q5-gates-v4",
+    prompt_version="q5-structured-policy-v4",
+)
 _PROTOCOL_BY_RUN_SCHEMA = {
     Q5_PROTOCOL_V1.run_manifest_schema: Q5_PROTOCOL_V1,
     Q5_PROTOCOL_V2.run_manifest_schema: Q5_PROTOCOL_V2,
     Q5_PROTOCOL_V3.run_manifest_schema: Q5_PROTOCOL_V3,
+    Q5_PROTOCOL_V4.run_manifest_schema: Q5_PROTOCOL_V4,
 }
 
 

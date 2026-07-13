@@ -202,7 +202,7 @@ def _observe_payload(
             "kind": "observe",
             "tool": "lookup_policy_exception",
             "args": {"resource_ref": resource_ref, "policy_ref": policy_ref},
-            "action": None,
+            "decision_basis": None,
             "evidence_chunk_ids": ["allowed-policy-chunk"],
             "reason_code": "check_exception",
             "reason_summary": "The current exception state must be observed.",
@@ -210,13 +210,27 @@ def _observe_payload(
     )
 
 
-def _terminal_payload(action: GovernanceAction) -> str:
+def _terminal_payload(
+    action: GovernanceAction,
+    observation_request_id: str | None = "q5-tool-0001",
+) -> str:
+    disposition = {
+        GovernanceAction.flag_stale: "mark_stale",
+        GovernanceAction.open_remediation_ticket: "remediate",
+        GovernanceAction.send_alert: "notify",
+        GovernanceAction.escalate_to_human: "human_review",
+        GovernanceAction.no_op: "no_action",
+    }[action]
     return json.dumps(
         {
             "kind": "terminal",
             "tool": None,
             "args": {},
-            "action": action.value,
+            "decision_basis": {
+                "policy_disposition": disposition,
+                "evidence_chunk_id": "allowed-policy-chunk",
+                "observation_request_id": observation_request_id,
+            },
             "evidence_chunk_ids": ["allowed-policy-chunk"],
             "reason_code": "terminal_decision",
             "reason_summary": "The trusted state supports this terminal action.",
@@ -233,7 +247,7 @@ def _typed_observe_payload(
             "kind": "observe",
             "tool": tool.value,
             "args": args,
-            "action": None,
+            "decision_basis": None,
             "evidence_chunk_ids": ["allowed-policy-chunk"],
             "reason_code": "runtime_state_required",
             "reason_summary": "The typed runtime state must be observed.",
@@ -341,7 +355,7 @@ def test_q5_three_agents_share_environment_tools_and_validator_contract() -> Non
         ),
     ],
 )
-def test_q5_each_valid_tool_contract_completes_context_v3_before_terminal(
+def test_q5_each_valid_tool_contract_completes_context_v4_before_terminal(
     condition: OpsCondition,
     capability: RequestedCapability,
     tool: Q5ObservationTool,
@@ -374,7 +388,7 @@ def test_q5_each_valid_tool_contract_completes_context_v3_before_terminal(
     assert result.fallback_reason is None
     assert result.observation_count == 1
     assert [trace["context_version"] for trace in result.context_traces] == [1, 2]
-    assert "q5-structured-policy-v3" in model.prompts[0]
+    assert "q5-structured-policy-v4" in model.prompts[0]
     assert tool.value in model.prompts[0]
     assert "TERMINAL-ONLY STATE" in model.prompts[1]
     assert '"allowed_proposal_kinds": ["terminal"]' in model.prompts[1]
@@ -384,7 +398,7 @@ def test_q5_each_valid_tool_contract_completes_context_v3_before_terminal(
 
 
 def test_q5_hybrid_deterministic_case_avoids_llm() -> None:
-    model = QueueModel([_terminal_payload(GovernanceAction.send_alert)])
+    model = QueueModel([_terminal_payload(GovernanceAction.send_alert, None)])
     task = _task(resource_refs=[], available_tools=[])
     result, _ = _run(Q5AgentSystem.hybrid, model=model, task=task)
 
@@ -506,7 +520,7 @@ def test_q5_empty_observation_args_fail_closed_before_tool_execution() -> None:
 
 
 def test_q5_illegal_action_is_explicit_and_safely_escalated() -> None:
-    model = QueueModel([_terminal_payload(GovernanceAction.send_alert)])
+    model = QueueModel([_terminal_payload(GovernanceAction.send_alert, None)])
     result, _ = _run(Q5AgentSystem.llm, model=model)
 
     assert result.final_action is GovernanceAction.escalate_to_human
@@ -585,7 +599,10 @@ def test_q5_timeout_does_not_complete_key_and_identical_retry_can_succeed() -> N
         [
             _observe_payload(),
             _observe_payload(),
-            _terminal_payload(GovernanceAction.open_remediation_ticket),
+            _terminal_payload(
+                GovernanceAction.open_remediation_ticket,
+                "q5-tool-0002",
+            ),
         ]
     )
     result, _ = _run(
@@ -654,7 +671,7 @@ def test_q5_same_tool_with_different_args_is_not_a_duplicate() -> None:
 def test_q5_terminal_stops_loop_and_forbids_later_tools() -> None:
     model = QueueModel(
         [
-            _terminal_payload(GovernanceAction.open_remediation_ticket),
+            _terminal_payload(GovernanceAction.open_remediation_ticket, None),
             _observe_payload(),
         ]
     )
@@ -678,7 +695,9 @@ def test_q5_unresolved_guard_uses_runtime_context_facts_only() -> None:
 
 
 def test_q5_investigate_side_effect_cannot_bypass_reauthorization() -> None:
-    model = QueueModel([_terminal_payload(GovernanceAction.open_remediation_ticket)])
+    model = QueueModel(
+        [_terminal_payload(GovernanceAction.open_remediation_ticket, None)]
+    )
     task = _task(capability=RequestedCapability.investigate)
     result, sink = _run(Q5AgentSystem.llm, model=model, task=task)
 

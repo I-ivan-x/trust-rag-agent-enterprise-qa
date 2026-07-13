@@ -6,6 +6,8 @@ import re
 
 from app.govern.conditions import GovernanceAction, OpsCondition
 from app.govern.q5_context import (
+    Q5_ACTION_TO_DISPOSITION,
+    Q5DecisionBasis,
     Q5DecisionContext,
     Q5ProposalKind,
     Q5StructuredProposal,
@@ -261,12 +263,32 @@ def _terminal(
         elif GovernanceAction.no_op in context.legal_terminal_actions:
             action = GovernanceAction.no_op
             reason_code = "legal_noop_fallback"
+    evidence_ids = [item.chunk_id for item in context.authorized_evidence[:5]]
+    successful_request = next(
+        (
+            item.request_id
+            for item in reversed(context.observations)
+            if item.status in {"ok", "not_found"}
+        ),
+        None,
+    )
+    grounded = bool(evidence_ids) and (not context.terminal_only or successful_request)
     return Q5StructuredProposal(
         kind=Q5ProposalKind.terminal,
         tool=None,
         args={},
         action=action,
-        evidence_chunk_ids=[item.chunk_id for item in context.authorized_evidence[:5]],
+        decision_basis=(
+            Q5DecisionBasis(
+                policy_disposition=Q5_ACTION_TO_DISPOSITION[action],
+                evidence_chunk_id=evidence_ids[0],
+                observation_request_id=successful_request,
+            )
+            if grounded
+            else None
+        ),
+        disposition_source="rule" if grounded else "fallback",
+        evidence_chunk_ids=evidence_ids,
         reason_code=reason_code,
         reason_summary="The deterministic policy selected a terminal governance action.",
     )

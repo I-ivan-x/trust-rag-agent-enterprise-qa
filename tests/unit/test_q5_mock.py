@@ -23,7 +23,7 @@ def test_q5_mock_uses_policy_exception_scope_from_runtime_facts() -> None:
         },
     )
 
-    assert proposal["action"] == "open_remediation_ticket"
+    assert proposal["decision_basis"]["policy_disposition"] == "remediate"
 
 
 def test_q5_mock_treats_planned_and_completed_change_states_differently() -> None:
@@ -56,8 +56,8 @@ def test_q5_mock_treats_planned_and_completed_change_states_differently() -> Non
         },
     )
 
-    assert planned["action"] == "escalate_to_human"
-    assert completed["action"] == "flag_stale"
+    assert planned["decision_basis"]["policy_disposition"] == "human_review"
+    assert completed["decision_basis"]["policy_disposition"] == "mark_stale"
 
 
 def test_q5_mock_does_not_send_production_alert_for_staging_impact() -> None:
@@ -76,7 +76,7 @@ def test_q5_mock_does_not_send_production_alert_for_staging_impact() -> None:
         },
     )
 
-    assert proposal["action"] == "escalate_to_human"
+    assert proposal["decision_basis"]["policy_disposition"] == "human_review"
 
 
 def test_q5_mock_keeps_deterministic_conflict_action_without_probe() -> None:
@@ -88,7 +88,7 @@ def test_q5_mock_keeps_deterministic_conflict_action_without_probe() -> None:
 
     proposal = _generate(context)
 
-    assert proposal["action"] == "send_alert"
+    assert proposal["decision_basis"]["policy_disposition"] == "notify"
 
 
 def _second_step(

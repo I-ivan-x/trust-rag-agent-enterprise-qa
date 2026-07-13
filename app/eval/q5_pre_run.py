@@ -111,7 +111,7 @@ class Q5PreRunReport(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    schema_version: Literal["q5-pre-run-v3"] = "q5-pre-run-v3"
+    schema_version: Literal["q5-pre-run-v4"] = "q5-pre-run-v4"
     dataset_partition: Literal["dev", "test"]
     valid: bool
     task_count: int = Field(ge=0)
@@ -360,13 +360,15 @@ def check_q5_pre_run(
                 "q5_dev environment origin disclosure must be deterministic_synthetic",
             )
         if dataset_partition == "dev" and (
-            provenance.get("dataset_version") != "v3"
+            provenance.get("dataset_version") != "v4"
+            or provenance.get("revision_reason")
+            != "post_v3_real_dev_clarity_revision"
             or provenance.get("semantic_design")
             != "crossed_counterfactual_latin_square_v1"
         ):
             fail(
                 "corpus_provenance",
-                "q5_dev provenance must declare the v3 crossed-counterfactual design",
+                "q5_dev provenance must declare the v4 clarity-revision design",
             )
         warnings.append(
             "q5_dev corpus and tool state are disclosed synthetic diagnostic data; "

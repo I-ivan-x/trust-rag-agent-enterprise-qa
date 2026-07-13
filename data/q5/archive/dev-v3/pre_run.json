@@ -21,23 +21,23 @@
   "errors": [],
   "gold_count": 36,
   "namespace_counts": {
-    "q5_dev_adversarial_v4": 12,
-    "q5_dev_public_v4": 24
+    "q5_dev_adversarial_v3": 12,
+    "q5_dev_public_v3": 24
   },
   "runtime_case_count": 36,
-  "schema_version": "q5-pre-run-v4",
+  "schema_version": "q5-pre-run-v3",
   "semantic_family_counts": {
     "semantic_family_change_state": 4,
     "semantic_family_incident_impact": 4,
     "semantic_family_policy_exception": 4
   },
   "sha256": {
-    "corpus": "b7efa151110ec08be1840090463fd3667508b6c651bf04a90fabf4d2350ec105",
+    "corpus": "fbb70816da16ecbf123b2f7ebbb25978692462e8a9a5e7714d5ea3c8678b64d7",
     "environment": "dd9371eb0f09e15db3b2c46c743ecabfd19cc4c9339c15eabd7076f11192fe89",
     "gold": "3dd75f63a9d97761f9c47a24f6ae0710e67a4f86b45b5efc6bc181c7eddd777b",
-    "manifest": "92da3089be6bb8db86a8bfc3e90b0d22bb1cf545b0f2c927c4fcd1ef2e96aa64",
-    "runtime_cases": "8f663c8d52dc4e561c8418a779f07ad9d39c384e371b901208894275f41c77d1",
-    "tasks": "af7b7f3ba8f6403bc9e824cd6d68a29850e5ad2475cd96d41c0f5a58ce6e08e2"
+    "manifest": "75934cc45a33d13f5eca720c9000babe0f63f1f00bddb0f43155d5bb37251b78",
+    "runtime_cases": "3a528896e096662f9fe5bd68280807db229827392e74cecb05ecffba2d021c49",
+    "tasks": "bafd1e7a416526229a919b223f4ccdc771175c72c0d928b5e28c9485840da0be"
   },
   "source_origin_counts": {
     "generated": 46

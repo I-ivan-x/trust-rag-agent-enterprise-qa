@@ -5,6 +5,7 @@ from copy import deepcopy
 import pytest
 
 from app.eval.q5_metrics import (
+    Q5_ALWAYS_HUMAN_REVIEW_CONTROL,
     Q5_BOOTSTRAP_MIN_RESAMPLES,
     Q5_ESCALATE_EVERYTHING_CONTROL,
     Q5_HYBRID_SYSTEM,
@@ -355,7 +356,14 @@ def _headline_summary() -> dict:
                 "task_success": 0.2,
                 "escalation_rate": 1.0,
                 "over_escalation_rate": 0.8,
-            }
+            },
+            Q5_ALWAYS_HUMAN_REVIEW_CONTROL: {
+                "anti_gaming_ok": False,
+                "anti_gaming_failure": True,
+                "task_success": 0.2,
+                "escalation_rate": 1.0,
+                "over_escalation_rate": 0.8,
+            },
         },
         "by_model_role": {
             "primary": {

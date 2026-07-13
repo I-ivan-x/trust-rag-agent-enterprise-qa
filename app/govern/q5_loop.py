@@ -13,6 +13,7 @@ from app.govern.executor import execute_governance_action
 from app.govern.q5_context import (
     Q5AuthorizationVerdict,
     Q5DecisionContext,
+    Q5PolicyDisposition,
     Q5ProposalKind,
     Q5StructuredProposal,
     Q5TrustedObservation,
@@ -100,6 +101,8 @@ class Q5TrajectoryEvent(BaseModel):
     tool: Q5ObservationTool | None = None
     tool_status: Q5ToolStatus | None = None
     action: GovernanceAction | None = None
+    policy_disposition: Q5PolicyDisposition | None = None
+    disposition_source: Literal["model", "rule", "fallback"] | None = None
     authorization_reason: str | None = None
     q4_validator_verdict: Literal["accepted", "rejected", "not_run"] = "not_run"
     q4_validator_reject_reason: str | None = None
@@ -721,6 +724,12 @@ def _finalize(
             reason_code=fallback_reason or effective.reason_code,
             proposal_kind=Q5ProposalKind.terminal,
             action=final_action,
+            policy_disposition=(
+                effective.decision_basis.policy_disposition
+                if effective.decision_basis is not None
+                else None
+            ),
+            disposition_source=effective.disposition_source,
             authorization_reason=authorization.reason_code,
             q4_validator_verdict="accepted" if q4_validation.ok else "rejected",
             q4_validator_reject_reason=q4_validation.reject_reason,
@@ -742,12 +751,9 @@ def _finalize(
         terminal_proposal_count=1,
         step_count=terminal_step_index,
         llm_calls=state.llm_calls,
-        duplicate_successful_observation_count=(
-            state.duplicate_successful_observation_count
-        ),
+        duplicate_successful_observation_count=(state.duplicate_successful_observation_count),
         post_observation_terminal_rate=(
-            state.terminal_selected_from_terminal_only
-            / state.terminal_only_prompt_count
+            state.terminal_selected_from_terminal_only / state.terminal_only_prompt_count
             if state.terminal_only_prompt_count
             else None
         ),
@@ -764,6 +770,8 @@ def _safe_escalation(
         tool=None,
         args={},
         action=GovernanceAction.escalate_to_human,
+        decision_basis=None,
+        disposition_source="fallback",
         evidence_chunk_ids=[item.chunk_id for item in context.authorized_evidence[:5]],
         reason_code=reason_code,
         reason_summary="The bounded Q5 loop stopped safely and escalated for review.",

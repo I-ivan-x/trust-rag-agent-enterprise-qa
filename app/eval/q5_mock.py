@@ -11,7 +11,7 @@ class Q5DeterministicMockPolicyModel:
     """Choose from runtime context only; this model has no gold or stratum input."""
 
     provider = "deterministic_mock"
-    model_name = "q5-runtime-policy-v1"
+    model_name = "q5-runtime-policy-v4"
     mock_used = True
 
     def generate(self, prompt: str) -> str:
@@ -71,6 +71,7 @@ class Q5DeterministicMockPolicyModel:
                 _legal_or_escalate(action, legal_actions),
                 evidence_ids,
                 "policy_state_applied",
+                observations,
             )
 
         if conditions & {"stale_procedure", "missing_prereq"}:
@@ -93,6 +94,7 @@ class Q5DeterministicMockPolicyModel:
                     "escalate_to_human",
                     evidence_ids,
                     "change_state_needs_review",
+                    observations,
                 )
             action = (
                 "flag_stale"
@@ -103,6 +105,7 @@ class Q5DeterministicMockPolicyModel:
                 _legal_or_escalate(action, legal_actions),
                 evidence_ids,
                 "stale_state_applied",
+                observations,
             )
 
         if "broken_xref" in conditions:
@@ -142,6 +145,7 @@ class Q5DeterministicMockPolicyModel:
                 _legal_or_escalate(action, legal_actions),
                 evidence_ids,
                 "incident_state_applied",
+                observations,
             )
 
         return _terminal(
@@ -216,7 +220,7 @@ def _observe(
             "kind": "observe",
             "tool": tool,
             "args": args,
-            "action": None,
+            "decision_basis": None,
             "evidence_chunk_ids": evidence_ids,
             "reason_code": reason_code,
             "reason_summary": (
@@ -227,13 +231,39 @@ def _observe(
     )
 
 
-def _terminal(action: str, evidence_ids: list[str], reason_code: str) -> str:
+def _terminal(
+    action: str,
+    evidence_ids: list[str],
+    reason_code: str,
+    observations: list[Any] | None = None,
+) -> str:
+    disposition = {
+        "flag_stale": "mark_stale",
+        "open_remediation_ticket": "remediate",
+        "send_alert": "notify",
+        "escalate_to_human": "human_review",
+        "no_op": "no_action",
+    }[action]
+    request_id = next(
+        (
+            str(item["request_id"])
+            for item in reversed(observations or [])
+            if isinstance(item, dict)
+            and item.get("status") in {"ok", "not_found"}
+            and item.get("request_id")
+        ),
+        None,
+    )
     return json.dumps(
         {
             "kind": "terminal",
             "tool": None,
             "args": {},
-            "action": action,
+            "decision_basis": {
+                "policy_disposition": disposition,
+                "evidence_chunk_id": evidence_ids[0],
+                "observation_request_id": request_id,
+            },
             "evidence_chunk_ids": evidence_ids,
             "reason_code": reason_code,
             "reason_summary": "The typed runtime state supports this terminal decision.",

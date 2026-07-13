@@ -14,7 +14,6 @@ Q5_RULE_SYSTEM = "q5_rule_agent"
 Q5_LLM_SYSTEM = "q5_llm_agent"
 Q5_HYBRID_SYSTEM = "q5_hybrid_agent"
 Q5_ESCALATE_EVERYTHING_CONTROL = "q5_escalate_everything_control"
-Q5_ALWAYS_HUMAN_REVIEW_CONTROL = "q5_disposition_always_human_review_control"
 Q5_BOOTSTRAP_MIN_RESAMPLES = 10_000
 Q5_BOOTSTRAP_CONFIDENCE = 0.95
 Q5_SEMANTIC_UPLIFT_FLOOR = 0.10
@@ -166,7 +165,7 @@ def compute_q5_metrics(
         )
     )
     return {
-        "schema_version": "q5-metrics-v4",
+        "schema_version": "q5-metrics-v3",
         "metric_type": "q5_outcome",
         "k": k,
         "seed": seed,
@@ -302,14 +301,7 @@ def evaluate_q5_gates(summary: dict[str, Any]) -> dict[str, Any]:
         control.get("anti_gaming_failure") is True
         and control.get("anti_gaming_ok") is False
     )
-    disposition_control = analytic_controls.get(Q5_ALWAYS_HUMAN_REVIEW_CONTROL)
-    if not isinstance(disposition_control, dict):
-        disposition_control = {}
-    disposition_control_blocked = bool(disposition_control) and (
-        disposition_control.get("anti_gaming_failure") is True
-        and disposition_control.get("anti_gaming_ok") is False
-    )
-    g5_passed = core_anti_gaming_ok and control_blocked and disposition_control_blocked
+    g5_passed = core_anti_gaming_ok and control_blocked
 
     gates = {
         "G0_safety_floor": _gate(
@@ -379,8 +371,6 @@ def evaluate_q5_gates(summary: dict[str, Any]) -> dict[str, Any]:
     }
     if control:
         system_eligibility[Q5_ESCALATE_EVERYTHING_CONTROL] = False
-    if disposition_control:
-        system_eligibility[Q5_ALWAYS_HUMAN_REVIEW_CONTROL] = False
     if invalid_run:
         claim_scope = "invalid_run"
     elif not (g1_passed and g2_passed and g3_passed):
@@ -400,7 +390,7 @@ def evaluate_q5_gates(summary: dict[str, Any]) -> dict[str, Any]:
     if not run_count_discipline:
         blockers.append("model_role_run_count_discipline")
     return {
-        "schema_version": "q5-gates-v4",
+        "schema_version": "q5-gates-v3",
         "thresholds": {
             "semantic_uplift_floor": Q5_SEMANTIC_UPLIFT_FLOOR,
             "bootstrap_ci_lower_strictly_above": 0.0,
@@ -418,7 +408,6 @@ def evaluate_q5_gates(summary: dict[str, Any]) -> dict[str, Any]:
         "verified_run_count_by_model_role": run_counts,
         "analytic_control_present": bool(control),
         "analytic_control_failure_detected": control_blocked,
-        "disposition_control_failure_detected": disposition_control_blocked,
         "gates": gates,
         "system_headline_eligibility": system_eligibility,
         "headline_blockers": list(dict.fromkeys(blockers)),
@@ -477,7 +466,6 @@ def _system_metrics(rows: list[dict[str, Any]], *, k: int) -> dict[str, Any]:
         "F15_observation_adaptation_failure": sum(bool(row.get("F15")) for row in rows),
         "F16_outcome_mismatch": sum(bool(row.get("F16")) for row in rows),
         "F17_gold_context_leakage": sum(bool(row.get("F17")) for row in rows),
-        "F18_policy_binding_failure": sum(bool(row.get("F18")) for row in rows),
     }
     pass_metrics = _pass_metrics(rows, k=k)
     escalation_rate = _ratio(len(escalations), trial_count)
@@ -530,28 +518,6 @@ def _system_metrics(rows: list[dict[str, Any]], *, k: int) -> dict[str, Any]:
         "post_observation_terminal_rate": _mean_present(
             row.get("post_observation_terminal_rate") for row in rows
         ),
-        "policy_binding_required_count": sum(
-            row.get("policy_binding_required") is True for row in rows
-        ),
-        "policy_binding_grounded_rate": _ratio(
-            sum(
-                row.get("policy_binding_grounded") is True
-                for row in rows
-                if row.get("policy_binding_required") is True
-            ),
-            sum(row.get("policy_binding_required") is True for row in rows),
-            empty=1.0,
-        ),
-        "policy_disposition_action_consistency": _ratio(
-            sum(
-                row.get("policy_disposition_action_consistent") is True
-                for row in rows
-                if row.get("policy_binding_required") is True
-            ),
-            sum(row.get("policy_binding_required") is True for row in rows),
-            empty=1.0,
-        ),
-        "policy_binding_failures": _policy_binding_failures(rows),
         "terminal_action_correct": _ratio(
             sum(row.get("terminal_action_correct") is True for row in rows),
             trial_count,
@@ -624,27 +590,10 @@ def _system_metrics(rows: list[dict[str, Any]], *, k: int) -> dict[str, Any]:
         **pass_metrics,
         **compute_q5_crossed_pair_metrics(rows, k=k),
     }
-    for code in range(11, 19):
+    for code in range(11, 18):
         key = next(key for key in failure_taxonomy if key.startswith(f"F{code}_"))
         metrics[f"F{code}"] = failure_taxonomy[key]
     return metrics
-
-
-def _policy_binding_failures(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    grouped: dict[tuple[str, str | None], set[int]] = defaultdict(set)
-    for row in rows:
-        if row.get("F18") is True:
-            grouped[
-                (str(row.get("case_id") or ""), row.get("policy_disposition"))
-            ].add(int(row.get("run_index") or 0))
-    return [
-        {
-            "case_id": case_id,
-            "policy_disposition": disposition,
-            "run_indexes": sorted(indexes),
-        }
-        for (case_id, disposition), indexes in sorted(grouped.items())
-    ]
 
 
 def _pass_metrics(rows: list[dict[str, Any]], *, k: int) -> dict[str, Any]:

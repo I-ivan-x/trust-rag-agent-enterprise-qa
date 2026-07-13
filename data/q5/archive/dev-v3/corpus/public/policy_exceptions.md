@@ -14,7 +14,7 @@ resource:checkout-exporter violates policy:change-control. The current exception
 
 ## q5-dev-s02-doc
 
-resource:settlement-worker violates policy:change-control. The current exception state must be observed. A matching active waiver pauses remediation for human review; a waiver for another deployment scope requires a remediation ticket because the violation remains actionable.
+resource:settlement-worker violates policy:change-control. The current exception state must be observed. A matching active waiver pauses remediation for human review; a waiver for another deployment scope leaves the violation actionable.
 
 ## q5-dev-s03-doc
 

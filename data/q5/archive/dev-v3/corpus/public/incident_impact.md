@@ -34,11 +34,11 @@ resource:catalog-routing-prod has active routing authority 2. The notification p
 
 ## q5-dev-s11-1-doc
 
-resource:notification-routing-prod has active routing authority 1. The failover policy suppresses a duplicate outage alert while automation is active and routes outage ownership to human review; early production degradation requires an alert.
+resource:notification-routing-prod has active routing authority 1. The failover policy suppresses a duplicate outage alert while automation is active; early production degradation requires an alert.
 
 ## q5-dev-s11-2-doc
 
-resource:notification-routing-prod has active routing authority 2. The failover policy suppresses a duplicate outage alert while automation is active and routes outage ownership to human review; early production degradation requires an alert.
+resource:notification-routing-prod has active routing authority 2. The failover policy suppresses a duplicate outage alert while automation is active; early production degradation requires an alert.
 
 ## q5-dev-s12-1-doc
 

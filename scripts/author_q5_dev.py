@@ -1,5 +1,5 @@
 # ruff: noqa: E402
-"""Author the formal 36-case q5_dev v3 dataset and static pre-run receipt."""
+"""Author the formal 36-case q5_dev v4 clarity-revision dataset."""
 
 from __future__ import annotations
 
@@ -48,8 +48,8 @@ from app.schemas.retrieval import RetrievedChunk
 from app.workflow.state import RetrievalPassResult
 
 AUTHOR = "q5-plan-report-v3"
-PUBLIC_NAMESPACE = "q5_dev_public_v3"
-ADVERSARIAL_NAMESPACE = "q5_dev_adversarial_v3"
+PUBLIC_NAMESPACE = "q5_dev_public_v4"
+ADVERSARIAL_NAMESPACE = "q5_dev_adversarial_v4"
 ALL_ACTIONS = tuple(action.value for action in GovernanceAction)
 _CAPABILITY_ACTION = {
     RequestedCapability.document_maintenance: GovernanceAction.flag_stale,
@@ -287,7 +287,7 @@ def _retrieved_chunk(
         line_start=1,
         line_end=1,
         status=DocumentStatus.active,
-        version="q5-dev-v1",
+        version="q5-dev-v4",
         allowed_roles=list(evidence.allowed_roles),
         access_level=evidence.access_level,
         corpus_source=(
@@ -610,7 +610,8 @@ def _semantic_specs() -> list[CaseSpec]:
             tools=policy_tool,
             policy_text=(
                 "A matching active waiver pauses remediation for human review; a waiver "
-                "for another deployment scope leaves the violation actionable."
+                "for another deployment scope requires a remediation ticket because the "
+                "violation remains actionable."
             ),
             policy_variant="matching_waiver_pauses",
             within_policy_group="policy_waiver",
@@ -761,7 +762,8 @@ def _semantic_specs() -> list[CaseSpec]:
             tools=incident_tool,
             policy_text=(
                 "The failover policy suppresses a duplicate outage alert while automation "
-                "is active; early production degradation requires an alert."
+                "is active and routes outage ownership to human review; early production "
+                "degradation requires an alert."
             ),
             policy_variant="degradation_pages",
             within_policy_group="incident_failover",
@@ -1318,9 +1320,10 @@ def _write_corpus(root: Path, specs: list[CaseSpec]) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("\n".join(rows).rstrip() + "\n", encoding="utf-8")
     provenance = {
-        "schema_version": "q5-corpus-provenance-v3",
+        "schema_version": "q5-corpus-provenance-v4",
         "dataset": "q5_dev",
-        "dataset_version": "v3",
+        "dataset_version": "v4",
+        "revision_reason": "post_v3_real_dev_clarity_revision",
         "document_content_origin": "generated_synthetic",
         "environment_state_origin": "deterministic_synthetic",
         "disclosure": (

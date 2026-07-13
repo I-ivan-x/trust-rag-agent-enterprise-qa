@@ -34,7 +34,7 @@ DEEPSEEK_INPUT_CACHE_MISS_USD_PER_MILLION = 0.14
 DEEPSEEK_OUTPUT_USD_PER_MILLION = 0.28
 INPUT_TOKEN_RESERVATION_PER_CALL = 8_192
 MAX_Q5_POLICY_STEPS = 3
-Q5_REAL_PREFLIGHT_SCHEMA = "q5-real-preflight-v3"
+Q5_REAL_PREFLIGHT_SCHEMA = "q5-real-preflight-v4"
 Q5_REAL_K = 3
 Q5_REAL_CASE_COUNT = 36
 Q5_REAL_SYSTEMS = (
@@ -42,13 +42,13 @@ Q5_REAL_SYSTEMS = (
     "q5_llm_agent",
     "q5_hybrid_agent",
 )
-Q5_V3_AUTHORING_SHA256 = {
-    "tasks": "bafd1e7a416526229a919b223f4ccdc771175c72c0d928b5e28c9485840da0be",
-    "runtime_cases": "3a528896e096662f9fe5bd68280807db229827392e74cecb05ecffba2d021c49",
+Q5_V4_AUTHORING_SHA256 = {
+    "tasks": "af7b7f3ba8f6403bc9e824cd6d68a29850e5ad2475cd96d41c0f5a58ce6e08e2",
+    "runtime_cases": "8f663c8d52dc4e561c8418a779f07ad9d39c384e371b901208894275f41c77d1",
     "environment": "dd9371eb0f09e15db3b2c46c743ecabfd19cc4c9339c15eabd7076f11192fe89",
     "gold": "3dd75f63a9d97761f9c47a24f6ae0710e67a4f86b45b5efc6bc181c7eddd777b",
-    "corpus": "fbb70816da16ecbf123b2f7ebbb25978692462e8a9a5e7714d5ea3c8678b64d7",
-    "manifest": "75934cc45a33d13f5eca720c9000babe0f63f1f00bddb0f43155d5bb37251b78",
+    "corpus": "b7efa151110ec08be1840090463fd3667508b6c651bf04a90fabf4d2350ec105",
+    "manifest": "92da3089be6bb8db86a8bfc3e90b0d22bb1cf545b0f2c927c4fcd1ef2e96aa64",
 }
 Q5_HISTORICAL_REAL_RUNS = (
     (
@@ -60,6 +60,11 @@ Q5_HISTORICAL_REAL_RUNS = (
         Path("data/eval_runs/q5-dev-v2-real-deepseek-v4-flash-2224fc4-primary-k3"),
         Path("data/q5/archive/dev-v2/gold.jsonl"),
         "v2",
+    ),
+    (
+        Path("data/eval_runs/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3"),
+        Path("data/q5/archive/dev-v3/gold.jsonl"),
+        "v3",
     ),
 )
 
@@ -92,9 +97,9 @@ def main(argv: Sequence[str] | None = None) -> dict[str, object]:
     if not worktree_clean:
         errors.append("worktree is not clean")
     if (Path("data/q5") / "test").exists():
-        errors.append("formal q5_test exists and is forbidden in Batch 5-F")
+        errors.append("formal q5_test exists and is forbidden in Batch 5-H")
     if args.provider != "deepseek" or args.model != "deepseek-v4-flash":
-        errors.append("Batch 5-F primary identity must be deepseek/deepseek-v4-flash")
+        errors.append("Batch 5-H primary identity must be deepseek/deepseek-v4-flash")
     if args.temperature != 0.0 or args.thinking_mode != "disabled":
         errors.append("controlled Q5 primary requires temperature=0 and thinking=disabled")
     if args.max_output_tokens != 512 or args.timeout_seconds != 30.0:
@@ -107,8 +112,8 @@ def main(argv: Sequence[str] | None = None) -> dict[str, object]:
     pre_run = check_q5_pre_run(args.dataset_root, dataset_partition="dev")
     if not pre_run.valid:
         errors.extend(f"dataset pre-run: {message}" for message in pre_run.errors)
-    if pre_run.sha256 != Q5_V3_AUTHORING_SHA256:
-        errors.append("q5_dev v3 authoring hashes do not match the frozen report")
+    if pre_run.sha256 != Q5_V4_AUTHORING_SHA256:
+        errors.append("q5_dev v4 authoring hashes do not match the frozen report")
     tasks = load_q5_tasks(args.dataset_root / "tasks.jsonl")
     if len(tasks) != Q5_REAL_CASE_COUNT:
         errors.append(
@@ -130,19 +135,19 @@ def main(argv: Sequence[str] | None = None) -> dict[str, object]:
                 f"mock={verified_mock.git_commit_sha} execution={commit}"
             )
         if (
-            verified_mock.protocol_version != "v3"
+            verified_mock.protocol_version != "v4"
             or verified_mock.mode != "mock"
             or not verified_mock.mock_used
             or verified_mock.real_run
         ):
-            errors.append("mock anchor must be a verified protocol-v3 mock run")
+            errors.append("mock anchor must be a verified protocol-v4 mock run")
 
     mock_summary: Mapping[str, Any] = {}
     mock_gates: Mapping[str, Any] = {}
     try:
         mock_summary = q5_read_json(args.mock_run / "summary.json")
         mock_gates = q5_read_json(args.mock_run / "gates.json")
-        _validate_v3_mock_metrics(mock_summary, mock_gates)
+        _validate_v4_mock_metrics(mock_summary, mock_gates)
     except (OSError, TypeError, ValueError) as exc:
         errors.append(f"mock metric anchor invalid: {exc}")
 
@@ -262,7 +267,7 @@ def main(argv: Sequence[str] | None = None) -> dict[str, object]:
             "protocol_version": (
                 verified_mock.protocol_version if verified_mock is not None else None
             ),
-            "authoring_sha256": dict(Q5_V3_AUTHORING_SHA256),
+            "authoring_sha256": dict(Q5_V4_AUTHORING_SHA256),
             "strong_rule_semantic_baseline": (
                 ((mock_summary.get("by_system") or {}).get("q5_rule_agent") or {})
                 .get("trajectory_qualified_success_by_stratum", {})
@@ -486,16 +491,16 @@ def _validate_mock_topology(
     }
 
 
-def _validate_v3_mock_metrics(
+def _validate_v4_mock_metrics(
     summary: Mapping[str, Any],
     gates: Mapping[str, Any],
 ) -> None:
-    """Require a fully verified v3 mechanism anchor; G1 may remain negative."""
+    """Require a fully verified v4 mechanism anchor; G1 may remain negative."""
 
-    if summary.get("schema_version") != "q5-metrics-v3":
-        raise ValueError("mock summary must use q5-metrics-v3")
-    if gates.get("schema_version") != "q5-gates-v3":
-        raise ValueError("mock gates must use q5-gates-v3")
+    if summary.get("schema_version") != "q5-metrics-v4":
+        raise ValueError("mock summary must use q5-metrics-v4")
+    if gates.get("schema_version") != "q5-gates-v4":
+        raise ValueError("mock gates must use q5-gates-v4")
     by_system = summary.get("by_system")
     if not isinstance(by_system, Mapping) or set(by_system) != set(Q5_REAL_SYSTEMS):
         raise ValueError("mock summary must contain the exact three-system matrix")
@@ -524,6 +529,8 @@ def _validate_v3_mock_metrics(
     for system in ("q5_llm_agent", "q5_hybrid_agent"):
         if by_system[system].get("post_observation_terminal_rate") != 1.0:
             raise ValueError(f"post-observation terminal rate must equal 1.00: {system}")
+        if by_system[system].get("policy_disposition_action_consistency") != 1.0:
+            raise ValueError(f"disposition/action consistency must equal 1.00: {system}")
     gate_payload = gates.get("gates")
     if not isinstance(gate_payload, Mapping):
         raise ValueError("mock gate payload is missing")

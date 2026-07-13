@@ -33,15 +33,13 @@ from app.workflow.state import RetrievalPassResult
 Q5_EXCERPT_CHAR_LIMIT = 600
 Q5_AUTHORIZED_TEXT_CHAR_LIMIT = 4_000
 Q5_RELATION_SUMMARY_CHAR_LIMIT = 400
-Q5_REFERENCE_SUFFIX_PATTERN = (
-    r"[A-Za-z0-9](?:[A-Za-z0-9_.:/-]{0,126}[A-Za-z0-9])?"
-)
+Q5_REFERENCE_SUFFIX_PATTERN = r"[A-Za-z0-9](?:[A-Za-z0-9_.:/-]{0,126}[A-Za-z0-9])?"
 Q5_RESOURCE_REF_PATTERN = rf"^resource:{Q5_REFERENCE_SUFFIX_PATTERN}$"
 Q5_POLICY_REF_PATTERN = rf"^policy:{Q5_REFERENCE_SUFFIX_PATTERN}$"
 Q5_CHANGE_REF_PATTERN = rf"^change:{Q5_REFERENCE_SUFFIX_PATTERN}$"
 Q5_TRUSTED_IDENTIFIER_PATTERN = r"^[a-z][a-z0-9_.-]{0,63}$"
 Q5_AUDIT_IDENTIFIER_PATTERN = r"^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"
-Q5_STRUCTURED_POLICY_VERSION = "q5-structured-policy-v3"
+Q5_STRUCTURED_POLICY_VERSION = "q5-structured-policy-v4"
 
 
 class Q5AuthorizedEvidence(BaseModel):
@@ -100,9 +98,7 @@ class Q5IncidentImpactObservation(BaseModel):
 
 
 Q5TypedObservation = (
-    Q5PolicyExceptionObservation
-    | Q5ChangeStateObservation
-    | Q5IncidentImpactObservation
+    Q5PolicyExceptionObservation | Q5ChangeStateObservation | Q5IncidentImpactObservation
 )
 _TRUSTED_OBSERVATION_MODEL_BY_TOOL: Mapping[
     Q5ObservationTool,
@@ -133,9 +129,7 @@ class Q5TrustedObservation(BaseModel):
         if self.status in {"timeout", "invalid"} and self.observation is not None:
             raise ValueError(f"{self.status} observation must not contain a payload")
         if self.observation is not None:
-            _TRUSTED_OBSERVATION_MODEL_BY_TOOL[self.tool_name].model_validate(
-                self.observation
-            )
+            _TRUSTED_OBSERVATION_MODEL_BY_TOOL[self.tool_name].model_validate(self.observation)
         return self
 
 
@@ -163,9 +157,7 @@ class Q5DecisionContext(BaseModel):
     conditions: list[OpsCondition] = Field(default_factory=list)
     evidence_decision: Literal["sufficient", "insufficient"]
     authorized_evidence: list[Q5AuthorizedEvidence] = Field(default_factory=list)
-    blocked_evidence_metadata: list[Q5BlockedEvidenceMetadata] = Field(
-        default_factory=list
-    )
+    blocked_evidence_metadata: list[Q5BlockedEvidenceMetadata] = Field(default_factory=list)
     observations: list[Q5TrustedObservation] = Field(default_factory=list)
     legal_terminal_actions: list[GovernanceAction] = Field(default_factory=list)
     terminal_only: bool = False
@@ -198,8 +190,78 @@ class Q5ProposalKind(StrEnum):
     terminal = "terminal"
 
 
+class Q5PolicyDisposition(StrEnum):
+    mark_stale = "mark_stale"
+    remediate = "remediate"
+    notify = "notify"
+    human_review = "human_review"
+    no_action = "no_action"
+
+
+class Q5DecisionBasis(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    policy_disposition: Q5PolicyDisposition
+    evidence_chunk_id: str = Field(min_length=1)
+    observation_request_id: str | None = Field(
+        default=None,
+        pattern=Q5_AUDIT_IDENTIFIER_PATTERN,
+    )
+
+
+Q5_DISPOSITION_TO_ACTION: Mapping[Q5PolicyDisposition, GovernanceAction] = MappingProxyType(
+    {
+        Q5PolicyDisposition.mark_stale: GovernanceAction.flag_stale,
+        Q5PolicyDisposition.remediate: GovernanceAction.open_remediation_ticket,
+        Q5PolicyDisposition.notify: GovernanceAction.send_alert,
+        Q5PolicyDisposition.human_review: GovernanceAction.escalate_to_human,
+        Q5PolicyDisposition.no_action: GovernanceAction.no_op,
+    }
+)
+Q5_ACTION_TO_DISPOSITION: Mapping[GovernanceAction, Q5PolicyDisposition] = MappingProxyType(
+    {action: disposition for disposition, action in Q5_DISPOSITION_TO_ACTION.items()}
+)
+
+
+def compile_q5_policy_disposition(
+    disposition: Q5PolicyDisposition,
+) -> GovernanceAction:
+    """Compile the semantic IR through the frozen, context-free bijection."""
+
+    return Q5_DISPOSITION_TO_ACTION[disposition]
+
+
+class Q5ModelProposal(BaseModel):
+    """Exact protocol-v4 model output; actions remain host-owned."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    kind: Q5ProposalKind
+    tool: Q5ObservationTool | None = None
+    args: dict[str, Any] = Field(default_factory=dict)
+    decision_basis: Q5DecisionBasis | None = None
+    evidence_chunk_ids: list[str] = Field(default_factory=list)
+    reason_code: str = Field(pattern=r"^[a-z][a-z0-9_]{0,63}$")
+    reason_summary: str = Field(min_length=1, max_length=240)
+
+    @model_validator(mode="after")
+    def _validate_model_shape(self) -> Q5ModelProposal:
+        assert_q5_no_gold_or_control_fields(self.args)
+        if self.kind is Q5ProposalKind.observe:
+            if self.tool is None or not self.args or self.decision_basis is not None:
+                raise ValueError("observe proposal requires tool args and forbids decision_basis")
+        elif self.tool is not None or self.args or self.decision_basis is None:
+            raise ValueError("terminal proposal requires decision_basis and forbids tool args")
+        if "\n" in self.reason_summary or "\r" in self.reason_summary:
+            raise ValueError("reason_summary must be one line")
+        if self.reason_code == "short_enum":
+            raise ValueError("reason_code must be concrete")
+        _require_unique(self.evidence_chunk_ids, field="evidence_chunk_ids")
+        return self
+
+
 class Q5StructuredProposal(BaseModel):
-    """Strict LLM output contract; risk and authorization remain code-owned."""
+    """Host-owned proposal after v4 disposition compilation."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -207,6 +269,8 @@ class Q5StructuredProposal(BaseModel):
     tool: Q5ObservationTool | None = None
     args: dict[str, Any] = Field(default_factory=dict)
     action: GovernanceAction | None = None
+    decision_basis: Q5DecisionBasis | None = None
+    disposition_source: Literal["model", "rule", "fallback"] | None = None
     evidence_chunk_ids: list[str] = Field(default_factory=list)
     reason_code: str = Field(pattern=r"^[a-z][a-z0-9_]{0,63}$")
     reason_summary: str = Field(min_length=1, max_length=240)
@@ -215,14 +279,21 @@ class Q5StructuredProposal(BaseModel):
     def _validate_proposal_shape(self) -> Q5StructuredProposal:
         assert_q5_no_gold_or_control_fields(self.args)
         if self.kind is Q5ProposalKind.observe:
-            if self.tool is None or self.action is not None:
+            if (
+                self.tool is None
+                or self.action is not None
+                or self.decision_basis is not None
+                or self.disposition_source is not None
+            ):
                 raise ValueError("observe proposal requires tool and forbids action")
             if not self.args:
                 raise ValueError("observe proposal requires non-empty tool args")
-        elif self.tool is not None or self.action is None:
+        elif self.tool is not None or self.action is None or self.disposition_source is None:
             raise ValueError("terminal proposal requires action and forbids tool")
         elif self.args:
             raise ValueError("terminal proposal requires args to be empty")
+        elif self.disposition_source in {"model", "rule"} and self.decision_basis is None:
+            raise ValueError("selected disposition requires grounded decision_basis")
 
         if "\n" in self.reason_summary or "\r" in self.reason_summary:
             raise ValueError("reason_summary must be one line")
@@ -250,24 +321,20 @@ class Q5AuthorizationVerdict(BaseModel):
     tool: Q5ObservationTool | None = None
 
 
-_SAFE_TERMINAL_ACTIONS = frozenset(
-    {GovernanceAction.no_op, GovernanceAction.escalate_to_human}
-)
+_SAFE_TERMINAL_ACTIONS = frozenset({GovernanceAction.no_op, GovernanceAction.escalate_to_human})
 Q5_CAPABILITY_TO_ACTIONS: Mapping[
     RequestedCapability,
     frozenset[GovernanceAction],
-] = MappingProxyType({
-    RequestedCapability.document_maintenance: frozenset(
-        {GovernanceAction.flag_stale}
-    ),
-    RequestedCapability.remediation_management: frozenset(
-        {GovernanceAction.open_remediation_ticket}
-    ),
-    RequestedCapability.incident_response: frozenset(
-        {GovernanceAction.send_alert}
-    ),
-    RequestedCapability.investigate: _SAFE_TERMINAL_ACTIONS,
-})
+] = MappingProxyType(
+    {
+        RequestedCapability.document_maintenance: frozenset({GovernanceAction.flag_stale}),
+        RequestedCapability.remediation_management: frozenset(
+            {GovernanceAction.open_remediation_ticket}
+        ),
+        RequestedCapability.incident_response: frozenset({GovernanceAction.send_alert}),
+        RequestedCapability.investigate: _SAFE_TERMINAL_ACTIONS,
+    }
+)
 _OBSERVATION_ROLES = frozenset().union(*DEFAULT_AUTHORIZED_ROLES.values())
 _CONTROL_ONLY_FIELDS = frozenset(
     {
@@ -302,9 +369,7 @@ def build_q5_decision_context(
         pass_result.acl_decision.surviving_chunks,
         pass_result.acl_decision.blocked_chunks,
     )
-    authorized_evidence = _authorized_evidence(
-        pass_result.acl_decision.surviving_chunks
-    )
+    authorized_evidence = _authorized_evidence(pass_result.acl_decision.surviving_chunks)
     blocked_metadata = _blocked_metadata(pass_result.acl_decision.blocked_chunks)
     legal_actions = legal_q5_terminal_actions(
         actor_claims,
@@ -394,9 +459,7 @@ def q5_prompt_payload(context: Q5DecisionContext) -> dict[str, Any]:
             }
             for item in context.observations
         ],
-        "legal_terminal_actions": [
-            action.value for action in context.legal_terminal_actions
-        ],
+        "legal_terminal_actions": [action.value for action in context.legal_terminal_actions],
         "remaining_observation_budget": context.remaining_observation_budget,
         "remaining_terminal_budget": context.remaining_terminal_budget,
     }
@@ -413,17 +476,17 @@ def build_q5_prompt(context: Q5DecisionContext) -> str:
         [
             "TERMINAL-ONLY STATE: required runtime observations are complete; "
             "kind=observe is forbidden.",
-            "TERMINAL BRANCH: kind=terminal; tool=null; args={}; action must be one "
-            "legal_terminal_action.",
+            "TERMINAL BRANCH: kind=terminal; tool=null; args={}; provide one grounded "
+            "decision_basis and do not output an action.",
         ]
         if context.terminal_only
         else [
-            "OBSERVE BRANCH: kind=observe; action=null; select one available tool; "
+            "OBSERVE BRANCH: kind=observe; decision_basis=null; select one available tool; "
             "args must contain exactly every required field from that tool's args_schema, "
             "use only that field's grounded_reference_values, and include no additional "
             "properties.",
-            "TERMINAL BRANCH: kind=terminal; tool=null; args={}; action must be one "
-            "legal_terminal_action.",
+            "TERMINAL BRANCH: kind=terminal; tool=null; args={}; provide one grounded "
+            "decision_basis and do not output an action.",
         ]
     )
     return "\n".join(
@@ -432,11 +495,18 @@ def build_q5_prompt(context: Q5DecisionContext) -> str:
             "Choose exactly one typed Q5 branch using only the authorized runtime context.",
             "Return one JSON object only; never include chain-of-thought, authorization, "
             "or risk fields.",
+            "For a terminal decision, compare every policy branch in authorized evidence "
+            "against the query and trusted observation, select the single policy effect "
+            "that actually applies, then choose exactly one policy_disposition. Do not "
+            "choose from state keywords alone.",
+            "Disposition meanings: human/manual/ownership review -> human_review; explicit "
+            "remediation -> remediate; explicit stale marking -> mark_stale; explicit alert "
+            "or notification -> notify; explicit no action -> no_action.",
             *branch_contract,
             "Both branches require evidence_chunk_ids, a concrete lowercase reason_code, and a "
             "one-line reason_summary. Placeholder reason codes are invalid.",
-            "The exact seven output fields are kind, tool, args, action, evidence_chunk_ids, "
-            "reason_code, and reason_summary.",
+            "The exact seven output fields are kind, tool, args, decision_basis, "
+            "evidence_chunk_ids, reason_code, and reason_summary.",
             "RUNTIME_CONTEXT:",
             json.dumps(payload, ensure_ascii=False, sort_keys=True),
         ]
@@ -445,9 +515,55 @@ def build_q5_prompt(context: Q5DecisionContext) -> str:
 
 def parse_q5_structured_proposal(
     payload: str | Mapping[str, Any],
-) -> Q5StructuredProposal:
+) -> Q5ModelProposal:
     parsed: Any = json.loads(payload) if isinstance(payload, str) else dict(payload)
-    return Q5StructuredProposal.model_validate(parsed)
+    return Q5ModelProposal.model_validate(parsed)
+
+
+def compile_q5_model_proposal(
+    proposal: Q5ModelProposal,
+    context: Q5DecisionContext,
+) -> Q5StructuredProposal:
+    """Ground and compile a v4 model proposal before any authorization gate."""
+
+    if proposal.kind is Q5ProposalKind.observe:
+        return Q5StructuredProposal(
+            kind=proposal.kind,
+            tool=proposal.tool,
+            args=proposal.args,
+            action=None,
+            decision_basis=None,
+            disposition_source=None,
+            evidence_chunk_ids=proposal.evidence_chunk_ids,
+            reason_code=proposal.reason_code,
+            reason_summary=proposal.reason_summary,
+        )
+    basis = proposal.decision_basis
+    assert basis is not None
+    authorized = {item.chunk_id for item in context.authorized_evidence}
+    if basis.evidence_chunk_id not in authorized:
+        raise ValueError("decision_basis evidence is not authorized")
+    if basis.evidence_chunk_id not in proposal.evidence_chunk_ids:
+        raise ValueError("decision_basis evidence must be cited")
+    successful = {
+        item.request_id for item in context.observations if item.status in {"ok", "not_found"}
+    }
+    required_observation = bool(context.terminal_only)
+    if required_observation and basis.observation_request_id not in successful:
+        raise ValueError("decision_basis observation request is not current and successful")
+    if basis.observation_request_id is not None and basis.observation_request_id not in successful:
+        raise ValueError("decision_basis observation request is stale or failed")
+    return Q5StructuredProposal(
+        kind=proposal.kind,
+        tool=None,
+        args={},
+        action=compile_q5_policy_disposition(basis.policy_disposition),
+        decision_basis=basis,
+        disposition_source="model",
+        evidence_chunk_ids=proposal.evidence_chunk_ids,
+        reason_code=proposal.reason_code,
+        reason_summary=proposal.reason_summary,
+    )
 
 
 def legal_q5_terminal_actions(
@@ -541,15 +657,11 @@ def build_q5_context_trace(
         "available_tools": [tool.value for tool in context.available_tools],
         "conditions": [condition.value for condition in context.conditions],
         "evidence_decision": context.evidence_decision,
-        "authorized_evidence_ids": [
-            item.chunk_id for item in context.authorized_evidence
-        ],
+        "authorized_evidence_ids": [item.chunk_id for item in context.authorized_evidence],
         "blocked_metadata_ids": [
             item.opaque_chunk_id for item in context.blocked_evidence_metadata
         ],
-        "legal_terminal_actions": [
-            action.value for action in context.legal_terminal_actions
-        ],
+        "legal_terminal_actions": [action.value for action in context.legal_terminal_actions],
         "terminal_only": context.terminal_only,
         "remaining_observation_budget": context.remaining_observation_budget,
         "remaining_terminal_budget": context.remaining_terminal_budget,
@@ -606,9 +718,7 @@ def _assert_acl_partition_disjoint(
     blocked_ids = {result.chunk.chunk_id for result in blocked_chunks}
     overlap = sorted(surviving_ids & blocked_ids)
     if overlap:
-        raise ValueError(
-            "ACL surviving_chunks and blocked_chunks overlap: " + ", ".join(overlap)
-        )
+        raise ValueError("ACL surviving_chunks and blocked_chunks overlap: " + ", ".join(overlap))
 
 
 def _blocked_metadata(

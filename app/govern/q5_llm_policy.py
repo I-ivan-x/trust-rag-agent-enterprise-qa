@@ -10,6 +10,7 @@ from typing import Any
 from app.govern.q5_context import (
     Q5DecisionContext,
     build_q5_prompt,
+    compile_q5_model_proposal,
     parse_q5_structured_proposal,
 )
 from app.govern.q5_policy import Q5PolicyModel, Q5PolicyStep
@@ -41,7 +42,8 @@ class Q5LLMAgentPolicy:
             )
         raw_hash = _payload_hash(raw)
         try:
-            proposal = parse_q5_structured_proposal(raw)
+            model_proposal = parse_q5_structured_proposal(raw)
+            proposal = compile_q5_model_proposal(model_proposal, context)
         except (json.JSONDecodeError, TypeError):
             return Q5PolicyStep(
                 policy_source="llm",

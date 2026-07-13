@@ -12,11 +12,11 @@ from scripts.preflight_q5_real import (
     Q5_REAL_K,
     Q5_REAL_PREFLIGHT_SCHEMA,
     Q5_REAL_SYSTEMS,
-    Q5_V3_AUTHORING_SHA256,
+    Q5_V4_AUTHORING_SHA256,
     _budget,
     _real_command,
     _validate_mock_topology,
-    _validate_v3_mock_metrics,
+    _validate_v4_mock_metrics,
     build_parser,
 )
 
@@ -107,15 +107,15 @@ def test_q5_real_preflight_accepts_complete_324_trial_topology() -> None:
     assert topology["expected_total_calls"] == 216
 
 
-def test_q5_real_preflight_v3_metrics_fail_closed_on_tamper() -> None:
+def test_q5_real_preflight_v4_metrics_fail_closed_on_tamper() -> None:
     summary, gates = _metric_anchor_fixture()
-    _validate_v3_mock_metrics(summary, gates)
+    _validate_v4_mock_metrics(summary, gates)
 
     summary["by_system"]["q5_rule_agent"][
         "trajectory_qualified_success_by_stratum"
     ]["semantic"] = 0.75
     with pytest.raises(ValueError, match="0.50"):
-        _validate_v3_mock_metrics(summary, gates)
+        _validate_v4_mock_metrics(summary, gates)
 
 
 def test_q5_real_preflight_rejects_missing_run_index() -> None:
@@ -291,7 +291,7 @@ def _stub_preflight_dependencies(tmp_path, monkeypatch: pytest.MonkeyPatch):
     tasks = [SimpleNamespace(case_id=case_id) for case_id in case_ids]
     verified = SimpleNamespace(
         git_commit_sha=execution_commit,
-        protocol_version="v3",
+        protocol_version="v4",
         mode="mock",
         mock_used=True,
         real_run=False,
@@ -308,7 +308,7 @@ def _stub_preflight_dependencies(tmp_path, monkeypatch: pytest.MonkeyPatch):
         thinking_mode="disabled",
         purpose="q5_policy",
     )
-    output = tmp_path / "preflight-v3.json"
+    output = tmp_path / "preflight-v4.json"
     argv = [
         "--dataset-root",
         str(tmp_path / "dataset"),
@@ -329,7 +329,7 @@ def _stub_preflight_dependencies(tmp_path, monkeypatch: pytest.MonkeyPatch):
         lambda *args, **kwargs: SimpleNamespace(
             valid=True,
             errors=[],
-            sha256=dict(Q5_V3_AUTHORING_SHA256),
+            sha256=dict(Q5_V4_AUTHORING_SHA256),
         ),
     )
     monkeypatch.setattr(preflight, "load_q5_tasks", lambda path: tasks)
@@ -344,6 +344,11 @@ def _stub_preflight_dependencies(tmp_path, monkeypatch: pytest.MonkeyPatch):
             run_id="historical-v2",
             raw_manifest_sha256="2" * 64,
         ),
+        "v3": SimpleNamespace(
+            protocol_version="v3",
+            run_id="historical-v3",
+            raw_manifest_sha256="3" * 64,
+        ),
     }
 
     def verify_stub(run_dir, gold_path):
@@ -352,6 +357,8 @@ def _stub_preflight_dependencies(tmp_path, monkeypatch: pytest.MonkeyPatch):
             return historical["v1"]
         if "q5-dev-v2-real" in path:
             return historical["v2"]
+        if "q5-dev-v3-real" in path:
+            return historical["v3"]
         return verified
 
     monkeypatch.setattr(preflight, "verify_q5_graded_run", verify_stub)
@@ -404,6 +411,7 @@ def _metric_anchor_fixture() -> tuple[dict, dict]:
         "cross_policy_pair_success": 0.5,
         "duplicate_successful_observation_count": 0,
         "post_observation_terminal_rate": 1.0,
+        "policy_disposition_action_consistency": 1.0,
     }
     by_system = {
         system: {
@@ -414,7 +422,7 @@ def _metric_anchor_fixture() -> tuple[dict, dict]:
     }
     return (
         {
-            "schema_version": "q5-metrics-v3",
+            "schema_version": "q5-metrics-v4",
             "by_system": by_system,
             "analytic_controls": {
                 "q5_semantic_table_rule_control": {
@@ -423,7 +431,7 @@ def _metric_anchor_fixture() -> tuple[dict, dict]:
             },
         },
         {
-            "schema_version": "q5-gates-v3",
+            "schema_version": "q5-gates-v4",
             "gates": {
                 gate: {"passed": True}
                 for gate in (

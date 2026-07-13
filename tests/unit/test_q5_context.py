@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 import json
 
 import pytest
@@ -8,17 +9,21 @@ from pydantic import ValidationError
 from app.core.enums import AccessLevel, CorpusSource, SourceOrigin
 from app.govern.conditions import GovernanceAction, OpsCondition
 from app.govern.q5_context import (
+    Q5_ACTION_TO_DISPOSITION,
     Q5_AUTHORIZED_TEXT_CHAR_LIMIT,
     Q5_EXCERPT_CHAR_LIMIT,
     Q5_STRUCTURED_POLICY_VERSION,
     Q5AuthorizationVerdict,
     Q5DecisionContext,
+    Q5PolicyDisposition,
     Q5StructuredProposal,
     Q5TrustedObservation,
     assert_q5_no_gold_or_control_fields,
     build_q5_context_trace,
     build_q5_decision_context,
     build_q5_prompt,
+    compile_q5_model_proposal,
+    compile_q5_policy_disposition,
     legal_q5_terminal_actions,
     parse_q5_structured_proposal,
     q5_prompt_payload,
@@ -150,6 +155,7 @@ def _terminal(action: GovernanceAction) -> Q5StructuredProposal:
         tool=None,
         args={},
         action=action,
+        disposition_source="fallback",
         evidence_chunk_ids=["allowed-chunk"],
         reason_code="policy_decision",
         reason_summary="The authorized evidence supports this terminal action.",
@@ -166,6 +172,34 @@ def _observe() -> Q5StructuredProposal:
         reason_code="exception_unresolved",
         reason_summary="The current exception state must be checked.",
     )
+
+
+def _model_observe_payload() -> dict:
+    return {
+        "kind": "observe",
+        "tool": "lookup_policy_exception",
+        "args": {"resource_ref": "resource:payments"},
+        "decision_basis": None,
+        "evidence_chunk_ids": ["allowed-chunk"],
+        "reason_code": "exception_unresolved",
+        "reason_summary": "The current exception state must be checked.",
+    }
+
+
+def _model_terminal_payload(disposition: str = "no_action") -> dict:
+    return {
+        "kind": "terminal",
+        "tool": None,
+        "args": {},
+        "decision_basis": {
+            "policy_disposition": disposition,
+            "evidence_chunk_id": "allowed-chunk",
+            "observation_request_id": None,
+        },
+        "evidence_chunk_ids": ["allowed-chunk"],
+        "reason_code": "policy_decision",
+        "reason_summary": "The authorized evidence supports this decision.",
+    }
 
 
 def test_q5_context_contains_authorized_text_and_scores() -> None:
@@ -226,7 +260,7 @@ def test_q5_context_preserves_chunk_ids_for_citations() -> None:
     assert '"chunk_id": "cite-b"' in prompt
 
 
-def test_q5_prompt_v3_exposes_machine_derived_tool_contracts() -> None:
+def test_q5_prompt_v4_exposes_machine_derived_tool_contracts() -> None:
     context = _context(
         resource_refs=["resource:payments", "policy:change-control"],
         available_tools=[Q5ObservationTool.lookup_policy_exception],
@@ -262,7 +296,7 @@ def test_q5_prompt_v3_exposes_machine_derived_tool_contracts() -> None:
         "policy_ref": ["policy:change-control"],
         "resource_ref": ["resource:payments"],
     }
-    assert "PROTOCOL: q5-structured-policy-v3" in prompt
+    assert "PROTOCOL: q5-structured-policy-v4" in prompt
     assert "OBSERVE BRANCH" in prompt
     assert "TERMINAL BRANCH" in prompt
     assert "short_enum" not in prompt
@@ -272,19 +306,19 @@ def test_q5_prompt_v3_exposes_machine_derived_tool_contracts() -> None:
 
 
 def test_q5_proposal_branches_require_exact_empty_or_nonempty_args() -> None:
-    observe = _observe().model_dump(mode="json")
+    observe = _model_observe_payload()
     observe["args"] = {}
-    with pytest.raises(ValidationError, match="non-empty tool args"):
+    with pytest.raises(ValidationError, match="requires tool args"):
         parse_q5_structured_proposal(observe)
 
-    terminal = _terminal(GovernanceAction.no_op).model_dump(mode="json")
+    terminal = _model_terminal_payload()
     terminal["args"] = {"resource_ref": "resource:payments"}
-    with pytest.raises(ValidationError, match="args to be empty"):
+    with pytest.raises(ValidationError, match="forbids tool args"):
         parse_q5_structured_proposal(terminal)
 
-    terminal = _terminal(GovernanceAction.no_op).model_dump(mode="json")
+    terminal = _model_terminal_payload()
     terminal["reason_code"] = "short_enum"
-    with pytest.raises(ValidationError, match="concrete code"):
+    with pytest.raises(ValidationError, match="must be concrete"):
         parse_q5_structured_proposal(terminal)
 
 
@@ -299,7 +333,11 @@ def test_q5_prompt_output_schema_rejects_extra_risk_or_auth_fields(
         "kind": "terminal",
         "tool": None,
         "args": {},
-        "action": "open_remediation_ticket",
+        "decision_basis": {
+            "policy_disposition": "remediate",
+            "evidence_chunk_id": "allowed-chunk",
+            "observation_request_id": None,
+        },
         "evidence_chunk_ids": ["allowed-chunk"],
         "reason_code": "policy_violation",
         "reason_summary": "The authorized evidence supports remediation.",
@@ -315,15 +353,103 @@ def test_q5_prompt_output_schema_rejects_extra_risk_or_auth_fields(
 
 
 def test_q5_proposal_kind_fields_are_mutually_exclusive() -> None:
-    observe_with_action = _observe().model_dump(mode="json")
+    observe_with_action = _model_observe_payload()
     observe_with_action["action"] = "no_op"
-    with pytest.raises(ValidationError, match="observe proposal requires tool"):
+    with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
         parse_q5_structured_proposal(observe_with_action)
 
-    terminal_with_tool = _terminal(GovernanceAction.no_op).model_dump(mode="json")
+    terminal_with_tool = _model_terminal_payload()
     terminal_with_tool["tool"] = "inspect_change_state"
-    with pytest.raises(ValidationError, match="terminal proposal requires action"):
+    with pytest.raises(ValidationError, match="terminal proposal requires decision_basis"):
         parse_q5_structured_proposal(terminal_with_tool)
+
+
+def test_q5_v4_disposition_mapping_is_complete_bijective_and_action_is_forbidden() -> None:
+    actions = {
+        compile_q5_policy_disposition(disposition)
+        for disposition in Q5PolicyDisposition
+    }
+    assert len(actions) == len(Q5PolicyDisposition) == 5
+    assert {
+        action: disposition for action, disposition in Q5_ACTION_TO_DISPOSITION.items()
+    } == Q5_ACTION_TO_DISPOSITION
+    payload = _model_terminal_payload("remediate")
+    payload["action"] = "open_remediation_ticket"
+    with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
+        parse_q5_structured_proposal(payload)
+    source = inspect.getsource(compile_q5_policy_disposition)
+    for forbidden in (
+        "case_id",
+        "gold",
+        "stratum",
+        "pair",
+        "reason_summary",
+        "control",
+    ):
+        assert forbidden not in source.lower()
+
+
+def test_q5_v4_grounded_basis_rejects_foreign_stale_and_failed_requests() -> None:
+    successful = Q5TrustedObservation(
+        tool_name="lookup_policy_exception",
+        request_id="q5-tool-0001",
+        status="ok",
+        observation={
+            "observation_type": "policy_exception",
+            "resource_ref": "resource:payments",
+            "policy_ref": "policy:change-control",
+            "status": "expired",
+            "scope": "staging",
+        },
+        provenance="q5-env-fixture-001:v1",
+    )
+    context = _context().model_copy(
+        update={"observations": [successful], "terminal_only": True}
+    )
+    payload = _model_terminal_payload("remediate")
+    payload["decision_basis"]["observation_request_id"] = "q5-tool-0001"
+    compiled = compile_q5_model_proposal(
+        parse_q5_structured_proposal(payload), context
+    )
+    assert compiled.action is GovernanceAction.open_remediation_ticket
+    assert compiled.disposition_source == "model"
+
+    foreign = json.loads(json.dumps(payload))
+    foreign["decision_basis"]["evidence_chunk_id"] = "foreign-chunk"
+    with pytest.raises(ValueError, match="not authorized"):
+        compile_q5_model_proposal(parse_q5_structured_proposal(foreign), context)
+
+    stale = json.loads(json.dumps(payload))
+    stale["decision_basis"]["observation_request_id"] = "q5-tool-9999"
+    with pytest.raises(ValueError, match="not current and successful"):
+        compile_q5_model_proposal(parse_q5_structured_proposal(stale), context)
+
+    failed = successful.model_copy(
+        update={"request_id": "q5-tool-0002", "status": "timeout", "observation": None}
+    )
+    failed_context = context.model_copy(update={"observations": [failed]})
+    failed_payload = json.loads(json.dumps(payload))
+    failed_payload["decision_basis"]["observation_request_id"] = "q5-tool-0002"
+    with pytest.raises(ValueError, match="not current and successful"):
+        compile_q5_model_proposal(
+            parse_q5_structured_proposal(failed_payload), failed_context
+        )
+
+
+def test_q5_v4_reason_text_cannot_change_compiled_action_and_prompt_is_generic() -> None:
+    context = _context()
+    first = _model_terminal_payload("human_review")
+    second = json.loads(json.dumps(first))
+    second["reason_summary"] = "A different summary cannot alter compilation."
+    assert compile_q5_model_proposal(
+        parse_q5_structured_proposal(first), context
+    ).action is compile_q5_model_proposal(
+        parse_q5_structured_proposal(second), context
+    ).action
+    prompt = build_q5_prompt(context)
+    assert "chain-of-thought" in prompt
+    assert "few-shot" not in prompt.lower()
+    assert "q5-dev-" not in prompt
 
 
 def test_q5_trace_contains_no_gold_only_fields() -> None:

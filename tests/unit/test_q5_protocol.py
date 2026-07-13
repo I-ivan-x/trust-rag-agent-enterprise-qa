@@ -36,6 +36,7 @@ def test_q5_v1_proposal_semantics_remain_frozen() -> None:
         ("q5-run-manifest-v1", "q5-structured-policy-v1", "v1"),
         ("q5-run-manifest-v2", "q5-structured-policy-v2", "v2"),
         ("q5-run-manifest-v3", "q5-structured-policy-v3", "v3"),
+        ("q5-run-manifest-v4", "q5-structured-policy-v4", "v4"),
     ],
 )
 def test_q5_protocol_dispatch_requires_matching_run_and_prompt_versions(
