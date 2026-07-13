@@ -13,7 +13,7 @@ from app.eval.q5_semantic_control import (
     grade_q5_semantic_table_rule_control,
 )
 
-DEV_ROOT = Path("data/q5/dev")
+DEV_ROOT = Path("data/q5/archive/dev-v2")
 BATCH5D_RUN = Path(
     "data/eval_runs/q5-dev-v2-real-deepseek-v4-flash-2224fc4-primary-k3"
 )

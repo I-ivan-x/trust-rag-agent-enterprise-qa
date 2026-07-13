@@ -9,9 +9,10 @@
 reliability & evaluation* — I don't just wire up RAG and tool-calls, I make an agent
 **measurable, auditable, regression-gated, and honest about its own limits.**
 
-Built solo over four quarters (Q1–Q4), ~11k LoC app + a 364-test suite, four release
-tags. LLM work uses the latest Claude models for design and DeepSeek for the evaluated
-runs; retrieval is real (`bge-small-en-v1.5` + `bge-reranker-base` + Qdrant + BM25/RRF).
+Built solo across four tagged quarters (Q1–Q4) plus the active Q5 Agent Infra phase,
+with a 543-test suite (542 passing, one opt-in real smoke skipped at the Q5 v3 authoring
+checkpoint). LLM work uses external models for evaluated runs; retrieval is real
+(`bge-small-en-v1.5` + `bge-reranker-base` + Qdrant + BM25/RRF).
 
 ---
 
@@ -100,7 +101,8 @@ number is guarded by a code contract, not discipline.
 - Latest outcome + web demo handoff: `docs/LATEST_RESULTS_AND_DEMO.md`
 - Engineering discipline + execution evidence: `docs/ENGINEERING_DISCIPLINE.md`
 - Active Q5 design + implementation handoff: `docs/Q5_ADAPTIVE_AGENT_DESIGN.md`,
-  `docs/Q5_P5_PREREG_AMENDMENT_V2.md`, `docs/Q5_P5_DEV_V2_READINESS.md`,
+  `docs/Q5_P5_PREREG_AMENDMENT_V2.md`, `docs/Q5_P5_PREREG_AMENDMENT_V3.md`,
+  `docs/Q5_P5_DEV_V3_AUTHORING_REPORT.md`, `docs/Q5_P5_DEV_V2_READINESS.md`,
   `docs/Q5_IMPLEMENTATION_HANDOFF.md`
 - Failure taxonomy F1–F13 with trace evidence: `docs/FAILURE_ANALYSIS.md`
 - Design decisions (ADR-001…016) with measured consequences: `docs/TECHNICAL_DESIGN.md`

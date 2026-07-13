@@ -396,6 +396,7 @@ Q5 的承重目标改为：在新 external outcome test 上，证明 selective h
 调用 LLM，相对 rule-only 获得实质 uplift，同时接近 always-LLM 的质量、显著降低调用成本，并保持
 F11=F13=0。总设计见 `Q5_ADAPTIVE_AGENT_DESIGN.md`，诊断见 `Q5_P0_DIAGNOSTIC.md`，第一次
 real-dev 后的 test 前有效性修订见 `Q5_P5_PREREG_AMENDMENT_V2.md`。
+v2 可被固定状态表完全解决后的第二次 test 前修订见 `Q5_P5_PREREG_AMENDMENT_V3.md`。
 
 双窗口纪律：本窗口负责 plan/spec/diagnostic/report/tag；独立 implementation 窗口按 batch 写代码和
 执行获批 real run。正式 q5_test 在实现 freeze 后才由 plan/report 窗口创建。
@@ -407,7 +408,7 @@ real-dev 后的 test 前有效性修订见 `Q5_P5_PREREG_AMENDMENT_V2.md`。
 | Q5-P2 | implementation | requested-capability 修复 + authorized rich DecisionContext | ✅ complete |
 | Q5-P3 | implementation | read-only tools + rule/LLM/hybrid bounded observation loop | ✅ complete |
 | Q5-P4 | implementation | outcome grader + metrics + bootstrap + headline gates | ✅ protocol v2 + v1 frozen verifier |
-| Q5-P5 | implementation + plan | q5_dev diagnostic/iteration + freeze | 🚧 Batch 5-D real-dev 有效负结果：G1/G3 fail；Batch 5-E Agent/eval validity pending |
+| Q5-P5 | implementation + plan | q5_dev diagnostic/iteration + freeze | 🚧 Batch 5-E complete；crossed q5_dev v3 frozen；Batch 5-F integration pending |
 | Q5-P6 | plan author + run window | freeze 后创建 q5_test；one-shot primary + confirmatory real runs | ⏳ 未解锁 |
 | Q5-P7 | plan/report | EVALUATION_REPORT / FAILURE_ANALYSIS / ADR-017+ | ⏳ |
 | Q5-P8 | plan/report + Owner | README/showcase + tag `v4.0-q5-adaptive-agent` | ⏳ |

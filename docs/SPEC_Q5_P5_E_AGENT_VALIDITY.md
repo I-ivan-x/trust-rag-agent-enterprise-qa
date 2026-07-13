@@ -1,6 +1,6 @@
 # Batch 5-E Spec: Agent Loop and Evaluation Validity
 
-版本：v1
+版本：v1（已完成）
 日期：2026-07-12
 执行窗口：implementation
 外部请求：**0**

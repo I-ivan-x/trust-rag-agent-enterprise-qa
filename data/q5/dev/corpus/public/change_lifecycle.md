@@ -14,16 +14,16 @@ The certificate rotation procedure lacks its required trust-store prerequisite a
 
 ## q5-dev-s05-doc
 
-resource:checkout-failover-runbook is governed by change:checkout-failover-v2. A completed change makes the recorded stale or missing-prerequisite condition actionable; a merely planned change requires human review.
+resource:checkout-failover-runbook is governed by change:checkout-failover-v2. Under the cutover policy, a completed replacement makes the runbook stale; a merely planned replacement requires human review.
 
 ## q5-dev-s06-doc
 
-resource:search-recovery-runbook is governed by change:search-recovery-v3. A completed change makes the recorded stale or missing-prerequisite condition actionable; a merely planned change requires human review.
+resource:search-recovery-runbook is governed by change:search-recovery-v3. Under the cutover policy, a completed replacement makes the runbook stale; a merely planned replacement requires human review.
 
 ## q5-dev-s07-doc
 
-resource:data-export-prereq is governed by change:data-export-enable. A completed change makes the recorded stale or missing-prerequisite condition actionable; a merely planned change requires human review.
+resource:data-export-runbook is governed by change:data-export-v4. Under the archival-hold policy, a planned replacement immediately marks the runbook stale; a completed replacement requires human archival review.
 
 ## q5-dev-s08-doc
 
-resource:cache-warmup-prereq is governed by change:cache-warmup-v2. A completed change makes the recorded stale or missing-prerequisite condition actionable; a merely planned change requires human review.
+resource:cache-warmup-runbook is governed by change:cache-warmup-v3. Under the archival-hold policy, a planned replacement immediately marks the runbook stale; a completed replacement requires human archival review.

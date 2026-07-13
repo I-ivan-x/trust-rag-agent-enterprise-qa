@@ -180,6 +180,9 @@ Real runs require a DeepSeek-compatible API key in `.env` (see
 | [Q5_P5_DEV_V2_READINESS](docs/Q5_P5_DEV_V2_READINESS.md) | C1R/C3 audits, v2 authoring receipt, and the failed primary real-dev freeze decision |
 | [Q5_P5_REAL_DEV_V2_NEGATIVE_DIAGNOSTIC](docs/Q5_P5_REAL_DEV_V2_NEGATIVE_DIAGNOSTIC.md) | Real trajectory diagnosis: repeated observations, fixed-table semantics, G1/G3 failure, and v3 direction |
 | [SPEC_Q5_P5_E_AGENT_VALIDITY](docs/SPEC_Q5_P5_E_AGENT_VALIDITY.md) | Large implementation batch for observation idempotency, strong-rule audit, replay diagnostics, and protocol-v3 groundwork |
+| [Q5_P5_PREREG_AMENDMENT_V3](docs/Q5_P5_PREREG_AMENDMENT_V3.md) | Frozen crossed-counterfactual contract, strong-rule baseline, v3 metrics, and readiness gates |
+| [Q5_P5_DEV_V3_AUTHORING_REPORT](docs/Q5_P5_DEV_V3_AUTHORING_REPORT.md) | q5_dev v3 pair design, hashes, fixed-table ceiling, pre-run, and zero-request mock evidence |
+| [SPEC_Q5_P5_F_V3_INTEGRATION](docs/SPEC_Q5_P5_F_V3_INTEGRATION.md) | Next large implementation batch for the strong headline rule baseline, crossed metrics, and v3 preflight |
 | [EVALUATION_REPORT](docs/EVALUATION_REPORT.md) | Week 6 results, contamination analysis, trade-off discussion, Q2 Phase 1 calibration, and the Q3 action-governance ablation |
 | [FAILURE_ANALYSIS](docs/FAILURE_ANALYSIS.md) | Failure taxonomy F1-F13 with trace evidence |
 | [Q3_ACTION_GOVERNANCE_DESIGN](docs/Q3_ACTION_GOVERNANCE_DESIGN.md) | Q3 action-governance design freeze (evidence-aware ops copilot, risk-tiered autonomy) |

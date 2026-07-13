@@ -1,12 +1,15 @@
 # Q5 设计：Adaptive Hybrid Agent + Semantic Decision Frontier
 
-版本：v1-q5-design + `Q5_P5_PREREG_AMENDMENT_V2.md`
-状态：**P5 DEV DIAGNOSTIC**（协议 v2 与 test 前修订已冻结；q5_test 仍未创建）
-日期：2026-07-10；有效修订：2026-07-12
+版本：v1-q5-design + V2/V3 amendments
+状态：**P5 V3 INTEGRATION**（crossed q5_dev v3 已冻结；q5_test 仍未创建）
+日期：2026-07-10；当前有效修订：2026-07-13
 前置证据：`Q5_P0_DIAGNOSTIC.md`、Q2 rule-vs-LLM 负结果、Q3 action governance、Q4 held-out calibration
 
 > 2026-07-12：第一次 real-dev 诊断发现 tool contract 与 semantic state disclosure 缺陷。
-> 当前有效的数据、指标和 Gate 语义以 `Q5_P5_PREREG_AMENDMENT_V2.md` 为准；所有数值阈值不变。
+> 该阶段的数据、指标和 Gate 语义以 `Q5_P5_PREREG_AMENDMENT_V2.md` 为准；所有数值阈值不变。
+>
+> 2026-07-13：v2 strong fixed-table solvability=1.00，不能证明 LLM 必要性。活动 dev 数据与新增
+> validity 指标以 `Q5_P5_PREREG_AMENDMENT_V3.md` 为准；v1/v2 artifacts 继续冻结。
 
 ------
 
@@ -234,6 +237,7 @@ data/q5/dev/environment.jsonl    # tool runtime 可读
 data/q5/dev/gold.jsonl           # grader only
 
 data/q5/archive/dev-v1/...       # 第一次 real-dev 的不可变复现数据
+data/q5/archive/dev-v2/...       # Batch 5-D real-dev 与 Batch 5-E 诊断数据
 
 data/q5/test/...                 # P5 freeze 后由 plan/report 窗口创建
 ```
@@ -357,7 +361,7 @@ G4 只要求方向复现，不要求复制 primary 的精确 effect size。
 | Q5-P2 | implementation 窗口 | task/gold isolation + rich authorized DecisionContext | complete ✅ |
 | Q5-P3 | implementation 窗口 | observation tools + rule/LLM/hybrid bounded loop | complete ✅ |
 | Q5-P4 | implementation 窗口 | outcome metrics + ablation harness + manifests/gates | protocol v2 complete ✅ |
-| Q5-P5 | implementation + plan | q5_dev runs -> diagnostic -> freeze commit | v2 primary real-dev G1/G3 失败；进入 Agent/eval validity v3 诊断 |
+| Q5-P5 | implementation + plan | q5_dev runs -> diagnostic -> freeze commit | crossed q5_dev v3 + amendment 已冻结；Batch 5-F integration pending |
 | Q5-P6 | plan author + run window | create sealed q5_test -> one-shot primary + confirmatory real runs | pending |
 | Q5-P7 | plan/report 窗口 | EVALUATION_REPORT / FAILURE_ANALYSIS / ADR-017+ | pending |
 | Q5-P8 | plan/report + Owner | README/showcase update + tag `v4.0-q5-adaptive-agent` | pending |

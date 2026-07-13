@@ -72,17 +72,20 @@
 
 不得把多个 batch 合成一个大提交。每批 review 通过后才进入下一批。
 
-### 当前交接状态（2026-07-12）
+### 当前交接状态（2026-07-13）
 
 - Batch 0-4、5-C1、5-C1R 已完成并通过 plan/report 审核；
-- protocol-v1 历史 artifact 由冻结 verifier 复算，活动协议为 protocol-v2；
-- 正式 q5_dev v2 由 plan/report 窗口 author，v1 数据归档在 `data/q5/archive/dev-v1/`；
-- 有效预注册修订为 `Q5_P5_PREREG_AMENDMENT_V2.md`；
+- protocol-v1/v2 历史 artifact 由冻结 verifier 复算，活动协议为 protocol-v3；
+- 正式 q5_dev v3 由 plan/report 窗口 author，v1/v2 数据分别归档在
+  `data/q5/archive/dev-v1/` 与 `data/q5/archive/dev-v2/`；
+- 有效预注册修订为 `Q5_P5_PREREG_AMENDMENT_V3.md`；
 - Batch 5-C3 已由 `6f8c749` 完成并通过 plan/report 独立审核；
 - synthetic k=3 的 G3 call/token ratio 为 `0.590909 / 0.646985`，质量、安全和 observation 无退化；
 - Batch 5-D 唯一 DeepSeek real-dev 已完成并有效验签，但 G1/G3 失败，裁决为 NOT FREEZE READY；
-- 下一动作是 Batch 5-E：observation idempotency、强规则可解性审计、real-artifact replay diagnostics
-  与 protocol-v3 groundwork；该批 external/LLM requests 必须为 0；
+- Batch 5-E 已完成：completion guard、v3 protocol、fixed-table=1.00 诊断与 replay 均通过审核；
+- plan/report 已冻结 crossed q5_dev v3、V3 amendment 与数据锚点；
+- 下一动作是 Batch 5-F：强规则 headline baseline、crossed metrics、v3 preflight 与完整 synthetic matrix；
+  该批 external/LLM requests 必须为 0；
 - 费用/token 仅作 observability，不得限制样本、k、复验或 validity；
 - q5_test、confirmatory run、freeze 和 tag 继续锁定。
 

@@ -7,15 +7,21 @@ from pathlib import Path
 
 import pytest
 
-from app.eval.q5_dataset import load_q5_gold, load_q5_tasks
+from app.eval.q5_dataset import load_q5_gold, load_q5_runtime_dataset, load_q5_tasks
 from app.eval.q5_pre_run import (
     check_q5_pre_run,
     q5_semantic_query_state_disclosures,
+)
+from app.eval.q5_runner import load_q5_runtime_cases
+from app.eval.q5_semantic_control import (
+    execute_q5_semantic_table_rule_control,
+    grade_q5_semantic_table_rule_control,
 )
 from scripts.author_q5_dev import main as author_q5_dev
 
 Q5_DEV_ROOT = Path("data/q5/dev")
 Q5_DEV_V1_ARCHIVE = Path("data/q5/archive/dev-v1")
+Q5_DEV_V2_ARCHIVE = Path("data/q5/archive/dev-v2")
 
 
 def test_formal_q5_dev_authoring_passes_static_pre_run() -> None:
@@ -52,10 +58,11 @@ def test_q5_dev_authoring_is_reproducible_in_an_isolated_root(tmp_path: Path) ->
     assert check_q5_pre_run(output).valid is True
 
 
-def test_q5_dev_semantic_queries_form_six_action_divergent_pairs() -> None:
+def test_q5_dev_semantic_queries_form_crossed_counterfactual_pairs() -> None:
     tasks = {task.case_id: task for task in load_q5_tasks(Q5_DEV_ROOT / "tasks.jsonl")}
     gold = load_q5_gold(Q5_DEV_ROOT / "gold.jsonl")
-    groups: dict[str, list[tuple[tuple[str, ...], tuple[str, ...]]]] = {}
+    within_groups: dict[str, list[tuple[tuple[str, ...], str]]] = {}
+    cross_groups: dict[str, list[tuple[tuple[str, ...], str]]] = {}
 
     for case_id, row in gold.items():
         if row.stratum.value != "semantic":
@@ -65,33 +72,122 @@ def test_q5_dev_semantic_queries_form_six_action_divergent_pairs() -> None:
             task,
             required_tools=row.required_observations,
         ) == []
-        group = next(
-            tag.removeprefix("counterfactual_group_")
+        within_group = next(
+            tag.removeprefix("within_policy_group_")
             for tag in row.gold_reason_tags
-            if tag.startswith("counterfactual_group_")
+            if tag.startswith("within_policy_group_")
         )
-        groups.setdefault(group, []).append(
-            (
-                tuple(
-                    sorted(
-                        str(getattr(action, "value", action))
-                        for action in row.allowed_terminal_actions
-                    )
-                ),
-                tuple(
-                    sorted(
-                        str(getattr(tool, "value", tool))
-                        for tool in row.required_observations
-                    )
-                ),
+        cross_group = next(
+            tag.removeprefix("cross_policy_group_")
+            for tag in row.gold_reason_tags
+            if tag.startswith("cross_policy_group_")
+        )
+        variant = next(
+            tag.removeprefix("policy_variant_")
+            for tag in row.gold_reason_tags
+            if tag.startswith("policy_variant_")
+        )
+        actions = tuple(
+            sorted(
+                str(getattr(action, "value", action))
+                for action in row.allowed_terminal_actions
             )
         )
+        within_groups.setdefault(within_group, []).append((actions, variant))
+        cross_groups.setdefault(cross_group, []).append((actions, variant))
 
-    assert len(groups) == 6
-    for members in groups.values():
+    assert len(within_groups) == len(cross_groups) == 6
+    for members in within_groups.values():
         assert len(members) == 2
         assert len({member[0] for member in members}) == 2
         assert len({member[1] for member in members}) == 1
+    for members in cross_groups.values():
+        assert len(members) == 2
+        assert len({member[0] for member in members}) == 2
+        assert len({member[1] for member in members}) == 2
+
+
+def test_q5_dev_v3_fixed_table_solvability_is_capped_at_half() -> None:
+    dataset = load_q5_runtime_dataset(
+        Q5_DEV_ROOT / "tasks.jsonl",
+        Q5_DEV_ROOT / "environment.jsonl",
+    )
+    execution = execute_q5_semantic_table_rule_control(
+        dataset.tasks,
+        dataset.environment,
+        load_q5_runtime_cases(Q5_DEV_ROOT / "runtime_cases.jsonl"),
+        k=1,
+    )
+    report = grade_q5_semantic_table_rule_control(
+        execution,
+        load_q5_gold(Q5_DEV_ROOT / "gold.jsonl"),
+    )
+
+    assert report.semantic_trial_count == 12
+    assert report.fixed_table_solvability == 0.5
+
+
+@pytest.mark.parametrize(
+    ("tag_prefix", "check_name"),
+    [
+        ("within_policy_group_", "semantic_within_policy_pairs"),
+        ("cross_policy_group_", "semantic_cross_policy_pairs"),
+    ],
+)
+def test_q5_dev_v3_crossed_pair_tamper_fails_closed(
+    tmp_path: Path,
+    tag_prefix: str,
+    check_name: str,
+) -> None:
+    copied = tmp_path / f"q5-dev-{check_name}"
+    shutil.copytree(Q5_DEV_ROOT, copied)
+    gold_path = copied / "gold.jsonl"
+    rows = [
+        json.loads(line)
+        for line in gold_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    row = next(item for item in rows if item["case_id"] == "q5-dev-s01")
+    row["gold_reason_tags"] = [
+        "tampered_group" if tag.startswith(tag_prefix) else tag
+        for tag in row["gold_reason_tags"]
+    ]
+    gold_path.write_text(
+        "\n".join(json.dumps(item, sort_keys=True) for item in rows) + "\n",
+        encoding="utf-8",
+    )
+
+    report = check_q5_pre_run(copied)
+
+    assert report.valid is False
+    assert report.checks[check_name] is False
+    assert report.checks["pre_run_receipt"] is False
+
+
+def test_q5_dev_v3_observation_axis_tamper_fails_closed(tmp_path: Path) -> None:
+    copied = tmp_path / "q5-dev-state-tamper"
+    shutil.copytree(Q5_DEV_ROOT, copied)
+    environment_path = copied / "environment.jsonl"
+    rows = [
+        json.loads(line)
+        for line in environment_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    row = next(item for item in rows if item["environment_ref"] == "q5-dev-env-s03")
+    exception = row["policy_exceptions"][
+        "resource:invoice-renderer|policy:deployment-window"
+    ]
+    exception["scope"] = "staging"
+    environment_path.write_text(
+        "\n".join(json.dumps(item, sort_keys=True) for item in rows) + "\n",
+        encoding="utf-8",
+    )
+
+    report = check_q5_pre_run(copied)
+
+    assert report.valid is False
+    assert report.checks["semantic_within_policy_pairs"] is False
+    assert report.checks["semantic_cross_policy_pairs"] is False
 
 
 @pytest.mark.parametrize(
@@ -130,6 +226,20 @@ def test_q5_dev_v1_archive_preserves_real_run_dataset_hashes() -> None:
     } == expected
 
 
+def test_q5_dev_v2_archive_preserves_batch5d_dataset_hashes() -> None:
+    expected = {
+        "tasks.jsonl": "eecc6bd418051638c687b4b86413dca94c4339ad36421c7576e4a4ec75ddb68f",
+        "runtime_cases.jsonl": "07bc4992b6e6ccd13d71d8d3a90de0d81b33a6028146e46f53288f1df437aaeb",
+        "environment.jsonl": "22a2a356ce35466a0cc7a8ff7f19d47919194ca7c8a6470af3488f805d4fb06a",
+        "gold.jsonl": "e7c0e96e0eb50f752c2132a4c7ece7577b605d3c585c721a1a255aaf70772a32",
+    }
+
+    assert {
+        name: hashlib.sha256((Q5_DEV_V2_ARCHIVE / name).read_bytes()).hexdigest()
+        for name in expected
+    } == expected
+
+
 def test_q5_test_does_not_inherit_dev_counterfactual_group_contract(
     tmp_path: Path,
 ) -> None:
@@ -145,7 +255,9 @@ def test_q5_test_does_not_inherit_dev_counterfactual_group_contract(
         row["gold_reason_tags"] = [
             tag
             for tag in row["gold_reason_tags"]
-            if not tag.startswith("counterfactual_group_")
+            if not tag.startswith(
+                ("within_policy_group_", "cross_policy_group_", "policy_variant_")
+            )
         ]
     gold_path.write_text(
         "\n".join(json.dumps(row, sort_keys=True) for row in rows) + "\n",
@@ -158,7 +270,8 @@ def test_q5_test_does_not_inherit_dev_counterfactual_group_contract(
         verify_receipt=False,
     )
 
-    assert report.checks["semantic_counterfactual_pairs"] is True
+    assert report.checks["semantic_within_policy_pairs"] is True
+    assert report.checks["semantic_cross_policy_pairs"] is True
 
 
 def test_q5_pre_run_rejects_acl_overlap_tamper(tmp_path: Path) -> None:

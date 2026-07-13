@@ -18,32 +18,32 @@ resource:job-scheduler has active authority record 2, creating duplicate active 
 
 ## q5-dev-s09-1-doc
 
-resource:edge-routing-prod has active routing authority 1. Production degradation or outage requires an alert; staging or sandbox impact requires review without a production alert.
+resource:edge-routing-prod has active routing authority 1. The notification policy pages on a production outage; production degradation is reviewed by a human before any alert.
 
 ## q5-dev-s09-2-doc
 
-resource:edge-routing-prod has active routing authority 2. Production degradation or outage requires an alert; staging or sandbox impact requires review without a production alert.
+resource:edge-routing-prod has active routing authority 2. The notification policy pages on a production outage; production degradation is reviewed by a human before any alert.
 
 ## q5-dev-s10-1-doc
 
-resource:catalog-routing-sandbox has active routing authority 1. Production degradation or outage requires an alert; staging or sandbox impact requires review without a production alert.
+resource:catalog-routing-prod has active routing authority 1. The notification policy pages on a production outage; production degradation is reviewed by a human before any alert.
 
 ## q5-dev-s10-2-doc
 
-resource:catalog-routing-sandbox has active routing authority 2. Production degradation or outage requires an alert; staging or sandbox impact requires review without a production alert.
+resource:catalog-routing-prod has active routing authority 2. The notification policy pages on a production outage; production degradation is reviewed by a human before any alert.
 
 ## q5-dev-s11-1-doc
 
-resource:notification-routing-prod has active routing authority 1. Production degradation or outage requires an alert; staging or sandbox impact requires review without a production alert.
+resource:notification-routing-prod has active routing authority 1. The failover policy suppresses a duplicate outage alert while automation is active; early production degradation requires an alert.
 
 ## q5-dev-s11-2-doc
 
-resource:notification-routing-prod has active routing authority 2. Production degradation or outage requires an alert; staging or sandbox impact requires review without a production alert.
+resource:notification-routing-prod has active routing authority 2. The failover policy suppresses a duplicate outage alert while automation is active; early production degradation requires an alert.
 
 ## q5-dev-s12-1-doc
 
-resource:search-routing-staging has active routing authority 1. Production degradation or outage requires an alert; staging or sandbox impact requires review without a production alert.
+resource:search-routing-prod has active routing authority 1. The failover policy suppresses a duplicate outage alert while automation is active; early production degradation requires an alert.
 
 ## q5-dev-s12-2-doc
 
-resource:search-routing-staging has active routing authority 2. Production degradation or outage requires an alert; staging or sandbox impact requires review without a production alert.
+resource:search-routing-prod has active routing authority 2. The failover policy suppresses a duplicate outage alert while automation is active; early production degradation requires an alert.

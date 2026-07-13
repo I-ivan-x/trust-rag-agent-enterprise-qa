@@ -42,10 +42,10 @@ TrustRAG 的项目秩序不是传统的“先列功能，再逐项打勾”，�
 | 证据 | 数量 / 时间 | 它说明什么 |
 | --- | ---: | --- |
 | Git commits | **107** | 交付被拆成可审查的小步，而非一次性大提交 |
-| 有记录的开发跨度 | **2026-06-10 至 2026-07-12** | 33 个自然日内完成系统、评测、治理、可靠性、展示与 Q5 Agent Infra 迭代 |
+| 有记录的开发跨度 | **2026-06-10 至 2026-07-13** | 34 个自然日内完成系统、评测、治理、可靠性、展示与 Q5 Agent Infra 迭代 |
 | 正式阶段标签 | **4** | `v0.3-q1-hard-demo`、`v1.0-q2-agentic-eval`、`v2.0-q3-action-governance`、`v3.0-q4-reliability` |
 | 阶段性标签 | **6** | ingestion、retrieval、generation、trust gates、eval 分阶段冻结 |
-| `docs/*.md` | **70（含本文及 Q5 文档）** | 设计、协议、规格、报告、失败分析和交接材料分层保存 |
+| `docs/*.md` | **75（含本文及 Q5 文档）** | 设计、协议、规格、报告、失败分析和交接材料分层保存 |
 | 实现规格文档 | **21** | 高风险功能通常先写契约，再进入代码 |
 | 可执行脚本 | **28** | ingest、index、eval、leakage、ablation、diagnostic、release gate 均可命令化 |
 | Python app 代码 | **20,605 行** | 覆盖完整 RAG、Agent、治理、评测与可观测模块 |
@@ -149,7 +149,7 @@ Git 历史中的多条链路都保持了相似结构：
 | 2026-06-24 至 2026-06-25 | Q3 design/spec -> condition/sink/validator/controller -> real governance run -> Web console -> Q3 tag |
 | 2026-06-25 至 2026-06-26 | Q4 diagnosis -> preregistration -> dev calibration -> freeze -> held-out -> OTel/manifest/gates -> Q4 tag |
 | 2026-06-29 | showcase plan -> snapshot data -> staged frontend implementation -> v2 focus redesign |
-| 2026-07-10 至 2026-07-12 | Q5 design freeze -> Batch 0-4 -> real-dev 负诊断 -> protocol v2 -> v1 archive -> counterfactual dev v2 |
+| 2026-07-10 至 2026-07-13 | Q5 design freeze -> Batch 0-4 -> real-dev 负诊断 -> protocol v2/v3 -> v1/v2 archive -> crossed-counterfactual dev v3 |
 
 提交信息通常能直接回答“这是设计、实现、评测还是报告”，并保留关键负结果，例如
 `no judge deployed`、`agent gain falsified`、`negative->positive`。这使 Git 本身成为决策审计记录的一部分。
@@ -200,6 +200,9 @@ Git 历史中的多条链路都保持了相似结构：
   baseline 的条件下压缩 schema annotation metadata，复验降至 `0.646985` 后才解锁 DeepSeek real-dev。
   唯一 real-dev 随后仍因 G1/G3 失败被裁定 NOT FREEZE READY；项目停止追加 real run，并继续锁定
   q5_test、confirmatory 与 headline。这避免了用 synthetic 成功替代真实模型证据。
+- Batch 5-E 进一步用 runtime-only 强规则得到 v2 `fixed_table_solvability=1.00`，项目没有通过加强
+  prompt 掩盖弱 baseline，而是重做 crossed-counterfactual v3：固定状态表降至 0.50，且在同政策/异状态
+  与同状态/异政策两个轴上分别预注册指标。这体现的是主动攻击自己的实验，而不是只优化模型分数。
 - Q4 held-out 结果真实但样本薄、同语料表面且运行过两次；它展示纪律，但不能替代下一轮独立外部评测。
 
 这些缺口不推翻前面的执行证据，但它们构成下一阶段启动前的 P0：先让仓库当前状态重新符合项目自己

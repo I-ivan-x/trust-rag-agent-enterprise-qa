@@ -11,9 +11,8 @@
     "pre_run_receipt": true,
     "runtime_case_closure": true,
     "runtime_gate_replay": true,
-    "semantic_cross_policy_pairs": true,
-    "semantic_state_nondisclosure": true,
-    "semantic_within_policy_pairs": true
+    "semantic_counterfactual_pairs": true,
+    "semantic_state_nondisclosure": true
   },
   "corpus_document_count": 46,
   "dataset_partition": "dev",
@@ -21,23 +20,23 @@
   "errors": [],
   "gold_count": 36,
   "namespace_counts": {
-    "q5_dev_adversarial_v3": 12,
-    "q5_dev_public_v3": 24
+    "q5_dev_adversarial_v2": 12,
+    "q5_dev_public_v2": 24
   },
   "runtime_case_count": 36,
-  "schema_version": "q5-pre-run-v3",
+  "schema_version": "q5-pre-run-v2",
   "semantic_family_counts": {
     "semantic_family_change_state": 4,
     "semantic_family_incident_impact": 4,
     "semantic_family_policy_exception": 4
   },
   "sha256": {
-    "corpus": "fbb70816da16ecbf123b2f7ebbb25978692462e8a9a5e7714d5ea3c8678b64d7",
-    "environment": "dd9371eb0f09e15db3b2c46c743ecabfd19cc4c9339c15eabd7076f11192fe89",
-    "gold": "3dd75f63a9d97761f9c47a24f6ae0710e67a4f86b45b5efc6bc181c7eddd777b",
-    "manifest": "75934cc45a33d13f5eca720c9000babe0f63f1f00bddb0f43155d5bb37251b78",
-    "runtime_cases": "3a528896e096662f9fe5bd68280807db229827392e74cecb05ecffba2d021c49",
-    "tasks": "bafd1e7a416526229a919b223f4ccdc771175c72c0d928b5e28c9485840da0be"
+    "corpus": "923ef2c488db1d40971d9333e1cd98e51e179a5b9a1f3c46c543f7d0bc98acb4",
+    "environment": "22a2a356ce35466a0cc7a8ff7f19d47919194ca7c8a6470af3488f805d4fb06a",
+    "gold": "e7c0e96e0eb50f752c2132a4c7ece7577b605d3c585c721a1a255aaf70772a32",
+    "manifest": "1b36de2b59b79c09b71e8435a72f45bb91bd11e55a535851f772b21f13cf1874",
+    "runtime_cases": "07bc4992b6e6ccd13d71d8d3a90de0d81b33a6028146e46f53288f1df437aaeb",
+    "tasks": "eecc6bd418051638c687b4b86413dca94c4339ad36421c7576e4a4ec75ddb68f"
   },
   "source_origin_counts": {
     "generated": 46

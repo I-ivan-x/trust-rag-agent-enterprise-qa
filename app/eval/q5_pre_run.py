@@ -43,7 +43,12 @@ from app.guards.acl_gate import apply_acl_gate
 from app.guards.conflict_detector import detect_minimal_conflict
 from app.guards.document_state_gate import apply_document_state_gate
 from app.guards.evidence_gate import apply_evidence_gate
-from app.schemas.q5_task import Q5_GOLD_ONLY_FIELDS, Q5TaskInput, RequestedCapability
+from app.schemas.q5_task import (
+    Q5_GOLD_ONLY_FIELDS,
+    Q5EnvironmentState,
+    Q5TaskInput,
+    RequestedCapability,
+)
 
 Q5_DEV_EXPECTED_STRATA: Mapping[str, int] = {
     "deterministic": 12,
@@ -77,7 +82,9 @@ _VALID_ASSERTION_OPERATORS = {
     "length_equals",
     "count_equals",
 }
-_COUNTERFACTUAL_TAG_PREFIX = "counterfactual_group_"
+_WITHIN_POLICY_TAG_PREFIX = "within_policy_group_"
+_CROSS_POLICY_TAG_PREFIX = "cross_policy_group_"
+_POLICY_VARIANT_TAG_PREFIX = "policy_variant_"
 _SEMANTIC_QUERY_STATE_PATTERNS: Mapping[str, tuple[re.Pattern[str], ...]] = {
     "lookup_policy_exception": (
         re.compile(r"\b(?:active|expired|missing)\b", re.IGNORECASE),
@@ -104,7 +111,7 @@ class Q5PreRunReport(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    schema_version: Literal["q5-pre-run-v2"] = "q5-pre-run-v2"
+    schema_version: Literal["q5-pre-run-v3"] = "q5-pre-run-v3"
     dataset_partition: Literal["dev", "test"]
     valid: bool
     task_count: int = Field(ge=0)
@@ -151,7 +158,8 @@ def check_q5_pre_run(
         "runtime_gate_replay": True,
         "context_prompt_leakage": True,
         "semantic_state_nondisclosure": True,
-        "semantic_counterfactual_pairs": True,
+        "semantic_within_policy_pairs": True,
+        "semantic_cross_policy_pairs": True,
         "corpus_provenance": True,
         "manifest_integrity": True,
         "pre_run_receipt": True,
@@ -198,30 +206,62 @@ def check_q5_pre_run(
         for tag in row.gold_reason_tags
         if tag.startswith("semantic_family_")
     )
-    counterfactual_groups: dict[
-        str,
-        list[tuple[str, tuple[str, ...], tuple[str, ...], str]],
-    ] = {}
+    semantic_pair_members: list[
+        tuple[
+            str,
+            tuple[str, ...],
+            tuple[str, ...],
+            str,
+            str,
+            str,
+            str,
+            str | None,
+        ]
+    ] = []
     for row in gold.values():
         if row.stratum.value != "semantic":
             continue
         if dataset_partition != "dev":
             continue
-        group_tags = [
-            tag.removeprefix(_COUNTERFACTUAL_TAG_PREFIX)
+        within_tags = [
+            tag.removeprefix(_WITHIN_POLICY_TAG_PREFIX)
             for tag in row.gold_reason_tags
-            if tag.startswith(_COUNTERFACTUAL_TAG_PREFIX)
+            if tag.startswith(_WITHIN_POLICY_TAG_PREFIX)
+        ]
+        cross_tags = [
+            tag.removeprefix(_CROSS_POLICY_TAG_PREFIX)
+            for tag in row.gold_reason_tags
+            if tag.startswith(_CROSS_POLICY_TAG_PREFIX)
+        ]
+        variant_tags = [
+            tag.removeprefix(_POLICY_VARIANT_TAG_PREFIX)
+            for tag in row.gold_reason_tags
+            if tag.startswith(_POLICY_VARIANT_TAG_PREFIX)
         ]
         family_tags = [
             tag for tag in row.gold_reason_tags if tag.startswith("semantic_family_")
         ]
-        if len(group_tags) != 1 or len(family_tags) != 1:
+        if (
+            len(within_tags) != 1
+            or len(cross_tags) != 1
+            or len(variant_tags) != 1
+            or len(family_tags) != 1
+        ):
             fail(
-                "semantic_counterfactual_pairs",
-                f"{row.case_id} must declare one counterfactual group and family",
+                "semantic_within_policy_pairs",
+                f"{row.case_id} must declare one within/cross group, policy variant, "
+                "and semantic family",
+            )
+            checks["semantic_cross_policy_pairs"] = False
+            continue
+        task = next((item for item in tasks if item.case_id == row.case_id), None)
+        if task is None or task.environment_ref not in environment:
+            fail(
+                "semantic_cross_policy_pairs",
+                f"{row.case_id} is missing task/environment closure",
             )
             continue
-        counterfactual_groups.setdefault(group_tags[0], []).append(
+        semantic_pair_members.append(
             (
                 row.case_id,
                 tuple(
@@ -237,6 +277,14 @@ def check_q5_pre_run(
                     )
                 ),
                 family_tags[0],
+                variant_tags[0],
+                within_tags[0],
+                cross_tags[0],
+                _semantic_observation_signature(
+                    task,
+                    required_tools=row.required_observations,
+                    environment_state=environment[task.environment_ref],
+                ),
             )
         )
     if dataset_partition == "dev":
@@ -255,27 +303,10 @@ def check_q5_pre_run(
                 f"{dict(Q5_DEV_EXPECTED_SEMANTIC_FAMILIES)}, "
                 f"got {dict(semantic_family_counts)}",
             )
-        if len(counterfactual_groups) != 6:
-            fail(
-                "semantic_counterfactual_pairs",
-                "q5_dev must contain exactly six semantic counterfactual groups",
-            )
-        for group, members in sorted(counterfactual_groups.items()):
-            actions = {member[1] for member in members}
-            tools = {member[2] for member in members}
-            families = {member[3] for member in members}
-            if (
-                len(members) != 2
-                or len(actions) != 2
-                or len(tools) != 1
-                or not next(iter(tools), ())
-                or len(families) != 1
-            ):
-                fail(
-                    "semantic_counterfactual_pairs",
-                    f"counterfactual group {group} must be a two-case, "
-                    "action-divergent, single-family/single-tool pair",
-                )
+        _validate_crossed_semantic_pairs(
+            semantic_pair_members,
+            fail=fail,
+        )
     expected_namespace_prefix = f"q5_{dataset_partition}"
     for task in tasks:
         if not task.corpus_namespace.lower().replace("-", "_").startswith(
@@ -329,13 +360,13 @@ def check_q5_pre_run(
                 "q5_dev environment origin disclosure must be deterministic_synthetic",
             )
         if dataset_partition == "dev" and (
-            provenance.get("dataset_version") != "v2"
+            provenance.get("dataset_version") != "v3"
             or provenance.get("semantic_design")
-            != "six_action_divergent_counterfactual_pairs"
+            != "crossed_counterfactual_latin_square_v1"
         ):
             fail(
                 "corpus_provenance",
-                "q5_dev provenance must declare the v2 counterfactual semantic design",
+                "q5_dev provenance must declare the v3 crossed-counterfactual design",
             )
         warnings.append(
             "q5_dev corpus and tool state are disclosed synthetic diagnostic data; "
@@ -616,6 +647,130 @@ def check_q5_pre_run(
             "errors": [*report.errors, f"pre_run_receipt: {receipt_error}"],
         }
     )
+
+
+def _validate_crossed_semantic_pairs(
+    members: Sequence[
+        tuple[
+            str,
+            tuple[str, ...],
+            tuple[str, ...],
+            str,
+            str,
+            str,
+            str,
+            str | None,
+        ]
+    ],
+    *,
+    fail: Any,
+) -> None:
+    within_groups: dict[str, list[tuple[Any, ...]]] = {}
+    cross_groups: dict[str, list[tuple[Any, ...]]] = {}
+    for member in members:
+        within_groups.setdefault(member[5], []).append(member)
+        cross_groups.setdefault(member[6], []).append(member)
+
+    if len(members) != 12 or len(within_groups) != 6:
+        fail(
+            "semantic_within_policy_pairs",
+            "q5_dev v3 must contain 12 semantic cases in six within-policy pairs",
+        )
+    for group, rows in sorted(within_groups.items()):
+        if not _valid_semantic_pair(rows, same_variant=True, same_state=False):
+            fail(
+                "semantic_within_policy_pairs",
+                f"within-policy group {group} must keep policy/tool/family fixed while "
+                "state and action diverge",
+            )
+
+    if len(members) != 12 or len(cross_groups) != 6:
+        fail(
+            "semantic_cross_policy_pairs",
+            "q5_dev v3 must contain 12 semantic cases in six cross-policy pairs",
+        )
+    for group, rows in sorted(cross_groups.items()):
+        if not _valid_semantic_pair(rows, same_variant=False, same_state=True):
+            fail(
+                "semantic_cross_policy_pairs",
+                f"cross-policy group {group} must keep state/tool/family fixed while "
+                "policy and action diverge",
+            )
+
+
+def _valid_semantic_pair(
+    rows: Sequence[tuple[Any, ...]],
+    *,
+    same_variant: bool,
+    same_state: bool,
+) -> bool:
+    if len(rows) != 2:
+        return False
+    actions = {row[1] for row in rows}
+    tools = {row[2] for row in rows}
+    families = {row[3] for row in rows}
+    variants = {row[4] for row in rows}
+    states = {row[7] for row in rows}
+    return bool(
+        len(actions) == 2
+        and len(tools) == 1
+        and next(iter(tools), ())
+        and len(families) == 1
+        and (len(variants) == 1) is same_variant
+        and None not in states
+        and (len(states) == 1) is same_state
+    )
+
+
+def _semantic_observation_signature(
+    task: Q5TaskInput,
+    *,
+    required_tools: Iterable[Any],
+    environment_state: Q5EnvironmentState,
+) -> str | None:
+    tool_names = [str(getattr(tool, "value", tool)) for tool in required_tools]
+    if len(tool_names) != 1:
+        return None
+    tool = tool_names[0]
+    payload: Mapping[str, Any] | None = None
+    if tool == "lookup_policy_exception":
+        resource_ref = next(
+            (value for value in task.resource_refs if value.startswith("resource:")),
+            None,
+        )
+        policy_ref = next(
+            (value for value in task.resource_refs if value.startswith("policy:")),
+            None,
+        )
+        if resource_ref and policy_ref:
+            value = environment_state.policy_exceptions.get(
+                f"{resource_ref}|{policy_ref}"
+            )
+            payload = value if isinstance(value, Mapping) else None
+    elif tool == "inspect_change_state":
+        change_ref = next(
+            (value for value in task.resource_refs if value.startswith("change:")),
+            None,
+        )
+        if change_ref:
+            value = environment_state.change_states.get(change_ref)
+            payload = value if isinstance(value, Mapping) else None
+    elif tool == "inspect_incident_impact":
+        resource_ref = next(
+            (value for value in task.resource_refs if value.startswith("resource:")),
+            None,
+        )
+        if resource_ref:
+            value = environment_state.incident_impacts.get(resource_ref)
+            payload = value if isinstance(value, Mapping) else None
+    if payload is None:
+        return None
+    semantic_state = {
+        key: payload[key]
+        for key in ("status", "scope")
+        if key in payload
+    }
+    return json.dumps(semantic_state, ensure_ascii=False, sort_keys=True)
 
 
 def q5_semantic_query_state_disclosures(
