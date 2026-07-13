@@ -508,6 +508,12 @@ def verify_q5_graded_run(
     control = recomputed["by_system"].pop(Q5_ESCALATE_EVERYTHING_CONTROL, None)
     if control is None:
         raise ValueError("Q5 graded run is missing escalate-everything analytic control")
+    fixed_table_control = recomputed.pop("fixed_table_control", None)
+    if protocol.version is Q5ProtocolVersion.v3 and not isinstance(
+        fixed_table_control,
+        dict,
+    ):
+        raise ValueError("Q5 graded run is missing fixed-table analytic control")
     for field in (
         "schema_version",
         "metric_type",
@@ -523,6 +529,10 @@ def verify_q5_graded_run(
         Q5_ESCALATE_EVERYTHING_CONTROL
     ) != control:
         raise ValueError("Q5 summary analytic-control provenance mismatch")
+    if protocol.version is Q5ProtocolVersion.v3 and (
+        summary.get("analytic_controls") or {}
+    ).get("q5_semantic_table_rule_control") != fixed_table_control:
+        raise ValueError("Q5 fixed-table control provenance mismatch")
     if gates != expected_gates:
         raise ValueError("Q5 gates are not reproducible from the verified summary")
     if (root / "report.md").read_text(encoding="utf-8") != expected_report:

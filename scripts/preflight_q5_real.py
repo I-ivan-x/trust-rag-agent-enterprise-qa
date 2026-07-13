@@ -34,13 +34,33 @@ DEEPSEEK_INPUT_CACHE_MISS_USD_PER_MILLION = 0.14
 DEEPSEEK_OUTPUT_USD_PER_MILLION = 0.28
 INPUT_TOKEN_RESERVATION_PER_CALL = 8_192
 MAX_Q5_POLICY_STEPS = 3
-Q5_REAL_PREFLIGHT_SCHEMA = "q5-real-preflight-v2"
+Q5_REAL_PREFLIGHT_SCHEMA = "q5-real-preflight-v3"
 Q5_REAL_K = 3
 Q5_REAL_CASE_COUNT = 36
 Q5_REAL_SYSTEMS = (
     "q5_rule_agent",
     "q5_llm_agent",
     "q5_hybrid_agent",
+)
+Q5_V3_AUTHORING_SHA256 = {
+    "tasks": "bafd1e7a416526229a919b223f4ccdc771175c72c0d928b5e28c9485840da0be",
+    "runtime_cases": "3a528896e096662f9fe5bd68280807db229827392e74cecb05ecffba2d021c49",
+    "environment": "dd9371eb0f09e15db3b2c46c743ecabfd19cc4c9339c15eabd7076f11192fe89",
+    "gold": "3dd75f63a9d97761f9c47a24f6ae0710e67a4f86b45b5efc6bc181c7eddd777b",
+    "corpus": "fbb70816da16ecbf123b2f7ebbb25978692462e8a9a5e7714d5ea3c8678b64d7",
+    "manifest": "75934cc45a33d13f5eca720c9000babe0f63f1f00bddb0f43155d5bb37251b78",
+}
+Q5_HISTORICAL_REAL_RUNS = (
+    (
+        Path("data/eval_runs/q5-dev-real-deepseek-v4-flash-5634135-primary-k1"),
+        Path("data/q5/archive/dev-v1/gold.jsonl"),
+        "v1",
+    ),
+    (
+        Path("data/eval_runs/q5-dev-v2-real-deepseek-v4-flash-2224fc4-primary-k3"),
+        Path("data/q5/archive/dev-v2/gold.jsonl"),
+        "v2",
+    ),
 )
 
 
@@ -72,9 +92,9 @@ def main(argv: Sequence[str] | None = None) -> dict[str, object]:
     if not worktree_clean:
         errors.append("worktree is not clean")
     if (Path("data/q5") / "test").exists():
-        errors.append("formal q5_test exists and is forbidden in Batch 5-D")
+        errors.append("formal q5_test exists and is forbidden in Batch 5-F")
     if args.provider != "deepseek" or args.model != "deepseek-v4-flash":
-        errors.append("Batch 5-D primary identity must be deepseek/deepseek-v4-flash")
+        errors.append("Batch 5-F primary identity must be deepseek/deepseek-v4-flash")
     if args.temperature != 0.0 or args.thinking_mode != "disabled":
         errors.append("controlled Q5 primary requires temperature=0 and thinking=disabled")
     if args.max_output_tokens != 512 or args.timeout_seconds != 30.0:
@@ -87,6 +107,8 @@ def main(argv: Sequence[str] | None = None) -> dict[str, object]:
     pre_run = check_q5_pre_run(args.dataset_root, dataset_partition="dev")
     if not pre_run.valid:
         errors.extend(f"dataset pre-run: {message}" for message in pre_run.errors)
+    if pre_run.sha256 != Q5_V3_AUTHORING_SHA256:
+        errors.append("q5_dev v3 authoring hashes do not match the frozen report")
     tasks = load_q5_tasks(args.dataset_root / "tasks.jsonl")
     if len(tasks) != Q5_REAL_CASE_COUNT:
         errors.append(
@@ -108,12 +130,43 @@ def main(argv: Sequence[str] | None = None) -> dict[str, object]:
                 f"mock={verified_mock.git_commit_sha} execution={commit}"
             )
         if (
-            verified_mock.protocol_version != "v2"
+            verified_mock.protocol_version != "v3"
             or verified_mock.mode != "mock"
             or not verified_mock.mock_used
             or verified_mock.real_run
         ):
-            errors.append("mock anchor must be a verified protocol-v2 mock run")
+            errors.append("mock anchor must be a verified protocol-v3 mock run")
+
+    mock_summary: Mapping[str, Any] = {}
+    mock_gates: Mapping[str, Any] = {}
+    try:
+        mock_summary = q5_read_json(args.mock_run / "summary.json")
+        mock_gates = q5_read_json(args.mock_run / "gates.json")
+        _validate_v3_mock_metrics(mock_summary, mock_gates)
+    except (OSError, TypeError, ValueError) as exc:
+        errors.append(f"mock metric anchor invalid: {exc}")
+
+    historical_verification: list[dict[str, str]] = []
+    for historical_run, historical_gold, expected_protocol in Q5_HISTORICAL_REAL_RUNS:
+        try:
+            verified_history = verify_q5_graded_run(
+                historical_run,
+                historical_gold,
+            )
+            if verified_history.protocol_version != expected_protocol:
+                raise ValueError("historical protocol mismatch")
+            historical_verification.append(
+                {
+                    "run_id": verified_history.run_id,
+                    "protocol_version": verified_history.protocol_version,
+                    "raw_manifest_sha256": verified_history.raw_manifest_sha256,
+                }
+            )
+        except (OSError, TypeError, ValueError) as exc:
+            errors.append(
+                f"historical {expected_protocol} verification failed: "
+                f"{type(exc).__name__}"
+            )
 
     topology: dict[str, Any] | None = None
     try:
@@ -206,7 +259,22 @@ def main(argv: Sequence[str] | None = None) -> dict[str, object]:
                 else None
             ),
             "mock_topology": topology,
+            "protocol_version": (
+                verified_mock.protocol_version if verified_mock is not None else None
+            ),
+            "authoring_sha256": dict(Q5_V3_AUTHORING_SHA256),
+            "strong_rule_semantic_baseline": (
+                ((mock_summary.get("by_system") or {}).get("q5_rule_agent") or {})
+                .get("trajectory_qualified_success_by_stratum", {})
+                .get("semantic")
+            ),
+            "fixed_table_solvability": (
+                (mock_summary.get("analytic_controls") or {})
+                .get("q5_semantic_table_rule_control", {})
+                .get("fixed_table_solvability")
+            ),
         },
+        "historical_verification": historical_verification,
         "primary": {
             "provider": identity.provider,
             "canonical_family": canonical_q5_model_family(identity),
@@ -416,6 +484,59 @@ def _validate_mock_topology(
         "expected_total_calls": expected_total_calls,
         "hard_call_limit": hard_call_limit,
     }
+
+
+def _validate_v3_mock_metrics(
+    summary: Mapping[str, Any],
+    gates: Mapping[str, Any],
+) -> None:
+    """Require a fully verified v3 mechanism anchor; G1 may remain negative."""
+
+    if summary.get("schema_version") != "q5-metrics-v3":
+        raise ValueError("mock summary must use q5-metrics-v3")
+    if gates.get("schema_version") != "q5-gates-v3":
+        raise ValueError("mock gates must use q5-gates-v3")
+    by_system = summary.get("by_system")
+    if not isinstance(by_system, Mapping) or set(by_system) != set(Q5_REAL_SYSTEMS):
+        raise ValueError("mock summary must contain the exact three-system matrix")
+    rule = by_system["q5_rule_agent"]
+    if not isinstance(rule, Mapping) or (
+        (rule.get("trajectory_qualified_success_by_stratum") or {}).get("semantic")
+        != 0.5
+    ):
+        raise ValueError("strong-rule semantic baseline must equal 0.50")
+    fixed = (summary.get("analytic_controls") or {}).get(
+        "q5_semantic_table_rule_control"
+    )
+    if not isinstance(fixed, Mapping) or fixed.get("fixed_table_solvability") != 0.5:
+        raise ValueError("fixed-table solvability must equal 0.50")
+    for system, metrics in by_system.items():
+        if not isinstance(metrics, Mapping):
+            raise ValueError(f"mock system metrics are invalid: {system}")
+        if metrics.get("duplicate_successful_observation_count") != 0:
+            raise ValueError(f"duplicate successful observations detected: {system}")
+        for axis in ("within_policy", "cross_policy"):
+            if metrics.get(f"{axis}_paired_count") != 18:
+                raise ValueError(f"{axis} pair matrix is incomplete: {system}")
+            value = metrics.get(f"{axis}_pair_success")
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                raise ValueError(f"{axis} pair metric is missing: {system}")
+    for system in ("q5_llm_agent", "q5_hybrid_agent"):
+        if by_system[system].get("post_observation_terminal_rate") != 1.0:
+            raise ValueError(f"post-observation terminal rate must equal 1.00: {system}")
+    gate_payload = gates.get("gates")
+    if not isinstance(gate_payload, Mapping):
+        raise ValueError("mock gate payload is missing")
+    for gate in (
+        "G0_safety_floor",
+        "G2_hybrid_noninferiority",
+        "G3_efficiency",
+        "G5_anti_gaming",
+    ):
+        if not isinstance(gate_payload.get(gate), Mapping) or not gate_payload[gate].get(
+            "passed"
+        ):
+            raise ValueError(f"required mock gate failed: {gate}")
 
 
 def _budget(call_count: int, max_output_tokens: int) -> dict[str, int | float]:

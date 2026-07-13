@@ -32,6 +32,12 @@ from app.eval.q5_outcome import (
     grade_q5_final_state,
     q5_outcome_environment_from_runtime,
 )
+from app.eval.q5_pairs import (
+    Q5PairAssignment,
+    q5_environment_observation_signature,
+    q5_tool_observation_signature,
+    validate_q5_crossed_pair_design,
+)
 from app.eval.q5_protocol import (
     Q5_PROTOCOL_V3,
     Q5ProtocolVersion,
@@ -368,6 +374,7 @@ def grade_q5_run(run_dir: Path | str, gold_path: Path | str) -> Q5GradedRunArtif
     analytic_control_metrics = metrics["by_system"].pop(
         Q5_ESCALATE_EVERYTHING_CONTROL
     )
+    fixed_table_control = metrics.pop("fixed_table_control")
     role = str(manifest["model"]["role"])
     provider_model_pairs = sorted(
         {
@@ -393,7 +400,8 @@ def grade_q5_run(run_dir: Path | str, gold_path: Path | str) -> Q5GradedRunArtif
         **metrics,
         "run_id": manifest["run_id"],
         "analytic_controls": {
-            Q5_ESCALATE_EVERYTHING_CONTROL: analytic_control_metrics
+            Q5_ESCALATE_EVERYTHING_CONTROL: analytic_control_metrics,
+            "q5_semantic_table_rule_control": fixed_table_control,
         },
         "run_metadata": {
             "mode": manifest["mode"],
@@ -490,7 +498,8 @@ def grade_q5_artifact_rows(
         list(raw_artifacts["environment_after.json"])
     )
     completed_tools_by_trial: dict[str, set[str]] = {}
-    for event_value in raw_artifacts["tool_events.jsonl"]:
+    tool_event_rows = list(raw_artifacts["tool_events.jsonl"])
+    for event_value in tool_event_rows:
         if not isinstance(event_value, dict):
             raise ValueError("Q5 tool event row must be an object")
         if event_value.get("status") in {"ok", "not_found"}:
@@ -504,6 +513,55 @@ def grade_q5_artifact_rows(
             f"missing_gold={sorted(manifest_case_ids - set(gold))}, "
             f"extra_gold={sorted(set(gold) - manifest_case_ids)}"
         )
+
+    pair_assignments: dict[str, Q5PairAssignment] = {}
+    if manifest.get("dataset_partition") == "dev":
+        signatures_by_case: dict[str, set[str]] = {}
+        for raw_value in raw_rows:
+            if not isinstance(raw_value, dict):
+                raise ValueError("Q5 raw result row must be an object")
+            case_id = str(raw_value.get("case_id") or "")
+            case_gold = gold.get(case_id)
+            if case_gold is None or case_gold.stratum.value != "semantic":
+                continue
+            required = list(case_gold.required_observations)
+            if len(required) != 1:
+                raise ValueError(
+                    f"semantic Q5 case must require exactly one tool: {case_id}"
+                )
+            key = _trial_key(raw_value)
+            signature = q5_environment_observation_signature(
+                before_rows[key],
+                str(required[0]),
+            )
+            signatures_by_case.setdefault(case_id, set()).add(signature)
+        unstable = sorted(
+            case_id
+            for case_id, signatures in signatures_by_case.items()
+            if len(signatures) != 1
+        )
+        if unstable:
+            raise ValueError(
+                "Q5 semantic observation signature varies across trials: "
+                + ", ".join(unstable)
+            )
+        pair_assignments = validate_q5_crossed_pair_design(
+            gold,
+            observation_signatures={
+                case_id: next(iter(signatures))
+                for case_id, signatures in signatures_by_case.items()
+            },
+        )
+        for event in tool_event_rows:
+            if not isinstance(event, dict):
+                raise ValueError("Q5 tool event row must be an object")
+            assignment = pair_assignments.get(str(event.get("case_id") or ""))
+            if assignment is None or event.get("status") not in {"ok", "not_found"}:
+                continue
+            if event.get("tool_name") != assignment.required_tool:
+                raise ValueError("Q5 semantic tool event contradicts pair assignment")
+            if q5_tool_observation_signature(event) != assignment.observation_signature:
+                raise ValueError("Q5 semantic observation signature mismatch")
 
     graded_rows: list[dict[str, Any]] = []
     for raw_value in raw_rows:
@@ -555,6 +613,7 @@ def grade_q5_artifact_rows(
         fallback_assisted_success = bool(
             final_state.task_success and fallback_reason
         )
+        pair_assignment = pair_assignments.get(str(raw["case_id"]))
         graded_rows.append(
             {
                 **raw,
@@ -602,6 +661,23 @@ def grade_q5_artifact_rows(
                     restricted_count > 0 or forbidden_field_exposure_count > 0
                 ),
                 "gold_reason_tags": list(case_gold.gold_reason_tags),
+                "semantic_family": (
+                    pair_assignment.family if pair_assignment is not None else None
+                ),
+                "policy_variant": (
+                    pair_assignment.variant if pair_assignment is not None else None
+                ),
+                "within_policy_group": (
+                    pair_assignment.within_group if pair_assignment is not None else None
+                ),
+                "cross_policy_group": (
+                    pair_assignment.cross_group if pair_assignment is not None else None
+                ),
+                "semantic_observation_signature": (
+                    pair_assignment.observation_signature
+                    if pair_assignment is not None
+                    else None
+                ),
             }
         )
 
@@ -611,6 +687,7 @@ def grade_q5_artifact_rows(
             manifest=manifest,
             before_rows=before_rows,
             gold=gold,
+            pair_assignments=pair_assignments,
         ),
     )
 
@@ -646,6 +723,8 @@ def _validate_q5_raw_artifacts(
 ) -> None:
     if not isinstance(manifest, dict):
         raise ValueError("Q5 manifest must be an object")
+    _assert_no_gold_fields(manifest)
+    _assert_no_gold_fields(artifacts)
     protocol = resolve_q5_artifact_protocol(manifest)
     is_v2 = protocol.version is Q5ProtocolVersion.v2
     is_v3 = protocol.version is Q5ProtocolVersion.v3
@@ -1446,12 +1525,14 @@ def _build_escalate_everything_control_rows(
     manifest: Mapping[str, Any],
     before_rows: Mapping[str, dict[str, Any]],
     gold: Mapping[str, Q5Gold],
+    pair_assignments: Mapping[str, Q5PairAssignment],
 ) -> list[dict[str, Any]]:
     systems = list(manifest["systems"])
     rows: list[dict[str, Any]] = []
     action = GovernanceAction.escalate_to_human.value
     for case_id in manifest["case_ids"]:
         case_gold = gold[str(case_id)]
+        pair_assignment = pair_assignments.get(str(case_id))
         required = set(case_gold.required_observations)
         allowed = set(case_gold.allowed_terminal_actions)
         for run_index in range(1, int(manifest["k"]) + 1):
@@ -1470,6 +1551,23 @@ def _build_escalate_everything_control_rows(
                     "system": Q5_ESCALATE_EVERYTHING_CONTROL,
                     "run_index": run_index,
                     "stratum": case_gold.stratum.value,
+                    "semantic_family": (
+                        pair_assignment.family if pair_assignment is not None else None
+                    ),
+                    "policy_variant": (
+                        pair_assignment.variant if pair_assignment is not None else None
+                    ),
+                    "within_policy_group": (
+                        pair_assignment.within_group if pair_assignment is not None else None
+                    ),
+                    "cross_policy_group": (
+                        pair_assignment.cross_group if pair_assignment is not None else None
+                    ),
+                    "semantic_observation_signature": (
+                        pair_assignment.observation_signature
+                        if pair_assignment is not None
+                        else None
+                    ),
                     "authorized": case_gold.authorized,
                     "final_action": action,
                     "task_success": final_state.task_success,
@@ -2248,6 +2346,14 @@ def _assert_no_gold_fields(payload: Any) -> None:
         ):
             for nested in value:
                 visit(nested)
+        elif isinstance(value, str) and value.startswith(
+            (
+                "within_policy_group_",
+                "cross_policy_group_",
+                "policy_variant_",
+            )
+        ):
+            forbidden.add(value)
 
     visit(payload)
     if forbidden:

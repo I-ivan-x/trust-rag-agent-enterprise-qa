@@ -8,10 +8,10 @@ from app.eval.q5_dataset import load_q5_gold, load_q5_runtime_dataset
 from app.eval.q5_replay import replay_q5_graded_run
 from app.eval.q5_runner import load_q5_runtime_cases
 from app.eval.q5_semantic_control import (
-    Q5SemanticTableRuleModel,
     execute_q5_semantic_table_rule_control,
     grade_q5_semantic_table_rule_control,
 )
+from app.govern.q5_rule_policy import q5_fixed_table_runtime_proposal
 
 DEV_ROOT = Path("data/q5/archive/dev-v2")
 BATCH5D_RUN = Path(
@@ -21,9 +21,9 @@ BATCH5D_RUN = Path(
 
 def test_q5_semantic_table_control_is_runtime_only_and_reports_solvability() -> None:
     signature = inspect.signature(execute_q5_semantic_table_rule_control)
-    source = inspect.getsource(Q5SemanticTableRuleModel.generate)
+    source = inspect.getsource(q5_fixed_table_runtime_proposal)
     assert "gold" not in signature.parameters
-    for forbidden in ("gold", "stratum", "family", "group"):
+    for forbidden in ("gold", "stratum", "within_policy", "cross_policy", "group_"):
         assert forbidden not in source.lower()
 
     dataset = load_q5_runtime_dataset(

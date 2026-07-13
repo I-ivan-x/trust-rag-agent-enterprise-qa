@@ -30,103 +30,117 @@ class Q5RuleAgentPolicy:
         )
 
     def _proposal(self, context: Q5DecisionContext) -> Q5StructuredProposal:
-        if (
-            OpsCondition.permission_blocked in context.conditions
-            or OpsCondition.insufficient_evidence in context.conditions
-            or context.evidence_decision == "insufficient"
-        ):
-            return _terminal(context, GovernanceAction.escalate_to_human, "policy_block")
+        return q5_fixed_table_runtime_proposal(context)
 
-        references = _references(context)
-        if any(
-            condition in context.conditions
-            for condition in (OpsCondition.config_violation, OpsCondition.policy_violation)
-        ):
-            tool = Q5ObservationTool.lookup_policy_exception
-            observation = _last_observation(context, tool)
-            if observation is None and _can_observe(context, tool):
-                resource_ref = _first_prefixed(references, "resource:")
-                policy_ref = _first_prefixed(references, "policy:")
-                if resource_ref and policy_ref:
-                    return _observe(
-                        context,
-                        tool,
-                        {"resource_ref": resource_ref, "policy_ref": policy_ref},
-                        "lookup_policy_exception",
-                    )
-            if observation is not None:
-                status = _observation_status(observation)
-                if status == "active":
-                    return _terminal(
-                        context,
-                        GovernanceAction.escalate_to_human,
-                        "active_exception",
-                    )
-                if status in {"expired", "missing"}:
-                    return _terminal(
-                        context,
-                        GovernanceAction.open_remediation_ticket,
-                        "exception_not_active",
-                    )
 
-        if any(
-            condition in context.conditions
-            for condition in (OpsCondition.stale_procedure, OpsCondition.missing_prereq)
-        ):
-            tool = Q5ObservationTool.inspect_change_state
-            observation = _last_observation(context, tool)
-            if observation is None and _can_observe(context, tool):
-                change_ref = _first_prefixed(references, "change:")
-                if change_ref:
-                    return _observe(
-                        context,
-                        tool,
-                        {"change_ref": change_ref},
-                        "inspect_change_state",
-                    )
-            if observation is not None:
-                status = _observation_status(observation)
-                if status == "in_progress":
-                    action = (
-                        GovernanceAction.flag_stale
-                        if OpsCondition.stale_procedure in context.conditions
-                        else GovernanceAction.open_remediation_ticket
-                    )
-                    return _terminal(context, action, "change_in_progress")
-                if status in {"planned", "completed", "unknown"}:
-                    return _terminal(
-                        context,
-                        GovernanceAction.escalate_to_human,
-                        "change_state_needs_review",
-                    )
+def q5_fixed_table_runtime_proposal(
+    context: Q5DecisionContext,
+) -> Q5StructuredProposal:
+    """Apply the audited three-family table to runtime-visible state only."""
 
-        if OpsCondition.active_active_conflict in context.conditions:
-            tool = Q5ObservationTool.inspect_incident_impact
-            observation = _last_observation(context, tool)
-            if observation is None and _can_observe(context, tool):
-                resource_ref = _first_prefixed(references, "resource:")
-                if resource_ref:
-                    return _observe(
-                        context,
-                        tool,
-                        {"resource_ref": resource_ref},
-                        "inspect_incident_impact",
-                    )
-            if observation is not None:
-                status = _observation_status(observation)
-                if status in {"degraded", "outage"}:
-                    return _terminal(
-                        context,
-                        GovernanceAction.send_alert,
-                        "incident_impact_confirmed",
-                    )
+    if (
+        OpsCondition.permission_blocked in context.conditions
+        or OpsCondition.insufficient_evidence in context.conditions
+        or context.evidence_decision == "insufficient"
+    ):
+        return _terminal(context, GovernanceAction.escalate_to_human, "policy_block")
+
+    references = _references(context)
+    if any(
+        condition in context.conditions
+        for condition in (OpsCondition.config_violation, OpsCondition.policy_violation)
+    ):
+        tool = Q5ObservationTool.lookup_policy_exception
+        observation = _last_observation(context, tool)
+        if observation is None and _can_observe(context, tool):
+            resource_ref = _first_prefixed(references, "resource:")
+            policy_ref = _first_prefixed(references, "policy:")
+            if resource_ref and policy_ref:
+                return _observe(
+                    context,
+                    tool,
+                    {"resource_ref": resource_ref, "policy_ref": policy_ref},
+                    "lookup_policy_exception",
+                )
+        if observation is not None:
+            status = _observation_status(observation)
+            requested_scope = _requested_scope(context.query)
+            observed_scope = _observation_scope(observation)
+            active_scope_matches = bool(
+                status == "active"
+                and (
+                    requested_scope is None
+                    or observed_scope is None
+                    or requested_scope == observed_scope
+                )
+            )
+            action = (
+                GovernanceAction.escalate_to_human
+                if active_scope_matches
+                else GovernanceAction.open_remediation_ticket
+            )
+            return _terminal(context, action, "policy_state_applied")
+
+    if any(
+        condition in context.conditions
+        for condition in (OpsCondition.stale_procedure, OpsCondition.missing_prereq)
+    ):
+        tool = Q5ObservationTool.inspect_change_state
+        observation = _last_observation(context, tool)
+        if observation is None and _can_observe(context, tool):
+            change_ref = _first_prefixed(references, "change:")
+            if change_ref:
+                return _observe(
+                    context,
+                    tool,
+                    {"change_ref": change_ref},
+                    "inspect_change_state",
+                )
+        if observation is not None:
+            status = _observation_status(observation)
+            if status in {"planned", "unknown"}:
                 return _terminal(
                     context,
                     GovernanceAction.escalate_to_human,
-                    "incident_impact_unclear",
+                    "change_state_needs_review",
                 )
+            action = (
+                GovernanceAction.flag_stale
+                if OpsCondition.stale_procedure in context.conditions
+                else GovernanceAction.open_remediation_ticket
+            )
+            return _terminal(context, action, "change_state_applied")
 
-        return _terminal(context, _default_action(context), "deterministic_mapping")
+    if OpsCondition.active_active_conflict in context.conditions:
+        tool = Q5ObservationTool.inspect_incident_impact
+        observation = _last_observation(context, tool)
+        if observation is None and _can_observe(context, tool):
+            resource_ref = _first_prefixed(references, "resource:")
+            if resource_ref:
+                return _observe(
+                    context,
+                    tool,
+                    {"resource_ref": resource_ref},
+                    "inspect_incident_impact",
+                )
+        if observation is not None:
+            impacted = _observation_status(observation) in {
+                "degraded",
+                "outage",
+            }
+            non_production = _requested_scope(context.query) in {
+                "development",
+                "sandbox",
+                "staging",
+            }
+            action = (
+                GovernanceAction.send_alert
+                if impacted and not non_production
+                else GovernanceAction.escalate_to_human
+            )
+            return _terminal(context, action, "incident_state_applied")
+
+    return _terminal(context, _default_action(context), "deterministic_mapping")
 
 
 def _can_observe(context: Q5DecisionContext, tool: Q5ObservationTool) -> bool:
@@ -149,6 +163,21 @@ def _observation_status(observation: Q5TrustedObservation) -> str:
     if not observation.observation:
         return "unknown"
     return str(observation.observation.get("status", "unknown"))
+
+
+def _observation_scope(observation: Q5TrustedObservation) -> str | None:
+    if not observation.observation:
+        return None
+    scope = observation.observation.get("scope")
+    return str(scope).lower() if isinstance(scope, str) and scope else None
+
+
+def _requested_scope(query: str) -> str | None:
+    lowered = query.lower()
+    for scope in ("production", "staging", "sandbox", "development"):
+        if re.search(rf"\b{scope}\b", lowered):
+            return scope
+    return None
 
 
 def _references(context: Q5DecisionContext) -> list[str]:

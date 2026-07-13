@@ -269,7 +269,7 @@ def test_q5_synthetic_mock_harness_runs_and_grades_all_three_systems(
         assert "post_observation_terminal_rate" in metrics
         assert "within_policy_adaptation_accuracy" in metrics
         assert "cross_policy_semantic_sensitivity" in metrics
-        assert "fixed_table_solvability" in metrics
+    assert "q5_semantic_table_rule_control" in summary["analytic_controls"]
     assert graded.row_count == 45
     assert set(summary["by_system"]) == {system.value for system in Q5AgentSystem}
     for metrics in summary["by_system"].values():
@@ -664,6 +664,17 @@ def test_q5_grader_rejects_extra_raw_artifact(tmp_path: Path) -> None:
         grade_q5_run(raw.run_dir, gold_path)
 
 
+def test_q5_grader_rejects_raw_pair_tag_leakage_after_rehash(tmp_path: Path) -> None:
+    raw, gold_path = _single_case_raw_run(tmp_path, run_id="q5-raw-pair-leak")
+    rows = _jsonl(raw.results_path)
+    rows[0]["leaked_pair_tag"] = "within_policy_group_injected"
+    _write_test_jsonl(raw.results_path, rows)
+    _refresh_raw_hash(raw.run_dir, "results.jsonl")
+
+    with pytest.raises(ValueError, match="gold fields reached Q5 runtime payload"):
+        grade_q5_run(raw.run_dir, gold_path)
+
+
 @pytest.mark.parametrize("target", ["graded_rows", "analytic_control"])
 def test_q5_sealed_gold_regrading_rejects_self_consistent_graded_tamper(
     tmp_path: Path,
@@ -696,6 +707,28 @@ def test_q5_verifier_rejects_modified_or_replaced_sealed_gold(tmp_path: Path) ->
     )
 
     with pytest.raises(ValueError, match="sealed gold hash mismatch"):
+        verify_q5_graded_run(graded.run_dir, gold_path)
+
+
+def test_q5_verifier_rejects_pair_metric_tamper_after_rehash(tmp_path: Path) -> None:
+    graded, gold_path = _single_case_graded_run(
+        tmp_path,
+        run_id="q5-pair-metric-tamper",
+        role="primary",
+        model=Q5DeterministicMockPolicyModel(),
+    )
+    summary = _json(graded.summary_path)
+    summary["by_system"][Q5AgentSystem.rule.value][
+        "within_policy_pair_success"
+    ] = 1.0
+    _write_test_json(graded.summary_path, summary)
+    hashes = _json(graded.graded_hashes_path)
+    hashes["artifacts"]["summary.json"] = hashlib.sha256(
+        graded.summary_path.read_bytes()
+    ).hexdigest()
+    _write_test_json(graded.graded_hashes_path, hashes)
+
+    with pytest.raises(ValueError, match="summary metric provenance"):
         verify_q5_graded_run(graded.run_dir, gold_path)
 
 
@@ -928,10 +961,14 @@ def _rewrite_graded_artifacts_with_tamper(run_dir: Path, *, target: str) -> None
         bootstrap_resamples=int(manifest["bootstrap"]["resamples"]),
     )
     control = metrics["by_system"].pop(Q5_ESCALATE_EVERYTHING_CONTROL)
+    fixed = metrics.pop("fixed_table_control")
     summary_path = run_dir / "summary.json"
     summary = _json(summary_path)
     summary.update(metrics)
-    summary["analytic_controls"] = {Q5_ESCALATE_EVERYTHING_CONTROL: control}
+    summary["analytic_controls"] = {
+        Q5_ESCALATE_EVERYTHING_CONTROL: control,
+        "q5_semantic_table_rule_control": fixed,
+    }
     role = str(manifest["model"]["role"])
     summary["by_model_role"] = {
         role: {

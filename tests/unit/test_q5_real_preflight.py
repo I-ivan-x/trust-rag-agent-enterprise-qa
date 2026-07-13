@@ -12,9 +12,11 @@ from scripts.preflight_q5_real import (
     Q5_REAL_K,
     Q5_REAL_PREFLIGHT_SCHEMA,
     Q5_REAL_SYSTEMS,
+    Q5_V3_AUTHORING_SHA256,
     _budget,
     _real_command,
     _validate_mock_topology,
+    _validate_v3_mock_metrics,
     build_parser,
 )
 
@@ -103,6 +105,17 @@ def test_q5_real_preflight_accepts_complete_324_trial_topology() -> None:
     assert topology["run_indexes"] == [1, 2, 3]
     assert topology["rows_per_run_index"] == {"1": 108, "2": 108, "3": 108}
     assert topology["expected_total_calls"] == 216
+
+
+def test_q5_real_preflight_v3_metrics_fail_closed_on_tamper() -> None:
+    summary, gates = _metric_anchor_fixture()
+    _validate_v3_mock_metrics(summary, gates)
+
+    summary["by_system"]["q5_rule_agent"][
+        "trajectory_qualified_success_by_stratum"
+    ]["semantic"] = 0.75
+    with pytest.raises(ValueError, match="0.50"):
+        _validate_v3_mock_metrics(summary, gates)
 
 
 def test_q5_real_preflight_rejects_missing_run_index() -> None:
@@ -278,7 +291,7 @@ def _stub_preflight_dependencies(tmp_path, monkeypatch: pytest.MonkeyPatch):
     tasks = [SimpleNamespace(case_id=case_id) for case_id in case_ids]
     verified = SimpleNamespace(
         git_commit_sha=execution_commit,
-        protocol_version="v2",
+        protocol_version="v3",
         mode="mock",
         mock_used=True,
         real_run=False,
@@ -295,7 +308,7 @@ def _stub_preflight_dependencies(tmp_path, monkeypatch: pytest.MonkeyPatch):
         thinking_mode="disabled",
         purpose="q5_policy",
     )
-    output = tmp_path / "preflight-v2.json"
+    output = tmp_path / "preflight-v3.json"
     argv = [
         "--dataset-root",
         str(tmp_path / "dataset"),
@@ -316,20 +329,50 @@ def _stub_preflight_dependencies(tmp_path, monkeypatch: pytest.MonkeyPatch):
         lambda *args, **kwargs: SimpleNamespace(
             valid=True,
             errors=[],
-            sha256={"tasks": "d" * 64, "gold": "e" * 64},
+            sha256=dict(Q5_V3_AUTHORING_SHA256),
         ),
     )
     monkeypatch.setattr(preflight, "load_q5_tasks", lambda path: tasks)
-    monkeypatch.setattr(preflight, "verify_q5_graded_run", lambda *args: verified)
+    historical = {
+        "v1": SimpleNamespace(
+            protocol_version="v1",
+            run_id="historical-v1",
+            raw_manifest_sha256="1" * 64,
+        ),
+        "v2": SimpleNamespace(
+            protocol_version="v2",
+            run_id="historical-v2",
+            raw_manifest_sha256="2" * 64,
+        ),
+    }
+
+    def verify_stub(run_dir, gold_path):
+        path = str(run_dir)
+        if "q5-dev-real-deepseek" in path and "v2-real" not in path:
+            return historical["v1"]
+        if "q5-dev-v2-real" in path:
+            return historical["v2"]
+        return verified
+
+    monkeypatch.setattr(preflight, "verify_q5_graded_run", verify_stub)
     monkeypatch.setattr(preflight, "q5_read_jsonl", lambda path: deepcopy(rows))
     real_q5_read_json = preflight.q5_read_json
+    summary, gates = _metric_anchor_fixture()
     monkeypatch.setattr(
         preflight,
         "q5_read_json",
         lambda path: (
             deepcopy(manifest)
             if str(path).endswith("manifest.json")
-            else real_q5_read_json(path)
+            else (
+                deepcopy(summary)
+                if str(path).endswith("summary.json")
+                else (
+                    deepcopy(gates)
+                    if str(path).endswith("gates.json")
+                    else real_q5_read_json(path)
+                )
+            )
         ),
     )
     monkeypatch.setattr(preflight, "get_llm_client", lambda *args, **kwargs: client)
@@ -350,4 +393,45 @@ def _stub_preflight_dependencies(tmp_path, monkeypatch: pytest.MonkeyPatch):
         output=output,
         verified=verified,
         client=client,
+    )
+
+
+def _metric_anchor_fixture() -> tuple[dict, dict]:
+    pair_metrics = {
+        "within_policy_paired_count": 18,
+        "within_policy_pair_success": 0.5,
+        "cross_policy_paired_count": 18,
+        "cross_policy_pair_success": 0.5,
+        "duplicate_successful_observation_count": 0,
+        "post_observation_terminal_rate": 1.0,
+    }
+    by_system = {
+        system: {
+            **deepcopy(pair_metrics),
+            "trajectory_qualified_success_by_stratum": {"semantic": 0.5},
+        }
+        for system in Q5_REAL_SYSTEMS
+    }
+    return (
+        {
+            "schema_version": "q5-metrics-v3",
+            "by_system": by_system,
+            "analytic_controls": {
+                "q5_semantic_table_rule_control": {
+                    "fixed_table_solvability": 0.5
+                }
+            },
+        },
+        {
+            "schema_version": "q5-gates-v3",
+            "gates": {
+                gate: {"passed": True}
+                for gate in (
+                    "G0_safety_floor",
+                    "G2_hybrid_noninferiority",
+                    "G3_efficiency",
+                    "G5_anti_gaming",
+                )
+            },
+        },
     )

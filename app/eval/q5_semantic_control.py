@@ -12,21 +12,12 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.eval.q5_dataset import Q5EnvironmentStore
-from app.eval.q5_mock import Q5DeterministicMockPolicyModel
 from app.eval.q5_outcome import Q5OutcomeEnvironmentState, grade_q5_final_state
-from app.eval.q5_provenance import derive_q5_model_identity
 from app.eval.q5_runner import Q5RuntimeCaseInput, _run_trial
 from app.govern.q5_loop import Q5AgentSystem
 from app.schemas.q5_task import Q5Gold, Q5TaskInput
 
 Q5_SEMANTIC_TABLE_RULE_CONTROL = "q5_semantic_table_rule_control"
-
-
-class Q5SemanticTableRuleModel(Q5DeterministicMockPolicyModel):
-    """Three-family fixed state table over prompt-visible runtime facts only."""
-
-    provider = "grader_only_fixed_table"
-    model_name = "q5-semantic-table-rule-control-v1"
 
 
 class Q5SemanticControlExecution(BaseModel):
@@ -63,16 +54,14 @@ def execute_q5_semantic_table_rule_control(
         raise ValueError("Q5 semantic-table runtime case matrix mismatch")
     rows: list[dict[str, Any]] = []
     for task in tasks:
-        model = Q5SemanticTableRuleModel()
-        identity = derive_q5_model_identity(model)
         for run_index in range(1, k + 1):
             trial = _run_trial(
                 task=task,
                 source_environment=environment[task.environment_ref],
                 runtime_case=runtime_cases[task.case_id],
-                system=Q5AgentSystem.llm,
+                system=Q5AgentSystem.rule,
                 run_index=run_index,
-                prepared_model=(model, identity),
+                prepared_model=None,
             )
             rows.append(
                 {

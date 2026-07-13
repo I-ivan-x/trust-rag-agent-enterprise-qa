@@ -8,6 +8,8 @@ from collections import defaultdict
 from statistics import median
 from typing import Any, Literal
 
+from app.eval.q5_pairs import compute_q5_crossed_pair_metrics
+
 Q5_RULE_SYSTEM = "q5_rule_agent"
 Q5_LLM_SYSTEM = "q5_llm_agent"
 Q5_HYBRID_SYSTEM = "q5_hybrid_agent"
@@ -155,6 +157,13 @@ def compute_q5_metrics(
         resamples=bootstrap_resamples,
     )
     comparisons = _comparisons(by_system, bootstrap)
+    rule_metrics = by_system.get(Q5_RULE_SYSTEM) or {}
+    rule_semantic = float(
+        (rule_metrics.get("trajectory_qualified_success_by_stratum") or {}).get(
+            "semantic",
+            0.0,
+        )
+    )
     return {
         "schema_version": "q5-metrics-v3",
         "metric_type": "q5_outcome",
@@ -163,6 +172,18 @@ def compute_q5_metrics(
         "bootstrap_resamples": bootstrap_resamples,
         "by_system": by_system,
         "comparisons": comparisons,
+        "fixed_table_control": {
+            "control": "q5_semantic_table_rule_control",
+            "source_system": Q5_RULE_SYSTEM,
+            "shared_runtime_core": "q5_fixed_table_runtime_proposal",
+            "fixed_table_solvability": rule_semantic,
+            "semantic_trial_count": int(
+                (rule_metrics.get("trial_count_by_stratum") or {}).get(
+                    "semantic",
+                    0,
+                )
+            ),
+        },
     }
 
 
@@ -414,6 +435,10 @@ def _system_metrics(rows: list[dict[str, Any]], *, k: int) -> dict[str, Any]:
         )
         for stratum in strata
     }
+    trial_count_by_stratum = {
+        stratum: sum(row.get("stratum") == stratum for row in rows)
+        for stratum in strata
+    }
     unauthorized = [row for row in rows if row.get("authorized") is False]
     escalations = [row for row in rows if row.get("final_action") == "escalate_to_human"]
     required_total = sum(int(row.get("required_observation_count") or 0) for row in rows)
@@ -478,6 +503,7 @@ def _system_metrics(rows: list[dict[str, Any]], *, k: int) -> dict[str, Any]:
             trial_count,
         ),
         "trajectory_qualified_success_by_stratum": trajectory_by_stratum,
+        "trial_count_by_stratum": trial_count_by_stratum,
         "fallback_assisted_success": _ratio(fallback_successes, trial_count),
         "tool_schema_invalid_count": sum(
             int(row.get("tool_schema_invalid_count") or 0) for row in rows
@@ -492,9 +518,6 @@ def _system_metrics(rows: list[dict[str, Any]], *, k: int) -> dict[str, Any]:
         "post_observation_terminal_rate": _mean_present(
             row.get("post_observation_terminal_rate") for row in rows
         ),
-        "within_policy_adaptation_accuracy": None,
-        "cross_policy_semantic_sensitivity": None,
-        "fixed_table_solvability": None,
         "terminal_action_correct": _ratio(
             sum(row.get("terminal_action_correct") is True for row in rows),
             trial_count,
@@ -565,6 +588,7 @@ def _system_metrics(rows: list[dict[str, Any]], *, k: int) -> dict[str, Any]:
             and over_escalation_rate <= Q5_OVER_ESCALATION_CEIL
         ),
         **pass_metrics,
+        **compute_q5_crossed_pair_metrics(rows, k=k),
     }
     for code in range(11, 18):
         key = next(key for key in failure_taxonomy if key.startswith(f"F{code}_"))
