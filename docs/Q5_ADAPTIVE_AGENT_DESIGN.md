@@ -361,7 +361,7 @@ G4 只要求方向复现，不要求复制 primary 的精确 effect size。
 | Q5-P2 | implementation 窗口 | task/gold isolation + rich authorized DecisionContext | complete ✅ |
 | Q5-P3 | implementation 窗口 | observation tools + rule/LLM/hybrid bounded loop | complete ✅ |
 | Q5-P4 | implementation 窗口 | outcome metrics + ablation harness + manifests/gates | protocol v2 complete ✅ |
-| Q5-P5 | implementation + plan | q5_dev runs -> diagnostic -> freeze commit | v3 real-dev 有效负结果；Batch 5-H policy semantic binding pending |
+| Q5-P5 | implementation + plan | q5_dev runs -> diagnostic -> freeze commit | v3 real-dev 有效负结果；5-H 已实现待审，随后执行 5-I value-frontier hardening |
 | Q5-P6 | plan author + run window | create sealed q5_test -> one-shot primary + confirmatory real runs | pending |
 | Q5-P7 | plan/report 窗口 | EVALUATION_REPORT / FAILURE_ANALYSIS / ADR-017+ | pending |
 | Q5-P8 | plan/report + Owner | README/showcase update + tag `v4.0-q5-adaptive-agent` | pending |

@@ -85,8 +85,10 @@
 - Batch 5-E 已完成：completion guard、v3 protocol、fixed-table=1.00 诊断与 replay 均通过审核；
 - plan/report 已冻结 crossed q5_dev v3、V3 amendment 与数据锚点；
 - Batch 5-F 与唯一 v3 DeepSeek real-dev 已完成并通过 artifact 审核，但 G1 与 crossed readiness 失败；
-- 下一动作是 Batch 5-H：dev-v4 clarity-controlled authoring、typed policy disposition、确定性 action
-  compilation、F18、protocol-v4 mock/preflight；该批 external/LLM requests 必须为 0；
+- Batch 5-H 已由 `0792fd3` 实现 protocol-v4 policy binding，尚待 plan/report 正式审核；
+- 5-H 通过后不直接运行 real-dev：下一动作是 Batch 5-I cognitive-step routing、counterfactual value
+  ledger 与 symbolic policy control；该批 external/LLM requests 必须为 0；
+- 5-I 审核与 zero-request preflight 通过后，才可能批准 Batch 5-J 唯一 v4 primary real-dev；
 - 费用/token 仅作 observability，不得限制样本、k、复验或 validity；
 - q5_test、confirmatory run、freeze 和 tag 继续锁定。
 

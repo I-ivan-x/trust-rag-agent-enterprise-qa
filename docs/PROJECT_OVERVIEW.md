@@ -104,7 +104,8 @@ number is guarded by a code contract, not discipline.
   `docs/Q5_P5_PREREG_AMENDMENT_V2.md`, `docs/Q5_P5_PREREG_AMENDMENT_V3.md`,
   `docs/Q5_P5_DEV_V3_AUTHORING_REPORT.md`, `docs/Q5_P5_DEV_V2_READINESS.md`,
   `docs/Q5_P5_REAL_DEV_V3_NEGATIVE_DIAGNOSTIC.md`,
-  `docs/SPEC_Q5_P5_H_POLICY_SEMANTIC_BINDING.md`, `docs/Q5_IMPLEMENTATION_HANDOFF.md`
+  `docs/SPEC_Q5_P5_H_POLICY_SEMANTIC_BINDING.md`, `docs/Q5_VALUE_FRONTIER_STRATEGY.md`,
+  `docs/SPEC_Q5_P5_I_VALUE_FRONTIER_HARDENING.md`, `docs/Q5_IMPLEMENTATION_HANDOFF.md`
 - Failure taxonomy F1–F13 with trace evidence: `docs/FAILURE_ANALYSIS.md`
 - Design decisions (ADR-001…016) with measured consequences: `docs/TECHNICAL_DESIGN.md`
 - Q4 negative→positive design + pre-registration: `docs/Q4_RELIABILITY_DESIGN.md`, `docs/Q4_P2_PREREGISTER.md`

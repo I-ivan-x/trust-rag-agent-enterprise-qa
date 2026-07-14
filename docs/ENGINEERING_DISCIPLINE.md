@@ -45,7 +45,7 @@ TrustRAG 的项目秩序不是传统的“先列功能，再逐项打勾”，�
 | 有记录的开发跨度 | **2026-06-10 至 2026-07-13** | 34 个自然日内完成系统、评测、治理、可靠性、展示与 Q5 Agent Infra 迭代 |
 | 正式阶段标签 | **4** | `v0.3-q1-hard-demo`、`v1.0-q2-agentic-eval`、`v2.0-q3-action-governance`、`v3.0-q4-reliability` |
 | 阶段性标签 | **6** | ingestion、retrieval、generation、trust gates、eval 分阶段冻结 |
-| `docs/*.md` | **77（含本文及 Q5 文档）** | 设计、协议、规格、报告、失败分析和交接材料分层保存 |
+| `docs/*.md` | **79（含本文及 Q5 文档）** | 设计、协议、规格、报告、失败分析和交接材料分层保存 |
 | 实现规格文档 | **21** | 高风险功能通常先写契约，再进入代码 |
 | 可执行脚本 | **28** | ingest、index、eval、leakage、ablation、diagnostic、release gate 均可命令化 |
 | Python app 代码 | **20,605 行** | 覆盖完整 RAG、Agent、治理、评测与可观测模块 |

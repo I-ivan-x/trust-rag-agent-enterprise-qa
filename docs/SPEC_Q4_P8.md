@@ -45,7 +45,7 @@ P8 对 Codex 而言是**机械收口 + tag**，只剩一处文档行需在 P6/P7
 并在 README 文档表追加：
 
 ```markdown
-| [SPEC_Q4_P6_P7](docs/SPEC_Q4_P6_P7.md) | OpenInference/OTel trace exporter, run manifest, and CI hard-gate spec |
+| [SPEC_Q4_P6_P7](SPEC_Q4_P6_P7.md) | OpenInference/OTel trace exporter, run manifest, and CI hard-gate spec |
 ```
 
 ------
