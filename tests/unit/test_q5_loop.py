@@ -6,12 +6,19 @@ from collections.abc import Sequence
 
 import pytest
 
+import app.govern.q5_loop as q5_loop_module
 from app.core.enums import CorpusSource, SourceOrigin
 from app.govern.conditions import (
     ConditionReport,
     GovernanceAction,
     OpsCondition,
     RiskTier,
+)
+from app.govern.q5_context import (
+    Q5DecisionBasis,
+    Q5PolicyDisposition,
+    Q5ProposalKind,
+    Q5StructuredProposal,
 )
 from app.govern.q5_environment import Q5ReadOnlyEnvironment
 from app.govern.q5_loop import (
@@ -20,6 +27,8 @@ from app.govern.q5_loop import (
     q5_unresolved_state_tools,
     run_q5_agent,
 )
+from app.govern.q5_policy import Q5PolicyStep
+from app.govern.q5_tool_validator import Q5ToolValidationResult
 from app.govern.sinks import ActionRecord, ApprovalState
 from app.guards.acl_gate import ACLGateDecision
 from app.guards.conflict_detector import ConflictDecision
@@ -262,12 +271,13 @@ def _run(
     task: Q5TaskInput | None = None,
     environment: Q5ReadOnlyEnvironment | None = None,
     report: ConditionReport | None = None,
+    pass_result: RetrievalPassResult | None = None,
 ):
     sink = MemorySink()
     result = run_q5_agent(
         system=system,
         task=task or _task(),
-        pass_result=_pass_result(),
+        pass_result=pass_result or _pass_result(),
         report=report or _report(),
         runtime=Q5AgentRuntime(
             environment=environment or _environment(),
@@ -488,7 +498,7 @@ def test_q5_parse_error_never_falls_back_to_rule_success() -> None:
 
     assert result.route.route == "llm"
     assert result.final_action is GovernanceAction.escalate_to_human
-    assert result.fallback_reason == "structured_proposal_parse_error"
+    assert result.fallback_reason == "policy_parse_error"
     assert result.llm_calls == 1
     assert result.observation_count == 0
     assert result.trajectory[0].event_type == "policy_error"
@@ -557,14 +567,14 @@ def test_q5_observation_budget_is_two_plus_one_terminal() -> None:
     )
 
     assert result.final_action is GovernanceAction.escalate_to_human
-    assert result.fallback_reason == "observation_budget_exhausted"
+    assert result.fallback_reason == "step_budget_exhausted"
     assert result.observation_count == 2
     assert result.terminal_proposal_count == 1
     assert result.step_count == 3
     assert len(result.tool_events) == len(result.otel_spans) == 2
 
 
-def test_q5_timeout_does_not_complete_key_and_identical_retry_can_succeed() -> None:
+def test_q5_timeout_is_one_step_canonical_safe_fallback_without_retry() -> None:
     class FlakyEnvironment:
         def __init__(self, delegate: Q5ReadOnlyEnvironment) -> None:
             self.delegate = delegate
@@ -611,15 +621,16 @@ def test_q5_timeout_does_not_complete_key_and_identical_retry_can_succeed() -> N
         environment=FlakyEnvironment(_environment()),  # type: ignore[arg-type]
     )
 
-    assert result.final_action is GovernanceAction.open_remediation_ticket
-    assert result.fallback_reason is None
+    assert result.final_action is GovernanceAction.escalate_to_human
+    assert result.fallback_reason == "tool_timeout"
     assert result.tool_events[0].status.value == "timeout"
-    assert result.tool_events[1].status.value == "ok"
     assert result.trajectory[0].reason_code == "tool_timeout"
-    assert len(result.context_traces) == 3
-    assert result.step_count == 3
+    assert result.trajectory[-1].reason_code == "tool_timeout"
+    assert len(result.context_traces) == 2
+    assert result.step_count == 2
+    assert result.llm_calls == 1
     assert result.duplicate_successful_observation_count == 0
-    assert result.post_observation_terminal_rate == 1.0
+    assert result.post_observation_terminal_rate is None
 
 
 def test_q5_completed_observation_rejects_exact_duplicate_without_execution() -> None:
@@ -705,3 +716,221 @@ def test_q5_investigate_side_effect_cannot_bypass_reauthorization() -> None:
     assert result.llm_calls == 0
     assert model.calls == 0
     assert sink.records[0].action is GovernanceAction.escalate_to_human
+
+
+def test_q5_model_error_has_canonical_runtime_cause() -> None:
+    result, _ = _run(Q5AgentSystem.llm, model=QueueModel([]))
+
+    assert result.fallback_reason == "policy_model_error"
+    assert result.terminal_proposal.reason_code == "policy_model_error"
+    assert result.trajectory[-1].reason_code == "policy_model_error"
+
+
+def test_q5_invalid_evidence_citation_has_canonical_runtime_cause(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    proposal = Q5StructuredProposal(
+        kind=Q5ProposalKind.terminal,
+        action=GovernanceAction.open_remediation_ticket,
+        decision_basis=Q5DecisionBasis(
+            policy_disposition=Q5PolicyDisposition.remediate,
+            evidence_chunk_id="foreign-evidence",
+        ),
+        disposition_source="model",
+        evidence_chunk_ids=["foreign-evidence"],
+        reason_code="candidate",
+        reason_summary="Candidate terminal proposal.",
+    )
+    monkeypatch.setattr(
+        q5_loop_module.Q5LLMAgentPolicy,
+        "decide",
+        lambda self, context: Q5PolicyStep(
+            proposal=proposal,
+            policy_source="llm",
+            parse_status="accepted",
+            raw_payload_sha256="a" * 64,
+            llm_called=True,
+        ),
+    )
+
+    result, _ = _run(Q5AgentSystem.llm, model=QueueModel([]))
+
+    assert result.fallback_reason == "invalid_evidence_citation"
+    assert result.terminal_proposal.disposition_source == "fallback"
+
+
+@pytest.mark.parametrize(
+    "cause",
+    [
+        "observation_reauthorization_rejection",
+        "tool_not_allowed",
+        "tool_forbidden_control_field",
+    ],
+)
+def test_q5_observation_rejection_causes_are_emitted_by_real_loop(
+    monkeypatch: pytest.MonkeyPatch,
+    cause: str,
+) -> None:
+    model = QueueModel([_observe_payload()])
+    if cause == "observation_reauthorization_rejection":
+        original = q5_loop_module.reauthorize_q5_proposal
+        calls = 0
+
+        def reject_first(*args, **kwargs):
+            nonlocal calls
+            calls += 1
+            verdict = original(*args, **kwargs)
+            if calls == 1:
+                return verdict.model_copy(
+                    update={
+                        "allowed": False,
+                        "reason_code": "observation_role_denied",
+                    }
+                )
+            return verdict
+
+        monkeypatch.setattr(q5_loop_module, "reauthorize_q5_proposal", reject_first)
+    else:
+        reason = (
+            "tool_not_allowed"
+            if cause == "tool_not_allowed"
+            else "forbidden_control_field"
+        )
+        monkeypatch.setattr(
+            q5_loop_module,
+            "validate_q5_tool_call",
+            lambda **kwargs: Q5ToolValidationResult(
+                allowed=False,
+                reason_code=reason,
+            ),
+        )
+
+    result, _ = _run(Q5AgentSystem.llm, model=model)
+
+    assert result.fallback_reason == cause
+    assert result.trajectory[0].event_type == "tool_rejected"
+
+
+def test_q5_terminal_reauthorization_rejection_has_canonical_witness(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    original = q5_loop_module.reauthorize_q5_proposal
+    calls = 0
+
+    def reject_first(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        verdict = original(*args, **kwargs)
+        if calls == 1:
+            return verdict.model_copy(
+                update={"allowed": False, "reason_code": "role_action_denied"}
+            )
+        return verdict
+
+    monkeypatch.setattr(q5_loop_module, "reauthorize_q5_proposal", reject_first)
+    result, _ = _run(
+        Q5AgentSystem.llm,
+        model=QueueModel(
+            [_terminal_payload(GovernanceAction.open_remediation_ticket, None)]
+        ),
+        task=_task(available_tools=[]),
+        report=_report(conditions=[OpsCondition.broken_xref]),
+    )
+
+    assert result.fallback_reason == "reauthorization_rejection"
+    assert result.trajectory[-1].authorization_reason == "role_action_denied"
+
+
+def test_q5_observation_and_terminal_only_budget_causes_are_distinct() -> None:
+    budget_result, _ = _run(
+        Q5AgentSystem.llm,
+        model=QueueModel([_observe_payload()]),
+        task=_task(max_observations=0),
+    )
+    terminal_only_model = QueueModel(
+        [
+            _observe_payload(),
+            _observe_payload(resource_ref="resource:other"),
+        ]
+    )
+    terminal_only_result, _ = _run(
+        Q5AgentSystem.llm,
+        model=terminal_only_model,
+        task=_task(
+            resource_refs=[
+                "resource:payments",
+                "resource:other",
+                "policy:change-control",
+            ]
+        ),
+    )
+
+    assert budget_result.fallback_reason == "observation_budget_exhausted"
+    assert (
+        terminal_only_result.fallback_reason
+        == "terminal_only_observation_rejected"
+    )
+
+
+def test_q5_q4_rejection_normalizes_every_terminal_action_surface(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        q5_loop_module,
+        "validate_governance",
+        lambda proposal, report, budget: q5_loop_module.GovValidationResult(
+            ok=False,
+            reject_reason="insufficient_evidence_requires_escalation",
+            forced_action=GovernanceAction.escalate_to_human,
+        ),
+    )
+    model = QueueModel(
+        [
+            _observe_payload(),
+            _terminal_payload(GovernanceAction.open_remediation_ticket),
+        ]
+    )
+
+    result, sink = _run(Q5AgentSystem.llm, model=model)
+
+    assert result.fallback_reason == "q4_rejection"
+    assert result.final_action is GovernanceAction.escalate_to_human
+    assert result.terminal_proposal.action is GovernanceAction.escalate_to_human
+    assert result.terminal_proposal.disposition_source == "fallback"
+    assert result.terminal_proposal.decision_basis is None
+    assert result.trajectory[-1].action is GovernanceAction.escalate_to_human
+    assert result.trajectory[-1].q4_validator_verdict == "rejected"
+    assert result.q4_validation_input["proposal"]["action"] == (
+        GovernanceAction.open_remediation_ticket.value
+    )
+    assert sink.records[-1].action is GovernanceAction.escalate_to_human
+
+
+def test_q5_trusted_rule_policy_block_remains_distinct_from_synthesized_fallback() -> None:
+    source = _pass_result()
+    empty_pass = source.model_copy(
+        update={
+            "retrieved_chunks": [],
+            "reranked_chunks": [],
+            "state_decision": StateGateDecision(),
+            "acl_decision": ACLGateDecision(),
+            "evidence_decision": EvidenceGateDecision(
+                evidence_sufficient=False,
+                reason="insufficient",
+                support_count=0,
+            ),
+        }
+    )
+    result, _ = _run(
+        Q5AgentSystem.rule,
+        pass_result=empty_pass,
+        report=ConditionReport(
+            conditions=[OpsCondition.insufficient_evidence],
+            authorized_actor=True,
+            evidence_decision="insufficient",
+        ),
+    )
+
+    assert result.terminal_proposal.disposition_source == "fallback"
+    assert result.terminal_proposal.reason_code == "policy_block"
+    assert result.fallback_reason is None

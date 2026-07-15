@@ -19,6 +19,10 @@ from app.eval.q5_dataset import (
     load_q5_gold,
     validate_q5_dataset,
 )
+from app.eval.q5_fallback import (
+    derive_q5_v4_fallback_witness,
+    q5_v4_q4_validation_matches,
+)
 from app.eval.q5_metrics import (
     Q5_ALWAYS_HUMAN_REVIEW_CONTROL,
     Q5_BOOTSTRAP_MIN_RESAMPLES,
@@ -74,6 +78,12 @@ from app.govern.q5_context import (
     build_q5_prompt,
 )
 from app.govern.q5_environment import Q5ReadOnlyEnvironment
+from app.govern.q5_fallback import (
+    Q5_FALLBACK_RESULT_REASON,
+    Q5_FALLBACK_TERMINAL_REASON_CODE,
+    Q5_SYNTHESIZED_FALLBACK_CAUSES,
+    Q5FallbackCause,
+)
 from app.govern.q5_loop import (
     Q5AgentRuntime,
     Q5AgentSystem,
@@ -755,6 +765,13 @@ def _validate_q5_raw_artifacts(
     is_v3 = protocol.version is Q5ProtocolVersion.v3
     is_v4 = protocol.version is Q5ProtocolVersion.v4
     is_strict = is_v2 or is_v3 or is_v4
+    if is_v4:
+        q4_input_presence = [
+            isinstance(row, dict) and "q4_validation_input" in row
+            for row in artifacts.get("terminal_events.jsonl", [])
+        ]
+        if any(q4_input_presence) and not all(q4_input_presence):
+            raise ValueError("Q5 v4 Q4 validation-input ledger is incomplete")
     if manifest.get("mode") not in {"mock", "dev", "real"}:
         raise ValueError("Q5 manifest mode is invalid")
     if type(manifest.get("mock_used")) is not bool or type(manifest.get("real_run")) is not bool:
@@ -1342,6 +1359,17 @@ def _validate_q5_raw_artifacts(
                         "Q5 v4 authorized-evidence provenance disagrees across systems: "
                         f"{case_id}|{run_index}"
                     )
+                evidence_decisions = {
+                    indexed["results.jsonl"][
+                        _trial_key_from_values(case_id, system, run_index)
+                    ].get("evidence_decision")
+                    for system in systems
+                }
+                if len(evidence_decisions) != 1:
+                    raise ValueError(
+                        "Q5 v4 evidence-decision provenance disagrees across systems: "
+                        f"{case_id}|{run_index}"
+                    )
 
 
 def _validate_q5_v4_trial_provenance(
@@ -1392,30 +1420,36 @@ def _validate_q5_v4_trial_provenance(
         and isinstance(item.get("accepted_proposal"), dict)
         and item["accepted_proposal"].get("kind") == Q5ProposalKind.terminal.value
     ]
+    fallback_witness = derive_q5_v4_fallback_witness(
+        result=result,
+        policy_events=policy,
+        tool_events=tools,
+        trajectory=trajectory,
+        terminal_event=terminal,
+    )
+    derived_cause = fallback_witness.cause if fallback_witness is not None else None
 
     if source == "fallback":
-        accepted_fallback = [
-            item
-            for item in accepted_terminal
-            if item["accepted_proposal"].get("disposition_source") == "fallback"
-        ]
-        policy_block_is_authentic = (
-            len(accepted_fallback) == 1
-            and accepted_fallback[0].get("accepted_proposal") == proposal
-            and accepted_fallback[0].get("policy_source") == "rule"
-            and accepted_fallback[0].get("llm_called") is False
-            and accepted_fallback[0].get("raw_payload_sha256") is None
-        )
-        synthesized_fallback_is_authentic = (
-            not accepted_fallback and result.get("fallback_reason") is not None
-        )
+        if fallback_witness is None:
+            raise ValueError(f"Q5 v4 fallback lacks a causal witness: {key}")
+        cause = fallback_witness.cause
+        expected_fallback_reason = Q5_FALLBACK_RESULT_REASON[cause]
+        expected_terminal_reason = Q5_FALLBACK_TERMINAL_REASON_CODE[cause]
         if (
             basis is not None
             or action is not GovernanceAction.escalate_to_human
-            or not (policy_block_is_authentic or synthesized_fallback_is_authentic)
+            or result.get("fallback_reason") != expected_fallback_reason
+            or parsed_terminal.reason_code != expected_terminal_reason
+            or terminal_step.get("reason_code") != expected_terminal_reason
         ):
             raise ValueError(f"Q5 v4 fallback terminal forges policy provenance: {key}")
+        if cause in Q5_SYNTHESIZED_FALLBACK_CAUSES and accepted_terminal and any(
+            item.get("accepted_proposal") == proposal for item in accepted_terminal
+        ):
+            raise ValueError(f"Q5 v4 synthesized fallback forges acceptance: {key}")
     else:
+        if fallback_witness is not None or result.get("fallback_reason") is not None:
+            raise ValueError(f"Q5 v4 non-fallback terminal has a causal rejection: {key}")
         if basis is None:
             raise ValueError(f"Q5 v4 selected disposition lacks decision basis: {key}")
         compiled_action = Q5_DISPOSITION_TO_ACTION[basis.policy_disposition]
@@ -1447,6 +1481,37 @@ def _validate_q5_v4_trial_provenance(
         expected_policy_source = "llm" if source == "model" else "rule"
         if accepted_terminal[0].get("policy_source") != expected_policy_source:
             raise ValueError(f"Q5 v4 terminal policy source mismatch: {key}")
+        q4_validation = terminal.get("q4_validation")
+        if not isinstance(q4_validation, dict) or q4_validation != {
+            "ok": True,
+            "reject_reason": None,
+            "forced_action": None,
+        }:
+            raise ValueError(f"Q5 v4 non-fallback terminal has unexplained Q4 state: {key}")
+
+    q4_validation = terminal.get("q4_validation")
+    if not isinstance(q4_validation, dict) or (
+        result.get("q4_validator_ok") != q4_validation.get("ok")
+        or result.get("q4_validator_reject_reason")
+        != q4_validation.get("reject_reason")
+    ):
+        raise ValueError(f"Q5 v4 result/Q4 validation provenance mismatch: {key}")
+    q4_input = terminal.get("q4_validation_input")
+    if q4_input is not None:
+        expected_q4_action = action.value
+        if derived_cause is Q5FallbackCause.q4_rejection:
+            if len(accepted_terminal) != 1:
+                raise ValueError(f"Q5 v4 Q4 rejection lacks original proposal: {key}")
+            expected_q4_action = str(
+                accepted_terminal[0]["accepted_proposal"].get("action") or ""
+            )
+        if not q5_v4_q4_validation_matches(
+            q4=q4_validation,
+            q4_input=q4_input,
+            result=result,
+            expected_proposal_action=expected_q4_action,
+        ):
+            raise ValueError(f"Q5 v4 Q4 validation input does not replay: {key}")
 
     expected_result = {
         "final_action": action.value,
@@ -1991,6 +2056,7 @@ def _run_trial(
         "terminal_proposal": result.terminal_proposal.model_dump(mode="json"),
         "final_action": result.final_action.value,
         "q4_validation": result.q4_validation.model_dump(mode="json"),
+        "q4_validation_input": result.q4_validation_input,
         "sink_record": (
             result.record.model_dump(mode="json") if result.record is not None else None
         ),

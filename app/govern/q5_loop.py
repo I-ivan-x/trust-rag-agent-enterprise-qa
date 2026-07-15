@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -22,6 +22,12 @@ from app.govern.q5_context import (
     reauthorize_q5_proposal,
 )
 from app.govern.q5_environment import Q5ReadOnlyEnvironment
+from app.govern.q5_fallback import (
+    Q5_FALLBACK_RESULT_REASON,
+    Q5_FALLBACK_TERMINAL_REASON_CODE,
+    Q5_TOOL_VALIDATION_FALLBACK,
+    Q5FallbackCause,
+)
 from app.govern.q5_llm_policy import Q5LLMAgentPolicy
 from app.govern.q5_policy import (
     Q5AgentPolicy,
@@ -116,6 +122,7 @@ class Q5AgentResult(BaseModel):
     terminal_proposal: Q5StructuredProposal
     final_action: GovernanceAction
     q4_validation: GovValidationResult
+    q4_validation_input: dict[str, Any]
     record: ActionRecord | None = None
     tool_events: list[Q5ToolEvent] = Field(default_factory=list)
     policy_events: list[Q5PolicyDecisionEvent] = Field(default_factory=list)
@@ -227,14 +234,22 @@ def run_q5_agent(
             )
         )
         if policy_step.proposal is None:
-            reason = policy_step.error_reason or policy_step.parse_status
+            fallback_cause = (
+                Q5FallbackCause.policy_model_error
+                if policy_step.parse_status == "model_error"
+                else (
+                    Q5FallbackCause.tool_schema_invalid
+                    if policy_step.error_reason == "tool_schema_invalid"
+                    else Q5FallbackCause.policy_parse_error
+                )
+            )
             state.trajectory.append(
                 Q5TrajectoryEvent(
                     step_index=step_index,
                     context_version=context_version,
                     event_type="policy_error",
                     policy_source=policy_step.policy_source,
-                    reason_code=reason,
+                    reason_code=fallback_cause.value,
                 )
             )
             return _finalize(
@@ -246,11 +261,11 @@ def run_q5_agent(
                 runtime=runtime,
                 context=context,
                 state=state,
-                proposal=_safe_escalation(context, "policy_error"),
+                proposal=_safe_escalation(context, fallback_cause),
                 policy_source=policy_step.policy_source,
                 step_index=step_index,
                 context_version=context_version,
-                fallback_reason=reason,
+                fallback_cause=fallback_cause,
             )
 
         proposal = policy_step.proposal
@@ -280,7 +295,7 @@ def run_q5_agent(
         )
         if not authorization.allowed:
             return _reject_tool_and_escalate(
-                reason=f"observation_{authorization.reason_code}",
+                fallback_cause=Q5FallbackCause.observation_reauthorization_rejection,
                 system=system,
                 route=route,
                 task=task,
@@ -305,7 +320,9 @@ def run_q5_agent(
         )
         if not tool_validation.allowed or tool_validation.call is None:
             return _reject_tool_and_escalate(
-                reason=f"tool_{tool_validation.reason_code}",
+                fallback_cause=Q5_TOOL_VALIDATION_FALLBACK[
+                    tool_validation.reason_code
+                ],
                 system=system,
                 route=route,
                 task=task,
@@ -328,7 +345,7 @@ def run_q5_agent(
         if completed_key in state.completed_observation_keys:
             state.duplicate_successful_observation_count += 1
             return _reject_tool_and_escalate(
-                reason="duplicate_successful_observation",
+                fallback_cause=Q5FallbackCause.duplicate_successful_observation,
                 system=system,
                 route=route,
                 task=task,
@@ -345,7 +362,7 @@ def run_q5_agent(
             )
         if context.terminal_only:
             return _reject_tool_and_escalate(
-                reason="terminal_only_observation_rejected",
+                fallback_cause=Q5FallbackCause.terminal_only_observation_rejected,
                 system=system,
                 route=route,
                 task=task,
@@ -362,7 +379,11 @@ def run_q5_agent(
             )
         if len(state.observations) >= max_observations:
             return _reject_tool_and_escalate(
-                reason="observation_budget_exhausted",
+                fallback_cause=(
+                    Q5FallbackCause.step_budget_exhausted
+                    if step_index == 3
+                    else Q5FallbackCause.observation_budget_exhausted
+                ),
                 system=system,
                 route=route,
                 task=task,
@@ -417,7 +438,12 @@ def run_q5_agent(
         state.context_traces.append(
             build_q5_context_trace(context, context_version=context_version)
         )
-        if execution.result.status is Q5ToolStatus.invalid:
+        if execution.result.status in {Q5ToolStatus.invalid, Q5ToolStatus.timeout}:
+            fallback_cause = (
+                Q5FallbackCause.tool_invalid
+                if execution.result.status is Q5ToolStatus.invalid
+                else Q5FallbackCause.tool_timeout
+            )
             return _finalize(
                 system=system,
                 route=route,
@@ -427,11 +453,11 @@ def run_q5_agent(
                 runtime=runtime,
                 context=context,
                 state=state,
-                proposal=_safe_escalation(context, "tool_failure"),
+                proposal=_safe_escalation(context, fallback_cause),
                 policy_source=policy_step.policy_source,
                 step_index=step_index,
                 context_version=context_version,
-                fallback_reason=f"tool_{execution.result.status.value}",
+                fallback_cause=fallback_cause,
             )
 
     return _finalize(
@@ -443,11 +469,11 @@ def run_q5_agent(
         runtime=runtime,
         context=context,
         state=state,
-        proposal=_safe_escalation(context, "step_budget_exhausted"),
+        proposal=_safe_escalation(context, Q5FallbackCause.step_budget_exhausted),
         policy_source=policy.policy_source,
         step_index=3,
         context_version=context_version,
-        fallback_reason="step_budget_exhausted",
+        fallback_cause=Q5FallbackCause.step_budget_exhausted,
     )
 
 
@@ -586,7 +612,7 @@ def _build_context(
 
 def _reject_tool_and_escalate(
     *,
-    reason: str,
+    fallback_cause: Q5FallbackCause,
     system: Q5AgentSystem,
     route: Q5RouteDecision,
     task: Q5TaskInput,
@@ -607,7 +633,7 @@ def _reject_tool_and_escalate(
             context_version=context_version,
             event_type="tool_rejected",
             policy_source=policy_source,
-            reason_code=reason,
+            reason_code=fallback_cause.value,
             proposal_kind=proposal.kind,
             tool=proposal.tool,
             authorization_reason=authorization.reason_code,
@@ -622,11 +648,11 @@ def _reject_tool_and_escalate(
         runtime=runtime,
         context=context,
         state=state,
-        proposal=_safe_escalation(context, "tool_rejected"),
+        proposal=_safe_escalation(context, fallback_cause),
         policy_source=policy_source,
         step_index=step_index,
         context_version=context_version,
-        fallback_reason=reason,
+        fallback_cause=fallback_cause,
     )
 
 
@@ -644,21 +670,24 @@ def _finalize(
     policy_source: Literal["rule", "llm"],
     step_index: int,
     context_version: int,
-    fallback_reason: str | None = None,
+    fallback_cause: Q5FallbackCause | None = None,
 ) -> Q5AgentResult:
     terminal_step_index = min(3, max(step_index, len(state.tool_events) + 1))
     effective = proposal
+    causal_authorization_reason: str | None = None
     authorized_ids = {item.chunk_id for item in context.authorized_evidence}
     unresolved_tools = q5_unresolved_state_tools(context)
     if not set(proposal.evidence_chunk_ids).issubset(authorized_ids):
-        fallback_reason = fallback_reason or "invalid_evidence_citation"
-        effective = _safe_escalation(context, "invalid_citation")
+        fallback_cause = fallback_cause or Q5FallbackCause.invalid_evidence_citation
+        effective = _safe_escalation(context, fallback_cause)
     elif proposal.action not in context.legal_terminal_actions:
-        fallback_reason = fallback_reason or "illegal_terminal_action"
-        effective = _safe_escalation(context, "illegal_action")
+        fallback_cause = fallback_cause or Q5FallbackCause.illegal_terminal_action
+        effective = _safe_escalation(context, fallback_cause)
     elif proposal.action in _SIDE_EFFECT_ACTIONS and unresolved_tools:
-        fallback_reason = fallback_reason or "premature_terminal_unresolved_state"
-        effective = _safe_escalation(context, "unresolved_state")
+        fallback_cause = (
+            fallback_cause or Q5FallbackCause.premature_terminal_unresolved_state
+        )
+        effective = _safe_escalation(context, fallback_cause)
 
     authorization = reauthorize_q5_proposal(
         effective,
@@ -667,8 +696,9 @@ def _finalize(
         available_tools=task.available_tools,
     )
     if not authorization.allowed:
-        fallback_reason = fallback_reason or f"reauthorization_{authorization.reason_code}"
-        effective = _safe_escalation(context, "reauthorization_failed")
+        causal_authorization_reason = authorization.reason_code
+        fallback_cause = fallback_cause or Q5FallbackCause.reauthorization_rejection
+        effective = _safe_escalation(context, fallback_cause)
         authorization = reauthorize_q5_proposal(
             effective,
             actor_claims=task.actor,
@@ -685,19 +715,40 @@ def _finalize(
         reason=effective.reason_summary,
         controller_source=system.value,
     )
-    if effective.action is GovernanceAction.no_op and not proposal_report.conditions:
+    q4_budget = GovernanceBudget(max_actions=1)
+    host_noop_short_circuit = bool(
+        effective.action is GovernanceAction.no_op and not proposal_report.conditions
+    )
+    q4_validation_input = {
+        "proposal": q4_proposal.model_dump(mode="json"),
+        "report": proposal_report.model_dump(mode="json"),
+        "budget": q4_budget.model_dump(mode="json"),
+        "host_noop_short_circuit": host_noop_short_circuit,
+    }
+    if host_noop_short_circuit:
         q4_validation = GovValidationResult(ok=True)
     else:
         q4_validation = validate_governance(
             q4_proposal,
             proposal_report,
-            GovernanceBudget(max_actions=1),
+            q4_budget,
         )
 
-    final_action = effective.action
     if not q4_validation.ok:
-        final_action = q4_validation.forced_action or GovernanceAction.escalate_to_human
-        fallback_reason = fallback_reason or f"q4_validator_{q4_validation.reject_reason}"
+        if fallback_cause is None:
+            fallback_cause = Q5FallbackCause.q4_rejection
+            effective = _safe_escalation(context, fallback_cause)
+            authorization = reauthorize_q5_proposal(
+                effective,
+                actor_claims=task.actor,
+                requested_capability=task.requested_capability,
+                available_tools=task.available_tools,
+            )
+            if not authorization.allowed:  # pragma: no cover - universally safe
+                raise RuntimeError("Q5 host fallback escalation failed reauthorization")
+
+    assert effective.action is not None
+    final_action = effective.action
 
     record = None
     if final_action is not GovernanceAction.no_op:
@@ -721,7 +772,11 @@ def _finalize(
             context_version=context_version,
             event_type="terminal",
             policy_source=policy_source,
-            reason_code=fallback_reason or effective.reason_code,
+            reason_code=(
+                Q5_FALLBACK_TERMINAL_REASON_CODE[fallback_cause]
+                if fallback_cause is not None
+                else effective.reason_code
+            ),
             proposal_kind=Q5ProposalKind.terminal,
             action=final_action,
             policy_disposition=(
@@ -730,7 +785,9 @@ def _finalize(
                 else None
             ),
             disposition_source=effective.disposition_source,
-            authorization_reason=authorization.reason_code,
+            authorization_reason=(
+                causal_authorization_reason or authorization.reason_code
+            ),
             q4_validator_verdict="accepted" if q4_validation.ok else "rejected",
             q4_validator_reject_reason=q4_validation.reject_reason,
         )
@@ -741,6 +798,7 @@ def _finalize(
         terminal_proposal=effective,
         final_action=final_action,
         q4_validation=q4_validation,
+        q4_validation_input=q4_validation_input,
         record=record,
         tool_events=list(state.tool_events),
         policy_events=list(state.policy_events),
@@ -757,13 +815,17 @@ def _finalize(
             if state.terminal_only_prompt_count
             else None
         ),
-        fallback_reason=fallback_reason,
+        fallback_reason=(
+            Q5_FALLBACK_RESULT_REASON[fallback_cause]
+            if fallback_cause is not None
+            else None
+        ),
     )
 
 
 def _safe_escalation(
     context: Q5DecisionContext,
-    reason_code: str,
+    fallback_cause: Q5FallbackCause,
 ) -> Q5StructuredProposal:
     return Q5StructuredProposal(
         kind=Q5ProposalKind.terminal,
@@ -773,7 +835,7 @@ def _safe_escalation(
         decision_basis=None,
         disposition_source="fallback",
         evidence_chunk_ids=[item.chunk_id for item in context.authorized_evidence[:5]],
-        reason_code=reason_code,
+        reason_code=Q5_FALLBACK_TERMINAL_REASON_CODE[fallback_cause],
         reason_summary="The bounded Q5 loop stopped safely and escalated for review.",
     )
 
