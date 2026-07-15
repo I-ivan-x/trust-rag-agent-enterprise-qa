@@ -1171,6 +1171,16 @@ def _validate_q5_raw_artifacts(
         )
         if parsed_terminal.kind is not Q5ProposalKind.terminal:
             raise ValueError(f"Q5 terminal event contains a non-terminal proposal: {key}")
+        if is_v4:
+            _validate_q5_v4_trial_provenance(
+                key=key,
+                result=result,
+                tools=tools,
+                policy=policy,
+                trajectory=trajectory,
+                terminal=terminal,
+                parsed_terminal=parsed_terminal,
+            )
         before = indexed["environment_before.json"][key]
         after = indexed["environment_after.json"][key]
         if before.get("sha256") != result.get("environment_before_sha256"):
@@ -1317,6 +1327,155 @@ def _validate_q5_raw_artifacts(
                     "Q5 isolated trial environments disagree before execution: "
                     f"{case_id}|{run_index}"
                 )
+            if is_v4:
+                authorized_evidence_sets = {
+                    tuple(
+                        indexed["results.jsonl"][
+                            _trial_key_from_values(case_id, system, run_index)
+                        ].get("authorized_evidence_ids")
+                        or []
+                    )
+                    for system in systems
+                }
+                if len(authorized_evidence_sets) != 1:
+                    raise ValueError(
+                        "Q5 v4 authorized-evidence provenance disagrees across systems: "
+                        f"{case_id}|{run_index}"
+                    )
+
+
+def _validate_q5_v4_trial_provenance(
+    *,
+    key: str,
+    result: Mapping[str, Any],
+    tools: Sequence[Mapping[str, Any]],
+    policy: Sequence[Mapping[str, Any]],
+    trajectory: Sequence[Mapping[str, Any]],
+    terminal: Mapping[str, Any],
+    parsed_terminal: Q5StructuredProposal,
+) -> None:
+    """Close protocol-v4 lineage using only same-trial runtime ledgers."""
+
+    proposal = parsed_terminal.model_dump(mode="json")
+    if terminal.get("terminal_proposal") != proposal:
+        raise ValueError(f"Q5 v4 terminal proposal normalization mismatch: {key}")
+
+    action = parsed_terminal.action
+    source = parsed_terminal.disposition_source
+    basis = parsed_terminal.decision_basis
+    if action is None or source is None:
+        raise ValueError(f"Q5 v4 terminal proposal provenance is incomplete: {key}")
+
+    authorized_ids = result.get("authorized_evidence_ids")
+    if (
+        not isinstance(authorized_ids, list)
+        or any(not isinstance(value, str) or not value for value in authorized_ids)
+        or len(authorized_ids) != len(set(authorized_ids))
+    ):
+        raise ValueError(f"Q5 v4 authorized-evidence ledger is invalid: {key}")
+    cited_ids = parsed_terminal.evidence_chunk_ids
+    if not set(cited_ids).issubset(set(authorized_ids)):
+        raise ValueError(f"Q5 v4 terminal proposal cites unauthorized evidence: {key}")
+
+    expected_disposition: str | None = None
+    expected_evidence_id: str | None = None
+    expected_request_id: str | None = None
+    terminal_step = next(
+        item for item in trajectory if item.get("event_type") == "terminal"
+    )
+    terminal_step_index = int(terminal_step["step_index"])
+    accepted_terminal = [
+        item
+        for item in policy
+        if int(item["step_index"]) == terminal_step_index
+        and item.get("parse_status") == "accepted"
+        and isinstance(item.get("accepted_proposal"), dict)
+        and item["accepted_proposal"].get("kind") == Q5ProposalKind.terminal.value
+    ]
+
+    if source == "fallback":
+        accepted_fallback = [
+            item
+            for item in accepted_terminal
+            if item["accepted_proposal"].get("disposition_source") == "fallback"
+        ]
+        policy_block_is_authentic = (
+            len(accepted_fallback) == 1
+            and accepted_fallback[0].get("accepted_proposal") == proposal
+            and accepted_fallback[0].get("policy_source") == "rule"
+            and accepted_fallback[0].get("llm_called") is False
+            and accepted_fallback[0].get("raw_payload_sha256") is None
+        )
+        synthesized_fallback_is_authentic = (
+            not accepted_fallback and result.get("fallback_reason") is not None
+        )
+        if (
+            basis is not None
+            or action is not GovernanceAction.escalate_to_human
+            or not (policy_block_is_authentic or synthesized_fallback_is_authentic)
+        ):
+            raise ValueError(f"Q5 v4 fallback terminal forges policy provenance: {key}")
+    else:
+        if basis is None:
+            raise ValueError(f"Q5 v4 selected disposition lacks decision basis: {key}")
+        compiled_action = Q5_DISPOSITION_TO_ACTION[basis.policy_disposition]
+        if action is not compiled_action:
+            raise ValueError(f"Q5 v4 disposition/action compilation mismatch: {key}")
+        if basis.evidence_chunk_id not in cited_ids:
+            raise ValueError(f"Q5 v4 decision-basis evidence is uncited: {key}")
+        if basis.evidence_chunk_id not in authorized_ids:
+            raise ValueError(f"Q5 v4 decision-basis evidence is unauthorized: {key}")
+        expected_disposition = basis.policy_disposition.value
+        expected_evidence_id = basis.evidence_chunk_id
+        expected_request_id = basis.observation_request_id
+        if expected_request_id is not None:
+            successful_request_ids = {
+                str(item["request_id"])
+                for item in tools
+                if item.get("status") in {"ok", "not_found"}
+            }
+            if expected_request_id not in successful_request_ids:
+                raise ValueError(
+                    f"Q5 v4 decision basis references no successful observation: {key}"
+                )
+        if len(accepted_terminal) != 1 or accepted_terminal[0].get(
+            "accepted_proposal"
+        ) != proposal:
+            raise ValueError(
+                f"Q5 v4 terminal proposal lacks same-step accepted policy provenance: {key}"
+            )
+        expected_policy_source = "llm" if source == "model" else "rule"
+        if accepted_terminal[0].get("policy_source") != expected_policy_source:
+            raise ValueError(f"Q5 v4 terminal policy source mismatch: {key}")
+
+    expected_result = {
+        "final_action": action.value,
+        "policy_disposition": expected_disposition,
+        "disposition_source": source,
+        "decision_basis_evidence_chunk_id": expected_evidence_id,
+        "decision_basis_observation_request_id": expected_request_id,
+    }
+    if any(result.get(field) != value for field, value in expected_result.items()):
+        raise ValueError(f"Q5 v4 result/terminal proposal provenance mismatch: {key}")
+
+    expected_trajectory = {
+        "action": action.value,
+        "policy_disposition": expected_disposition,
+        "disposition_source": source,
+    }
+    if any(terminal_step.get(field) != value for field, value in expected_trajectory.items()):
+        raise ValueError(f"Q5 v4 terminal trajectory provenance mismatch: {key}")
+
+    transition = terminal.get("transition")
+    if not isinstance(transition, dict) or transition.get("action") != action.value:
+        raise ValueError(f"Q5 v4 terminal transition action mismatch: {key}")
+    if terminal.get("final_action") != action.value:
+        raise ValueError(f"Q5 v4 terminal event action mismatch: {key}")
+    sink_record = terminal.get("sink_record")
+    if sink_record is not None and (
+        not isinstance(sink_record, dict) or sink_record.get("action") != action.value
+    ):
+        raise ValueError(f"Q5 v4 sink action provenance mismatch: {key}")
 
 
 def _index_exact_trial_rows(
