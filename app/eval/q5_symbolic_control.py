@@ -32,9 +32,10 @@ from app.govern.q5_policy import Q5PolicyStep
 from app.govern.q5_rule_policy import q5_fixed_table_runtime_proposal
 from app.schemas.q5_task import Q5Gold, Q5TaskInput
 
-Q5_SYMBOLIC_ROWS_SCHEMA = "q5-strong-symbolic-rows-v1"
-Q5_SYMBOLIC_SUMMARY_SCHEMA = "q5-strong-symbolic-summary-v1"
-Q5_SYMBOLIC_HASHES_SCHEMA = "q5-strong-symbolic-hashes-v1"
+Q5_SYMBOLIC_ROWS_SCHEMA = "q5-strong-symbolic-rows-v2"
+Q5_SYMBOLIC_SUMMARY_SCHEMA = "q5-strong-symbolic-summary-v2"
+Q5_SYMBOLIC_HASHES_SCHEMA = "q5-strong-symbolic-hashes-v2"
+Q5_SYMBOLIC_V1_HASHES_SCHEMA = "q5-strong-symbolic-hashes-v1"
 Q5_SYMBOLIC_FILES = frozenset(
     {
         "symbolic_rows.jsonl",
@@ -53,6 +54,32 @@ _DISPOSITION_LEXICON: Mapping[str, tuple[str, ...]] = {
     "no_action": ("no action", "suppresses"),
 }
 _SUCCESS_STATUSES = frozenset({"ok", "not_found"})
+_FROZEN_SYMBOLIC_V1_ARTIFACTS = {
+    "symbolic_report.md": "074072baa17cf52feae76e3dd2014b16bf4ecf71a8765457311bfedb28421872",
+    "symbolic_rows.jsonl": "da9c907d342d5c7d1538e419574699b58441e336620ae5e452cbef01a2efba11",
+    "symbolic_summary.json": "2dac48d1d63083edc3dbdf54cb4c2bedfe28ec15babfa633e2a7ce878c777f6f",
+}
+_SYMBOLIC_SOURCE_DEPENDENCIES = (
+    "app/schemas/q5_task.py",
+    "app/eval/q5_dataset.py",
+    "app/eval/q5_symbolic_control.py",
+    "app/eval/q5_runner.py",
+    "app/eval/q5_outcome.py",
+    "app/eval/q5_pairs.py",
+    "app/eval/q5_provenance.py",
+    "app/govern/conditions.py",
+    "app/govern/executor.py",
+    "app/govern/sinks.py",
+    "app/govern/validator.py",
+    "app/govern/q5_loop.py",
+    "app/govern/q5_policy.py",
+    "app/govern/q5_rule_policy.py",
+    "app/govern/q5_context.py",
+    "app/govern/q5_environment.py",
+    "app/govern/q5_fallback.py",
+    "app/govern/q5_tool_validator.py",
+    "app/govern/q5_tools.py",
+)
 
 
 class Q5StrongSymbolicPolicy:
@@ -286,6 +313,17 @@ def grade_q5_strong_symbolic_control(
                 + inspect.getsource(_dispositions)
             ).encode()
         ).hexdigest(),
+        "implementation_sha256_scope": "policy_class_and_matcher_core_only",
+        "source_attestation_scope": "entire_file_and_execution_dependencies",
+        "source_file_sha256": _source_inventory()[
+            "app/eval/q5_symbolic_control.py"
+        ],
+        "source_dependency_sha256": _source_inventory(),
+        "control_kind": "frozen_closed_vocabulary_parser",
+        "claim_scope": (
+            "v4_benchmark_does_not_support_llm_necessity;"
+            "not_general_natural_language_rule_solving"
+        ),
     }
     return graded, summary
 
@@ -353,6 +391,15 @@ def verify_q5_strong_symbolic_artifacts(
     if actual != Q5_SYMBOLIC_FILES:
         raise ValueError("Q5 symbolic artifact closure mismatch")
     hashes = q5_read_json(target / "symbolic_hashes.json")
+    if hashes.get("schema_version") == Q5_SYMBOLIC_V1_HASHES_SCHEMA:
+        return _verify_frozen_symbolic_v1(
+            tasks_path=tasks_path,
+            environment_path=environment_path,
+            runtime_cases_path=runtime_cases_path,
+            gold_path=gold_path,
+            target=target,
+            hashes=hashes,
+        )
     if (
         hashes.get("schema_version") != Q5_SYMBOLIC_HASHES_SCHEMA
         or set(hashes.get("artifacts") or {})
@@ -384,6 +431,37 @@ def verify_q5_strong_symbolic_artifacts(
         raise ValueError("Q5 symbolic summary does not match deterministic recomputation")
     if (target / "symbolic_report.md").read_text(encoding="utf-8") != _render_report(summary):
         raise ValueError("Q5 symbolic report does not match deterministic recomputation")
+    return summary
+
+
+def _verify_frozen_symbolic_v1(
+    *,
+    tasks_path: Path | str,
+    environment_path: Path | str,
+    runtime_cases_path: Path | str,
+    gold_path: Path | str,
+    target: Path,
+    hashes: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Verify the committed 5-I symbolic v1 bytes without current-code replay."""
+
+    if hashes.get("artifacts") != _FROZEN_SYMBOLIC_V1_ARTIFACTS:
+        raise ValueError("Q5 symbolic v1 sidecar is not a frozen artifact")
+    for name, expected_hash in _FROZEN_SYMBOLIC_V1_ARTIFACTS.items():
+        if q5_sha256_file(target / name) != expected_hash:
+            raise ValueError(f"Q5 symbolic v1 artifact hash mismatch: {name}")
+    summary = q5_read_json(target / "symbolic_summary.json")
+    expected_inputs = {
+        "tasks": q5_sha256_file(Path(tasks_path)),
+        "environment": q5_sha256_file(Path(environment_path)),
+        "runtime_cases": q5_sha256_file(Path(runtime_cases_path)),
+        "gold": q5_sha256_file(Path(gold_path)),
+    }
+    if (
+        summary.get("schema_version") != "q5-strong-symbolic-summary-v1"
+        or summary.get("input_sha256") != expected_inputs
+    ):
+        raise ValueError("Q5 symbolic v1 input provenance mismatch")
     return summary
 
 
@@ -479,9 +557,27 @@ def _config_sha256() -> str:
     ).hexdigest()
 
 
+def _source_inventory() -> dict[str, str]:
+    project_root = Path(__file__).resolve().parents[2]
+    inventory = {
+        relative: q5_sha256_file(project_root / relative)
+        for relative in _SYMBOLIC_SOURCE_DEPENDENCIES
+    }
+    if set(inventory) != set(_SYMBOLIC_SOURCE_DEPENDENCIES):  # pragma: no cover
+        raise ValueError("Q5 symbolic source inventory is incomplete")
+    return dict(sorted(inventory.items()))
+
+
 def _render_report(summary: Mapping[str, Any]) -> str:
     return (
         "# Q5 Strong Symbolic Control\n\n"
+        "- Control type: `frozen closed-vocabulary parser`\n"
+        "- Claim scope: this control shows that the v4 benchmark does not support "
+        "an LLM-necessity claim; it does not establish general natural-language "
+        "rule-solving ability.\n"
+        f"- Entire source file SHA-256: `{summary['source_file_sha256']}`\n"
+        f"- Execution dependency inventory entries: "
+        f"`{len(summary['source_dependency_sha256'])}`\n"
         f"- Semantic success: `{summary['semantic_success']:.6f}`\n"
         f"- Within-policy pair success: `{summary['within_policy_pair_success']:.6f}`\n"
         f"- Cross-policy pair success: `{summary['cross_policy_pair_success']:.6f}`\n"

@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 
+from app.eval import q5_symbolic_control as symbolic_module
 from app.eval.q5_claim_readiness import evaluate_q5_claim_readiness
 from app.eval.q5_dataset import load_q5_environment, load_q5_tasks
 from app.eval.q5_mock import Q5DeterministicMockPolicyModel
@@ -27,6 +28,7 @@ from app.eval.q5_symbolic_control import (
 )
 from app.eval.q5_value_ledger import build_q5_value_ledger, verify_q5_value_ledger
 from app.govern.q5_loop import Q5AgentSystem
+from scripts import preflight_q5_i as preflight_i
 from tests.integration.test_q5_harness import _refresh_raw_hash
 
 DATASET = Path("data/q5/dev")
@@ -179,6 +181,12 @@ def test_q5_symbolic_control_is_zero_call_hash_closed_and_identity_free(
     assert summary["within_policy_pair_success"] == 1.0
     assert summary["cross_policy_pair_success"] == 1.0
     assert summary["llm_calls"] == summary["total_tokens"] == 0
+    assert summary["source_file_sha256"] == summary["source_dependency_sha256"][
+        "app/eval/q5_symbolic_control.py"
+    ]
+    assert len(summary["source_dependency_sha256"]) >= 9
+    assert summary["control_kind"] == "frozen_closed_vocabulary_parser"
+    assert "not_general_natural_language_rule_solving" in summary["claim_scope"]
     lowered = inspect.getsource(Q5StrongSymbolicPolicy).lower()
     for forbidden in ("case_id", "gold_reason", "stratum", "pair_tag", "expected_action"):
         assert forbidden not in lowered
@@ -236,7 +244,9 @@ def test_q5_claim_readiness_fail_closed_on_symbolic_headroom(q5_i_bundle) -> Non
     readiness = evaluate_q5_claim_readiness(run_summary, value, symbolic)
     assert readiness["valid"] is False
     assert "claim_headroom" in readiness["blockers"]
+    assert "beneficial_evidence_absent" in readiness["blockers"]
     assert readiness["checks"]["semantic_headroom"] is False
+    assert readiness["checks"]["beneficial_value_capture"] is None
 
 
 def test_q5_value_ledger_is_complete_case_system_run_matrix(q5_i_bundle) -> None:
@@ -245,6 +255,277 @@ def test_q5_value_ledger_is_complete_case_system_run_matrix(q5_i_bundle) -> None
     assert len(
         {(row["case_id"], row["system"], row["run_index"]) for row in rows}
     ) == 324
+    summary = _json(q5_i_bundle["value"] / "value_summary.json")
+    assert summary["beneficial_group_count"] == 0
+    assert summary["beneficial_capture_numerator"] == 0
+    assert summary["beneficial_capture_denominator"] == 0
+    assert summary["beneficial_capture_vacuous"] is True
+    assert summary["beneficial_value_capture"] is None
+    assert (
+        summary["hybrid_observation_planning_llm_calls_global"],
+        summary["hybrid_observation_planning_llm_calls_semantic"],
+        summary["hybrid_observation_planning_llm_calls_adversarial"],
+    ) == (3, 0, 3)
+    assert (
+        summary["hybrid_terminal_binding_llm_calls_global"],
+        summary["hybrid_terminal_binding_llm_calls_semantic"],
+        summary["hybrid_terminal_binding_llm_calls_adversarial"],
+    ) == (39, 36, 3)
+
+
+@pytest.mark.parametrize(
+    ("field", "mutated"),
+    [
+        ("beneficial_value_capture", 1.0),
+        ("beneficial_group_count", 1),
+        ("beneficial_capture_numerator", 1),
+        ("beneficial_capture_denominator", 1),
+        ("hybrid_observation_planning_llm_calls_global", 0),
+        ("hybrid_observation_planning_llm_calls_semantic", 3),
+    ],
+)
+def test_q5_value_v2_summary_mutations_fail_closed(
+    q5_i_bundle,
+    tmp_path: Path,
+    field: str,
+    mutated: object,
+) -> None:
+    target = tmp_path / field
+    shutil.copytree(q5_i_bundle["value"], target)
+    summary_path = target / "value_summary.json"
+    summary = _json(summary_path)
+    summary[field] = mutated
+    _write_json(summary_path, summary)
+    _rehash_sidecar_artifact(target, "value", "value_summary.json")
+    with pytest.raises(ValueError):
+        verify_q5_value_ledger(q5_i_bundle["run"], GOLD, target)
+
+
+def test_q5_value_v2_scoped_global_phase_swap_fails_closed(
+    q5_i_bundle,
+    tmp_path: Path,
+) -> None:
+    target = tmp_path / "phase-swap"
+    shutil.copytree(q5_i_bundle["value"], target)
+    summary_path = target / "value_summary.json"
+    summary = _json(summary_path)
+    global_calls = summary["hybrid_observation_planning_llm_calls_global"]
+    semantic_calls = summary["hybrid_observation_planning_llm_calls_semantic"]
+    summary["hybrid_observation_planning_llm_calls_global"] = semantic_calls
+    summary["hybrid_observation_planning_llm_calls_semantic"] = global_calls
+    _write_json(summary_path, summary)
+    _rehash_sidecar_artifact(target, "value", "value_summary.json")
+    with pytest.raises(ValueError):
+        verify_q5_value_ledger(q5_i_bundle["run"], GOLD, target)
+
+
+@pytest.mark.parametrize("sidecar", ["value", "symbolic"])
+def test_q5_sidecar_v2_downgrade_to_v1_fails_closed(
+    q5_i_bundle,
+    tmp_path: Path,
+    sidecar: str,
+) -> None:
+    target = tmp_path / sidecar
+    shutil.copytree(q5_i_bundle[sidecar], target)
+    hashes_path = target / f"{sidecar}_hashes.json"
+    hashes = _json(hashes_path)
+    hashes["schema_version"] = (
+        "q5-value-hashes-v1"
+        if sidecar == "value"
+        else "q5-strong-symbolic-hashes-v1"
+    )
+    _write_json(hashes_path, hashes)
+    with pytest.raises(ValueError):
+        if sidecar == "value":
+            verify_q5_value_ledger(q5_i_bundle["run"], GOLD, target)
+        else:
+            _verify_symbolic(target)
+
+
+def test_q5_symbolic_v2_dependency_inventory_mutation_fails_closed(
+    q5_i_bundle,
+    tmp_path: Path,
+) -> None:
+    target = tmp_path / "symbolic"
+    shutil.copytree(q5_i_bundle["symbolic"], target)
+    summary_path = target / "symbolic_summary.json"
+    summary = _json(summary_path)
+    summary["source_dependency_sha256"]["app/govern/q5_tools.py"] = "0" * 64
+    _write_json(summary_path, summary)
+    _rehash_sidecar_artifact(target, "symbolic", "symbolic_summary.json")
+    with pytest.raises(ValueError):
+        _verify_symbolic(target)
+
+
+def test_q5_symbolic_v2_omitted_helper_change_invalidates_old_attestation(
+    q5_i_bundle,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    original = symbolic_module._source_inventory()
+    changed = dict(original)
+    changed["app/eval/q5_symbolic_control.py"] = "f" * 64
+    monkeypatch.setattr(symbolic_module, "_source_inventory", lambda: changed)
+    with pytest.raises(ValueError):
+        _verify_symbolic(q5_i_bundle["symbolic"])
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "value_capture",
+        "value_count",
+        "value_numerator",
+        "value_denominator",
+        "value_phase_swap",
+        "value_downgrade",
+        "symbolic_source",
+        "symbolic_downgrade",
+    ],
+)
+def test_q5_ir_preflight_rejects_rehashed_sidecar_mutations(
+    q5_i_bundle,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    mutation: str,
+) -> None:
+    value = q5_i_bundle["value"]
+    symbolic = q5_i_bundle["symbolic"]
+    sidecar = "value" if mutation.startswith("value_") else "symbolic"
+    target = tmp_path / sidecar
+    shutil.copytree(q5_i_bundle[sidecar], target)
+    if sidecar == "value":
+        if mutation == "value_downgrade":
+            hashes_path = target / "value_hashes.json"
+            hashes = _json(hashes_path)
+            hashes["schema_version"] = "q5-value-hashes-v1"
+            _write_json(hashes_path, hashes)
+        else:
+            summary_path = target / "value_summary.json"
+            summary = _json(summary_path)
+            if mutation == "value_capture":
+                summary["beneficial_value_capture"] = 1.0
+            elif mutation == "value_count":
+                summary["beneficial_group_count"] = 1
+            elif mutation == "value_numerator":
+                summary["beneficial_capture_numerator"] = 1
+            elif mutation == "value_denominator":
+                summary["beneficial_capture_denominator"] = 1
+            else:
+                global_calls = summary[
+                    "hybrid_observation_planning_llm_calls_global"
+                ]
+                semantic_calls = summary[
+                    "hybrid_observation_planning_llm_calls_semantic"
+                ]
+                summary["hybrid_observation_planning_llm_calls_global"] = (
+                    semantic_calls
+                )
+                summary["hybrid_observation_planning_llm_calls_semantic"] = (
+                    global_calls
+                )
+            _write_json(summary_path, summary)
+            _rehash_sidecar_artifact(target, "value", "value_summary.json")
+        value = target
+    else:
+        if mutation == "symbolic_downgrade":
+            hashes_path = target / "symbolic_hashes.json"
+            hashes = _json(hashes_path)
+            hashes["schema_version"] = "q5-strong-symbolic-hashes-v1"
+            _write_json(hashes_path, hashes)
+        else:
+            summary_path = target / "symbolic_summary.json"
+            summary = _json(summary_path)
+            summary["source_file_sha256"] = "0" * 64
+            _write_json(summary_path, summary)
+            _rehash_sidecar_artifact(target, "symbolic", "symbolic_summary.json")
+        symbolic = target
+    monkeypatch.setattr(
+        preflight_i,
+        "run_base_preflight",
+        lambda argv: {
+            "schema_version": "q5-real-preflight-v4",
+            "valid": True,
+            "request_policy": {
+                "completion_requests_sent_during_preflight": 0,
+                "http_model_requests_sent_during_preflight": 0,
+                "provider_model_calls_during_preflight": 0,
+            },
+            "errors": [],
+        },
+    )
+    with pytest.raises(ValueError):
+        preflight_i.main(
+            [
+                "--mock-run",
+                str(q5_i_bundle["run"]),
+                "--value-dir",
+                str(value),
+                "--symbolic-dir",
+                str(symbolic),
+                "--output",
+                str(tmp_path / "receipt.json"),
+                "--real-run-id",
+                "q5-ir-never-executed",
+            ]
+        )
+
+
+def test_q5_ir_preflight_rejects_omitted_helper_change(
+    q5_i_bundle,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    original = symbolic_module._source_inventory()
+    changed = dict(original)
+    changed["app/eval/q5_symbolic_control.py"] = "f" * 64
+    monkeypatch.setattr(symbolic_module, "_source_inventory", lambda: changed)
+    monkeypatch.setattr(
+        preflight_i,
+        "run_base_preflight",
+        lambda argv: {
+            "schema_version": "q5-real-preflight-v4",
+            "valid": True,
+            "request_policy": {
+                "completion_requests_sent_during_preflight": 0,
+                "http_model_requests_sent_during_preflight": 0,
+                "provider_model_calls_during_preflight": 0,
+            },
+            "errors": [],
+        },
+    )
+    with pytest.raises(ValueError):
+        preflight_i.main(
+            [
+                "--mock-run",
+                str(q5_i_bundle["run"]),
+                "--value-dir",
+                str(q5_i_bundle["value"]),
+                "--symbolic-dir",
+                str(q5_i_bundle["symbolic"]),
+                "--output",
+                str(tmp_path / "receipt.json"),
+                "--real-run-id",
+                "q5-ir-never-executed",
+            ]
+        )
+
+
+@pytest.mark.skipif(
+    not Path("data/eval_runs/q5-dev-v4-value-i-73c9b34-primary-k3").exists(),
+    reason="local frozen 5-I sidecars are absent",
+)
+def test_q5_frozen_v1_sidecars_still_verify() -> None:
+    run = Path("data/eval_runs/q5-dev-v4-mock-i-73c9b34-primary-k3")
+    value = verify_q5_value_ledger(
+        run,
+        GOLD,
+        "data/eval_runs/q5-dev-v4-value-i-73c9b34-primary-k3",
+    )
+    symbolic = _verify_symbolic(
+        Path("data/eval_runs/q5-dev-v4-symbolic-i-73c9b34-primary-k3")
+    )
+    assert value["schema_version"] == "q5-value-summary-v1"
+    assert symbolic["schema_version"] == "q5-strong-symbolic-summary-v1"
 
 
 def test_q5_i_bundle_reverifies(q5_i_bundle) -> None:
@@ -275,4 +556,21 @@ def _write_jsonl(path: Path, rows: list[dict]) -> None:
     path.write_text(
         "".join(json.dumps(row, sort_keys=True) + "\n" for row in rows),
         encoding="utf-8",
+    )
+
+
+def _rehash_sidecar_artifact(target: Path, sidecar: str, artifact: str) -> None:
+    hashes_path = target / f"{sidecar}_hashes.json"
+    hashes = _json(hashes_path)
+    hashes["artifacts"][artifact] = q5_sha256_file(target / artifact)
+    _write_json(hashes_path, hashes)
+
+
+def _verify_symbolic(path: Path) -> dict:
+    return verify_q5_strong_symbolic_artifacts(
+        tasks_path=DATASET / "tasks.jsonl",
+        environment_path=DATASET / "environment.jsonl",
+        runtime_cases_path=DATASET / "runtime_cases.jsonl",
+        gold_path=GOLD,
+        output_dir=path,
     )

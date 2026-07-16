@@ -16,13 +16,19 @@ from app.eval.q5_provenance import (
 )
 from app.govern.q5_loop import Q5AgentSystem
 
-Q5_VALUE_LEDGER_SCHEMA = "q5-value-ledger-v1"
-Q5_VALUE_SUMMARY_SCHEMA = "q5-value-summary-v1"
-Q5_VALUE_HASHES_SCHEMA = "q5-value-hashes-v1"
+Q5_VALUE_LEDGER_SCHEMA = "q5-value-ledger-v2"
+Q5_VALUE_SUMMARY_SCHEMA = "q5-value-summary-v2"
+Q5_VALUE_HASHES_SCHEMA = "q5-value-hashes-v2"
+Q5_VALUE_V1_HASHES_SCHEMA = "q5-value-hashes-v1"
 Q5_VALUE_FILES = frozenset(
     {"value_ledger.jsonl", "value_summary.json", "value_report.md", "value_hashes.json"}
 )
 _SYSTEMS = tuple(system.value for system in Q5AgentSystem)
+_FROZEN_VALUE_V1_ARTIFACTS = {
+    "value_ledger.jsonl": "883c156cb6636a59fd0e6f29600fb4f0206f338ad9323c34cf335dafd3c458d3",
+    "value_report.md": "edfd8e05dd37a7640a61cca68a66e0da5e37cab6f1b1129bf234df2f5cbf6bbd",
+    "value_summary.json": "dc55954f77a50d9ab1c8abe13032799586139595717f2dd77e3b7b7d01fa8d64",
+}
 
 
 def build_q5_value_ledger(
@@ -68,6 +74,8 @@ def verify_q5_value_ledger(
             f"extra={sorted(actual - Q5_VALUE_FILES)}"
         )
     hashes = q5_read_json(target / "value_hashes.json")
+    if hashes.get("schema_version") == Q5_VALUE_V1_HASHES_SCHEMA:
+        return _verify_frozen_value_v1(source, gold_path, target, hashes)
     if (
         not isinstance(hashes, dict)
         or hashes.get("schema_version") != Q5_VALUE_HASHES_SCHEMA
@@ -90,6 +98,41 @@ def verify_q5_value_ledger(
     if (target / "value_report.md").read_text(encoding="utf-8") != expected_report:
         raise ValueError("Q5 value report does not match verified source artifacts")
     return expected_summary
+
+
+def _verify_frozen_value_v1(
+    source: Path,
+    gold_path: Path | str,
+    target: Path,
+    hashes: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Verify the one committed 5-I v1 sidecar by its frozen byte inventory."""
+
+    if hashes.get("artifacts") != _FROZEN_VALUE_V1_ARTIFACTS:
+        raise ValueError("Q5 value v1 sidecar is not a frozen artifact")
+    for name, expected_hash in _FROZEN_VALUE_V1_ARTIFACTS.items():
+        if q5_sha256_file(target / name) != expected_hash:
+            raise ValueError(f"Q5 value v1 artifact hash mismatch: {name}")
+    verified = verify_q5_graded_run(source, gold_path)
+    summary = q5_read_json(target / "value_summary.json")
+    expected_source_hashes = {
+        name: q5_sha256_file(source / name)
+        for name in (
+            "manifest.json",
+            "graded_manifest.json",
+            "graded_rows.jsonl",
+            "policy_events.jsonl",
+            "trajectory.jsonl",
+        )
+    }
+    if (
+        summary.get("schema_version") != "q5-value-summary-v1"
+        or summary.get("source_run_id") != verified.run_id
+        or summary.get("source_git_commit_sha") != verified.git_commit_sha
+        or summary.get("source_hashes") != expected_source_hashes
+    ):
+        raise ValueError("Q5 value v1 source provenance mismatch")
+    return summary
 
 
 def _derive_value_artifacts(
@@ -241,19 +284,51 @@ def _summarize_value_ledger(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]
     harmful = [row for row in hybrid_rows if row["value_class"] == "harmful"]
     neutral = [row for row in hybrid_rows if row["value_class"] == "neutral"]
     total_calls = sum(int(row["total_llm_calls"]) for row in hybrid_rows)
+    beneficial_capture_numerator = sum(
+        row["terminal_policy_source"] == "llm"
+        and bool(row["hybrid_tq_outcome"])
+        for row in beneficial
+    )
+    beneficial_capture_denominator = len(beneficial)
+    beneficial_capture_vacuous = beneficial_capture_denominator == 0
     beneficial_capture = (
-        sum(
-            row["terminal_policy_source"] == "llm"
-            and bool(row["hybrid_tq_outcome"])
-            for row in beneficial
-        )
-        / len(beneficial)
-        if beneficial
-        else 1.0
+        round(beneficial_capture_numerator / beneficial_capture_denominator, 6)
+        if beneficial_capture_denominator
+        else None
+    )
+    observation_global = sum(
+        int(row["observation_planning_llm_calls"]) for row in hybrid_rows
+    )
+    observation_semantic = sum(
+        int(row["observation_planning_llm_calls"])
+        for row in hybrid_rows
+        if row["stratum"] == "semantic"
+    )
+    observation_adversarial = sum(
+        int(row["observation_planning_llm_calls"])
+        for row in hybrid_rows
+        if row["stratum"] == "adversarial"
+    )
+    terminal_global = sum(
+        int(row["terminal_binding_llm_calls"]) for row in hybrid_rows
+    )
+    terminal_semantic = sum(
+        int(row["terminal_binding_llm_calls"])
+        for row in hybrid_rows
+        if row["stratum"] == "semantic"
+    )
+    terminal_adversarial = sum(
+        int(row["terminal_binding_llm_calls"])
+        for row in hybrid_rows
+        if row["stratum"] == "adversarial"
     )
     return {
         "value_class_counts": dict(sorted(classes.items())),
-        "beneficial_value_capture": round(beneficial_capture, 6),
+        "beneficial_group_count": len(beneficial),
+        "beneficial_capture_numerator": beneficial_capture_numerator,
+        "beneficial_capture_denominator": beneficial_capture_denominator,
+        "beneficial_capture_vacuous": beneficial_capture_vacuous,
+        "beneficial_value_capture": beneficial_capture,
         "harmful_terminal_llm_exposure": sum(
             row["terminal_policy_source"] == "llm" for row in harmful
         ),
@@ -265,16 +340,17 @@ def _summarize_value_ledger(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]
             / len(hybrid_rows),
             6,
         ),
-        "hybrid_observation_planning_llm_calls": sum(
-            int(row["observation_planning_llm_calls"])
-            for row in hybrid_rows
-            if row["stratum"] == "semantic"
-        ),
-        "hybrid_semantic_binding_llm_calls": sum(
-            int(row["terminal_binding_llm_calls"])
-            for row in hybrid_rows
-            if row["stratum"] == "semantic"
-        ),
+        "hybrid_observation_planning_llm_calls_global": observation_global,
+        "hybrid_observation_planning_llm_calls_semantic": observation_semantic,
+        "hybrid_observation_planning_llm_calls_adversarial": observation_adversarial,
+        "hybrid_terminal_binding_llm_calls_global": terminal_global,
+        "hybrid_terminal_binding_llm_calls_semantic": terminal_semantic,
+        "hybrid_terminal_binding_llm_calls_adversarial": terminal_adversarial,
+        "phase_call_metric_scopes": {
+            "global": "all_strata",
+            "semantic": "semantic_stratum_only",
+            "adversarial": "adversarial_stratum_only",
+        },
         "hybrid_adversarial_llm_calls": sum(
             int(row["total_llm_calls"])
             for row in hybrid_rows
@@ -365,17 +441,33 @@ def _group_steps(
 
 
 def _render_value_report(summary: Mapping[str, Any]) -> str:
+    capture = summary["beneficial_value_capture"]
+    capture_text = "null (empty/vacuous)" if capture is None else f"{capture:.6f}"
+    evidence_state = (
+        "empty/vacuous" if summary["beneficial_capture_vacuous"] else "present"
+    )
     return (
         "# Q5 Counterfactual Value Ledger\n\n"
         f"- Source run: `{summary['source_run_id']}`\n"
-        f"- Beneficial value capture: `{summary['beneficial_value_capture']:.6f}`\n"
+        f"- Beneficial evidence: `{evidence_state}`\n"
+        f"- Beneficial groups: `{summary['beneficial_group_count']}`\n"
+        f"- Beneficial value capture: `{capture_text}`\n"
+        f"- Beneficial capture numerator/denominator: "
+        f"`{summary['beneficial_capture_numerator']}/"
+        f"{summary['beneficial_capture_denominator']}`\n"
         f"- Harmful terminal LLM exposure: `{summary['harmful_terminal_llm_exposure']}`\n"
         f"- Neutral terminal LLM exposure: `{summary['neutral_terminal_llm_exposure']}`\n"
         f"- Hybrid oracle regret: `{summary['hybrid_oracle_regret']:.6f}`\n"
-        f"- Observation-planning LLM calls: "
-        f"`{summary['hybrid_observation_planning_llm_calls']}`\n"
-        f"- Semantic-binding LLM calls: "
-        f"`{summary['hybrid_semantic_binding_llm_calls']}`\n"
+        f"- Observation-planning calls (global/semantic/adversarial): "
+        f"`{summary['hybrid_observation_planning_llm_calls_global']}/"
+        f"{summary['hybrid_observation_planning_llm_calls_semantic']}/"
+        f"{summary['hybrid_observation_planning_llm_calls_adversarial']}`\n"
+        f"- Terminal-binding calls (global/semantic/adversarial): "
+        f"`{summary['hybrid_terminal_binding_llm_calls_global']}/"
+        f"{summary['hybrid_terminal_binding_llm_calls_semantic']}/"
+        f"{summary['hybrid_terminal_binding_llm_calls_adversarial']}`\n"
+        "- Actual observation topology: `3/0/3` "
+        "(global/semantic/adversarial).\n"
         f"- Adversarial LLM calls: `{summary['hybrid_adversarial_llm_calls']}`\n"
         f"- Total Hybrid LLM calls: `{summary['hybrid_total_llm_calls']}`\n"
     )
