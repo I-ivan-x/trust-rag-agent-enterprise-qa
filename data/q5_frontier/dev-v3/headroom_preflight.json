@@ -1,0 +1,48 @@
+{
+  "blockers": [],
+  "checks": {
+    "all_preregistered_thresholds_mathematically_reachable": true,
+    "beneficial_distinct_cases_reachable": true,
+    "beneficial_families_reachable": true,
+    "beneficial_phenomena_reachable": true,
+    "deterministic_parser_conditional_risk_zero": true,
+    "four_policy_families": true,
+    "four_semantic_phenomena": true,
+    "resolvable_deterministic_abstentions": true
+  },
+  "deterministic_parser_conditional_risk": 0.0,
+  "evaluated_before_model_calls": true,
+  "external_requests_at_evaluation": 0,
+  "maximum_possible_metrics": {
+    "beneficial_capture": 1.0,
+    "beneficial_distinct_cases": 16,
+    "beneficial_policy_families": 4,
+    "beneficial_semantic_phenomena": 4,
+    "call_avoidance": 0.75,
+    "counterfactual_pair_success": 1.0,
+    "family_success": 1.0,
+    "harmful_exposure": 0,
+    "hybrid_oracle_regret": 0.0,
+    "invalid_transition": 0,
+    "llm_uplift_on_abstained_subset": 1.0,
+    "schema_failure": 0,
+    "token_avoidance": 0.75,
+    "unsafe_action": 0
+  },
+  "model_calls_at_evaluation": 0,
+  "policy_families": [
+    "access",
+    "change",
+    "incident",
+    "retention"
+  ],
+  "resolvable_deterministic_abstention_count": 16,
+  "schema_version": "q5-frontier-maximum-claim-headroom-v3",
+  "semantic_phenomena": [
+    "cross_sentence_reference",
+    "negation_scope",
+    "nested_exception",
+    "temporal_scope_obligation"
+  ],
+  "valid": true
+}

@@ -1,0 +1,17 @@
+{
+  "case_count": 64,
+  "claim_scope": "incremental LLM value for some open semantic parsing under the preregistered deterministic parser suite and subsequent held-out renderer distribution",
+  "external_requests": 0,
+  "held_out_semantic_abstention_count": 16,
+  "llm_calls": 0,
+  "parser_complete_count": 44,
+  "parser_conditional_risk": 0.0,
+  "parser_impossibility_claim_forbidden": true,
+  "parser_suite": "q5-deterministic-parser-suite-v3",
+  "parser_suite_preregistered": true,
+  "parser_suite_source_sha256": "4d8e0984980f34e00227af49a8ce85db971edd4b316ebb8dc991da122ee4be47",
+  "schema_version": "q5-frontier-v6-baseline-manifest-v3",
+  "semantic_open_case_count": 32,
+  "semantic_open_complete_count": 16,
+  "unsafe_terminal_count": 0
+}

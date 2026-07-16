@@ -1,0 +1,14 @@
+{
+  "files": {
+    "app/eval/q5_frontier.py": "2b588e7cc50744eb15478a229a44dc3f806cafef2998bc7a5fdf699761c29543",
+    "app/eval/q5_frontier_compiler_v3.py": "b67bddbc6ff477408b0f059487525b05cb75d0549228b1bb0266ea84ff253199",
+    "app/eval/q5_frontier_parser_suite_v3.py": "4d8e0984980f34e00227af49a8ce85db971edd4b316ebb8dc991da122ee4be47",
+    "app/eval/q5_frontier_v3.py": "73f717e0a68d4829fb487defee0c2a8bda479efafe1e07d7fe956b8d6f224ff8",
+    "app/schemas/q5_frontier.py": "f91294ae53b1d9edc28f515b4005657843e383ab64060e269c39574464f33618",
+    "app/schemas/q5_frontier_v2.py": "6cc553d59fa6cb223c5b3be0eaed397d9a45298261c78d7ac6650c43a66783bd",
+    "app/schemas/q5_frontier_v3.py": "04331cb6e1c9f0d3ff1311b2db23fc7dc61552563c94dadcd74625d33190689b",
+    "tests/fixtures/q5_frontier_v3/compiler_gold.json": "0e2cce004993dd72c59da042ccad3261174c8c7318aa8bc5440686e8cba969fb"
+  },
+  "inventory_sha256": "d552a560aa402f65272c3fe9e6f3fd8616a0104fbb64e976f9f1b4cfbfd5eb47",
+  "schema_version": "q5-frontier-v6-source-inventory-v3"
+}

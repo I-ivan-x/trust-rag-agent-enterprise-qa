@@ -1,0 +1,38 @@
+{
+  "all_passed": true,
+  "compiler": "compile_policy_ir_v3",
+  "compiler_generated_expected_results": false,
+  "construct_counts": {
+    "ambiguity": 3,
+    "authorization": 3,
+    "condition_all_of": 3,
+    "condition_any_of": 3,
+    "disposition_branch": 3,
+    "exception": 3,
+    "observation_completion": 3,
+    "observation_type": 3,
+    "precedence_base_only": 3,
+    "precedence_deny_overrides": 3,
+    "precedence_exception_overrides": 3,
+    "predicate_eq": 3,
+    "predicate_in": 3,
+    "predicate_ne": 3,
+    "scope": 3,
+    "temporal": 3,
+    "terminal_legality": 3
+  },
+  "fixture_count": 51,
+  "gold_fixture_source": "independent_handwritten_json",
+  "schema_version": "q5-frontier-policy-ir-compiler-contract-v3",
+  "semantics": {
+    "ambiguity": "non-none ambiguity is human_review",
+    "authorization": "host authorization plus nonempty evidence required; failure is human_review",
+    "base_only": "ignore matching exception and execute the base branch",
+    "deny_overrides": "human_review then no_action dominate; otherwise preserve base",
+    "exception_overrides": "unique matching exception replaces base; conflict is human_review",
+    "observation_completion": "successful typed observation required; failure is human_review",
+    "observation_type": "exact match required; mismatch is human_review",
+    "scope": "observed scope must be in allowed_scopes; otherwise false branch",
+    "temporal": "observed temporal state must equal policy temporal state; otherwise false branch"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "closed_vocabulary_exact_binding": true,
+  "graded_row_count": 64,
+  "open_language_provenance_claim": "source_and_completeness_only",
+  "open_language_semantics_source": "sealed_ir_offline_grader",
+  "schema_version": "q5-frontier-semantic-attestation-manifest-v3",
+  "semantic_correctness_is_runtime_attestation": false,
+  "semantic_correctness_offline_graded_count": 60,
+  "structural_integrity_verified_count": 60
+}

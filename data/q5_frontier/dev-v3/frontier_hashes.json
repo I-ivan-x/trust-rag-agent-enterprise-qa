@@ -1,0 +1,26 @@
+{
+  "artifacts": {
+    "baseline_manifest.json": "35c6bbae1adfa5e1444363acb59c02ef37e09001da8fa39be1fb5a89c1f9303a",
+    "claim_preregistration.json": "a6756cac7f3913cef4f937287e0aa8b6ec1ffc68ae3716f6b03d2e6b862deef5",
+    "compiler_contract.json": "7fa63c01648b049b5fd1b34e209ff9b6b3fe95efb895513d082644726c853ff2",
+    "compiler_fixture_results.jsonl": "6294751c6bed33c85526a8a65320e8fd5ba577dc4c390c45446db2ca750e2f9c",
+    "environment_authoring.jsonl": "9d405e8b8afb64f012f6f38a2fc9744614c257528eb45b2597720b1fe54c36f4",
+    "execution_rows.jsonl": "42364e5f7de9c55d55757a6206b92b215a10a83af6a50190d85067b1635cf788",
+    "frontier_dataset_manifest.json": "3d9cb3a2cc4121598bee095fa2ef1202d22b56e48c75b5f58b3db930bf1f01c1",
+    "gold.jsonl": "f114aad7cc742a06c59359c0ca9a117a2bab31b76285291771cdae74f7c529e1",
+    "graded_rows.jsonl": "e2a4a4444b8274e29b355dc33d2c3e8b2dee9d56b3f8bc3d0bc31939ee5b275d",
+    "headroom_preflight.json": "a27275ef138bab2436ef5acd3d5ba5c38b35f5bda347edd120fe60b83118d059",
+    "leakage_report.json": "17670f9a0b22203844e2cdfca947a1a2b92d2f50721fe8ce3a6d14be73bb666e",
+    "mutation_matrix.json": "cb9b742890c8abc6fb0f5e71d71076a6a25ca29d7a4ea5bb651b380681bec542",
+    "policy_ir.jsonl": "8d83c9c6da433c488e7f1369ec0667725c1bdcbdb063d6b68c1e00ecfdba6986",
+    "rendered_meaning.jsonl": "53c693b5f2cc13bb69162634227543808d415fbd1d7a67fe165da78e2111ab1e",
+    "renderer_manifest.json": "102d393d08185cb83bcec633bead1133072c1e02ecd1d40416166ca5bd291cfa",
+    "runtime_cases.jsonl": "3722499a315227ff775c44669f4b9e380428744eaecea789cc55651e90ea4e67",
+    "semantic_attestation_manifest.json": "a50b608d0d71dc47f29259f8a6e0b9620b73fad54bb17323e2cbe9ce139fd372",
+    "semantic_attestations.jsonl": "844e55875aa57960562ac0b342e2e99addae5e42f8854d63006ecba7f50a0659",
+    "semantic_candidates.jsonl": "b141efeaade6f143554504b8ffe135db0ecbb04cd7fbd227374791d034ba150d",
+    "source_inventory.json": "c2200ec4f056a0c8ef70bd7c1a79436d10c64f93855ffe35047eabb5489d41f8",
+    "topology.jsonl": "6e06219a983802c4940e12f8c2b49b3ff97ece8294dc07d0ecf38b668072aaf2"
+  },
+  "schema_version": "q5-frontier-v6-hashes-v3"
+}

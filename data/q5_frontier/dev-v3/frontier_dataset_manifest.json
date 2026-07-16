@@ -1,0 +1,86 @@
+{
+  "capability_class_counts": {
+    "ambiguous_or_unsafe": 16,
+    "semantic_open": 32,
+    "symbolic_complete": 16
+  },
+  "case_count": 64,
+  "execution_boundary": {
+    "forbidden_execution_inputs": [
+      "policy_ir.jsonl",
+      "environment_authoring.jsonl",
+      "gold.jsonl",
+      "topology.jsonl",
+      "semantic_candidates.jsonl"
+    ],
+    "input_artifacts": [
+      "runtime_cases.jsonl"
+    ],
+    "label_free": true
+  },
+  "ir_coverage_matrix": {
+    "all_of_case_count": 64,
+    "any_of_case_count": 2,
+    "authorized_count": 62,
+    "exception_active_count": 8,
+    "exception_inactive_count": 54,
+    "observation_failure_count": 2,
+    "observation_type_families": [
+      "inspect_access_scope",
+      "inspect_change_state",
+      "inspect_incident_state",
+      "inspect_retention_state"
+    ],
+    "precedence_counts": {
+      "base_only": 44,
+      "deny_overrides": 16,
+      "exception_overrides": 4
+    },
+    "predicate_operator_counts": {
+      "eq": 54,
+      "in": 8,
+      "ne": 8
+    },
+    "scope_match_count": 60,
+    "scope_mismatch_count": 2,
+    "temporal_match_count": 56,
+    "temporal_mismatch_count": 6,
+    "unauthorized_count": 2
+  },
+  "namespace": "data/q5_frontier/dev-v3",
+  "pair_audit": {
+    "canonical_ir_and_rendered_meaning_invariants": true,
+    "pair_count": 32,
+    "pair_kind_counts": {
+      "policy_fixed_state_changed": 16,
+      "state_fixed_policy_changed": 16
+    },
+    "single_variable_state_and_policy_invariants": true
+  },
+  "partition": "dev",
+  "policy_family_counts": {
+    "access": 16,
+    "change": 16,
+    "incident": 16,
+    "retention": 16
+  },
+  "protocol_namespace": "q5-frontier-v6-k0s",
+  "renderer_distribution_counts": {
+    "held_out": 16,
+    "preregistered": 48
+  },
+  "row_sha256": {
+    "compiler_fixture_results.jsonl": "6294751c6bed33c85526a8a65320e8fd5ba577dc4c390c45446db2ca750e2f9c",
+    "environment_authoring.jsonl": "9d405e8b8afb64f012f6f38a2fc9744614c257528eb45b2597720b1fe54c36f4",
+    "execution_rows.jsonl": "42364e5f7de9c55d55757a6206b92b215a10a83af6a50190d85067b1635cf788",
+    "gold.jsonl": "f114aad7cc742a06c59359c0ca9a117a2bab31b76285291771cdae74f7c529e1",
+    "graded_rows.jsonl": "e2a4a4444b8274e29b355dc33d2c3e8b2dee9d56b3f8bc3d0bc31939ee5b275d",
+    "policy_ir.jsonl": "8d83c9c6da433c488e7f1369ec0667725c1bdcbdb063d6b68c1e00ecfdba6986",
+    "rendered_meaning.jsonl": "53c693b5f2cc13bb69162634227543808d415fbd1d7a67fe165da78e2111ab1e",
+    "runtime_cases.jsonl": "3722499a315227ff775c44669f4b9e380428744eaecea789cc55651e90ea4e67",
+    "semantic_attestations.jsonl": "844e55875aa57960562ac0b342e2e99addae5e42f8854d63006ecba7f50a0659",
+    "semantic_candidates.jsonl": "b141efeaade6f143554504b8ffe135db0ecbb04cd7fbd227374791d034ba150d",
+    "topology.jsonl": "6e06219a983802c4940e12f8c2b49b3ff97ece8294dc07d0ecf38b668072aaf2"
+  },
+  "schema_version": "q5-frontier-v6-dataset-manifest-v3"
+}

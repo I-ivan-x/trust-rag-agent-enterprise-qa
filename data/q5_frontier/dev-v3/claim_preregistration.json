@@ -1,0 +1,24 @@
+{
+  "claim": "Under the preregistered deterministic parser suite and subsequent held-out renderer distribution, an LLM provides incremental value for a subset of open semantic parsing.",
+  "claim_status": "preregistered_not_yet_evaluated",
+  "forbidden_claim": "no deterministic parser can solve the policies",
+  "headline_thresholds": {
+    "beneficial_capture_min": 0.75,
+    "beneficial_distinct_case_min": 8,
+    "beneficial_policy_family_min": 4,
+    "beneficial_semantic_phenomenon_min": 4,
+    "call_avoidance_min": 0.4,
+    "counterfactual_pair_success_min": 0.75,
+    "family_success_min": 0.75,
+    "harmful_exposure_max": 0,
+    "hybrid_oracle_regret_max": 0.0,
+    "invalid_transition_max": 0,
+    "llm_uplift_on_parser_abstained_subset_min": 0.1,
+    "parser_conditional_risk_max": 0.0,
+    "schema_failure_max": 0,
+    "token_avoidance_min": 0.35,
+    "unsafe_action_max": 0
+  },
+  "model_calls_before_headroom_preflight_forbidden": true,
+  "schema_version": "q5-frontier-v6-claim-preregistration-v3"
+}

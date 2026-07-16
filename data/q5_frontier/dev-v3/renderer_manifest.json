@@ -1,0 +1,49 @@
+{
+  "held_out_renderer_authoring_source_sha256": "73f717e0a68d4829fb487defee0c2a8bda479efafe1e07d7fe956b8d6f224ff8",
+  "held_out_renderer_ids": [
+    "frontier-v3-negated-scope-heldout",
+    "frontier-v3-nested-heldout",
+    "frontier-v3-reference-heldout",
+    "frontier-v3-temporal-deontic-heldout"
+  ],
+  "parser_suite_and_renderer_authoring_source_separated": true,
+  "parser_suite_frozen_source_sha256": "4d8e0984980f34e00227af49a8ce85db971edd4b316ebb8dc991da122ee4be47",
+  "policy_text_multiplicity": {
+    "1": 32,
+    "2": 16
+  },
+  "preregistered_renderer_ids": [
+    "frontier-v3-formal-eq",
+    "frontier-v3-formal-set",
+    "frontier-v3-negated-scope-preregistered",
+    "frontier-v3-nested-preregistered",
+    "frontier-v3-reference-preregistered",
+    "frontier-v3-safety-authorization",
+    "frontier-v3-safety-conflict",
+    "frontier-v3-safety-observation_failure",
+    "frontier-v3-temporal-deontic-preregistered"
+  ],
+  "renderer_family_count": 13,
+  "renderer_ids": [
+    "frontier-v3-formal-eq",
+    "frontier-v3-formal-set",
+    "frontier-v3-negated-scope-heldout",
+    "frontier-v3-negated-scope-preregistered",
+    "frontier-v3-nested-heldout",
+    "frontier-v3-nested-preregistered",
+    "frontier-v3-reference-heldout",
+    "frontier-v3-reference-preregistered",
+    "frontier-v3-safety-authorization",
+    "frontier-v3-safety-conflict",
+    "frontier-v3-safety-observation_failure",
+    "frontier-v3-temporal-deontic-heldout",
+    "frontier-v3-temporal-deontic-preregistered"
+  ],
+  "schema_version": "q5-frontier-v6-renderer-manifest-v3",
+  "semantic_open_uses_canonical_action_wording": false,
+  "test_distribution": {
+    "reason": "q5_test absent",
+    "status": "not_evaluated"
+  },
+  "unique_policy_text_count": 48
+}

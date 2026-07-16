@@ -1,0 +1,45 @@
+{
+  "action_label_exposure": {
+    "formal_and_terminal_ontology_expected": true,
+    "semantic_open_canonical_tokens": []
+  },
+  "checks": {
+    "execution_signature_runtime_only": true,
+    "execution_source_has_no_sealed_join": true,
+    "external_requests": 0,
+    "model_calls": 0,
+    "q5_test_absent": true,
+    "sealed_fields_absent_from_runtime": true,
+    "semantic_open_canonical_action_wording_absent": true
+  },
+  "dev_test_disjointness": {
+    "passed": null,
+    "reason": "q5_test does not exist",
+    "status": "not_evaluated"
+  },
+  "leaked_runtime_keys": [],
+  "renderer_coverage": {
+    "frontier-v3-formal-eq": 8,
+    "frontier-v3-formal-set": 8,
+    "frontier-v3-negated-scope-heldout": 4,
+    "frontier-v3-negated-scope-preregistered": 4,
+    "frontier-v3-nested-heldout": 4,
+    "frontier-v3-nested-preregistered": 4,
+    "frontier-v3-reference-heldout": 4,
+    "frontier-v3-reference-preregistered": 4,
+    "frontier-v3-safety-authorization": 4,
+    "frontier-v3-safety-conflict": 8,
+    "frontier-v3-safety-observation_failure": 4,
+    "frontier-v3-temporal-deontic-heldout": 4,
+    "frontier-v3-temporal-deontic-preregistered": 4
+  },
+  "schema_version": "q5-frontier-v6-leakage-report-v3",
+  "unique_text_template_multiplicity": {
+    "multiplicity": {
+      "1": 32,
+      "2": 16
+    },
+    "unique_policy_text_count": 48
+  },
+  "valid": true
+}

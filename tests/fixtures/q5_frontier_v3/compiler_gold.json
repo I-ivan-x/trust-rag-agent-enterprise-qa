@@ -1,0 +1,125 @@
+{
+  "schema_version": "q5-frontier-compiler-handwritten-gold-v1",
+  "authorship": "independent_expected_results_not_emitted_by_compiler",
+  "base_policy_ir": {
+    "schema_version": "q5-canonical-policy-ir-v1",
+    "scope": {"resource_type": "incident", "allowed_scopes": ["production"]},
+    "condition": {
+      "all_of": [{"field": "status", "operator": "eq", "value": "outage"}],
+      "any_of": []
+    },
+    "temporal_state": "current",
+    "exceptions": [{
+      "predicate": {"field": "exception_active", "operator": "eq", "value": true},
+      "disposition": "human_review"
+    }],
+    "precedence": "base_only",
+    "evidence_requirements": {
+      "authorized_chunk_required": true,
+      "successful_observation_required": true,
+      "observation_type": "inspect_incident_state"
+    },
+    "true_disposition": "remediate",
+    "false_disposition": "no_action",
+    "ambiguity": {"kind": "none", "conflict_count": 0},
+    "terminal_safety": {
+      "allowed_dispositions": ["mark_stale", "remediate", "notify", "human_review", "no_action"],
+      "require_authorized_evidence": true,
+      "require_successful_observation": true,
+      "ambiguity_terminal": "human_review",
+      "unauthorized_terminal": "human_review"
+    }
+  },
+  "base_runtime_payload": {
+    "runtime_ref": "frontier-v3-resource:r900",
+    "policy_text": "Independent compiler fixture.",
+    "query": "Compile the fixture.",
+    "legal_dispositions": ["mark_stale", "remediate", "notify", "human_review", "no_action"],
+    "trusted_observation": {
+      "observation_type": "inspect_incident_state",
+      "status": "ok",
+      "success": true,
+      "authorization": {
+        "attestation_source": "host_acl",
+        "authorized": true,
+        "authorized_evidence_ids": ["chunk:fixture"]
+      },
+      "request_id": "observation:fixture",
+      "state": {
+        "status": "outage",
+        "scope": "production",
+        "temporal_state": "current",
+        "exception_active": false
+      }
+    }
+  },
+  "cases": [
+    {"fixture_id":"scope-positive","construct":"scope","polarity":"positive","expected_disposition":"remediate"},
+    {"fixture_id":"scope-negative","construct":"scope","polarity":"negative","runtime_updates":{"trusted_observation.state.scope":"public"},"expected_disposition":"no_action"},
+    {"fixture_id":"scope-metamorphic","construct":"scope","polarity":"metamorphic","policy_updates":{"scope.allowed_scopes":["production","public"]},"runtime_updates":{"trusted_observation.state.scope":"public"},"expected_disposition":"remediate"},
+
+    {"fixture_id":"temporal-positive","construct":"temporal","polarity":"positive","expected_disposition":"remediate"},
+    {"fixture_id":"temporal-negative","construct":"temporal","polarity":"negative","runtime_updates":{"trusted_observation.state.temporal_state":"completed"},"expected_disposition":"no_action"},
+    {"fixture_id":"temporal-metamorphic","construct":"temporal","polarity":"metamorphic","policy_updates":{"temporal_state":"completed"},"runtime_updates":{"trusted_observation.state.temporal_state":"completed"},"expected_disposition":"remediate"},
+
+    {"fixture_id":"observation-type-positive","construct":"observation_type","polarity":"positive","expected_disposition":"remediate"},
+    {"fixture_id":"observation-type-negative","construct":"observation_type","polarity":"negative","runtime_updates":{"trusted_observation.observation_type":"inspect_change_state"},"expected_disposition":"human_review"},
+    {"fixture_id":"observation-type-metamorphic","construct":"observation_type","polarity":"metamorphic","policy_updates":{"evidence_requirements.observation_type":"inspect_change_state"},"runtime_updates":{"trusted_observation.observation_type":"inspect_change_state"},"expected_disposition":"remediate"},
+
+    {"fixture_id":"authorization-positive","construct":"authorization","polarity":"positive","expected_disposition":"remediate"},
+    {"fixture_id":"authorization-negative","construct":"authorization","polarity":"negative","runtime_updates":{"trusted_observation.authorization.authorized":false,"trusted_observation.authorization.authorized_evidence_ids":[]},"expected_disposition":"human_review"},
+    {"fixture_id":"authorization-metamorphic","construct":"authorization","polarity":"metamorphic","runtime_updates":{"trusted_observation.authorization.authorized_evidence_ids":["chunk:alternate"]},"expected_disposition":"remediate"},
+
+    {"fixture_id":"observation-completion-positive","construct":"observation_completion","polarity":"positive","expected_disposition":"remediate"},
+    {"fixture_id":"observation-completion-negative","construct":"observation_completion","polarity":"negative","runtime_updates":{"trusted_observation.status":"error","trusted_observation.success":false,"trusted_observation.authorization.authorized_evidence_ids":[],"trusted_observation.state":null},"expected_disposition":"human_review"},
+    {"fixture_id":"observation-completion-metamorphic","construct":"observation_completion","polarity":"metamorphic","runtime_updates":{"trusted_observation.status":"not_found"},"expected_disposition":"remediate"},
+
+    {"fixture_id":"exception-positive","construct":"exception","polarity":"positive","expected_disposition":"remediate"},
+    {"fixture_id":"exception-negative","construct":"exception","polarity":"negative","policy_updates":{"precedence":"exception_overrides"},"runtime_updates":{"trusted_observation.state.exception_active":true},"expected_disposition":"human_review"},
+    {"fixture_id":"exception-metamorphic","construct":"exception","polarity":"metamorphic","policy_updates":{"precedence":"exception_overrides","exceptions.0.predicate.value":false},"runtime_updates":{"trusted_observation.state.exception_active":true},"expected_disposition":"remediate"},
+
+    {"fixture_id":"base-only-positive","construct":"precedence_base_only","polarity":"positive","expected_disposition":"remediate"},
+    {"fixture_id":"base-only-negative","construct":"precedence_base_only","polarity":"negative","runtime_updates":{"trusted_observation.state.exception_active":true},"expected_disposition":"remediate"},
+    {"fixture_id":"base-only-metamorphic","construct":"precedence_base_only","polarity":"metamorphic","runtime_updates":{"trusted_observation.state.status":"nominal","trusted_observation.state.exception_active":true},"expected_disposition":"no_action"},
+
+    {"fixture_id":"exception-overrides-positive","construct":"precedence_exception_overrides","polarity":"positive","policy_updates":{"precedence":"exception_overrides"},"runtime_updates":{"trusted_observation.state.exception_active":true},"expected_disposition":"human_review"},
+    {"fixture_id":"exception-overrides-negative","construct":"precedence_exception_overrides","polarity":"negative","policy_updates":{"precedence":"exception_overrides"},"expected_disposition":"remediate"},
+    {"fixture_id":"exception-overrides-metamorphic","construct":"precedence_exception_overrides","polarity":"metamorphic","policy_updates":{"precedence":"exception_overrides","exceptions.0.disposition":"no_action"},"runtime_updates":{"trusted_observation.state.exception_active":true},"expected_disposition":"no_action"},
+
+    {"fixture_id":"deny-overrides-positive","construct":"precedence_deny_overrides","polarity":"positive","policy_updates":{"precedence":"deny_overrides"},"expected_disposition":"remediate"},
+    {"fixture_id":"deny-overrides-negative","construct":"precedence_deny_overrides","polarity":"negative","policy_updates":{"precedence":"deny_overrides"},"runtime_updates":{"trusted_observation.state.exception_active":true},"expected_disposition":"human_review"},
+    {"fixture_id":"deny-overrides-metamorphic","construct":"precedence_deny_overrides","polarity":"metamorphic","policy_updates":{"precedence":"deny_overrides","exceptions.0.disposition":"no_action"},"runtime_updates":{"trusted_observation.state.exception_active":true},"expected_disposition":"no_action"},
+
+    {"fixture_id":"eq-positive","construct":"predicate_eq","polarity":"positive","expected_disposition":"remediate"},
+    {"fixture_id":"eq-negative","construct":"predicate_eq","polarity":"negative","runtime_updates":{"trusted_observation.state.status":"nominal"},"expected_disposition":"no_action"},
+    {"fixture_id":"eq-metamorphic","construct":"predicate_eq","polarity":"metamorphic","policy_updates":{"condition.all_of.0.value":"nominal"},"runtime_updates":{"trusted_observation.state.status":"nominal"},"expected_disposition":"remediate"},
+
+    {"fixture_id":"ne-positive","construct":"predicate_ne","polarity":"positive","policy_updates":{"condition.all_of.0.operator":"ne","condition.all_of.0.value":"nominal"},"expected_disposition":"remediate"},
+    {"fixture_id":"ne-negative","construct":"predicate_ne","polarity":"negative","policy_updates":{"condition.all_of.0.operator":"ne","condition.all_of.0.value":"nominal"},"runtime_updates":{"trusted_observation.state.status":"nominal"},"expected_disposition":"no_action"},
+    {"fixture_id":"ne-metamorphic","construct":"predicate_ne","polarity":"metamorphic","policy_updates":{"condition.all_of.0.operator":"ne","condition.all_of.0.value":"blocked"},"runtime_updates":{"trusted_observation.state.status":"nominal"},"expected_disposition":"remediate"},
+
+    {"fixture_id":"in-positive","construct":"predicate_in","polarity":"positive","policy_updates":{"condition.all_of.0.operator":"in","condition.all_of.0.value":["outage","degraded"]},"expected_disposition":"remediate"},
+    {"fixture_id":"in-negative","construct":"predicate_in","polarity":"negative","policy_updates":{"condition.all_of.0.operator":"in","condition.all_of.0.value":["outage","degraded"]},"runtime_updates":{"trusted_observation.state.status":"nominal"},"expected_disposition":"no_action"},
+    {"fixture_id":"in-metamorphic","construct":"predicate_in","polarity":"metamorphic","policy_updates":{"condition.all_of.0.operator":"in","condition.all_of.0.value":["outage","degraded","nominal"]},"runtime_updates":{"trusted_observation.state.status":"nominal"},"expected_disposition":"remediate"},
+
+    {"fixture_id":"all-of-positive","construct":"condition_all_of","polarity":"positive","expected_disposition":"remediate"},
+    {"fixture_id":"all-of-negative","construct":"condition_all_of","polarity":"negative","policy_updates":{"condition.all_of":[{"field":"status","operator":"eq","value":"outage"},{"field":"scope","operator":"eq","value":"restricted"}]},"expected_disposition":"no_action"},
+    {"fixture_id":"all-of-metamorphic","construct":"condition_all_of","polarity":"metamorphic","policy_updates":{"scope.allowed_scopes":["production","restricted"],"condition.all_of":[{"field":"status","operator":"eq","value":"outage"},{"field":"scope","operator":"eq","value":"restricted"}]},"runtime_updates":{"trusted_observation.state.scope":"restricted"},"expected_disposition":"remediate"},
+
+    {"fixture_id":"any-of-positive","construct":"condition_any_of","polarity":"positive","policy_updates":{"condition.any_of":[{"field":"status","operator":"eq","value":"outage"}]},"expected_disposition":"remediate"},
+    {"fixture_id":"any-of-negative","construct":"condition_any_of","polarity":"negative","policy_updates":{"condition.any_of":[{"field":"scope","operator":"eq","value":"restricted"}]},"expected_disposition":"no_action"},
+    {"fixture_id":"any-of-metamorphic","construct":"condition_any_of","polarity":"metamorphic","policy_updates":{"scope.allowed_scopes":["production","restricted"],"condition.any_of":[{"field":"scope","operator":"eq","value":"restricted"}]},"runtime_updates":{"trusted_observation.state.scope":"restricted"},"expected_disposition":"remediate"}
+    ,
+    {"fixture_id":"ambiguity-positive","construct":"ambiguity","polarity":"positive","expected_disposition":"remediate"},
+    {"fixture_id":"ambiguity-negative","construct":"ambiguity","polarity":"negative","policy_updates":{"ambiguity.kind":"conflicting_clauses","ambiguity.conflict_count":2},"expected_disposition":"human_review"},
+    {"fixture_id":"ambiguity-metamorphic","construct":"ambiguity","polarity":"metamorphic","policy_updates":{"ambiguity.kind":"unsupported_construct","ambiguity.conflict_count":1},"expected_disposition":"human_review"},
+
+    {"fixture_id":"terminal-legality-positive","construct":"terminal_legality","polarity":"positive","expected_disposition":"remediate"},
+    {"fixture_id":"terminal-legality-negative","construct":"terminal_legality","polarity":"negative","runtime_updates":{"legal_dispositions":["mark_stale","notify","human_review","no_action"]},"expected_disposition":"human_review"},
+    {"fixture_id":"terminal-legality-metamorphic","construct":"terminal_legality","polarity":"metamorphic","policy_updates":{"true_disposition":"notify"},"expected_disposition":"notify"},
+
+    {"fixture_id":"disposition-branch-positive","construct":"disposition_branch","polarity":"positive","expected_disposition":"remediate"},
+    {"fixture_id":"disposition-branch-negative","construct":"disposition_branch","polarity":"negative","runtime_updates":{"trusted_observation.state.status":"nominal"},"expected_disposition":"no_action"},
+    {"fixture_id":"disposition-branch-metamorphic","construct":"disposition_branch","polarity":"metamorphic","policy_updates":{"true_disposition":"no_action"},"expected_disposition":"no_action"}
+  ]
+}
