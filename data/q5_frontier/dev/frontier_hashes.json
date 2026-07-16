@@ -1,0 +1,17 @@
+{
+  "artifacts": {
+    "baseline_manifest.json": "974ddc4bc9123a3fc892675c2914e1cfc998464a9038fc6cc4bf7b37d0ec29e6",
+    "baseline_rows.jsonl": "f05216c1819b6699760dab9ce2deb2dd23f6d75042f333a65ebb898fa0405104",
+    "claim_preregistration.json": "730589364a3492ecf6658e05c35b03ed870790ff680de84160989b42a74910be",
+    "environment.jsonl": "e180cfc961ee8b9b1011a450a032189d6e880471fc97f6860ebee2d9b7fddb9a",
+    "frontier_dataset_manifest.json": "09f7f725563c44a153a935645c3c5e6da2347e076f777c1f99c25dc06c3910f1",
+    "gold.jsonl": "35a9596d49f28e19da8b9be477c834fef49cba58892e170c31203d893b02fc29",
+    "leakage_report.json": "2ba1ccda92cebb2a5c993741b5728592b19da38ae41d68f21ccb7b19b88131ba",
+    "policy_ir.jsonl": "e9630fc7edb2b1780304eeba23b1b23aad63fc12ed92567420a4a246d083212e",
+    "policy_ir_manifest.json": "9ca6b786237c293aa8799f73448b146e911c1bdc2d191476c5c08af335431060",
+    "renderer_manifest.json": "2857756e1ab4905bb2d27cf109c7fd7d219421d2ae2dd950b6db93a31e15d9c7",
+    "runtime_cases.jsonl": "5a05972e4b8c9e7db467e617e536e647711ffc205c649b2b42171232b5b853cc",
+    "topology.jsonl": "90b489eb50b43180ee7dd4df5cc5feb92ee7e208e9d05452b229e9944cba9d4a"
+  },
+  "schema_version": "q5-frontier-v5-hashes-v1"
+}

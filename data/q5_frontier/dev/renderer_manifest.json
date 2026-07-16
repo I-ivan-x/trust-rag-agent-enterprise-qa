@@ -1,0 +1,18 @@
+{
+  "dev_renderer_ids": [
+    "frontier-dev-ambiguity-probe-v1",
+    "frontier-dev-semantic-prose-v1",
+    "frontier-dev-structured-grammar-v1"
+  ],
+  "dev_renderer_sha256": {
+    "frontier-dev-ambiguity-probe-v1": "a1036a69626063dbbd3ee51e73b3142df3c2271688de79bb27bf88a1beb8ee14",
+    "frontier-dev-semantic-prose-v1": "2c7a81b7a1b67914ff523f26ff984b148bb790062408ed9153d21f9b59d25da2",
+    "frontier-dev-structured-grammar-v1": "5404f2ae884e3996e57508bacf113b2a667819b7e21ecd41eea2a3bd094d7c0d"
+  },
+  "dev_test_renderer_reuse_forbidden": true,
+  "protocol_namespace": "q5-frontier-v5",
+  "reserved_test_renderer_namespace": "frontier-test-renderer-reserved-v1",
+  "reserved_test_renderer_namespace_sha256": "8831ae09dacc7e68c960a777f52c99fe35331fab0190133124310ff16a89f696",
+  "schema_version": "q5-frontier-v5-renderer-manifest-v1",
+  "test_content_created": false
+}

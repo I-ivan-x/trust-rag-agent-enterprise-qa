@@ -1,0 +1,288 @@
+{
+  "canonical_schema": {
+    "$defs": {
+      "FrontierAmbiguityConflict": {
+        "additionalProperties": false,
+        "properties": {
+          "conflict_count": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "kind": {
+            "$ref": "#/$defs/FrontierAmbiguityKind"
+          }
+        },
+        "type": "object"
+      },
+      "FrontierAmbiguityKind": {
+        "enum": [
+          "none",
+          "conflicting_clauses",
+          "underspecified_scope",
+          "unsupported_construct"
+        ],
+        "type": "string"
+      },
+      "FrontierConditionExpression": {
+        "additionalProperties": false,
+        "properties": {
+          "all_of": {
+            "items": {
+              "$ref": "#/$defs/FrontierPredicate"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "any_of": {
+            "items": {
+              "$ref": "#/$defs/FrontierPredicate"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "all_of"
+        ],
+        "type": "object"
+      },
+      "FrontierDisposition": {
+        "enum": [
+          "mark_stale",
+          "remediate",
+          "notify",
+          "human_review",
+          "no_action"
+        ],
+        "type": "string"
+      },
+      "FrontierEvidenceRequirements": {
+        "additionalProperties": false,
+        "properties": {
+          "authorized_chunk_required": {
+            "type": "boolean"
+          },
+          "observation_type": {
+            "enum": [
+              "inspect_incident_state",
+              "inspect_change_state",
+              "inspect_access_scope",
+              "inspect_retention_state"
+            ],
+            "type": "string"
+          },
+          "successful_observation_required": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "observation_type"
+        ],
+        "type": "object"
+      },
+      "FrontierExceptionClause": {
+        "additionalProperties": false,
+        "properties": {
+          "disposition": {
+            "$ref": "#/$defs/FrontierDisposition"
+          },
+          "predicate": {
+            "$ref": "#/$defs/FrontierPredicate"
+          }
+        },
+        "required": [
+          "predicate",
+          "disposition"
+        ],
+        "type": "object"
+      },
+      "FrontierPolicyScope": {
+        "additionalProperties": false,
+        "properties": {
+          "allowed_scopes": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "resource_type": {
+            "$ref": "#/$defs/FrontierResourceType"
+          }
+        },
+        "required": [
+          "resource_type",
+          "allowed_scopes"
+        ],
+        "type": "object"
+      },
+      "FrontierPrecedence": {
+        "enum": [
+          "exception_overrides",
+          "deny_overrides",
+          "base_only"
+        ],
+        "type": "string"
+      },
+      "FrontierPredicate": {
+        "additionalProperties": false,
+        "properties": {
+          "field": {
+            "$ref": "#/$defs/FrontierPredicateField"
+          },
+          "operator": {
+            "$ref": "#/$defs/FrontierPredicateOperator"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ]
+          }
+        },
+        "required": [
+          "field",
+          "operator",
+          "value"
+        ],
+        "type": "object"
+      },
+      "FrontierPredicateField": {
+        "enum": [
+          "status",
+          "scope",
+          "temporal_state",
+          "exception_active"
+        ],
+        "type": "string"
+      },
+      "FrontierPredicateOperator": {
+        "enum": [
+          "eq",
+          "ne",
+          "in"
+        ],
+        "type": "string"
+      },
+      "FrontierResourceType": {
+        "enum": [
+          "incident",
+          "change",
+          "access",
+          "retention"
+        ],
+        "type": "string"
+      },
+      "FrontierTemporalState": {
+        "enum": [
+          "current",
+          "planned",
+          "completed",
+          "expired"
+        ],
+        "type": "string"
+      },
+      "FrontierTerminalSafetyConstraints": {
+        "additionalProperties": false,
+        "properties": {
+          "allowed_dispositions": {
+            "items": {
+              "$ref": "#/$defs/FrontierDisposition"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "ambiguity_terminal": {
+            "const": "human_review",
+            "type": "string"
+          },
+          "require_authorized_evidence": {
+            "type": "boolean"
+          },
+          "require_successful_observation": {
+            "type": "boolean"
+          },
+          "unauthorized_terminal": {
+            "const": "human_review",
+            "type": "string"
+          }
+        },
+        "required": [
+          "allowed_dispositions"
+        ],
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "ambiguity": {
+        "$ref": "#/$defs/FrontierAmbiguityConflict"
+      },
+      "condition": {
+        "$ref": "#/$defs/FrontierConditionExpression"
+      },
+      "evidence_requirements": {
+        "$ref": "#/$defs/FrontierEvidenceRequirements"
+      },
+      "exceptions": {
+        "items": {
+          "$ref": "#/$defs/FrontierExceptionClause"
+        },
+        "type": "array"
+      },
+      "false_disposition": {
+        "$ref": "#/$defs/FrontierDisposition"
+      },
+      "precedence": {
+        "$ref": "#/$defs/FrontierPrecedence"
+      },
+      "schema_version": {
+        "const": "q5-canonical-policy-ir-v1",
+        "type": "string"
+      },
+      "scope": {
+        "$ref": "#/$defs/FrontierPolicyScope"
+      },
+      "temporal_state": {
+        "$ref": "#/$defs/FrontierTemporalState"
+      },
+      "terminal_safety": {
+        "$ref": "#/$defs/FrontierTerminalSafetyConstraints"
+      },
+      "true_disposition": {
+        "$ref": "#/$defs/FrontierDisposition"
+      }
+    },
+    "required": [
+      "scope",
+      "condition",
+      "temporal_state",
+      "precedence",
+      "evidence_requirements",
+      "true_disposition",
+      "false_disposition",
+      "ambiguity",
+      "terminal_safety"
+    ],
+    "type": "object"
+  },
+  "gold_compiler": "typed_ir_plus_environment_only",
+  "policy_ir_row_count": 48,
+  "policy_ir_sha256": "e9630fc7edb2b1780304eeba23b1b23aad63fc12ed92567420a4a246d083212e",
+  "protocol_namespace": "q5-frontier-v5",
+  "pydantic_schema_sha256": "c4c8017235053e82102b34529dedbc7767f30730114d43ecc4e67efe037d0e01",
+  "schema_version": "q5-frontier-v5-policy-ir-manifest-v1",
+  "source_sha256": {
+    "app/eval/q5_frontier.py": "2b588e7cc50744eb15478a229a44dc3f806cafef2998bc7a5fdf699761c29543",
+    "app/schemas/q5_frontier.py": "f91294ae53b1d9edc28f515b4005657843e383ab64060e269c39574464f33618"
+  }
+}

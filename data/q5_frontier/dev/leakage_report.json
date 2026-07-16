@@ -1,0 +1,19 @@
+{
+  "checks": {
+    "case_specific_expected_action_map_absent": true,
+    "clause_order_and_irrelevant_comment_preserve_semantics": true,
+    "dev_test_renderer_families_disjoint": true,
+    "expected_action_lexicon_absent": true,
+    "external_requests": 0,
+    "gold_compiler_ignores_case_text_and_expected_tables": true,
+    "identity_rewrite_preserves_compiled_gold": true,
+    "q5_frontier_test_absent": true,
+    "runtime_gold_identity_bijection": true,
+    "runtime_payload_gold_ir_topology_fields_absent": true,
+    "runtime_topology_identity_bijection": true
+  },
+  "leaked_runtime_keys": [],
+  "protocol_namespace": "q5-frontier-v5",
+  "schema_version": "q5-frontier-v5-leakage-report-v1",
+  "valid": true
+}

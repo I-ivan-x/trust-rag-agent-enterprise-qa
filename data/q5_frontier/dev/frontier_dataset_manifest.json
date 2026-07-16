@@ -1,0 +1,66 @@
+{
+  "capability_class_counts": {
+    "ambiguous_or_unsafe": 12,
+    "semantic_open": 20,
+    "symbolic_complete": 16
+  },
+  "case_count": 48,
+  "distinct_case_primary_unit": true,
+  "k_is_not_semantic_replication": true,
+  "namespace": "data/q5_frontier/dev",
+  "pair_count": 24,
+  "pair_kind_counts": {
+    "policy_fixed_state_changed": 12,
+    "state_fixed_policy_changed": 12
+  },
+  "pair_kinds_by_capability_class": {
+    "ambiguous_or_unsafe": [
+      "policy_fixed_state_changed",
+      "state_fixed_policy_changed"
+    ],
+    "semantic_open": [
+      "policy_fixed_state_changed",
+      "state_fixed_policy_changed"
+    ],
+    "symbolic_complete": [
+      "policy_fixed_state_changed",
+      "state_fixed_policy_changed"
+    ]
+  },
+  "pair_kinds_by_policy_family": {
+    "access": [
+      "policy_fixed_state_changed",
+      "state_fixed_policy_changed"
+    ],
+    "change": [
+      "policy_fixed_state_changed",
+      "state_fixed_policy_changed"
+    ],
+    "incident": [
+      "policy_fixed_state_changed",
+      "state_fixed_policy_changed"
+    ],
+    "retention": [
+      "policy_fixed_state_changed",
+      "state_fixed_policy_changed"
+    ]
+  },
+  "partition": "dev",
+  "policy_family_count": 4,
+  "policy_family_counts": {
+    "access": 12,
+    "change": 12,
+    "incident": 12,
+    "retention": 12
+  },
+  "protocol_namespace": "q5-frontier-v5",
+  "row_sha256": {
+    "environment.jsonl": "e180cfc961ee8b9b1011a450a032189d6e880471fc97f6860ebee2d9b7fddb9a",
+    "gold.jsonl": "35a9596d49f28e19da8b9be477c834fef49cba58892e170c31203d893b02fc29",
+    "policy_ir.jsonl": "e9630fc7edb2b1780304eeba23b1b23aad63fc12ed92567420a4a246d083212e",
+    "runtime_cases.jsonl": "5a05972e4b8c9e7db467e617e536e647711ffc205c649b2b42171232b5b853cc",
+    "topology.jsonl": "90b489eb50b43180ee7dd4df5cc5feb92ee7e208e9d05452b229e9944cba9d4a"
+  },
+  "runtime_payload_excludes_sealed_authoring": true,
+  "schema_version": "q5-frontier-v5-dataset-manifest-v1"
+}
