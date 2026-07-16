@@ -91,7 +91,7 @@ from app.govern.q5_loop import (
     Q5TrajectoryEvent,
     run_q5_agent,
 )
-from app.govern.q5_policy import Q5PolicyDecisionEvent, Q5PolicyModel
+from app.govern.q5_policy import Q5AgentPolicy, Q5PolicyDecisionEvent, Q5PolicyModel
 from app.govern.q5_tool_validator import q5_tool_args_model
 from app.govern.q5_tools import Q5ToolEvent
 from app.govern.sinks import ActionRecord, ApprovalState
@@ -104,10 +104,17 @@ from app.schemas.q5_task import (
 )
 from app.workflow.state import RetrievalPassResult
 
-Q5_V4_RUNTIME_ATTESTATION = {
+Q5_V4_HR3_RUNTIME_ATTESTATION = {
     "schema_version": "q5-runtime-attestation-hr3",
     "trusted_policy_block": "same_trial_route_fact_v1",
     "timeout_recovery": "bounded_policy_replan_v1",
+}
+Q5_V4_RUNTIME_ATTESTATION = {
+    "schema_version": "q5-runtime-attestation-i",
+    "cognitive_step_routing": "per_policy_step_executor_v1",
+    "bounded_timeout_recovery": "bounded_policy_replan_v1",
+    "trusted_policy_block": "same_trial_route_fact_v1",
+    "legal_action_singleton_zero_call": "safe_escalation_singleton_v1",
 }
 Q5_V4_FROZEN_LEGACY_MANIFESTS = {
     "q5-dev-v4-mock-h-0792fd3-primary-k3": (
@@ -119,6 +126,16 @@ Q5_V4_FROZEN_LEGACY_MANIFESTS = {
     "q5-dev-v4-mock-hr2-3628d2b-primary-k3": (
         "33b125bc2ee00560ff73834a424c56a7067929fab432ae7ad0e2adddd9251cb2"
     ),
+}
+Q5_V4_FROZEN_HR3_MANIFESTS = {
+    "q5-dev-v4-mock-hr3-65f4963-primary-k3": (
+        "69d1cbc17ae4e8e9f4991ced917633b339be72181a0513ff001532cec5ab7cee"
+    ),
+}
+Q5_I_FROZEN_DEV_RUNTIME_HASHES = {
+    "tasks": "17ae83fb0173a693b1d4d7ea6fc8d2ac4859b7bec294bf4f5e01b9f61c26b5e1",
+    "environment": "b1cbcf1bfbeb86fa25451c09b883ef5097ca3dedf02fb6e0ce1e982c5858d61f",
+    "runtime_inputs": "6395a407147910eefc60122b8b644025f7ac855610b4ac2f178f4f1c7eb0daa6",
 }
 
 Q5_PROMPT_VERSION = Q5_STRUCTURED_POLICY_VERSION
@@ -790,7 +807,13 @@ def _validate_q5_raw_artifacts(
     is_v4 = protocol.version is Q5ProtocolVersion.v4
     is_strict = is_v2 or is_v3 or is_v4
     runtime_attestation = manifest.get("runtime_attestation")
-    if runtime_attestation is not None and runtime_attestation != Q5_V4_RUNTIME_ATTESTATION:
+    if runtime_attestation == Q5_V4_HR3_RUNTIME_ATTESTATION:
+        if (
+            Q5_V4_FROZEN_HR3_MANIFESTS.get(str(manifest.get("run_id") or ""))
+            != raw_manifest_sha256
+        ):
+            raise ValueError("Q5 HR3 runtime attestation is not a frozen artifact")
+    elif runtime_attestation not in (None, Q5_V4_RUNTIME_ATTESTATION):
         raise ValueError("Q5 runtime attestation feature dispatch is invalid")
     if (
         is_v4
@@ -799,7 +822,12 @@ def _validate_q5_raw_artifacts(
         != raw_manifest_sha256
     ):
         raise ValueError("Q5 v4 runtime attestation cannot be downgraded")
-    hr3_attestation = bool(is_v4 and runtime_attestation == Q5_V4_RUNTIME_ATTESTATION)
+    i_attestation = bool(is_v4 and runtime_attestation == Q5_V4_RUNTIME_ATTESTATION)
+    hr3_attestation = bool(
+        is_v4
+        and runtime_attestation
+        in (Q5_V4_HR3_RUNTIME_ATTESTATION, Q5_V4_RUNTIME_ATTESTATION)
+    )
     if is_v4:
         q4_input_presence = [
             isinstance(row, dict) and "q4_validation_input" in row
@@ -1234,6 +1262,13 @@ def _validate_q5_raw_artifacts(
                 parsed_terminal=parsed_terminal,
                 hr3_attestation=hr3_attestation,
             )
+            if i_attestation:
+                _validate_q5_i_cognitive_sources(
+                    key=key,
+                    result=result,
+                    policy=policy,
+                    terminal=terminal,
+                )
         before = indexed["environment_before.json"][key]
         after = indexed["environment_after.json"][key]
         if before.get("sha256") != result.get("environment_before_sha256"):
@@ -1247,6 +1282,13 @@ def _validate_q5_raw_artifacts(
 
     if referenced_identities != set(identities):
         raise ValueError("Q5 manifest contains missing or unused model identities")
+
+    if i_attestation and dataset_hashes == Q5_I_FROZEN_DEV_RUNTIME_HASHES:
+        _validate_q5_i_frozen_dev_topology(
+            manifest=manifest,
+            results=result_rows,
+            policy_by_trial=policy_by_trial,
+        )
 
     call_evidence = model_manifest.get("call_evidence")
     if not isinstance(call_evidence, list):
@@ -1609,6 +1651,118 @@ def _validate_q5_v4_trial_provenance(
         not isinstance(sink_record, dict) or sink_record.get("action") != action.value
     ):
         raise ValueError(f"Q5 v4 sink action provenance mismatch: {key}")
+
+
+def _validate_q5_i_cognitive_sources(
+    *,
+    key: str,
+    result: Mapping[str, Any],
+    policy: Sequence[Mapping[str, Any]],
+    terminal: Mapping[str, Any],
+) -> None:
+    """Validate the 5-I per-step executor ledger without grader labels."""
+
+    sources = [item.get("policy_source") for item in policy]
+    called = [item.get("llm_called") for item in policy]
+    if any(
+        source not in {"rule", "llm"}
+        or type(was_called) is not bool
+        or was_called != (source == "llm")
+        for source, was_called in zip(sources, called, strict=True)
+    ):
+        raise ValueError(f"Q5 5-I cognitive executor ledger is invalid: {key}")
+    system = result.get("system")
+    route = terminal.get("route")
+    if not isinstance(route, Mapping):
+        raise ValueError(f"Q5 5-I route ledger is invalid: {key}")
+    safe_singleton = route.get("candidate_terminal_actions") == [
+        GovernanceAction.escalate_to_human.value
+    ]
+    policy_block = route.get("route_reasons") == ["terminal_policy_block"]
+    if (safe_singleton or policy_block) and any(called):
+        raise ValueError(f"Q5 5-I host-decided route called the model: {key}")
+    if system == Q5AgentSystem.rule.value:
+        if any(source != "rule" for source in sources):
+            raise ValueError(f"Q5 5-I rule baseline changed executor: {key}")
+        return
+    if system == Q5AgentSystem.llm.value:
+        if not (all(source == "llm" for source in sources) or not any(called)):
+            raise ValueError(f"Q5 5-I LLM-only executor sequence is invalid: {key}")
+        return
+    if system != Q5AgentSystem.hybrid.value:
+        raise ValueError(f"Q5 5-I cognitive executor system is invalid: {key}")
+    proposal_kinds = [
+        (
+            item["accepted_proposal"].get("kind")
+            if isinstance(item.get("accepted_proposal"), Mapping)
+            else None
+        )
+        for item in policy
+    ]
+    allowed = (
+        all(source == "rule" for source in sources)
+        or all(source == "llm" for source in sources)
+        or (
+            sources == ["rule", "llm"]
+            and proposal_kinds == ["observe", "terminal"]
+        )
+        or (
+            sources == ["llm", "llm"]
+            and proposal_kinds == ["observe", "terminal"]
+        )
+    )
+    if not allowed:
+        raise ValueError(f"Q5 5-I hybrid cognitive executor sequence is invalid: {key}")
+
+
+def _validate_q5_i_frozen_dev_topology(
+    *,
+    manifest: Mapping[str, Any],
+    results: Mapping[str, Mapping[str, Any]],
+    policy_by_trial: Mapping[str, Sequence[Mapping[str, Any]]],
+) -> None:
+    """Close the frozen 36x3 cognitive call topology without consulting labels."""
+
+    if len(manifest.get("case_ids") or []) != 36 or manifest.get("k") != 3:
+        raise ValueError("Q5 5-I frozen dev topology is incomplete")
+    calls = {system.value: 0 for system in Q5AgentSystem}
+    called_trials = {system.value: 0 for system in Q5AgentSystem}
+    hybrid_observation_calls = 0
+    hybrid_terminal_calls = 0
+    for key, result in results.items():
+        system = str(result.get("system") or "")
+        trial_calls = int(result.get("llm_calls") or 0)
+        if system not in calls:
+            raise ValueError(f"Q5 5-I frozen dev system is invalid: {key}")
+        calls[system] += trial_calls
+        called_trials[system] += int(trial_calls > 0)
+        if system != Q5AgentSystem.hybrid.value:
+            continue
+        for event in policy_by_trial[key]:
+            if event.get("llm_called") is not True:
+                continue
+            proposal = event.get("accepted_proposal")
+            kind = proposal.get("kind") if isinstance(proposal, Mapping) else None
+            if kind == "observe":
+                hybrid_observation_calls += 1
+            elif kind == "terminal":
+                hybrid_terminal_calls += 1
+            else:
+                raise ValueError(f"Q5 5-I Hybrid call phase is invalid: {key}")
+    if calls != {
+        Q5AgentSystem.rule.value: 0,
+        Q5AgentSystem.llm.value: 132,
+        Q5AgentSystem.hybrid.value: 42,
+    }:
+        raise ValueError("Q5 5-I frozen dev cognitive call topology changed")
+    if called_trials != {
+        Q5AgentSystem.rule.value: 0,
+        Q5AgentSystem.llm.value: 93,
+        Q5AgentSystem.hybrid.value: 39,
+    }:
+        raise ValueError("Q5 5-I frozen dev model-called trial topology changed")
+    if hybrid_observation_calls != 3 or hybrid_terminal_calls != 39:
+        raise ValueError("Q5 5-I Hybrid cognitive phase ledger changed")
 
 
 def _index_exact_trial_rows(
@@ -1985,6 +2139,7 @@ def _run_trial(
     system: Q5AgentSystem,
     run_index: int,
     prepared_model: tuple[Q5PolicyModel, Q5ModelIdentity] | None,
+    rule_policy: Q5AgentPolicy | None = None,
 ) -> dict[str, Any]:
     before = q5_outcome_environment_from_runtime(source_environment.model_copy(deep=True))
     readonly_environment = Q5ReadOnlyEnvironment.from_state(
@@ -2011,6 +2166,7 @@ def _run_trial(
             environment=readonly_environment,
             sink=sink,
             model=audited_model,
+            rule_policy=rule_policy,
         ),
     )
     latency_ms = max(0.0, (time.perf_counter_ns() - started) / 1_000_000)

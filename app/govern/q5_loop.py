@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any, Literal
@@ -162,6 +163,7 @@ class Q5AgentRuntime:
     environment: Q5ReadOnlyEnvironment
     sink: ActionSink
     model: Q5PolicyModel | None = None
+    rule_policy: Q5AgentPolicy | None = None
 
 
 @dataclass
@@ -203,7 +205,13 @@ def run_q5_agent(
         remaining_observations=max_observations,
     )
     route_facts = _route_facts(task, context)
-    route, policy = _select_policy(system, route_facts, runtime.model)
+    route, _ = _select_policy(
+        system,
+        route_facts,
+        runtime.model,
+        context,
+        rule_policy=runtime.rule_policy,
+    )
     state = _LoopState(
         observations=[],
         tool_events=[],
@@ -217,6 +225,14 @@ def run_q5_agent(
     context_version = 1
 
     for step_index in range(1, 4):
+        step_route_facts = _route_facts(task, context)
+        _, policy = _select_policy(
+            system,
+            step_route_facts,
+            runtime.model,
+            context,
+            rule_policy=runtime.rule_policy,
+        )
         if context.terminal_only:
             state.terminal_only_prompt_count += 1
         policy_step = policy.decide(context)
@@ -477,20 +493,30 @@ def _select_policy(
     system: Q5AgentSystem,
     facts: Q5RouteFacts,
     model: Q5PolicyModel | None,
+    context: Q5DecisionContext,
+    *,
+    rule_policy: Q5AgentPolicy | None = None,
 ) -> tuple[Q5RouteDecision, Q5AgentPolicy]:
-    rule = Q5RuleAgentPolicy()
+    rule = rule_policy or Q5RuleAgentPolicy()
     llm = Q5LLMAgentPolicy(model)
     if facts.terminal_policy_block:
         return _fixed_route("rule", Q5RouteReason.terminal_policy_block, facts), rule
     if system is Q5AgentSystem.rule:
         return _fixed_route("rule", Q5RouteReason.rule_baseline, facts), rule
-    if (
-        facts.structured_state_complete
-        and facts.candidate_terminal_actions == [GovernanceAction.escalate_to_human]
-    ):
+    if facts.candidate_terminal_actions == [GovernanceAction.escalate_to_human]:
         return _fixed_route("rule", Q5RouteReason.trusted_state_complete, facts), rule
     if system is Q5AgentSystem.llm:
         return _fixed_route("llm", Q5RouteReason.always_llm_control, facts), llm
+    required_state = q5_required_state_tools(context)
+    unresolved_state = q5_unresolved_state_tools(context)
+    semantic_binding = q5_requires_policy_semantic_binding(context)
+    if unresolved_state and semantic_binding:
+        return _fixed_route("rule", Q5RouteReason.missing_trusted_state, facts), rule
+    if required_state and context.observations:
+        return (
+            _fixed_route("llm", Q5RouteReason.trusted_state_complete, facts),
+            llm,
+        )
     decision = route_q5(facts)
     return decision, llm if decision.route == "llm" else rule
 
@@ -586,6 +612,41 @@ def q5_unresolved_state_tools(
     return frozenset(
         tool for tool in q5_required_state_tools(context) if tool not in observed_tools
     )
+
+
+def q5_requires_policy_semantic_binding(context: Q5DecisionContext) -> bool:
+    """Detect a runtime policy branch comparison without identity or grader labels."""
+
+    branch_terms = (
+        " matching ",
+        " mismatch ",
+        " completed ",
+        " planned ",
+        " outage",
+        " degradation",
+        " active ",
+        " another ",
+    )
+    disposition_terms = (
+        "human review",
+        "review",
+        "remediation",
+        "stale",
+        "alert",
+        "page",
+        "suppress",
+    )
+    for evidence in context.authorized_evidence:
+        text = f" {evidence.text_excerpt.lower()} "
+        clauses = [part.strip() for part in re.split(r"[.;]", text) if part.strip()]
+        if (
+            ";" in text
+            and len(clauses) >= 2
+            and sum(term in text for term in branch_terms) >= 2
+            and sum(term in text for term in disposition_terms) >= 2
+        ):
+            return True
+    return False
 
 
 def _build_context(

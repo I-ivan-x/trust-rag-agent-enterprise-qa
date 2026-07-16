@@ -81,6 +81,11 @@ Q5_HISTORICAL_REAL_RUNS = (
         Path("data/q5/dev/gold.jsonl"),
         "v4",
     ),
+    (
+        Path("data/eval_runs/q5-dev-v4-mock-hr3-65f4963-primary-k3"),
+        Path("data/q5/dev/gold.jsonl"),
+        "v4",
+    ),
 )
 
 

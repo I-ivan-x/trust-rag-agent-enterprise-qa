@@ -587,12 +587,12 @@ def test_q5_observation_budget_is_two_plus_one_terminal() -> None:
         ]
     )
     task = _task(
-        capability=RequestedCapability.investigate,
+        capability=RequestedCapability.remediation_management,
         resource_refs=refs,
         available_tools=[Q5ObservationTool.inspect_incident_impact],
     )
     report = ConditionReport(
-        conditions=[],
+        conditions=[OpsCondition.broken_xref],
         authorized_actor=True,
         evidence_decision="sufficient",
     )
@@ -733,15 +733,15 @@ def test_q5_same_tool_with_different_args_is_not_a_duplicate() -> None:
             )
             for ref in refs
         ]
-        + [_terminal_payload(GovernanceAction.no_op)]
+        + [_terminal_payload(GovernanceAction.open_remediation_ticket)]
     )
     task = _task(
-        capability=RequestedCapability.investigate,
+        capability=RequestedCapability.remediation_management,
         resource_refs=refs,
         available_tools=[Q5ObservationTool.inspect_incident_impact],
     )
     report = ConditionReport(
-        conditions=[],
+        conditions=[OpsCondition.broken_xref],
         authorized_actor=True,
         evidence_decision="sufficient",
     )
@@ -752,7 +752,7 @@ def test_q5_same_tool_with_different_args_is_not_a_duplicate() -> None:
         report=report,
     )
 
-    assert result.final_action is GovernanceAction.no_op
+    assert result.final_action is GovernanceAction.open_remediation_ticket
     assert len(result.tool_events) == 2
     assert result.duplicate_successful_observation_count == 0
     assert result.post_observation_terminal_rate is None
@@ -792,9 +792,9 @@ def test_q5_investigate_side_effect_cannot_bypass_reauthorization() -> None:
     result, sink = _run(Q5AgentSystem.llm, model=model, task=task)
 
     assert result.final_action is GovernanceAction.escalate_to_human
-    assert result.llm_calls == 1
-    assert result.route.route_reasons == [Q5RouteReason.always_llm_control]
-    assert model.calls == 1
+    assert result.llm_calls == 0
+    assert result.route.route_reasons == [Q5RouteReason.trusted_state_complete]
+    assert model.calls == 0
     assert sink.records[0].action is GovernanceAction.escalate_to_human
 
 
