@@ -28,6 +28,7 @@ from app.govern.q5_loop import (
     run_q5_agent,
 )
 from app.govern.q5_policy import Q5PolicyStep
+from app.govern.q5_router import Q5RouteReason
 from app.govern.q5_tool_validator import Q5ToolValidationResult
 from app.govern.sinks import ActionRecord, ApprovalState
 from app.guards.acl_gate import ACLGateDecision
@@ -93,6 +94,42 @@ class QueueModel:
         if not self.outputs:
             raise RuntimeError("mock output queue exhausted")
         return self.outputs.pop(0)
+
+
+class FaultSequenceEnvironment:
+    def __init__(
+        self,
+        delegate: Q5ReadOnlyEnvironment,
+        statuses: list[str | None],
+    ) -> None:
+        self.delegate = delegate
+        self.statuses = list(statuses)
+
+    @property
+    def environment_ref(self) -> str:
+        return self.delegate.environment_ref
+
+    @property
+    def state_version(self) -> str:
+        return self.delegate.state_version
+
+    @property
+    def provenance(self) -> str:
+        return self.delegate.provenance
+
+    def tool_fault(self, tool: Q5ObservationTool):
+        del tool
+        status = self.statuses.pop(0) if self.statuses else None
+        return {"status": status} if status is not None else None
+
+    def policy_exception(self, resource_ref: str, policy_ref: str):
+        return self.delegate.policy_exception(resource_ref, policy_ref)
+
+    def change_state(self, change_ref: str):
+        return self.delegate.change_state(change_ref)
+
+    def incident_impact(self, resource_ref: str):
+        return self.delegate.incident_impact(resource_ref)
 
 
 def _task(
@@ -574,37 +611,7 @@ def test_q5_observation_budget_is_two_plus_one_terminal() -> None:
     assert len(result.tool_events) == len(result.otel_spans) == 2
 
 
-def test_q5_timeout_is_one_step_canonical_safe_fallback_without_retry() -> None:
-    class FlakyEnvironment:
-        def __init__(self, delegate: Q5ReadOnlyEnvironment) -> None:
-            self.delegate = delegate
-            self.fault_checks = 0
-
-        @property
-        def environment_ref(self) -> str:
-            return self.delegate.environment_ref
-
-        @property
-        def state_version(self) -> str:
-            return self.delegate.state_version
-
-        @property
-        def provenance(self) -> str:
-            return self.delegate.provenance
-
-        def tool_fault(self, tool: Q5ObservationTool):
-            self.fault_checks += 1
-            return {"status": "timeout"} if self.fault_checks == 1 else None
-
-        def policy_exception(self, resource_ref: str, policy_ref: str):
-            return self.delegate.policy_exception(resource_ref, policy_ref)
-
-        def change_state(self, change_ref: str):
-            return self.delegate.change_state(change_ref)
-
-        def incident_impact(self, resource_ref: str):
-            return self.delegate.incident_impact(resource_ref)
-
+def test_q5_timeout_allows_policy_replan_then_success_within_budget() -> None:
     model = QueueModel(
         [
             _observe_payload(),
@@ -618,19 +625,91 @@ def test_q5_timeout_is_one_step_canonical_safe_fallback_without_retry() -> None:
     result, _ = _run(
         Q5AgentSystem.llm,
         model=model,
-        environment=FlakyEnvironment(_environment()),  # type: ignore[arg-type]
+        environment=FaultSequenceEnvironment(  # type: ignore[arg-type]
+            _environment(),
+            ["timeout", None],
+        ),
+    )
+
+    assert result.final_action is GovernanceAction.open_remediation_ticket
+    assert result.fallback_reason is None
+    assert [event.status.value for event in result.tool_events] == ["timeout", "ok"]
+    assert [event.request_id for event in result.tool_events] == [
+        "q5-tool-0001",
+        "q5-tool-0002",
+    ]
+    assert result.trajectory[0].reason_code == "tool_timeout"
+    assert result.trajectory[1].reason_code == "tool_ok"
+    assert result.terminal_proposal.decision_basis is not None
+    assert (
+        result.terminal_proposal.decision_basis.observation_request_id
+        == "q5-tool-0002"
+    )
+    assert len(result.context_traces) == 3
+    assert result.step_count == 3
+    assert result.llm_calls == 3
+    assert result.duplicate_successful_observation_count == 0
+    assert result.post_observation_terminal_rate == 1.0
+
+
+def test_q5_repeated_timeout_stops_at_step_budget_with_one_causal_terminal() -> None:
+    model = QueueModel([_observe_payload(), _observe_payload(), _observe_payload()])
+    result, _ = _run(
+        Q5AgentSystem.llm,
+        model=model,
+        environment=FaultSequenceEnvironment(  # type: ignore[arg-type]
+            _environment(),
+            ["timeout", "timeout"],
+        ),
     )
 
     assert result.final_action is GovernanceAction.escalate_to_human
-    assert result.fallback_reason == "tool_timeout"
-    assert result.tool_events[0].status.value == "timeout"
-    assert result.trajectory[0].reason_code == "tool_timeout"
-    assert result.trajectory[-1].reason_code == "tool_timeout"
-    assert len(result.context_traces) == 2
-    assert result.step_count == 2
-    assert result.llm_calls == 1
+    assert result.fallback_reason == "step_budget_exhausted"
+    assert [event.status.value for event in result.tool_events] == [
+        "timeout",
+        "timeout",
+    ]
+    assert [event.request_id for event in result.tool_events] == [
+        "q5-tool-0001",
+        "q5-tool-0002",
+    ]
+    assert [event.event_type for event in result.trajectory] == [
+        "observation",
+        "observation",
+        "tool_rejected",
+        "terminal",
+    ]
+    assert result.trajectory[-2].reason_code == "step_budget_exhausted"
+    assert result.trajectory[-1].reason_code == "step_budget_exhausted"
+    assert result.step_count == result.llm_calls == 3
     assert result.duplicate_successful_observation_count == 0
     assert result.post_observation_terminal_rate is None
+
+
+def test_q5_timeout_then_premature_side_effect_uses_unresolved_guard() -> None:
+    model = QueueModel(
+        [
+            _observe_payload(),
+            _terminal_payload(GovernanceAction.open_remediation_ticket, None),
+        ]
+    )
+    result, _ = _run(
+        Q5AgentSystem.llm,
+        model=model,
+        environment=FaultSequenceEnvironment(  # type: ignore[arg-type]
+            _environment(),
+            ["timeout"],
+        ),
+    )
+
+    assert result.final_action is GovernanceAction.escalate_to_human
+    assert result.fallback_reason == "premature_terminal_unresolved_state"
+    assert len(result.tool_events) == 1
+    assert result.tool_events[0].status is q5_loop_module.Q5ToolStatus.timeout
+    assert result.trajectory[-1].reason_code == (
+        "premature_terminal_unresolved_state"
+    )
+    assert result.duplicate_successful_observation_count == 0
 
 
 def test_q5_completed_observation_rejects_exact_duplicate_without_execution() -> None:
@@ -713,8 +792,9 @@ def test_q5_investigate_side_effect_cannot_bypass_reauthorization() -> None:
     result, sink = _run(Q5AgentSystem.llm, model=model, task=task)
 
     assert result.final_action is GovernanceAction.escalate_to_human
-    assert result.llm_calls == 0
-    assert model.calls == 0
+    assert result.llm_calls == 1
+    assert result.route.route_reasons == [Q5RouteReason.always_llm_control]
+    assert model.calls == 1
     assert sink.records[0].action is GovernanceAction.escalate_to_human
 
 
@@ -921,16 +1001,63 @@ def test_q5_trusted_rule_policy_block_remains_distinct_from_synthesized_fallback
             ),
         }
     )
-    result, _ = _run(
-        Q5AgentSystem.rule,
-        pass_result=empty_pass,
-        report=ConditionReport(
-            conditions=[OpsCondition.insufficient_evidence],
-            authorized_actor=True,
-            evidence_decision="insufficient",
-        ),
+    for system in Q5AgentSystem:
+        result, _ = _run(
+            system,
+            pass_result=empty_pass,
+            report=ConditionReport(
+                conditions=[OpsCondition.insufficient_evidence],
+                authorized_actor=True,
+                evidence_decision="insufficient",
+            ),
+        )
+
+        assert result.route.route_reasons == [Q5RouteReason.terminal_policy_block]
+        assert result.route.candidate_terminal_actions == [
+            GovernanceAction.escalate_to_human
+        ]
+        assert result.terminal_proposal.action is GovernanceAction.escalate_to_human
+        assert result.terminal_proposal.disposition_source == "fallback"
+        assert result.terminal_proposal.decision_basis is None
+        assert result.terminal_proposal.reason_code == "policy_block"
+        assert result.trajectory[-1].reason_code == "policy_block"
+        assert result.policy_events[-1].policy_source == "rule"
+        assert result.policy_events[-1].llm_called is False
+        assert result.policy_events[-1].raw_payload_sha256 is None
+        assert result.fallback_reason is None
+
+
+def test_q5_permission_blocked_is_attested_for_all_systems() -> None:
+    report = ConditionReport(
+        conditions=[OpsCondition.permission_blocked],
+        authorized_actor=False,
+        evidence_decision="sufficient",
+        violating_doc_ids=["doc-payments-policy"],
     )
 
-    assert result.terminal_proposal.disposition_source == "fallback"
-    assert result.terminal_proposal.reason_code == "policy_block"
+    results = [
+        _run(system, report=report)[0]
+        for system in Q5AgentSystem
+    ]
+
+    assert {
+        tuple(reason.value for reason in result.route.route_reasons)
+        for result in results
+    } == {("terminal_policy_block",)}
+    assert all(result.llm_calls == 0 for result in results)
+    assert all(result.fallback_reason is None for result in results)
+    assert all(result.terminal_proposal.decision_basis is None for result in results)
+
+
+def test_q5_evidence_sufficient_rule_human_review_is_not_policy_block() -> None:
+    result, _ = _run(
+        Q5AgentSystem.rule,
+        environment=_environment(exception_status="active", scope="staging"),
+    )
+
+    assert result.final_action is GovernanceAction.escalate_to_human
+    assert result.route.route_reasons == [Q5RouteReason.rule_baseline]
+    assert result.terminal_proposal.disposition_source == "rule"
+    assert result.terminal_proposal.decision_basis is not None
+    assert result.terminal_proposal.reason_code == "policy_state_applied"
     assert result.fallback_reason is None

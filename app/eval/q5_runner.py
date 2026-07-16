@@ -21,6 +21,7 @@ from app.eval.q5_dataset import (
 )
 from app.eval.q5_fallback import (
     derive_q5_v4_fallback_witness,
+    derive_q5_v4_fallback_witness_legacy,
     q5_v4_q4_validation_matches,
 )
 from app.eval.q5_metrics import (
@@ -102,6 +103,23 @@ from app.schemas.q5_task import (
     Q5TaskInput,
 )
 from app.workflow.state import RetrievalPassResult
+
+Q5_V4_RUNTIME_ATTESTATION = {
+    "schema_version": "q5-runtime-attestation-hr3",
+    "trusted_policy_block": "same_trial_route_fact_v1",
+    "timeout_recovery": "bounded_policy_replan_v1",
+}
+Q5_V4_FROZEN_LEGACY_MANIFESTS = {
+    "q5-dev-v4-mock-h-0792fd3-primary-k3": (
+        "20d5ef32b0e5b4015f64b673c5383fc30104297f785d5c373603ede996b9fb82"
+    ),
+    "q5-dev-v4-mock-hr-7711ed4-primary-k3": (
+        "db7aa61f587e146197af71c4dd550360deaad30fd062475c847eb51242787a40"
+    ),
+    "q5-dev-v4-mock-hr2-3628d2b-primary-k3": (
+        "33b125bc2ee00560ff73834a424c56a7067929fab432ae7ad0e2adddd9251cb2"
+    ),
+}
 
 Q5_PROMPT_VERSION = Q5_STRUCTURED_POLICY_VERSION
 _SIDE_EFFECT_ACTIONS = {
@@ -748,13 +766,19 @@ def verify_q5_raw_trial_matrix(
         "trajectory.jsonl": _read_jsonl(root / "trajectory.jsonl"),
         "otel_spans.jsonl": _read_jsonl(root / "otel_spans.jsonl"),
     }
-    _validate_q5_raw_artifacts(raw_manifest, artifacts)
+    _validate_q5_raw_artifacts(
+        raw_manifest,
+        artifacts,
+        raw_manifest_sha256=_sha256_file(root / "manifest.json"),
+    )
     return artifacts
 
 
 def _validate_q5_raw_artifacts(
     manifest: Any,
     artifacts: Mapping[str, Any],
+    *,
+    raw_manifest_sha256: str,
 ) -> None:
     if not isinstance(manifest, dict):
         raise ValueError("Q5 manifest must be an object")
@@ -765,6 +789,17 @@ def _validate_q5_raw_artifacts(
     is_v3 = protocol.version is Q5ProtocolVersion.v3
     is_v4 = protocol.version is Q5ProtocolVersion.v4
     is_strict = is_v2 or is_v3 or is_v4
+    runtime_attestation = manifest.get("runtime_attestation")
+    if runtime_attestation is not None and runtime_attestation != Q5_V4_RUNTIME_ATTESTATION:
+        raise ValueError("Q5 runtime attestation feature dispatch is invalid")
+    if (
+        is_v4
+        and runtime_attestation is None
+        and Q5_V4_FROZEN_LEGACY_MANIFESTS.get(str(manifest.get("run_id") or ""))
+        != raw_manifest_sha256
+    ):
+        raise ValueError("Q5 v4 runtime attestation cannot be downgraded")
+    hr3_attestation = bool(is_v4 and runtime_attestation == Q5_V4_RUNTIME_ATTESTATION)
     if is_v4:
         q4_input_presence = [
             isinstance(row, dict) and "q4_validation_input" in row
@@ -1197,6 +1232,7 @@ def _validate_q5_raw_artifacts(
                 trajectory=trajectory,
                 terminal=terminal,
                 parsed_terminal=parsed_terminal,
+                hr3_attestation=hr3_attestation,
             )
         before = indexed["environment_before.json"][key]
         after = indexed["environment_after.json"][key]
@@ -1370,6 +1406,23 @@ def _validate_q5_raw_artifacts(
                         "Q5 v4 evidence-decision provenance disagrees across systems: "
                         f"{case_id}|{run_index}"
                     )
+                if hr3_attestation:
+                    terminal_block_facts = {
+                        tuple(
+                            indexed["terminal_events.jsonl"][
+                                _trial_key_from_values(case_id, system, run_index)
+                            ]
+                            .get("route", {})
+                            .get("route_reasons", [])
+                        )
+                        == ("terminal_policy_block",)
+                        for system in systems
+                    }
+                    if len(terminal_block_facts) != 1:
+                        raise ValueError(
+                            "Q5 v4 terminal-policy-block route fact disagrees across systems: "
+                            f"{case_id}|{run_index}"
+                        )
 
 
 def _validate_q5_v4_trial_provenance(
@@ -1381,6 +1434,7 @@ def _validate_q5_v4_trial_provenance(
     trajectory: Sequence[Mapping[str, Any]],
     terminal: Mapping[str, Any],
     parsed_terminal: Q5StructuredProposal,
+    hr3_attestation: bool,
 ) -> None:
     """Close protocol-v4 lineage using only same-trial runtime ledgers."""
 
@@ -1393,6 +1447,15 @@ def _validate_q5_v4_trial_provenance(
     basis = parsed_terminal.decision_basis
     if action is None or source is None:
         raise ValueError(f"Q5 v4 terminal proposal provenance is incomplete: {key}")
+
+    if hr3_attestation:
+        route = terminal.get("route")
+        if (
+            not isinstance(route, Mapping)
+            or result.get("route") != route.get("route")
+            or result.get("route_reasons") != route.get("route_reasons")
+        ):
+            raise ValueError(f"Q5 v4 result/terminal route provenance mismatch: {key}")
 
     authorized_ids = result.get("authorized_evidence_ids")
     if (
@@ -1420,7 +1483,12 @@ def _validate_q5_v4_trial_provenance(
         and isinstance(item.get("accepted_proposal"), dict)
         and item["accepted_proposal"].get("kind") == Q5ProposalKind.terminal.value
     ]
-    fallback_witness = derive_q5_v4_fallback_witness(
+    fallback_deriver = (
+        derive_q5_v4_fallback_witness
+        if hr3_attestation
+        else derive_q5_v4_fallback_witness_legacy
+    )
+    fallback_witness = fallback_deriver(
         result=result,
         policy_events=policy,
         tool_events=tools,
@@ -2366,6 +2434,7 @@ def _build_raw_manifest(
     )
     return {
         "schema_version": Q5_PROTOCOL_V4.run_manifest_schema,
+        "runtime_attestation": dict(Q5_V4_RUNTIME_ATTESTATION),
         "run_id": settings.run_id,
         "created_at": datetime.now(UTC).isoformat(),
         "git_commit_sha": git_commit_sha(),

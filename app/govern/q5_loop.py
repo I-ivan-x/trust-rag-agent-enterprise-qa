@@ -438,12 +438,8 @@ def run_q5_agent(
         state.context_traces.append(
             build_q5_context_trace(context, context_version=context_version)
         )
-        if execution.result.status in {Q5ToolStatus.invalid, Q5ToolStatus.timeout}:
-            fallback_cause = (
-                Q5FallbackCause.tool_invalid
-                if execution.result.status is Q5ToolStatus.invalid
-                else Q5FallbackCause.tool_timeout
-            )
+        if execution.result.status is Q5ToolStatus.invalid:
+            fallback_cause = Q5FallbackCause.tool_invalid
             return _finalize(
                 system=system,
                 route=route,
@@ -484,10 +480,15 @@ def _select_policy(
 ) -> tuple[Q5RouteDecision, Q5AgentPolicy]:
     rule = Q5RuleAgentPolicy()
     llm = Q5LLMAgentPolicy(model)
-    if system is Q5AgentSystem.rule:
-        return _fixed_route("rule", Q5RouteReason.rule_baseline, facts), rule
     if facts.terminal_policy_block:
         return _fixed_route("rule", Q5RouteReason.terminal_policy_block, facts), rule
+    if system is Q5AgentSystem.rule:
+        return _fixed_route("rule", Q5RouteReason.rule_baseline, facts), rule
+    if (
+        facts.structured_state_complete
+        and facts.candidate_terminal_actions == [GovernanceAction.escalate_to_human]
+    ):
+        return _fixed_route("rule", Q5RouteReason.trusted_state_complete, facts), rule
     if system is Q5AgentSystem.llm:
         return _fixed_route("llm", Q5RouteReason.always_llm_control, facts), llm
     decision = route_q5(facts)
@@ -513,7 +514,6 @@ def _route_facts(task: Q5TaskInput, context: Q5DecisionContext) -> Q5RouteFacts:
         OpsCondition.permission_blocked in context.conditions
         or OpsCondition.insufficient_evidence in context.conditions
         or context.evidence_decision == "insufficient"
-        or context.legal_terminal_actions == [GovernanceAction.escalate_to_human]
     )
     observed_tools = {observation.tool_name for observation in context.observations}
     references = set(q5_allowed_tool_argument_values(task=task, context=context))
@@ -551,7 +551,11 @@ def _route_facts(task: Q5TaskInput, context: Q5DecisionContext) -> Q5RouteFacts:
         structured_state_complete=not terminal_block and not missing,
         observable_ambiguity_count=len(missing),
         missing_state_types=missing,
-        candidate_terminal_actions=list(context.legal_terminal_actions),
+        candidate_terminal_actions=(
+            [GovernanceAction.escalate_to_human]
+            if terminal_block
+            else list(context.legal_terminal_actions)
+        ),
     )
 
 

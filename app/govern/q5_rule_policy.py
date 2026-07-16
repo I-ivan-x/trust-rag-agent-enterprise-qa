@@ -45,7 +45,7 @@ def q5_fixed_table_runtime_proposal(
         or OpsCondition.insufficient_evidence in context.conditions
         or context.evidence_decision == "insufficient"
     ):
-        return _terminal(context, GovernanceAction.escalate_to_human, "policy_block")
+        return _policy_block_terminal(context)
 
     references = _references(context)
     if any(
@@ -291,4 +291,20 @@ def _terminal(
         evidence_chunk_ids=evidence_ids,
         reason_code=reason_code,
         reason_summary="The deterministic policy selected a terminal governance action.",
+    )
+
+
+def _policy_block_terminal(context: Q5DecisionContext) -> Q5StructuredProposal:
+    """Emit the host-audited terminal form reserved for a real policy block."""
+
+    return Q5StructuredProposal(
+        kind=Q5ProposalKind.terminal,
+        tool=None,
+        args={},
+        action=GovernanceAction.escalate_to_human,
+        decision_basis=None,
+        disposition_source="fallback",
+        evidence_chunk_ids=[item.chunk_id for item in context.authorized_evidence[:5]],
+        reason_code="policy_block",
+        reason_summary="Runtime policy requires safe escalation without a model decision.",
     )

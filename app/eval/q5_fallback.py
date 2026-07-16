@@ -7,7 +7,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.govern.conditions import ConditionReport, GovernanceAction
+from app.govern.conditions import ConditionReport, GovernanceAction, OpsCondition
 from app.govern.q5_fallback import (
     Q5_TOOL_REJECTION_REASON_TO_CAUSE,
     Q5FallbackCause,
@@ -61,7 +61,48 @@ def derive_q5_v4_fallback_witness(
     trajectory: Sequence[Mapping[str, Any]],
     terminal_event: Mapping[str, Any],
 ) -> Q5FallbackCausalWitness | None:
-    """Derive one cause solely from the supplied runtime audit ledgers."""
+    """Derive one HR3 cause solely from the supplied runtime audit ledgers."""
+
+    return _derive_q5_v4_fallback_witness(
+        result=result,
+        policy_events=policy_events,
+        tool_events=tool_events,
+        trajectory=trajectory,
+        terminal_event=terminal_event,
+        strict_policy_block=True,
+    )
+
+
+def derive_q5_v4_fallback_witness_legacy(
+    *,
+    result: Mapping[str, Any],
+    policy_events: Sequence[Mapping[str, Any]],
+    tool_events: Sequence[Mapping[str, Any]],
+    trajectory: Sequence[Mapping[str, Any]],
+    terminal_event: Mapping[str, Any],
+) -> Q5FallbackCausalWitness | None:
+    """Preserve frozen pre-HR3 protocol-v4 fallback verification semantics."""
+
+    return _derive_q5_v4_fallback_witness(
+        result=result,
+        policy_events=policy_events,
+        tool_events=tool_events,
+        trajectory=trajectory,
+        terminal_event=terminal_event,
+        strict_policy_block=False,
+    )
+
+
+def _derive_q5_v4_fallback_witness(
+    *,
+    result: Mapping[str, Any],
+    policy_events: Sequence[Mapping[str, Any]],
+    tool_events: Sequence[Mapping[str, Any]],
+    trajectory: Sequence[Mapping[str, Any]],
+    terminal_event: Mapping[str, Any],
+    strict_policy_block: bool,
+) -> Q5FallbackCausalWitness | None:
+    """Internal feature-dispatched derivation over same-trial runtime ledgers."""
 
     candidates: list[Q5FallbackCausalWitness] = []
     terminal_trajectory = [
@@ -131,7 +172,7 @@ def derive_q5_v4_fallback_witness(
     for tool, observation in zip(tool_events, observation_events, strict=False):
         status = str(tool.get("status") or "")
         if (
-            status in {"invalid", "timeout"}
+            status in ({"invalid"} if strict_policy_block else {"invalid", "timeout"})
             and observation.get("tool_status") == status
             and observation.get("tool") == tool.get("tool_name")
         ):
@@ -150,7 +191,19 @@ def derive_q5_v4_fallback_witness(
 
     terminal_proposal = terminal_event.get("terminal_proposal")
     route = terminal_event.get("route")
-    if isinstance(terminal_proposal, Mapping) and isinstance(route, Mapping):
+    if strict_policy_block:
+        policy_block = _strict_policy_block_witness(
+            result=result,
+            accepted_at_terminal=accepted_at_terminal,
+            terminal_proposal=terminal_proposal,
+            terminal_trajectory=terminal_trajectory[0],
+            terminal_event=terminal_event,
+            route=route,
+            terminal_step=terminal_step,
+        )
+        if policy_block is not None:
+            candidates.append(policy_block)
+    elif isinstance(terminal_proposal, Mapping) and isinstance(route, Mapping):
         trusted = [
             item
             for item in accepted_at_terminal
@@ -160,9 +213,7 @@ def derive_q5_v4_fallback_witness(
             and item.get("raw_payload_sha256") is None
             and item["accepted_proposal"].get("disposition_source") == "fallback"
         ]
-        if (
-            len(trusted) == 1
-        ):
+        if len(trusted) == 1:
             route_reason = next(iter(route.get("route_reasons") or []), "rule_policy_block")
             candidates.append(
                 Q5FallbackCausalWitness(
@@ -277,6 +328,115 @@ def derive_q5_v4_fallback_witness(
     if len(unique) > 1:
         raise ValueError("Q5 v4 trial contains multiple fallback causal witnesses")
     return next(iter(unique.values()), None)
+
+
+def _strict_policy_block_witness(
+    *,
+    result: Mapping[str, Any],
+    accepted_at_terminal: Sequence[Mapping[str, Any]],
+    terminal_proposal: Any,
+    terminal_trajectory: Mapping[str, Any],
+    terminal_event: Mapping[str, Any],
+    route: Any,
+    terminal_step: int,
+) -> Q5FallbackCausalWitness | None:
+    q4_input = terminal_event.get("q4_validation_input")
+    report: ConditionReport | None = None
+    if isinstance(q4_input, Mapping):
+        try:
+            report = ConditionReport.model_validate(q4_input.get("report"))
+        except (TypeError, ValueError):
+            report = None
+    runtime_block = bool(
+        report is not None
+        and (
+            OpsCondition.permission_blocked in report.conditions
+            or OpsCondition.insufficient_evidence in report.conditions
+            or report.evidence_decision == "insufficient"
+        )
+    )
+    route_block = bool(
+        isinstance(route, Mapping)
+        and route.get("route") == "rule"
+        and route.get("route_reasons") == ["terminal_policy_block"]
+    )
+    proposal_block = bool(
+        isinstance(terminal_proposal, Mapping)
+        and terminal_proposal.get("reason_code") == "policy_block"
+    )
+    trajectory_block = terminal_trajectory.get("reason_code") == "policy_block"
+    accepted_block = any(
+        isinstance(item.get("accepted_proposal"), Mapping)
+        and item["accepted_proposal"].get("reason_code") == "policy_block"
+        for item in accepted_at_terminal
+    )
+    if not any((runtime_block, route_block, proposal_block, trajectory_block, accepted_block)):
+        return None
+
+    trusted = [
+        item
+        for item in accepted_at_terminal
+        if item.get("accepted_proposal") == terminal_proposal
+        and item.get("policy_source") == "rule"
+        and item.get("llm_called") is False
+        and item.get("raw_payload_sha256") is None
+    ]
+    proposal_attested = bool(
+        isinstance(terminal_proposal, Mapping)
+        and terminal_proposal.get("kind") == "terminal"
+        and terminal_proposal.get("action") == GovernanceAction.escalate_to_human.value
+        and terminal_proposal.get("decision_basis") is None
+        and terminal_proposal.get("disposition_source") == "fallback"
+        and terminal_proposal.get("reason_code") == "policy_block"
+    )
+    trajectory_attested = bool(
+        terminal_trajectory.get("policy_source") == "rule"
+        and terminal_trajectory.get("action") == GovernanceAction.escalate_to_human.value
+        and terminal_trajectory.get("policy_disposition") is None
+        and terminal_trajectory.get("disposition_source") == "fallback"
+        and terminal_trajectory.get("reason_code") == "policy_block"
+    )
+    result_attested = bool(
+        result.get("final_action") == GovernanceAction.escalate_to_human.value
+        and result.get("policy_disposition") is None
+        and result.get("disposition_source") == "fallback"
+        and result.get("decision_basis_evidence_chunk_id") is None
+        and result.get("decision_basis_observation_request_id") is None
+        and result.get("fallback_reason") is None
+    )
+    terminal_attested = bool(
+        terminal_event.get("final_action") == GovernanceAction.escalate_to_human.value
+        and terminal_event.get("fallback_reason") is None
+    )
+    route_attested = bool(
+        route_block
+        and isinstance(route, Mapping)
+        and route.get("candidate_terminal_actions")
+        == [GovernanceAction.escalate_to_human.value]
+    )
+    report_attested = bool(
+        runtime_block
+        and report is not None
+        and report.evidence_decision == result.get("evidence_decision")
+    )
+    if not all(
+        (
+            len(trusted) == 1,
+            proposal_attested,
+            trajectory_attested,
+            result_attested,
+            terminal_attested,
+            route_attested,
+            report_attested,
+        )
+    ):
+        raise ValueError("Q5 v4 trusted policy-block attestation is incomplete")
+    return Q5FallbackCausalWitness(
+        cause=Q5FallbackCause.trusted_rule_policy_block,
+        witness_kind="trusted_rule_policy_block",
+        step_index=terminal_step,
+        detail="terminal_policy_block",
+    )
 
 
 def _one_policy_at_step(

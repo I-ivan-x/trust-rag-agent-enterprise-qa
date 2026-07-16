@@ -525,7 +525,10 @@ def test_q5_verifier_accepts_loop_generated_timeout_and_safe_terminal(
     summary = _json(graded.summary_path)
 
     assert verified.run_id == "q5-loop-timeout"
-    assert all(row["fallback_reason"] == "tool_timeout" for row in rows)
+    assert all(
+        row["fallback_reason"] == "premature_terminal_unresolved_state"
+        for row in rows
+    )
     assert all(row["final_action"] == "escalate_to_human" for row in rows)
     assert all(
         row["completed_required_observation_count"] == 0

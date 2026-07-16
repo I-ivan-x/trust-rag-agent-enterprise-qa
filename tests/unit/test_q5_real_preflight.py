@@ -277,11 +277,12 @@ def test_q5_real_preflight_large_cost_never_blocks_and_sends_zero_model_requests
         "provider_model_calls_during_preflight": 0,
         "tls_handshake_only": True,
     }
-    assert len(receipt["historical_verification"]) == 5
+    assert len(receipt["historical_verification"]) == 6
     assert [row["protocol_version"] for row in receipt["historical_verification"]] == [
         "v1",
         "v2",
         "v3",
+        "v4",
         "v4",
         "v4",
     ]
