@@ -1,0 +1,38 @@
+{
+  "action_label_exposure": {
+    "outside_policy_and_legal_surface": [],
+    "policy_text_disposition_ontology_expected": true
+  },
+  "checks": {
+    "action_label_exposure_outside_policy_and_legal_surface": true,
+    "execution_entrypoint_runtime_only": true,
+    "external_requests": 0,
+    "host_authorization_typed": true,
+    "q5_frontier_test_absent": true,
+    "runtime_sealed_fields_absent": true,
+    "semantic_boundary_renderer_prefix_independent": true,
+    "unauthorized_chunk_ids_empty": true
+  },
+  "dev_test_renderer_disjointness": {
+    "passed": null,
+    "reason": "no test renderer or test content exists",
+    "status": "not_evaluated"
+  },
+  "leaked_runtime_keys": [],
+  "protocol_namespace": "q5-frontier-v5-k0r",
+  "renderer_coverage": {
+    "frontier-v2-semantic-phenomena-v1": 32,
+    "frontier-v2-structured-v1": 16
+  },
+  "schema_version": "q5-frontier-v5-leakage-report-v2",
+  "topology_row_count": 48,
+  "unique_text_template_multiplicity": {
+    "multiplicity": {
+      "1": 23,
+      "2": 11,
+      "3": 1
+    },
+    "unique_policy_text_count": 35
+  },
+  "valid": true
+}

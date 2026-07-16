@@ -1,0 +1,26 @@
+{
+  "dev_renderer_sha256": {
+    "frontier-v2-semantic-phenomena-v1": "62e975dace96f5e18214279963e98bbdca032a7a075efa370902ff6a0f74063a",
+    "frontier-v2-structured-v1": "ef9603d433bd1a54210a0b1086f71eeef8d186e162acf21289a025fc48a1062c"
+  },
+  "policy_text_multiplicity": {
+    "1": 23,
+    "2": 11,
+    "3": 1
+  },
+  "protocol_namespace": "q5-frontier-v5-k0r",
+  "renderer_coverage": {
+    "frontier-v2-semantic-phenomena-v1": 32,
+    "frontier-v2-structured-v1": 16
+  },
+  "reserved_test_renderer_namespace": "frontier-test-renderer-reserved-v2",
+  "schema_version": "q5-frontier-v5-renderer-manifest-v2",
+  "semantic_boundary_uses_renderer_prefix": false,
+  "test_content_created": false,
+  "test_renderer_evaluation": {
+    "disjoint": null,
+    "reason": "no test renderer or test content exists",
+    "status": "not_evaluated"
+  },
+  "unique_policy_text_count": 35
+}

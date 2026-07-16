@@ -1,0 +1,20 @@
+{
+  "artifacts": {
+    "baseline_manifest.json": "8cb415bf169833b05ddd4ca80c51aea68fbb3aee321908e48dbe195a7fb33fd4",
+    "claim_preregistration.json": "58f8a53fd1e5f7a3e1d454e2fcb9c130ba5a7a9da9f5f8b35d0fffbbdae9018a",
+    "environment_authoring.jsonl": "95247b5cda4b2bcd89d3f52ad642f9e487831a176e1a918f5d1220be33ed72de",
+    "execution_rows.jsonl": "8a527fd804779a0a85df500e9021d0cef1694c764e752e4bbcb1b51a20aacbc6",
+    "frontier_dataset_manifest.json": "63a407fc58075a0f484be72a175d8d6140a40356388685d54128729af282a95a",
+    "gold.jsonl": "4917c7c2eeaee45d7c32545b0120c209bd1c045746b453fe28d0dc1b2150c9ce",
+    "graded_baseline_rows.jsonl": "8e70eed63bd0f40a42ca79cfb6b6b6e328f5600b9ce142eebc09626fe7593e9a",
+    "leakage_report.json": "5b4b0111ce33d148bb7e109ffb48c2c38a61c5c809d99b33d0851007c0ebd1e6",
+    "mutation_matrix.json": "bbddad7950871a70a3dd8a452244f041d5ba40bfcc6c055966e4f65100f40203",
+    "policy_ir.jsonl": "3dfd7838709502ae8469b9085326f2ec4bf8333988e3d66e15c0e5e634bdc82b",
+    "policy_ir_manifest.json": "58861b6b1f6fe5e34054537ad5f9a24c579c4cf2c234186105d57d81509248ad",
+    "rendered_meaning.jsonl": "babf0e3f4fb0395070036d0872b2e00d9d11340600be3c3bf15def8db79c2749",
+    "renderer_manifest.json": "76a30841b465f2e0d057e350ba7e23d9f5683cd01bc80c8f07df1750fcf9bf1f",
+    "runtime_cases.jsonl": "7d051cdc32326418efd1f03fc3111c2f2fcdc185814743ce7c56eba64708b8ab",
+    "topology.jsonl": "0ed35861297380a8c279351d09bc316cc4682fe6906ebb9e26566874023597da"
+  },
+  "schema_version": "q5-frontier-v5-hashes-v2"
+}
