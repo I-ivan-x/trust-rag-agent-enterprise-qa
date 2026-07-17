@@ -1,0 +1,149 @@
+{
+  "schema_version": "public-claim-source-import-v1",
+  "artifacts": [
+    {
+      "source_path": "data/claims/source/week6-real-external-full/summary.json",
+      "archived_from_path": "data/eval_runs/week6-real-external-full/summary.json",
+      "original_sha256": "44b0c99b0acdb6e6ff9e022612e6aa952d47f060e991e1017d7c472c894bc296",
+      "run_id": "week6-real-external-full",
+      "execution_commit": "4e75f78a030e884a7d3bff1c9924d46a341fb953",
+      "artifact_import_commit": "73ad26bc28cd70dcac6be8d7d21c41a531c44d16",
+      "size_bytes": 3398,
+      "safety": {
+        "secret_scan": "clear",
+        "personal_data_scan": "clear",
+        "prompt_text_review": "none",
+        "publication_boundary": "Aggregate run summary only; no query, response, corpus text, or credentials.",
+        "license_and_data_boundary": "Repository-generated aggregate metrics; underlying evaluation content is excluded."
+      }
+    },
+    {
+      "source_path": "data/claims/source/week6-external-retrieval-ablation/summary.json",
+      "archived_from_path": "data/eval_runs/week6-external-retrieval-ablation/summary.json",
+      "original_sha256": "48309825fb871033c23faf5722c6d7bbf732c3b03e4197933eaba7f786f03cd6",
+      "run_id": "week6-external-retrieval-ablation",
+      "execution_commit": "4e75f78a030e884a7d3bff1c9924d46a341fb953",
+      "artifact_import_commit": "73ad26bc28cd70dcac6be8d7d21c41a531c44d16",
+      "size_bytes": 3601,
+      "safety": {
+        "secret_scan": "clear",
+        "personal_data_scan": "clear",
+        "prompt_text_review": "none",
+        "publication_boundary": "Aggregate retrieval summary only; public-corpus content is not included.",
+        "license_and_data_boundary": "Repository-generated aggregate metrics; public-corpus documents are excluded."
+      }
+    },
+    {
+      "source_path": "data/claims/source/p3-09-agent-ablation/summary.json",
+      "archived_from_path": "data/eval_runs/p3-09-agent-ablation/summary.json",
+      "original_sha256": "6350df6a07112715e1989ab472983d45e186bb7e3ea3b7a28ad17684a869335d",
+      "run_id": "p3-09-agent-ablation",
+      "execution_commit": "bb8d70c4bae6f475792a82beff26d275bc59af2d",
+      "artifact_import_commit": "73ad26bc28cd70dcac6be8d7d21c41a531c44d16",
+      "size_bytes": 23725,
+      "safety": {
+        "secret_scan": "clear",
+        "personal_data_scan": "clear",
+        "prompt_text_review": "none",
+        "publication_boundary": "Aggregate diagnostic and pass-k summary only; no case text or model output.",
+        "license_and_data_boundary": "Repository-generated aggregate metrics; task content and provider output are excluded."
+      }
+    },
+    {
+      "source_path": "data/claims/source/q3-p7-governance-ablation/summary.json",
+      "archived_from_path": "data/eval_runs/q3-p7-governance-ablation/summary.json",
+      "original_sha256": "c3a956a722583f14b24887512cccd2abe2ffc2f2497d407566e821d10d38d6ab",
+      "run_id": "q3-p7-governance-ablation",
+      "execution_commit": "fe2d40040ba103d138d4f2a4eccd2ee72b26f2bb",
+      "artifact_import_commit": "73ad26bc28cd70dcac6be8d7d21c41a531c44d16",
+      "size_bytes": 6237,
+      "safety": {
+        "secret_scan": "clear",
+        "personal_data_scan": "clear",
+        "prompt_text_review": "none",
+        "publication_boundary": "Aggregate governance summary only; no task prompt or document excerpt.",
+        "license_and_data_boundary": "Repository-generated aggregate metrics; authoring inputs and evidence text are excluded."
+      }
+    },
+    {
+      "source_path": "data/claims/source/q4-p5-selection-calibrated/summary.json",
+      "archived_from_path": "data/eval_runs/q4-p5-selection-calibrated/summary.json",
+      "original_sha256": "130edf3aa4dbc681a1b811a220b8acb7210db2fe9a80d8f734ceed3e73667779",
+      "run_id": "q4-p5-selection-calibrated",
+      "execution_commit": "39d6cb78e6fcab4ed95d951d8c16f9925e048d77",
+      "artifact_import_commit": "73ad26bc28cd70dcac6be8d7d21c41a531c44d16",
+      "size_bytes": 6224,
+      "safety": {
+        "secret_scan": "clear",
+        "personal_data_scan": "clear",
+        "prompt_text_review": "none",
+        "publication_boundary": "Aggregate held-out governance summary only; no task or corpus content.",
+        "license_and_data_boundary": "Repository-generated aggregate metrics; held-out task and corpus content are excluded."
+      }
+    },
+    {
+      "source_path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json",
+      "archived_from_path": "data/eval_runs/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json",
+      "original_sha256": "86d6637954fa695e3de2d28d170ce3fb22f096ac360a18bf35e2f1f31d6f05a8",
+      "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3",
+      "execution_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db",
+      "artifact_import_commit": "73ad26bc28cd70dcac6be8d7d21c41a531c44d16",
+      "size_bytes": 54293,
+      "safety": {
+        "secret_scan": "clear",
+        "personal_data_scan": "clear",
+        "prompt_text_review": "none",
+        "publication_boundary": "Aggregate Q5 metrics and failure IDs only; no prompts, responses, or evidence excerpts.",
+        "license_and_data_boundary": "Repository-generated aggregate metrics; provider responses, sealed Gold, and evidence text are excluded."
+      }
+    },
+    {
+      "source_path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/manifest.json",
+      "archived_from_path": "data/eval_runs/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/manifest.json",
+      "original_sha256": "b0efd5a7a3c9d2f19cfe3251ed48c2d567a0336f9c779bf147434db8a1ce8de6",
+      "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3",
+      "execution_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db",
+      "artifact_import_commit": "73ad26bc28cd70dcac6be8d7d21c41a531c44d16",
+      "size_bytes": 3931,
+      "safety": {
+        "secret_scan": "clear",
+        "personal_data_scan": "clear",
+        "prompt_text_review": "hash_and_version_only",
+        "publication_boundary": "Manifest contains prompt version and hash only; no prompt body or credentials.",
+        "license_and_data_boundary": "Repository-generated provenance metadata; prompt body and provider payloads are excluded."
+      }
+    },
+    {
+      "source_path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/graded_manifest.json",
+      "archived_from_path": "data/eval_runs/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/graded_manifest.json",
+      "original_sha256": "7122c08211f9c488caab4078b200dd05031d941c043d71a7e08a89c86de08ea9",
+      "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3",
+      "execution_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db",
+      "artifact_import_commit": "73ad26bc28cd70dcac6be8d7d21c41a531c44d16",
+      "size_bytes": 1038,
+      "safety": {
+        "secret_scan": "clear",
+        "personal_data_scan": "clear",
+        "prompt_text_review": "none",
+        "publication_boundary": "Grading provenance and hashes only; no sealed gold or graded rows.",
+        "license_and_data_boundary": "Repository-generated provenance metadata; sealed Gold and trial rows are excluded."
+      }
+    },
+    {
+      "source_path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/gates.json",
+      "archived_from_path": "data/eval_runs/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/gates.json",
+      "original_sha256": "1615fb0ecaf2fe44265f2f1c95a7707bef1a05acd3a4eb7c88debe89e4df15b9",
+      "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3",
+      "execution_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db",
+      "artifact_import_commit": "73ad26bc28cd70dcac6be8d7d21c41a531c44d16",
+      "size_bytes": 2011,
+      "safety": {
+        "secret_scan": "clear",
+        "personal_data_scan": "clear",
+        "prompt_text_review": "none",
+        "publication_boundary": "Gate outcomes and thresholds only; no prompt, response, or task payload.",
+        "license_and_data_boundary": "Repository-generated gate metadata; task content and provider payloads are excluded."
+      }
+    }
+  ]
+}

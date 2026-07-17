@@ -9,7 +9,9 @@ def test_generated_public_claim_files_are_current_and_provenanced() -> None:
     result = build_public_claims(check=True)
     assert result == {
         "claim_count": 14,
-        "source_artifact_count": 7,
+        "source_artifact_count": 11,
+        "source_blob_count": 11,
+        "imported_snapshot_count": 9,
         "generated_file_count": 9,
     }
     for path in GENERATED_PATHS:
@@ -30,7 +32,11 @@ def test_generated_public_claim_files_are_current_and_provenanced() -> None:
         for claim in question["claims"]:
             assert claim["source_artifacts"]
             assert all(source["sha256"] for source in claim["source_artifacts"])
-            assert all(source["evidence_commit"] for source in claim["source_artifacts"])
+            assert all(source["execution_commit"] for source in claim["source_artifacts"])
+            assert all(source["artifact_commit"] for source in claim["source_artifacts"])
+            for metric in claim["metrics"].values():
+                assert metric["source"]["source_path"]
+                assert metric["source"]["derivation"]
 
 
 def test_recruiting_data_contract_is_complete_and_scoped() -> None:
@@ -68,9 +74,11 @@ def test_recruiting_data_contract_is_complete_and_scoped() -> None:
             for source in claim["source_artifacts"]:
                 assert {
                     "path",
+                    "archived_from_path",
                     "sha256",
                     "run_id",
-                    "evidence_commit",
+                    "execution_commit",
+                    "artifact_commit",
                 } <= source.keys()
     frontier = json.loads(data_paths["decision-frontier.json"].read_text(encoding="utf-8"))
     assert [segment["segment_id"] for segment in frontier["segments"]] == [

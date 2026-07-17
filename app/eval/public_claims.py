@@ -6,13 +6,24 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
+import re
 import subprocess
+from functools import cache
 from pathlib import Path
 from typing import Any
 
-from app.schemas.public_claims import ClaimRegistry, ClaimStatus
+from app.schemas.public_claims import (
+    ClaimMetric,
+    ClaimRegistry,
+    ClaimSourceArtifact,
+    ClaimStatus,
+    MetricDerivation,
+    SourceImportAudit,
+)
 
 REGISTRY_PATH = Path("data/claims/claim_registry.json")
+SOURCE_IMPORT_AUDIT_PATH = Path("data/claims/source_import_audit.json")
 GENERATED_PATHS = (
     Path("data/claims/claim_registry.schema.json"),
     Path("docs/Q5_CLAIM_MATRIX.md"),
@@ -47,7 +58,11 @@ def load_and_verify_registry(path: Path | str = REGISTRY_PATH) -> ClaimRegistry:
     serialized = json.dumps(payload, ensure_ascii=False).lower()
     if "uncovered 32/32" in serialized:
         raise ValueError("ambiguous uncovered 32/32 wording is forbidden")
+    audit = load_and_verify_source_import_audit()
+    audited_sources = {row.source_path: row for row in audit.artifacts}
+    raw_payloads: dict[str, Any] = {}
     for claim in registry.claims:
+        claim_source_paths = {source.path for source in claim.source_artifacts}
         for source in claim.source_artifacts:
             source_path = Path(source.path)
             if not source_path.is_file():
@@ -57,10 +72,52 @@ def load_and_verify_registry(path: Path | str = REGISTRY_PATH) -> ClaimRegistry:
             actual_hash = hashlib.sha256(source_path.read_bytes()).hexdigest()
             if actual_hash != source.sha256:
                 raise ValueError(f"claim source artifact hash mismatch: {source.path}")
-            if not _commit_exists(source.evidence_commit):
-                raise ValueError(f"claim evidence commit does not exist: {source.evidence_commit}")
+            _verify_source_lineage(source)
+            if source.path.startswith("data/claims/source/"):
+                _verify_import_audit_row(source, audited_sources.get(source.path))
             _verify_source_identity(claim.evidence_mode.value, claim.split_or_frozen_scope, source)
+            raw_payloads[source.path] = _load_json(source.path)
+        for metric_name, metric in claim.metrics.items():
+            if metric.source.source_path not in claim_source_paths:
+                raise ValueError(
+                    f"claim metric source is not declared by the claim: {claim.claim_id}.{metric_name}"
+                )
+            payload = raw_payloads.setdefault(
+                metric.source.source_path,
+                _load_json(metric.source.source_path),
+            )
+            _verify_metric_binding(claim.claim_id, metric_name, metric, payload)
+    imported_sources = {
+        source.path
+        for claim in registry.claims
+        for source in claim.source_artifacts
+        if source.path.startswith("data/claims/source/")
+    }
+    if imported_sources != set(audited_sources):
+        raise ValueError("source import audit closure does not match registry raw sources")
     return registry
+
+
+def load_and_verify_source_import_audit(
+    path: Path | str = SOURCE_IMPORT_AUDIT_PATH,
+) -> SourceImportAudit:
+    audit_path = Path(path)
+    if not audit_path.is_file() or not _is_git_tracked(audit_path.as_posix()):
+        raise ValueError("source import audit is missing or not Git tracked")
+    audit = SourceImportAudit.model_validate(_load_json(audit_path.as_posix()))
+    for row in audit.artifacts:
+        source = Path(row.source_path)
+        if not source.is_file() or not _is_git_tracked(row.source_path):
+            raise ValueError(
+                f"audited raw source is missing or not Git tracked: {row.source_path}"
+            )
+        raw = source.read_bytes()
+        if len(raw) != row.size_bytes:
+            raise ValueError(f"audited raw source size mismatch: {row.source_path}")
+        if hashlib.sha256(raw).hexdigest() != row.original_sha256:
+            raise ValueError(f"source import receipt hash mismatch: {row.source_path}")
+        _verify_safe_public_snapshot(row.source_path, raw)
+    return audit
 
 
 def render_public_claims(registry: ClaimRegistry) -> dict[Path, bytes]:
@@ -187,6 +244,15 @@ def build_public_claims(*, check: bool = False) -> dict[str, int]:
     return {
         "claim_count": len(registry.claims),
         "source_artifact_count": source_count,
+        "source_blob_count": source_count,
+        "imported_snapshot_count": len(
+            {
+                source.path
+                for claim in registry.claims
+                for source in claim.source_artifacts
+                if source.path.startswith("data/claims/source/")
+            }
+        ),
         "generated_file_count": len(rendered),
     }
 
@@ -341,7 +407,11 @@ def _number(value: float) -> str:
     return str(int(value)) if value.is_integer() else f"{value:g}"
 
 
-def _verify_source_identity(evidence_mode: str, scope: str, source) -> None:
+def _verify_source_identity(
+    evidence_mode: str,
+    scope: str,
+    source: ClaimSourceArtifact,
+) -> None:
     try:
         payload = json.loads(Path(source.path).read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
@@ -376,15 +446,210 @@ def _is_git_tracked(path: str) -> bool:
     )
 
 
-def _commit_exists(commit: str) -> bool:
-    return (
-        subprocess.run(
-            ["git", "cat-file", "-e", f"{commit}^{{commit}}"],
-            capture_output=True,
-            text=True,
-        ).returncode
-        == 0
+def _verify_source_lineage(source: ClaimSourceArtifact) -> None:
+    if _object_type(source.execution_commit) != "commit":
+        raise ValueError(f"execution_commit is not a commit: {source.execution_commit}")
+    if not _is_ancestor(source.execution_commit):
+        raise ValueError(f"execution_commit is not in the current ancestor chain: {source.path}")
+    if _object_type(source.artifact_commit) != "commit":
+        raise ValueError(f"artifact_commit is not a commit: {source.artifact_commit}")
+    committed = _committed_blob(source.artifact_commit, source.path)
+    if committed is None:
+        raise ValueError(f"artifact_commit does not contain source path: {source.path}")
+    working = Path(source.path).read_bytes()
+    if committed != working:
+        raise ValueError(f"working-tree source differs from committed blob: {source.path}")
+    if source.release_tag is None:
+        return
+    if _object_type(source.tag_object_sha or "") != "tag":
+        raise ValueError(f"tag_object_sha is not an annotated tag object: {source.path}")
+    if _object_type(source.release_commit or "") != "commit":
+        raise ValueError(f"release_commit is not a commit: {source.path}")
+    tag_object = _git_text("rev-parse", f"refs/tags/{source.release_tag}")
+    if tag_object != source.tag_object_sha:
+        raise ValueError(f"release tag object mismatch: {source.path}")
+    peeled = _git_text("rev-parse", f"{source.release_tag}^{{commit}}")
+    if peeled != source.release_commit:
+        raise ValueError(f"release tag peel mismatch: {source.path}")
+
+
+def _verify_import_audit_row(source: ClaimSourceArtifact, row) -> None:
+    if row is None:
+        raise ValueError(f"raw source is absent from import audit: {source.path}")
+    expected = {
+        "source_path": source.path,
+        "archived_from_path": source.archived_from_path,
+        "original_sha256": source.sha256,
+        "run_id": source.run_id,
+        "execution_commit": source.execution_commit,
+        "artifact_import_commit": source.artifact_commit,
+    }
+    actual = row.model_dump(include=set(expected))
+    if actual != expected:
+        raise ValueError(f"source import audit provenance mismatch: {source.path}")
+
+
+def _verify_metric_binding(
+    claim_id: str,
+    metric_name: str,
+    metric: ClaimMetric,
+    payload: Any,
+) -> None:
+    source = metric.source
+    tolerance = source.tolerance
+    if source.derivation is MetricDerivation.direct:
+        value = _number_at(payload, source.value_pointer)
+        expected = (value, 1.0, value)
+    elif source.derivation is MetricDerivation.boolean:
+        raw = _pointer(payload, source.value_pointer)
+        if not isinstance(raw, bool):
+            raise ValueError(f"boolean metric pointer is not boolean: {claim_id}.{metric_name}")
+        value = float(raw)
+        expected = (value, 1.0, value)
+    elif source.derivation is MetricDerivation.ratio:
+        numerator = _number_at(payload, source.numerator_pointer)
+        denominator = _positive_number_at(payload, source.denominator_pointer)
+        value = numerator / denominator
+        if source.value_pointer is not None:
+            _assert_close(
+                _number_at(payload, source.value_pointer),
+                value,
+                tolerance,
+                f"raw ratio value mismatch: {claim_id}.{metric_name}",
+            )
+        expected = (numerator, denominator, value)
+    elif source.derivation is MetricDerivation.rate_from_value:
+        value = _number_at(payload, source.value_pointer)
+        denominator = _positive_number_at(payload, source.denominator_pointer)
+        expected = (value * denominator, denominator, value)
+    else:
+        left = _number_at(payload, source.left_pointer)
+        right = _number_at(payload, source.right_pointer)
+        denominator = _positive_number_at(payload, source.denominator_pointer)
+        value = left - right
+        if source.value_pointer is not None:
+            _assert_close(
+                _number_at(payload, source.value_pointer),
+                value,
+                tolerance,
+                f"raw difference value mismatch: {claim_id}.{metric_name}",
+            )
+        expected = (value * denominator, denominator, value)
+    for label, actual, derived in zip(
+        ("numerator", "denominator", "value"),
+        (metric.numerator, metric.denominator, metric.value),
+        expected,
+        strict=True,
+    ):
+        _assert_close(
+            actual,
+            derived,
+            tolerance,
+            f"claim metric {label} mismatch: {claim_id}.{metric_name}",
+        )
+
+
+def _pointer(payload: Any, pointer: str | None) -> Any:
+    if pointer is None or not pointer.startswith("/"):
+        raise ValueError("metric source pointer is missing")
+    current = payload
+    for encoded in pointer[1:].split("/"):
+        token = encoded.replace("~1", "/").replace("~0", "~")
+        if isinstance(current, dict) and token in current:
+            current = current[token]
+        elif isinstance(current, list) and token.isdigit() and int(token) < len(current):
+            current = current[int(token)]
+        else:
+            raise ValueError(f"JSON pointer does not resolve: {pointer}")
+    return current
+
+
+def _number_at(payload: Any, pointer: str | None) -> float:
+    value = _pointer(payload, pointer)
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+        raise ValueError(f"JSON pointer is not a finite number: {pointer}")
+    return float(value)
+
+
+def _positive_number_at(payload: Any, pointer: str | None) -> float:
+    value = _number_at(payload, pointer)
+    if value <= 0:
+        raise ValueError(f"metric denominator pointer is not positive: {pointer}")
+    return value
+
+
+def _assert_close(actual: float, expected: float, tolerance: float, message: str) -> None:
+    if not math.isclose(actual, expected, rel_tol=0, abs_tol=tolerance):
+        raise ValueError(message)
+
+
+def _load_json(path: str) -> Any:
+    try:
+        return json.loads(Path(path).read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"claim source artifact is not JSON: {path}") from exc
+
+
+def _verify_safe_public_snapshot(path: str, raw: bytes) -> None:
+    if len(raw) > 1_000_000:
+        raise ValueError(f"public source exceeds the 1 MB publication boundary: {path}")
+    text = raw.decode("utf-8")
+    forbidden = {
+        "secret/token": r"(?i)(api[_-]?key|access[_-]?token|refresh[_-]?token|password|private[_-]?key|bearer\s+[A-Za-z0-9._-]+)",
+        "email": r"(?i)[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}",
+        "personal path": r"(?i)([A-Z]:\\Users\\|/home/[^/]+/)",
+    }
+    for label, pattern in forbidden.items():
+        if re.search(pattern, text):
+            raise ValueError(f"public source {label} scan failed: {path}")
+    payload = json.loads(text)
+    _verify_prompt_publication_boundary(payload, path)
+
+
+def _verify_prompt_publication_boundary(payload: Any, path: str) -> None:
+    if isinstance(payload, dict):
+        for key, value in payload.items():
+            if key.lower() in {"prompt", "system_prompt", "user_prompt"}:
+                if not (
+                    key.lower() == "prompt"
+                    and isinstance(value, dict)
+                    and set(value) <= {"sha256", "version"}
+                    and set(value) == {"sha256", "version"}
+                ):
+                    raise ValueError(f"public source contains prompt text: {path}")
+            _verify_prompt_publication_boundary(value, path)
+    elif isinstance(payload, list):
+        for value in payload:
+            _verify_prompt_publication_boundary(value, path)
+
+
+@cache
+def _object_type(oid: str) -> str | None:
+    result = subprocess.run(["git", "cat-file", "-t", oid], capture_output=True, text=True)
+    return result.stdout.strip() if result.returncode == 0 else None
+
+
+@cache
+def _is_ancestor(commit: str) -> bool:
+    return subprocess.run(
+        ["git", "merge-base", "--is-ancestor", commit, "HEAD"],
+        capture_output=True,
+    ).returncode == 0
+
+
+@cache
+def _committed_blob(commit: str, path: str) -> bytes | None:
+    result = subprocess.run(
+        ["git", "cat-file", "blob", f"{commit}:{path}"],
+        capture_output=True,
     )
+    return result.stdout if result.returncode == 0 else None
+
+
+@cache
+def _git_text(*args: str) -> str:
+    result = subprocess.run(["git", *args], capture_output=True, text=True, check=True)
+    return result.stdout.strip()
 
 
 def _json_bytes(payload: Any) -> bytes:

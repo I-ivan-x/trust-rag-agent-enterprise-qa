@@ -12,6 +12,9 @@
           "title": "Numerator",
           "type": "number"
         },
+        "source": {
+          "$ref": "#/$defs/ClaimMetricSource"
+        },
         "unit": {
           "minLength": 1,
           "pattern": "^[a-z][a-z0-9_]*$",
@@ -27,17 +30,116 @@
         "numerator",
         "denominator",
         "value",
-        "unit"
+        "unit",
+        "source"
       ],
       "title": "ClaimMetric",
+      "type": "object"
+    },
+    "ClaimMetricSource": {
+      "additionalProperties": false,
+      "properties": {
+        "denominator_pointer": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Denominator Pointer"
+        },
+        "derivation": {
+          "$ref": "#/$defs/MetricDerivation"
+        },
+        "left_pointer": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Left Pointer"
+        },
+        "numerator_pointer": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Numerator Pointer"
+        },
+        "right_pointer": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Right Pointer"
+        },
+        "source_path": {
+          "minLength": 1,
+          "pattern": "^[^\\\\]+$",
+          "title": "Source Path",
+          "type": "string"
+        },
+        "tolerance": {
+          "exclusiveMinimum": 0,
+          "maximum": 0.01,
+          "title": "Tolerance",
+          "type": "number"
+        },
+        "value_pointer": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value Pointer"
+        }
+      },
+      "required": [
+        "source_path",
+        "derivation",
+        "tolerance"
+      ],
+      "title": "ClaimMetricSource",
       "type": "object"
     },
     "ClaimSourceArtifact": {
       "additionalProperties": false,
       "properties": {
-        "evidence_commit": {
+        "archived_from_path": {
+          "minLength": 1,
+          "pattern": "^[^\\\\]+$",
+          "title": "Archived From Path",
+          "type": "string"
+        },
+        "artifact_commit": {
           "pattern": "^[0-9a-f]{40}$",
-          "title": "Evidence Commit",
+          "title": "Artifact Commit",
+          "type": "string"
+        },
+        "execution_commit": {
+          "pattern": "^[0-9a-f]{40}$",
+          "title": "Execution Commit",
           "type": "string"
         },
         "path": {
@@ -45,6 +147,32 @@
           "pattern": "^[^\\\\]+$",
           "title": "Path",
           "type": "string"
+        },
+        "release_commit": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{40}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Release Commit"
+        },
+        "release_tag": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Release Tag"
         },
         "run_id": {
           "minLength": 1,
@@ -55,13 +183,28 @@
           "pattern": "^[0-9a-f]{64}$",
           "title": "Sha256",
           "type": "string"
+        },
+        "tag_object_sha": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{40}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tag Object Sha"
         }
       },
       "required": [
         "path",
+        "archived_from_path",
         "sha256",
         "run_id",
-        "evidence_commit"
+        "execution_commit",
+        "artifact_commit"
       ],
       "title": "ClaimSourceArtifact",
       "type": "object"
@@ -84,6 +227,17 @@
         "offline_control"
       ],
       "title": "EvidenceMode",
+      "type": "string"
+    },
+    "MetricDerivation": {
+      "enum": [
+        "direct",
+        "ratio",
+        "rate_from_value",
+        "difference",
+        "boolean"
+      ],
+      "title": "MetricDerivation",
       "type": "string"
     },
     "PublicClaim": {
@@ -203,7 +357,7 @@
       "type": "string"
     },
     "schema_version": {
-      "const": "public-claim-registry-v1",
+      "const": "public-claim-registry-v2",
       "title": "Schema Version",
       "type": "string"
     }

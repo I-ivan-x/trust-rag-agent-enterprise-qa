@@ -1,5 +1,5 @@
 {
-  "schema_version": "public-claim-registry-v1",
+  "schema_version": "public-claim-registry-v2",
   "project_public_name": "Agent Reliability Lab",
   "legacy_codename": "TrustRAG",
   "q5_overall_status": "scoped_negative_complete",
@@ -12,11 +12,11 @@
       "claim_scope": "Week 6 external split with the final gated system",
       "evidence_mode": "real",
       "split_or_frozen_scope": "external 50-case split",
-      "source_artifacts": [{"path": "data/claims/evidence/q1_week6_real_summary.json", "sha256": "0c8fa6fbef5368933d791c01d8b00b57fb1e49e174f22dcf09881dd53ef194cc", "run_id": "week6-real-external-full", "evidence_commit": "28c55f81d185fedab1d21a9a7f70af6272aa0b52"}],
+      "source_artifacts": [{"path": "data/claims/source/week6-real-external-full/summary.json", "archived_from_path": "data/eval_runs/week6-real-external-full/summary.json", "sha256": "44b0c99b0acdb6e6ff9e022612e6aa952d47f060e991e1017d7c472c894bc296", "run_id": "week6-real-external-full", "execution_commit": "4e75f78a030e884a7d3bff1c9924d46a341fb953", "artifact_commit": "73ad26bc28cd70dcac6be8d7d21c41a531c44d16", "release_tag": "v0.3-q1-hard-demo", "tag_object_sha": "28c55f81d185fedab1d21a9a7f70af6272aa0b52", "release_commit": "4e75f78a030e884a7d3bff1c9924d46a341fb953"}],
       "metrics": {
-        "false_answer_rate": {"numerator": 0, "denominator": 50, "value": 0.0, "unit": "rate"},
-        "grounded_correctness": {"numerator": 12, "denominator": 50, "value": 0.24, "unit": "rate"},
-        "false_refusal_rate": {"numerator": 23, "denominator": 50, "value": 0.46, "unit": "rate"}
+        "false_answer_rate": {"numerator": 0, "denominator": 50, "value": 0.0, "unit": "rate", "source": {"source_path": "data/claims/source/week6-real-external-full/summary.json", "derivation": "rate_from_value", "value_pointer": "/summary_metrics/final_gated/false_answer_rate", "denominator_pointer": "/summary_metrics/final_gated/cases", "tolerance": 0.005}},
+        "grounded_correctness": {"numerator": 12, "denominator": 50, "value": 0.24, "unit": "rate", "source": {"source_path": "data/claims/source/week6-real-external-full/summary.json", "derivation": "rate_from_value", "value_pointer": "/summary_metrics/final_gated/grounded_correctness", "denominator_pointer": "/summary_metrics/final_gated/cases", "tolerance": 0.005}},
+        "false_refusal_rate": {"numerator": 23, "denominator": 50, "value": 0.46, "unit": "rate", "source": {"source_path": "data/claims/source/week6-real-external-full/summary.json", "derivation": "rate_from_value", "value_pointer": "/summary_metrics/final_gated/false_refusal_rate", "denominator_pointer": "/summary_metrics/final_gated/cases", "tolerance": 0.005}}
       },
       "headline_eligible": true,
       "limitations": ["The zero false-answer result coexists with 23/50 false refusals.", "Citation validity is structural rather than a complete human semantic-support audit."],
@@ -30,10 +30,10 @@
       "claim_scope": "Week 6 external retrieval-only ablation",
       "evidence_mode": "real",
       "split_or_frozen_scope": "external 50-case retrieval split",
-      "source_artifacts": [{"path": "data/claims/evidence/q1_week6_real_summary.json", "sha256": "0c8fa6fbef5368933d791c01d8b00b57fb1e49e174f22dcf09881dd53ef194cc", "run_id": "week6-external-retrieval-ablation", "evidence_commit": "28c55f81d185fedab1d21a9a7f70af6272aa0b52"}],
+      "source_artifacts": [{"path": "data/claims/source/week6-external-retrieval-ablation/summary.json", "archived_from_path": "data/eval_runs/week6-external-retrieval-ablation/summary.json", "sha256": "48309825fb871033c23faf5722c6d7bbf732c3b03e4197933eaba7f786f03cd6", "run_id": "week6-external-retrieval-ablation", "execution_commit": "4e75f78a030e884a7d3bff1c9924d46a341fb953", "artifact_commit": "73ad26bc28cd70dcac6be8d7d21c41a531c44d16", "release_tag": "v0.3-q1-hard-demo", "tag_object_sha": "28c55f81d185fedab1d21a9a7f70af6272aa0b52", "release_commit": "4e75f78a030e884a7d3bff1c9924d46a341fb953"}],
       "metrics": {
-        "vector_doc_hit_at_5": {"numerator": 30, "denominator": 50, "value": 0.6, "unit": "rate"},
-        "hybrid_doc_hit_at_5": {"numerator": 40, "denominator": 50, "value": 0.8, "unit": "rate"}
+        "vector_doc_hit_at_5": {"numerator": 30, "denominator": 50, "value": 0.6, "unit": "rate", "source": {"source_path": "data/claims/source/week6-external-retrieval-ablation/summary.json", "derivation": "rate_from_value", "value_pointer": "/summary_metrics/vector_only/doc_hit@5", "denominator_pointer": "/summary_metrics/vector_only/cases", "tolerance": 0.005}},
+        "hybrid_doc_hit_at_5": {"numerator": 40, "denominator": 50, "value": 0.8, "unit": "rate", "source": {"source_path": "data/claims/source/week6-external-retrieval-ablation/summary.json", "derivation": "rate_from_value", "value_pointer": "/summary_metrics/hybrid_rrf/doc_hit@5", "denominator_pointer": "/summary_metrics/hybrid_rrf/cases", "tolerance": 0.005}}
       },
       "headline_eligible": true,
       "limitations": ["The reranked hybrid variant did not improve on plain hybrid RRF."],
@@ -47,11 +47,11 @@
       "claim_scope": "Mixed 22-case agent residual diagnostic",
       "evidence_mode": "real",
       "split_or_frozen_scope": "p3_agent_ablation_mixed",
-      "source_artifacts": [{"path": "data/claims/evidence/q2_agent_ablation_summary.json", "sha256": "9f95ff902582be4dce7a0da0913abee46f349fe9076909bedad7cc9de2ed96c2", "run_id": "p3-09-agent-ablation", "evidence_commit": "64a33711aff3412cca4827b23e39be9dc2280da3"}],
+      "source_artifacts": [{"path": "data/claims/source/p3-09-agent-ablation/summary.json", "archived_from_path": "data/eval_runs/p3-09-agent-ablation/summary.json", "sha256": "6350df6a07112715e1989ab472983d45e186bb7e3ea3b7a28ad17684a869335d", "run_id": "p3-09-agent-ablation", "execution_commit": "bb8d70c4bae6f475792a82beff26d275bc59af2d", "artifact_commit": "73ad26bc28cd70dcac6be8d7d21c41a531c44d16", "release_tag": "v1.0-q2-agentic-eval", "tag_object_sha": "64a33711aff3412cca4827b23e39be9dc2280da3", "release_commit": "bb8d70c4bae6f475792a82beff26d275bc59af2d"}],
       "metrics": {
-        "gated_success": {"numerator": 5, "denominator": 22, "value": 0.2273, "unit": "rate"},
-        "rule_agent_success": {"numerator": 6, "denominator": 22, "value": 0.2727, "unit": "rate"},
-        "llm_agent_success": {"numerator": 6, "denominator": 22, "value": 0.2727, "unit": "rate"}
+        "gated_success": {"numerator": 5, "denominator": 22, "value": 0.2273, "unit": "rate", "source": {"source_path": "data/claims/source/p3-09-agent-ablation/summary.json", "derivation": "rate_from_value", "value_pointer": "/passk/by_system/final_gated_calibrated/pass_1_first_run", "denominator_pointer": "/num_cases", "tolerance": 0.005}},
+        "rule_agent_success": {"numerator": 6, "denominator": 22, "value": 0.2727, "unit": "rate", "source": {"source_path": "data/claims/source/p3-09-agent-ablation/summary.json", "derivation": "rate_from_value", "value_pointer": "/passk/by_system/final_agentic_v2_rule/pass_1_first_run", "denominator_pointer": "/num_cases", "tolerance": 0.005}},
+        "llm_agent_success": {"numerator": 6, "denominator": 22, "value": 0.2727, "unit": "rate", "source": {"source_path": "data/claims/source/p3-09-agent-ablation/summary.json", "derivation": "rate_from_value", "value_pointer": "/passk/by_system/final_agentic_v2_llm/pass_1_first_run", "denominator_pointer": "/num_cases", "tolerance": 0.005}}
       },
       "headline_eligible": false,
       "limitations": ["The run was diagnostic and not headline eligible.", "Rule and LLM controllers produced the same outcome rate."],
@@ -65,11 +65,11 @@
       "claim_scope": "Q3 real ops development ablation",
       "evidence_mode": "real",
       "split_or_frozen_scope": "ops_dev",
-      "source_artifacts": [{"path": "data/claims/evidence/q3_governance_summary.json", "sha256": "e0f39ed645d80b0afd54c7309f9328da39cd0bb167f87b692bf9c93b58b2dd4a", "run_id": "q3-p7-governance-ablation", "evidence_commit": "637f7ce4509a5ff06b0744bdc45451f723d370ec"}],
+      "source_artifacts": [{"path": "data/claims/source/q3-p7-governance-ablation/summary.json", "archived_from_path": "data/eval_runs/q3-p7-governance-ablation/summary.json", "sha256": "c3a956a722583f14b24887512cccd2abe2ffc2f2497d407566e821d10d38d6ab", "run_id": "q3-p7-governance-ablation", "execution_commit": "fe2d40040ba103d138d4f2a4eccd2ee72b26f2bb", "artifact_commit": "73ad26bc28cd70dcac6be8d7d21c41a531c44d16", "release_tag": "v2.0-q3-action-governance", "tag_object_sha": "637f7ce4509a5ff06b0744bdc45451f723d370ec", "release_commit": "fe2d40040ba103d138d4f2a4eccd2ee72b26f2bb"}],
       "metrics": {
-        "unauthorized_action_blocked": {"numerator": 9, "denominator": 9, "value": 1.0, "unit": "rate"},
-        "F11_action_without_evidence": {"numerator": 0, "denominator": 84, "value": 0.0, "unit": "rate"},
-        "F13_missed_escalation_unauth": {"numerator": 0, "denominator": 84, "value": 0.0, "unit": "rate"}
+        "unauthorized_action_blocked": {"numerator": 9, "denominator": 9, "value": 1.0, "unit": "rate", "source": {"source_path": "data/claims/source/q3-p7-governance-ablation/summary.json", "derivation": "rate_from_value", "value_pointer": "/governance_metrics/by_system/final_governed_rule/unauthorized_action_blocked", "denominator_pointer": "/governance_metrics/by_system/final_governed_rule/denominators/unauthorized_action_blocked", "tolerance": 0.005}},
+        "F11_action_without_evidence": {"numerator": 0, "denominator": 84, "value": 0.0, "unit": "rate", "source": {"source_path": "data/claims/source/q3-p7-governance-ablation/summary.json", "derivation": "ratio", "numerator_pointer": "/governance_attribution/failure_taxonomy/F11_action_without_evidence", "denominator_pointer": "/attempt_count", "tolerance": 0.005}},
+        "F13_missed_escalation_unauth": {"numerator": 0, "denominator": 84, "value": 0.0, "unit": "rate", "source": {"source_path": "data/claims/source/q3-p7-governance-ablation/summary.json", "derivation": "ratio", "numerator_pointer": "/governance_attribution/failure_taxonomy/F13_missed_escalation_unauth", "denominator_pointer": "/attempt_count", "tolerance": 0.005}}
       },
       "headline_eligible": true,
       "limitations": ["Safety did not imply useful action selection; the Q3 anti-gaming triad failed."],
@@ -83,10 +83,10 @@
       "claim_scope": "Q3 real ops development ablation",
       "evidence_mode": "real",
       "split_or_frozen_scope": "ops_dev",
-      "source_artifacts": [{"path": "data/claims/evidence/q3_governance_summary.json", "sha256": "e0f39ed645d80b0afd54c7309f9328da39cd0bb167f87b692bf9c93b58b2dd4a", "run_id": "q3-p7-governance-ablation", "evidence_commit": "637f7ce4509a5ff06b0744bdc45451f723d370ec"}],
+      "source_artifacts": [{"path": "data/claims/source/q3-p7-governance-ablation/summary.json", "archived_from_path": "data/eval_runs/q3-p7-governance-ablation/summary.json", "sha256": "c3a956a722583f14b24887512cccd2abe2ffc2f2497d407566e821d10d38d6ab", "run_id": "q3-p7-governance-ablation", "execution_commit": "fe2d40040ba103d138d4f2a4eccd2ee72b26f2bb", "artifact_commit": "73ad26bc28cd70dcac6be8d7d21c41a531c44d16", "release_tag": "v2.0-q3-action-governance", "tag_object_sha": "637f7ce4509a5ff06b0744bdc45451f723d370ec", "release_commit": "fe2d40040ba103d138d4f2a4eccd2ee72b26f2bb"}],
       "metrics": {
-        "rule_precision_authorized": {"numerator": 15, "denominator": 33, "value": 0.4545, "unit": "rate"},
-        "anti_gaming_triad": {"numerator": 0, "denominator": 1, "value": 0.0, "unit": "boolean_rate"}
+        "rule_precision_authorized": {"numerator": 15, "denominator": 33, "value": 0.4545, "unit": "rate", "source": {"source_path": "data/claims/source/q3-p7-governance-ablation/summary.json", "derivation": "rate_from_value", "value_pointer": "/governance_metrics/by_system/final_governed_rule/action_precision@authorized", "denominator_pointer": "/governance_metrics/by_system/final_governed_rule/denominators/action_precision@authorized", "tolerance": 0.005}},
+        "anti_gaming_triad": {"numerator": 0, "denominator": 1, "value": 0.0, "unit": "boolean_rate", "source": {"source_path": "data/claims/source/q3-p7-governance-ablation/summary.json", "derivation": "boolean", "value_pointer": "/governance_metrics/by_system/final_governed_rule/anti_gaming_triad_ok", "tolerance": 0.005}}
       },
       "headline_eligible": false,
       "limitations": ["This negative Q3 result was later superseded by Q4 calibration on a held-out split."],
@@ -100,11 +100,11 @@
       "claim_scope": "Q4 held-out ops_test rule-controller evaluation",
       "evidence_mode": "real",
       "split_or_frozen_scope": "ops_test",
-      "source_artifacts": [{"path": "data/claims/evidence/q4_reliability_summary.json", "sha256": "8bf13e59f483688e6d245e4acde5ca345805d1f25fc02373e9081b84e7bff438", "run_id": "q4-p5-selection-calibrated", "evidence_commit": "39d6cb78e6fcab4ed95d951d8c16f9925e048d77"}],
+      "source_artifacts": [{"path": "data/claims/source/q4-p5-selection-calibrated/summary.json", "archived_from_path": "data/eval_runs/q4-p5-selection-calibrated/summary.json", "sha256": "130edf3aa4dbc681a1b811a220b8acb7210db2fe9a80d8f734ceed3e73667779", "run_id": "q4-p5-selection-calibrated", "execution_commit": "39d6cb78e6fcab4ed95d951d8c16f9925e048d77", "artifact_commit": "73ad26bc28cd70dcac6be8d7d21c41a531c44d16", "release_tag": "v3.0-q4-reliability", "tag_object_sha": "4e5198c1303b8626a2d10cea33ec905116e5d286", "release_commit": "2257ff02a77474d597a8ee180e18ea91c2963326"}],
       "metrics": {
-        "precision_authorized": {"numerator": 33, "denominator": 51, "value": 0.6471, "unit": "rate"},
-        "anti_gaming_triad": {"numerator": 1, "denominator": 1, "value": 1.0, "unit": "boolean_rate"},
-        "over_escalation_rate": {"numerator": 3, "denominator": 60, "value": 0.05, "unit": "rate"}
+        "precision_authorized": {"numerator": 33, "denominator": 51, "value": 0.6471, "unit": "rate", "source": {"source_path": "data/claims/source/q4-p5-selection-calibrated/summary.json", "derivation": "rate_from_value", "value_pointer": "/governance_metrics/by_system/final_governed_rule/action_precision@authorized", "denominator_pointer": "/governance_metrics/by_system/final_governed_rule/denominators/action_precision@authorized", "tolerance": 0.005}},
+        "anti_gaming_triad": {"numerator": 1, "denominator": 1, "value": 1.0, "unit": "boolean_rate", "source": {"source_path": "data/claims/source/q4-p5-selection-calibrated/summary.json", "derivation": "boolean", "value_pointer": "/governance_metrics/by_system/final_governed_rule/anti_gaming_triad_ok", "tolerance": 0.005}},
+        "over_escalation_rate": {"numerator": 3, "denominator": 60, "value": 0.05, "unit": "rate", "source": {"source_path": "data/claims/source/q4-p5-selection-calibrated/summary.json", "derivation": "rate_from_value", "value_pointer": "/governance_metrics/by_system/final_governed_rule/over_escalation_rate", "denominator_pointer": "/governance_metrics/by_system/final_governed_rule/denominators/over_escalation_rate", "tolerance": 0.005}}
       },
       "headline_eligible": true,
       "limitations": ["The result is real but thin and clears the precision floor by roughly one case-equivalent.", "The LLM controller did not pass the triad."],
@@ -118,11 +118,11 @@
       "claim_scope": "Q4 held-out ops_test safety floor",
       "evidence_mode": "real",
       "split_or_frozen_scope": "ops_test",
-      "source_artifacts": [{"path": "data/claims/evidence/q4_reliability_summary.json", "sha256": "8bf13e59f483688e6d245e4acde5ca345805d1f25fc02373e9081b84e7bff438", "run_id": "q4-p5-selection-calibrated", "evidence_commit": "39d6cb78e6fcab4ed95d951d8c16f9925e048d77"}],
+      "source_artifacts": [{"path": "data/claims/source/q4-p5-selection-calibrated/summary.json", "archived_from_path": "data/eval_runs/q4-p5-selection-calibrated/summary.json", "sha256": "130edf3aa4dbc681a1b811a220b8acb7210db2fe9a80d8f734ceed3e73667779", "run_id": "q4-p5-selection-calibrated", "execution_commit": "39d6cb78e6fcab4ed95d951d8c16f9925e048d77", "artifact_commit": "73ad26bc28cd70dcac6be8d7d21c41a531c44d16", "release_tag": "v3.0-q4-reliability", "tag_object_sha": "4e5198c1303b8626a2d10cea33ec905116e5d286", "release_commit": "2257ff02a77474d597a8ee180e18ea91c2963326"}],
       "metrics": {
-        "unauthorized_action_blocked": {"numerator": 9, "denominator": 9, "value": 1.0, "unit": "rate"},
-        "F11_action_without_evidence": {"numerator": 0, "denominator": 120, "value": 0.0, "unit": "rate"},
-        "F13_missed_escalation_unauth": {"numerator": 0, "denominator": 120, "value": 0.0, "unit": "rate"}
+        "unauthorized_action_blocked": {"numerator": 9, "denominator": 9, "value": 1.0, "unit": "rate", "source": {"source_path": "data/claims/source/q4-p5-selection-calibrated/summary.json", "derivation": "rate_from_value", "value_pointer": "/governance_metrics/by_system/final_governed_rule/unauthorized_action_blocked", "denominator_pointer": "/governance_metrics/by_system/final_governed_rule/denominators/unauthorized_action_blocked", "tolerance": 0.005}},
+        "F11_action_without_evidence": {"numerator": 0, "denominator": 120, "value": 0.0, "unit": "rate", "source": {"source_path": "data/claims/source/q4-p5-selection-calibrated/summary.json", "derivation": "ratio", "numerator_pointer": "/governance_attribution/failure_taxonomy/F11_action_without_evidence", "denominator_pointer": "/attempt_count", "tolerance": 0.005}},
+        "F13_missed_escalation_unauth": {"numerator": 0, "denominator": 120, "value": 0.0, "unit": "rate", "source": {"source_path": "data/claims/source/q4-p5-selection-calibrated/summary.json", "derivation": "ratio", "numerator_pointer": "/governance_attribution/failure_taxonomy/F13_missed_escalation_unauth", "denominator_pointer": "/attempt_count", "tolerance": 0.005}}
       },
       "headline_eligible": true,
       "limitations": ["The stable product release remains v3.0-q4-reliability; Q5 does not supersede it."],
@@ -136,12 +136,17 @@
       "claim_scope": "Protocol-v3 primary real-dev run across 36 cases and three systems",
       "evidence_mode": "real",
       "split_or_frozen_scope": "real-dev",
-      "source_artifacts": [{"path": "data/claims/evidence/q5_real_dev_v3_summary.json", "sha256": "b727f2d102911ae3fab49abaef3ab10683445b39c6ba61855b9087c2fe740174", "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3", "evidence_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db"}],
+      "source_artifacts": [
+        {"path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json", "archived_from_path": "data/eval_runs/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json", "sha256": "86d6637954fa695e3de2d28d170ce3fb22f096ac360a18bf35e2f1f31d6f05a8", "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3", "execution_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db", "artifact_commit": "73ad26bc28cd70dcac6be8d7d21c41a531c44d16"},
+        {"path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/manifest.json", "archived_from_path": "data/eval_runs/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/manifest.json", "sha256": "b0efd5a7a3c9d2f19cfe3251ed48c2d567a0336f9c779bf147434db8a1ce8de6", "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3", "execution_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db", "artifact_commit": "73ad26bc28cd70dcac6be8d7d21c41a531c44d16"},
+        {"path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/graded_manifest.json", "archived_from_path": "data/eval_runs/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/graded_manifest.json", "sha256": "7122c08211f9c488caab4078b200dd05031d941c043d71a7e08a89c86de08ea9", "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3", "execution_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db", "artifact_commit": "73ad26bc28cd70dcac6be8d7d21c41a531c44d16"},
+        {"path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/gates.json", "archived_from_path": "data/eval_runs/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/gates.json", "sha256": "1615fb0ecaf2fe44265f2f1c95a7707bef1a05acd3a4eb7c88debe89e4df15b9", "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3", "execution_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db", "artifact_commit": "73ad26bc28cd70dcac6be8d7d21c41a531c44d16"}
+      ],
       "metrics": {
-        "historical_real_dev_model_calls": {"numerator": 210, "denominator": 1, "value": 210.0, "unit": "count"},
-        "hybrid_route_precision": {"numerator": 1, "denominator": 1, "value": 1.0, "unit": "normalized_ratio"},
-        "hybrid_route_recall": {"numerator": 1, "denominator": 1, "value": 1.0, "unit": "normalized_ratio"},
-        "trajectory_qualified_success": {"numerator": 90, "denominator": 108, "value": 0.833333, "unit": "rate"}
+        "historical_real_dev_model_calls": {"numerator": 210, "denominator": 1, "value": 210.0, "unit": "count", "source": {"source_path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/manifest.json", "derivation": "direct", "value_pointer": "/usage/llm_calls", "tolerance": 0.005}},
+        "hybrid_route_precision": {"numerator": 1, "denominator": 1, "value": 1.0, "unit": "normalized_ratio", "source": {"source_path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json", "derivation": "direct", "value_pointer": "/by_system/q5_hybrid_agent/route_precision", "tolerance": 0.005}},
+        "hybrid_route_recall": {"numerator": 1, "denominator": 1, "value": 1.0, "unit": "normalized_ratio", "source": {"source_path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json", "derivation": "direct", "value_pointer": "/by_system/q5_hybrid_agent/route_recall", "tolerance": 0.005}},
+        "trajectory_qualified_success": {"numerator": 90, "denominator": 108, "value": 0.833333, "unit": "rate", "source": {"source_path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json", "derivation": "rate_from_value", "value_pointer": "/by_system/q5_hybrid_agent/trajectory_qualified_success", "denominator_pointer": "/by_system/q5_hybrid_agent/trial_count", "tolerance": 0.005}}
       },
       "headline_eligible": false,
       "limitations": ["This is real-dev evidence, not held-out test evidence.", "The architecture result does not establish LLM semantic value."],
@@ -155,10 +160,10 @@
       "claim_scope": "Protocol-v3 hybrid system in the primary real-dev run",
       "evidence_mode": "real",
       "split_or_frozen_scope": "real-dev",
-      "source_artifacts": [{"path": "data/claims/evidence/q5_real_dev_v3_summary.json", "sha256": "b727f2d102911ae3fab49abaef3ab10683445b39c6ba61855b9087c2fe740174", "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3", "evidence_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db"}],
+      "source_artifacts": [{"path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json", "archived_from_path": "data/eval_runs/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json", "sha256": "86d6637954fa695e3de2d28d170ce3fb22f096ac360a18bf35e2f1f31d6f05a8", "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3", "execution_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db", "artifact_commit": "73ad26bc28cd70dcac6be8d7d21c41a531c44d16"}],
       "metrics": {
-        "required_observation_recall": {"numerator": 1, "denominator": 1, "value": 1.0, "unit": "normalized_ratio"},
-        "post_observation_terminal_rate": {"numerator": 1, "denominator": 1, "value": 1.0, "unit": "normalized_ratio"}
+        "required_observation_recall": {"numerator": 1, "denominator": 1, "value": 1.0, "unit": "normalized_ratio", "source": {"source_path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json", "derivation": "direct", "value_pointer": "/by_system/q5_hybrid_agent/required_observation_recall", "tolerance": 0.005}},
+        "post_observation_terminal_rate": {"numerator": 1, "denominator": 1, "value": 1.0, "unit": "normalized_ratio", "source": {"source_path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json", "derivation": "direct", "value_pointer": "/by_system/q5_hybrid_agent/post_observation_terminal_rate", "tolerance": 0.005}}
       },
       "headline_eligible": false,
       "limitations": ["Normalized ratios are scoped to the frozen real-dev topology."],
@@ -172,14 +177,14 @@
       "claim_scope": "Protocol-v3 hybrid system over 108 real-dev trials",
       "evidence_mode": "real",
       "split_or_frozen_scope": "real-dev",
-      "source_artifacts": [{"path": "data/claims/evidence/q5_real_dev_v3_summary.json", "sha256": "b727f2d102911ae3fab49abaef3ab10683445b39c6ba61855b9087c2fe740174", "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3", "evidence_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db"}],
+      "source_artifacts": [{"path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json", "archived_from_path": "data/eval_runs/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json", "sha256": "86d6637954fa695e3de2d28d170ce3fb22f096ac360a18bf35e2f1f31d6f05a8", "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3", "execution_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db", "artifact_commit": "73ad26bc28cd70dcac6be8d7d21c41a531c44d16"}],
       "metrics": {
-        "F11": {"numerator": 0, "denominator": 108, "value": 0.0, "unit": "rate"},
-        "F13": {"numerator": 0, "denominator": 108, "value": 0.0, "unit": "rate"},
-        "F17": {"numerator": 0, "denominator": 108, "value": 0.0, "unit": "rate"},
-        "unsafe_tool_calls": {"numerator": 0, "denominator": 108, "value": 0.0, "unit": "rate"},
-        "invalid_transitions": {"numerator": 0, "denominator": 108, "value": 0.0, "unit": "rate"},
-        "schema_invalid": {"numerator": 0, "denominator": 108, "value": 0.0, "unit": "rate"}
+        "F11": {"numerator": 0, "denominator": 108, "value": 0.0, "unit": "rate", "source": {"source_path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json", "derivation": "ratio", "numerator_pointer": "/by_system/q5_hybrid_agent/F11", "denominator_pointer": "/by_system/q5_hybrid_agent/trial_count", "tolerance": 0.005}},
+        "F13": {"numerator": 0, "denominator": 108, "value": 0.0, "unit": "rate", "source": {"source_path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json", "derivation": "ratio", "numerator_pointer": "/by_system/q5_hybrid_agent/F13", "denominator_pointer": "/by_system/q5_hybrid_agent/trial_count", "tolerance": 0.005}},
+        "F17": {"numerator": 0, "denominator": 108, "value": 0.0, "unit": "rate", "source": {"source_path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json", "derivation": "ratio", "numerator_pointer": "/by_system/q5_hybrid_agent/F17", "denominator_pointer": "/by_system/q5_hybrid_agent/trial_count", "tolerance": 0.005}},
+        "unsafe_tool_calls": {"numerator": 0, "denominator": 108, "value": 0.0, "unit": "rate", "source": {"source_path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json", "derivation": "ratio", "numerator_pointer": "/by_system/q5_hybrid_agent/unsafe_tool_call_count", "denominator_pointer": "/by_system/q5_hybrid_agent/trial_count", "tolerance": 0.005}},
+        "invalid_transitions": {"numerator": 0, "denominator": 108, "value": 0.0, "unit": "rate", "source": {"source_path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json", "derivation": "rate_from_value", "value_pointer": "/by_system/q5_hybrid_agent/invalid_transition_rate", "denominator_pointer": "/by_system/q5_hybrid_agent/trial_count", "tolerance": 0.005}},
+        "schema_invalid": {"numerator": 0, "denominator": 108, "value": 0.0, "unit": "rate", "source": {"source_path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json", "derivation": "ratio", "numerator_pointer": "/by_system/q5_hybrid_agent/tool_schema_invalid_count", "denominator_pointer": "/by_system/q5_hybrid_agent/trial_count", "tolerance": 0.005}}
       },
       "headline_eligible": false,
       "limitations": ["Zero observed failures in 108 dev trials is not an open-world guarantee."],
@@ -193,10 +198,10 @@
       "claim_scope": "Hybrid versus LLM-only in the protocol-v3 primary real-dev run",
       "evidence_mode": "real",
       "split_or_frozen_scope": "real-dev",
-      "source_artifacts": [{"path": "data/claims/evidence/q5_real_dev_v3_summary.json", "sha256": "b727f2d102911ae3fab49abaef3ab10683445b39c6ba61855b9087c2fe740174", "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3", "evidence_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db"}],
+      "source_artifacts": [{"path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json", "archived_from_path": "data/eval_runs/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json", "sha256": "86d6637954fa695e3de2d28d170ce3fb22f096ac360a18bf35e2f1f31d6f05a8", "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3", "execution_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db", "artifact_commit": "73ad26bc28cd70dcac6be8d7d21c41a531c44d16"}],
       "metrics": {
-        "model_call_ratio": {"numerator": 78, "denominator": 132, "value": 0.590909, "unit": "ratio"},
-        "token_ratio": {"numerator": 66531, "denominator": 103246, "value": 0.644393, "unit": "ratio"}
+        "model_call_ratio": {"numerator": 78, "denominator": 132, "value": 0.590909, "unit": "ratio", "source": {"source_path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json", "derivation": "ratio", "numerator_pointer": "/by_system/q5_hybrid_agent/llm_calls", "denominator_pointer": "/by_system/q5_llm_agent/llm_calls", "tolerance": 0.005}},
+        "token_ratio": {"numerator": 66531, "denominator": 103246, "value": 0.644393, "unit": "ratio", "source": {"source_path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json", "derivation": "ratio", "numerator_pointer": "/by_system/q5_hybrid_agent/total_tokens", "denominator_pointer": "/by_system/q5_llm_agent/total_tokens", "tolerance": 0.005}}
       },
       "headline_eligible": false,
       "limitations": ["Efficiency is measured on real-dev and is not a held-out product headline."],
@@ -210,9 +215,12 @@
       "claim_scope": "Protocol-v3 semantic stratum in the primary real-dev run",
       "evidence_mode": "real",
       "split_or_frozen_scope": "real-dev semantic stratum",
-      "source_artifacts": [{"path": "data/claims/evidence/q5_real_dev_v3_summary.json", "sha256": "b727f2d102911ae3fab49abaef3ab10683445b39c6ba61855b9087c2fe740174", "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3", "evidence_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db"}],
+      "source_artifacts": [
+        {"path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json", "archived_from_path": "data/eval_runs/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json", "sha256": "86d6637954fa695e3de2d28d170ce3fb22f096ac360a18bf35e2f1f31d6f05a8", "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3", "execution_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db", "artifact_commit": "73ad26bc28cd70dcac6be8d7d21c41a531c44d16"},
+        {"path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/gates.json", "archived_from_path": "data/eval_runs/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/gates.json", "sha256": "1615fb0ecaf2fe44265f2f1c95a7707bef1a05acd3a4eb7c88debe89e4df15b9", "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3", "execution_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db", "artifact_commit": "73ad26bc28cd70dcac6be8d7d21c41a531c44d16"}
+      ],
       "metrics": {
-        "semantic_uplift": {"numerator": 1, "denominator": 12, "value": 0.083333, "unit": "rate_difference"}
+        "semantic_uplift": {"numerator": 1, "denominator": 12, "value": 0.083333, "unit": "rate_difference", "source": {"source_path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json", "derivation": "difference", "left_pointer": "/by_system/q5_hybrid_agent/trajectory_qualified_success_by_stratum/semantic", "right_pointer": "/by_system/q5_rule_agent/trajectory_qualified_success_by_stratum/semantic", "denominator_pointer": "/comparisons/paired_bootstrap_ci/paired_case_count", "value_pointer": "/comparisons/semantic_uplift_hybrid_vs_rule", "tolerance": 0.005}}
       },
       "headline_eligible": true,
       "limitations": ["This falsifies the preregistered value claim only in the current real-dev scope.", "It does not show that LLMs are generally without value."],
@@ -227,19 +235,19 @@
       "evidence_mode": "offline_control",
       "split_or_frozen_scope": "frozen controlled-prose K0U 32-case scope",
       "source_artifacts": [
-        {"path": "data/q5_frontier/dev-k0u-audit/boundary_f_summary.json", "sha256": "a10d4cbff6fa9c7d554a87ad06dc63e79db235d289190d72af9addf0d6d97648", "run_id": "q5-boundary-f-k0u", "evidence_commit": "17c6c7ddf641fc6b8e5c803f35743fd369f8b258"},
-        {"path": "data/eval_runs/q5-boundary-f-addendum-z-a/addendum_metrics.json", "sha256": "1adf221729af61c0bbfa50c4fe28869710fc187ec1d09d7a522e11fde6e5efba", "run_id": "q5-boundary-f-addendum-z-a", "evidence_commit": "c1fdecf0a4d3bb9fa6dbadecc8df7cdc05abe044"}
+        {"path": "data/q5_frontier/dev-k0u-audit/boundary_f_summary.json", "archived_from_path": "data/q5_frontier/dev-k0u-audit/boundary_f_summary.json", "sha256": "a10d4cbff6fa9c7d554a87ad06dc63e79db235d289190d72af9addf0d6d97648", "run_id": "q5-boundary-f-k0u", "execution_commit": "17c6c7ddf641fc6b8e5c803f35743fd369f8b258", "artifact_commit": "17c6c7ddf641fc6b8e5c803f35743fd369f8b258"},
+        {"path": "data/eval_runs/q5-boundary-f-addendum-z-a/addendum_metrics.json", "archived_from_path": "data/eval_runs/q5-boundary-f-addendum-z-a/addendum_metrics.json", "sha256": "1adf221729af61c0bbfa50c4fe28869710fc187ec1d09d7a522e11fde6e5efba", "run_id": "q5-boundary-f-addendum-z-a", "execution_commit": "c1fdecf0a4d3bb9fa6dbadecc8df7cdc05abe044", "artifact_commit": "c1fdecf0a4d3bb9fa6dbadecc8df7cdc05abe044"}
       ],
       "metrics": {
-        "original_boundary_f_coverage": {"numerator": 30, "denominator": 32, "value": 0.9375, "unit": "rate"},
-        "addendum_parser_accuracy": {"numerator": 32, "denominator": 32, "value": 1.0, "unit": "rate"},
-        "previously_uncovered_cases_resolved": {"numerator": 32, "denominator": 32, "value": 1.0, "unit": "rate"},
-        "remaining_uncovered": {"numerator": 0, "denominator": 32, "value": 0.0, "unit": "rate"},
-        "addendum_coverage": {"numerator": 32, "denominator": 32, "value": 1.0, "unit": "rate"},
-        "addendum_conditional_risk": {"numerator": 0, "denominator": 32, "value": 0.0, "unit": "rate"},
-        "addendum_abstention_count": {"numerator": 0, "denominator": 32, "value": 0.0, "unit": "rate"},
-        "addendum_model_requests": {"numerator": 0, "denominator": 1, "value": 0.0, "unit": "count"},
-        "addendum_external_requests": {"numerator": 0, "denominator": 1, "value": 0.0, "unit": "count"}
+        "original_boundary_f_coverage": {"numerator": 30, "denominator": 32, "value": 0.9375, "unit": "rate", "source": {"source_path": "data/q5_frontier/dev-k0u-audit/boundary_f_summary.json", "derivation": "ratio", "numerator_pointer": "/trigger_metrics/parsed_count", "denominator_pointer": "/trigger_metrics/case_count", "value_pointer": "/trigger_metrics/coverage", "tolerance": 0.005}},
+        "addendum_parser_accuracy": {"numerator": 32, "denominator": 32, "value": 1.0, "unit": "rate", "source": {"source_path": "data/eval_runs/q5-boundary-f-addendum-z-a/addendum_metrics.json", "derivation": "ratio", "numerator_pointer": "/correct_count", "denominator_pointer": "/case_count", "value_pointer": "/conditional_accuracy", "tolerance": 0.005}},
+        "previously_uncovered_cases_resolved": {"numerator": 32, "denominator": 32, "value": 1.0, "unit": "rate", "source": {"source_path": "data/eval_runs/q5-boundary-f-addendum-z-a/addendum_metrics.json", "derivation": "ratio", "numerator_pointer": "/previously_uncovered_cases_resolved/resolved", "denominator_pointer": "/previously_uncovered_cases_resolved/total", "tolerance": 0.005}},
+        "remaining_uncovered": {"numerator": 0, "denominator": 32, "value": 0.0, "unit": "rate", "source": {"source_path": "data/eval_runs/q5-boundary-f-addendum-z-a/addendum_metrics.json", "derivation": "ratio", "numerator_pointer": "/remaining_uncovered_cases/count", "denominator_pointer": "/remaining_uncovered_cases/total", "tolerance": 0.005}},
+        "addendum_coverage": {"numerator": 32, "denominator": 32, "value": 1.0, "unit": "rate", "source": {"source_path": "data/eval_runs/q5-boundary-f-addendum-z-a/addendum_metrics.json", "derivation": "ratio", "numerator_pointer": "/parsed_count", "denominator_pointer": "/case_count", "value_pointer": "/coverage", "tolerance": 0.005}},
+        "addendum_conditional_risk": {"numerator": 0, "denominator": 32, "value": 0.0, "unit": "rate", "source": {"source_path": "data/eval_runs/q5-boundary-f-addendum-z-a/addendum_metrics.json", "derivation": "rate_from_value", "value_pointer": "/conditional_risk", "denominator_pointer": "/case_count", "tolerance": 0.005}},
+        "addendum_abstention_count": {"numerator": 0, "denominator": 32, "value": 0.0, "unit": "rate", "source": {"source_path": "data/eval_runs/q5-boundary-f-addendum-z-a/addendum_metrics.json", "derivation": "ratio", "numerator_pointer": "/abstention_count", "denominator_pointer": "/case_count", "tolerance": 0.005}},
+        "addendum_model_requests": {"numerator": 0, "denominator": 1, "value": 0.0, "unit": "count", "source": {"source_path": "data/eval_runs/q5-boundary-f-addendum-z-a/addendum_metrics.json", "derivation": "direct", "value_pointer": "/model_requests", "tolerance": 0.005}},
+        "addendum_external_requests": {"numerator": 0, "denominator": 1, "value": 0.0, "unit": "count", "source": {"source_path": "data/eval_runs/q5-boundary-f-addendum-z-a/addendum_metrics.json", "derivation": "direct", "value_pointer": "/external_requests", "tolerance": 0.005}}
       },
       "headline_eligible": true,
       "limitations": ["This is a frozen-scope deterministic demonstration.", "It does not evaluate open-world policy language or general LLM value."],
@@ -253,7 +261,7 @@
       "claim_scope": "Open-world policy language outside the frozen controlled-prose benchmark",
       "evidence_mode": "offline_control",
       "split_or_frozen_scope": "outside evaluated frozen scopes",
-      "source_artifacts": [{"path": "data/eval_runs/q5-boundary-f-addendum-z-a/addendum_metrics.json", "sha256": "1adf221729af61c0bbfa50c4fe28869710fc187ec1d09d7a522e11fde6e5efba", "run_id": "q5-boundary-f-addendum-z-a", "evidence_commit": "c1fdecf0a4d3bb9fa6dbadecc8df7cdc05abe044"}],
+      "source_artifacts": [{"path": "data/eval_runs/q5-boundary-f-addendum-z-a/addendum_metrics.json", "archived_from_path": "data/eval_runs/q5-boundary-f-addendum-z-a/addendum_metrics.json", "sha256": "1adf221729af61c0bbfa50c4fe28869710fc187ec1d09d7a522e11fde6e5efba", "run_id": "q5-boundary-f-addendum-z-a", "execution_commit": "c1fdecf0a4d3bb9fa6dbadecc8df7cdc05abe044", "artifact_commit": "c1fdecf0a4d3bb9fa6dbadecc8df7cdc05abe044"}],
       "metrics": {},
       "headline_eligible": false,
       "limitations": ["The current benchmark closes only the controlled-prose track.", "No held-out open-world test split was created or read."],

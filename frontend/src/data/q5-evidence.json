@@ -14,24 +14,64 @@
         "historical_real_dev_model_calls": {
           "denominator": 1.0,
           "numerator": 210.0,
+          "source": {
+            "denominator_pointer": null,
+            "derivation": "direct",
+            "left_pointer": null,
+            "numerator_pointer": null,
+            "right_pointer": null,
+            "source_path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/manifest.json",
+            "tolerance": 0.005,
+            "value_pointer": "/usage/llm_calls"
+          },
           "unit": "count",
           "value": 210.0
         },
         "hybrid_route_precision": {
           "denominator": 1.0,
           "numerator": 1.0,
+          "source": {
+            "denominator_pointer": null,
+            "derivation": "direct",
+            "left_pointer": null,
+            "numerator_pointer": null,
+            "right_pointer": null,
+            "source_path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json",
+            "tolerance": 0.005,
+            "value_pointer": "/by_system/q5_hybrid_agent/route_precision"
+          },
           "unit": "normalized_ratio",
           "value": 1.0
         },
         "hybrid_route_recall": {
           "denominator": 1.0,
           "numerator": 1.0,
+          "source": {
+            "denominator_pointer": null,
+            "derivation": "direct",
+            "left_pointer": null,
+            "numerator_pointer": null,
+            "right_pointer": null,
+            "source_path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json",
+            "tolerance": 0.005,
+            "value_pointer": "/by_system/q5_hybrid_agent/route_recall"
+          },
           "unit": "normalized_ratio",
           "value": 1.0
         },
         "trajectory_qualified_success": {
           "denominator": 108.0,
           "numerator": 90.0,
+          "source": {
+            "denominator_pointer": "/by_system/q5_hybrid_agent/trial_count",
+            "derivation": "rate_from_value",
+            "left_pointer": null,
+            "numerator_pointer": null,
+            "right_pointer": null,
+            "source_path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json",
+            "tolerance": 0.005,
+            "value_pointer": "/by_system/q5_hybrid_agent/trajectory_qualified_success"
+          },
           "unit": "rate",
           "value": 0.833333
         }
@@ -41,10 +81,48 @@
       "question_id": "Q5",
       "source_artifacts": [
         {
-          "evidence_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db",
-          "path": "data/claims/evidence/q5_real_dev_v3_summary.json",
+          "archived_from_path": "data/eval_runs/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json",
+          "artifact_commit": "73ad26bc28cd70dcac6be8d7d21c41a531c44d16",
+          "execution_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db",
+          "path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json",
+          "release_commit": null,
+          "release_tag": null,
           "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3",
-          "sha256": "b727f2d102911ae3fab49abaef3ab10683445b39c6ba61855b9087c2fe740174"
+          "sha256": "86d6637954fa695e3de2d28d170ce3fb22f096ac360a18bf35e2f1f31d6f05a8",
+          "tag_object_sha": null
+        },
+        {
+          "archived_from_path": "data/eval_runs/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/manifest.json",
+          "artifact_commit": "73ad26bc28cd70dcac6be8d7d21c41a531c44d16",
+          "execution_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db",
+          "path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/manifest.json",
+          "release_commit": null,
+          "release_tag": null,
+          "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3",
+          "sha256": "b0efd5a7a3c9d2f19cfe3251ed48c2d567a0336f9c779bf147434db8a1ce8de6",
+          "tag_object_sha": null
+        },
+        {
+          "archived_from_path": "data/eval_runs/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/graded_manifest.json",
+          "artifact_commit": "73ad26bc28cd70dcac6be8d7d21c41a531c44d16",
+          "execution_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db",
+          "path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/graded_manifest.json",
+          "release_commit": null,
+          "release_tag": null,
+          "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3",
+          "sha256": "7122c08211f9c488caab4078b200dd05031d941c043d71a7e08a89c86de08ea9",
+          "tag_object_sha": null
+        },
+        {
+          "archived_from_path": "data/eval_runs/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/gates.json",
+          "artifact_commit": "73ad26bc28cd70dcac6be8d7d21c41a531c44d16",
+          "execution_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db",
+          "path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/gates.json",
+          "release_commit": null,
+          "release_tag": null,
+          "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3",
+          "sha256": "1615fb0ecaf2fe44265f2f1c95a7707bef1a05acd3a4eb7c88debe89e4df15b9",
+          "tag_object_sha": null
         }
       ],
       "split_or_frozen_scope": "real-dev",
@@ -63,12 +141,32 @@
         "post_observation_terminal_rate": {
           "denominator": 1.0,
           "numerator": 1.0,
+          "source": {
+            "denominator_pointer": null,
+            "derivation": "direct",
+            "left_pointer": null,
+            "numerator_pointer": null,
+            "right_pointer": null,
+            "source_path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json",
+            "tolerance": 0.005,
+            "value_pointer": "/by_system/q5_hybrid_agent/post_observation_terminal_rate"
+          },
           "unit": "normalized_ratio",
           "value": 1.0
         },
         "required_observation_recall": {
           "denominator": 1.0,
           "numerator": 1.0,
+          "source": {
+            "denominator_pointer": null,
+            "derivation": "direct",
+            "left_pointer": null,
+            "numerator_pointer": null,
+            "right_pointer": null,
+            "source_path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json",
+            "tolerance": 0.005,
+            "value_pointer": "/by_system/q5_hybrid_agent/required_observation_recall"
+          },
           "unit": "normalized_ratio",
           "value": 1.0
         }
@@ -78,10 +176,15 @@
       "question_id": "Q5",
       "source_artifacts": [
         {
-          "evidence_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db",
-          "path": "data/claims/evidence/q5_real_dev_v3_summary.json",
+          "archived_from_path": "data/eval_runs/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json",
+          "artifact_commit": "73ad26bc28cd70dcac6be8d7d21c41a531c44d16",
+          "execution_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db",
+          "path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json",
+          "release_commit": null,
+          "release_tag": null,
           "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3",
-          "sha256": "b727f2d102911ae3fab49abaef3ab10683445b39c6ba61855b9087c2fe740174"
+          "sha256": "86d6637954fa695e3de2d28d170ce3fb22f096ac360a18bf35e2f1f31d6f05a8",
+          "tag_object_sha": null
         }
       ],
       "split_or_frozen_scope": "real-dev",
@@ -100,36 +203,96 @@
         "F11": {
           "denominator": 108.0,
           "numerator": 0.0,
+          "source": {
+            "denominator_pointer": "/by_system/q5_hybrid_agent/trial_count",
+            "derivation": "ratio",
+            "left_pointer": null,
+            "numerator_pointer": "/by_system/q5_hybrid_agent/F11",
+            "right_pointer": null,
+            "source_path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json",
+            "tolerance": 0.005,
+            "value_pointer": null
+          },
           "unit": "rate",
           "value": 0.0
         },
         "F13": {
           "denominator": 108.0,
           "numerator": 0.0,
+          "source": {
+            "denominator_pointer": "/by_system/q5_hybrid_agent/trial_count",
+            "derivation": "ratio",
+            "left_pointer": null,
+            "numerator_pointer": "/by_system/q5_hybrid_agent/F13",
+            "right_pointer": null,
+            "source_path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json",
+            "tolerance": 0.005,
+            "value_pointer": null
+          },
           "unit": "rate",
           "value": 0.0
         },
         "F17": {
           "denominator": 108.0,
           "numerator": 0.0,
+          "source": {
+            "denominator_pointer": "/by_system/q5_hybrid_agent/trial_count",
+            "derivation": "ratio",
+            "left_pointer": null,
+            "numerator_pointer": "/by_system/q5_hybrid_agent/F17",
+            "right_pointer": null,
+            "source_path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json",
+            "tolerance": 0.005,
+            "value_pointer": null
+          },
           "unit": "rate",
           "value": 0.0
         },
         "invalid_transitions": {
           "denominator": 108.0,
           "numerator": 0.0,
+          "source": {
+            "denominator_pointer": "/by_system/q5_hybrid_agent/trial_count",
+            "derivation": "rate_from_value",
+            "left_pointer": null,
+            "numerator_pointer": null,
+            "right_pointer": null,
+            "source_path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json",
+            "tolerance": 0.005,
+            "value_pointer": "/by_system/q5_hybrid_agent/invalid_transition_rate"
+          },
           "unit": "rate",
           "value": 0.0
         },
         "schema_invalid": {
           "denominator": 108.0,
           "numerator": 0.0,
+          "source": {
+            "denominator_pointer": "/by_system/q5_hybrid_agent/trial_count",
+            "derivation": "ratio",
+            "left_pointer": null,
+            "numerator_pointer": "/by_system/q5_hybrid_agent/tool_schema_invalid_count",
+            "right_pointer": null,
+            "source_path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json",
+            "tolerance": 0.005,
+            "value_pointer": null
+          },
           "unit": "rate",
           "value": 0.0
         },
         "unsafe_tool_calls": {
           "denominator": 108.0,
           "numerator": 0.0,
+          "source": {
+            "denominator_pointer": "/by_system/q5_hybrid_agent/trial_count",
+            "derivation": "ratio",
+            "left_pointer": null,
+            "numerator_pointer": "/by_system/q5_hybrid_agent/unsafe_tool_call_count",
+            "right_pointer": null,
+            "source_path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json",
+            "tolerance": 0.005,
+            "value_pointer": null
+          },
           "unit": "rate",
           "value": 0.0
         }
@@ -139,10 +302,15 @@
       "question_id": "Q5",
       "source_artifacts": [
         {
-          "evidence_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db",
-          "path": "data/claims/evidence/q5_real_dev_v3_summary.json",
+          "archived_from_path": "data/eval_runs/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json",
+          "artifact_commit": "73ad26bc28cd70dcac6be8d7d21c41a531c44d16",
+          "execution_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db",
+          "path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json",
+          "release_commit": null,
+          "release_tag": null,
           "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3",
-          "sha256": "b727f2d102911ae3fab49abaef3ab10683445b39c6ba61855b9087c2fe740174"
+          "sha256": "86d6637954fa695e3de2d28d170ce3fb22f096ac360a18bf35e2f1f31d6f05a8",
+          "tag_object_sha": null
         }
       ],
       "split_or_frozen_scope": "real-dev",
@@ -161,12 +329,32 @@
         "model_call_ratio": {
           "denominator": 132.0,
           "numerator": 78.0,
+          "source": {
+            "denominator_pointer": "/by_system/q5_llm_agent/llm_calls",
+            "derivation": "ratio",
+            "left_pointer": null,
+            "numerator_pointer": "/by_system/q5_hybrid_agent/llm_calls",
+            "right_pointer": null,
+            "source_path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json",
+            "tolerance": 0.005,
+            "value_pointer": null
+          },
           "unit": "ratio",
           "value": 0.590909
         },
         "token_ratio": {
           "denominator": 103246.0,
           "numerator": 66531.0,
+          "source": {
+            "denominator_pointer": "/by_system/q5_llm_agent/total_tokens",
+            "derivation": "ratio",
+            "left_pointer": null,
+            "numerator_pointer": "/by_system/q5_hybrid_agent/total_tokens",
+            "right_pointer": null,
+            "source_path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json",
+            "tolerance": 0.005,
+            "value_pointer": null
+          },
           "unit": "ratio",
           "value": 0.644393
         }
@@ -176,10 +364,15 @@
       "question_id": "Q5",
       "source_artifacts": [
         {
-          "evidence_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db",
-          "path": "data/claims/evidence/q5_real_dev_v3_summary.json",
+          "archived_from_path": "data/eval_runs/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json",
+          "artifact_commit": "73ad26bc28cd70dcac6be8d7d21c41a531c44d16",
+          "execution_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db",
+          "path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json",
+          "release_commit": null,
+          "release_tag": null,
           "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3",
-          "sha256": "b727f2d102911ae3fab49abaef3ab10683445b39c6ba61855b9087c2fe740174"
+          "sha256": "86d6637954fa695e3de2d28d170ce3fb22f096ac360a18bf35e2f1f31d6f05a8",
+          "tag_object_sha": null
         }
       ],
       "split_or_frozen_scope": "real-dev",
@@ -199,6 +392,16 @@
         "semantic_uplift": {
           "denominator": 12.0,
           "numerator": 1.0,
+          "source": {
+            "denominator_pointer": "/comparisons/paired_bootstrap_ci/paired_case_count",
+            "derivation": "difference",
+            "left_pointer": "/by_system/q5_hybrid_agent/trajectory_qualified_success_by_stratum/semantic",
+            "numerator_pointer": null,
+            "right_pointer": "/by_system/q5_rule_agent/trajectory_qualified_success_by_stratum/semantic",
+            "source_path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json",
+            "tolerance": 0.005,
+            "value_pointer": "/comparisons/semantic_uplift_hybrid_vs_rule"
+          },
           "unit": "rate_difference",
           "value": 0.083333
         }
@@ -208,10 +411,26 @@
       "question_id": "Q5",
       "source_artifacts": [
         {
-          "evidence_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db",
-          "path": "data/claims/evidence/q5_real_dev_v3_summary.json",
+          "archived_from_path": "data/eval_runs/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json",
+          "artifact_commit": "73ad26bc28cd70dcac6be8d7d21c41a531c44d16",
+          "execution_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db",
+          "path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/summary.json",
+          "release_commit": null,
+          "release_tag": null,
           "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3",
-          "sha256": "b727f2d102911ae3fab49abaef3ab10683445b39c6ba61855b9087c2fe740174"
+          "sha256": "86d6637954fa695e3de2d28d170ce3fb22f096ac360a18bf35e2f1f31d6f05a8",
+          "tag_object_sha": null
+        },
+        {
+          "archived_from_path": "data/eval_runs/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/gates.json",
+          "artifact_commit": "73ad26bc28cd70dcac6be8d7d21c41a531c44d16",
+          "execution_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db",
+          "path": "data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/gates.json",
+          "release_commit": null,
+          "release_tag": null,
+          "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3",
+          "sha256": "1615fb0ecaf2fe44265f2f1c95a7707bef1a05acd3a4eb7c88debe89e4df15b9",
+          "tag_object_sha": null
         }
       ],
       "split_or_frozen_scope": "real-dev semantic stratum",
@@ -231,54 +450,144 @@
         "addendum_abstention_count": {
           "denominator": 32.0,
           "numerator": 0.0,
+          "source": {
+            "denominator_pointer": "/case_count",
+            "derivation": "ratio",
+            "left_pointer": null,
+            "numerator_pointer": "/abstention_count",
+            "right_pointer": null,
+            "source_path": "data/eval_runs/q5-boundary-f-addendum-z-a/addendum_metrics.json",
+            "tolerance": 0.005,
+            "value_pointer": null
+          },
           "unit": "rate",
           "value": 0.0
         },
         "addendum_conditional_risk": {
           "denominator": 32.0,
           "numerator": 0.0,
+          "source": {
+            "denominator_pointer": "/case_count",
+            "derivation": "rate_from_value",
+            "left_pointer": null,
+            "numerator_pointer": null,
+            "right_pointer": null,
+            "source_path": "data/eval_runs/q5-boundary-f-addendum-z-a/addendum_metrics.json",
+            "tolerance": 0.005,
+            "value_pointer": "/conditional_risk"
+          },
           "unit": "rate",
           "value": 0.0
         },
         "addendum_coverage": {
           "denominator": 32.0,
           "numerator": 32.0,
+          "source": {
+            "denominator_pointer": "/case_count",
+            "derivation": "ratio",
+            "left_pointer": null,
+            "numerator_pointer": "/parsed_count",
+            "right_pointer": null,
+            "source_path": "data/eval_runs/q5-boundary-f-addendum-z-a/addendum_metrics.json",
+            "tolerance": 0.005,
+            "value_pointer": "/coverage"
+          },
           "unit": "rate",
           "value": 1.0
         },
         "addendum_external_requests": {
           "denominator": 1.0,
           "numerator": 0.0,
+          "source": {
+            "denominator_pointer": null,
+            "derivation": "direct",
+            "left_pointer": null,
+            "numerator_pointer": null,
+            "right_pointer": null,
+            "source_path": "data/eval_runs/q5-boundary-f-addendum-z-a/addendum_metrics.json",
+            "tolerance": 0.005,
+            "value_pointer": "/external_requests"
+          },
           "unit": "count",
           "value": 0.0
         },
         "addendum_model_requests": {
           "denominator": 1.0,
           "numerator": 0.0,
+          "source": {
+            "denominator_pointer": null,
+            "derivation": "direct",
+            "left_pointer": null,
+            "numerator_pointer": null,
+            "right_pointer": null,
+            "source_path": "data/eval_runs/q5-boundary-f-addendum-z-a/addendum_metrics.json",
+            "tolerance": 0.005,
+            "value_pointer": "/model_requests"
+          },
           "unit": "count",
           "value": 0.0
         },
         "addendum_parser_accuracy": {
           "denominator": 32.0,
           "numerator": 32.0,
+          "source": {
+            "denominator_pointer": "/case_count",
+            "derivation": "ratio",
+            "left_pointer": null,
+            "numerator_pointer": "/correct_count",
+            "right_pointer": null,
+            "source_path": "data/eval_runs/q5-boundary-f-addendum-z-a/addendum_metrics.json",
+            "tolerance": 0.005,
+            "value_pointer": "/conditional_accuracy"
+          },
           "unit": "rate",
           "value": 1.0
         },
         "original_boundary_f_coverage": {
           "denominator": 32.0,
           "numerator": 30.0,
+          "source": {
+            "denominator_pointer": "/trigger_metrics/case_count",
+            "derivation": "ratio",
+            "left_pointer": null,
+            "numerator_pointer": "/trigger_metrics/parsed_count",
+            "right_pointer": null,
+            "source_path": "data/q5_frontier/dev-k0u-audit/boundary_f_summary.json",
+            "tolerance": 0.005,
+            "value_pointer": "/trigger_metrics/coverage"
+          },
           "unit": "rate",
           "value": 0.9375
         },
         "previously_uncovered_cases_resolved": {
           "denominator": 32.0,
           "numerator": 32.0,
+          "source": {
+            "denominator_pointer": "/previously_uncovered_cases_resolved/total",
+            "derivation": "ratio",
+            "left_pointer": null,
+            "numerator_pointer": "/previously_uncovered_cases_resolved/resolved",
+            "right_pointer": null,
+            "source_path": "data/eval_runs/q5-boundary-f-addendum-z-a/addendum_metrics.json",
+            "tolerance": 0.005,
+            "value_pointer": null
+          },
           "unit": "rate",
           "value": 1.0
         },
         "remaining_uncovered": {
           "denominator": 32.0,
           "numerator": 0.0,
+          "source": {
+            "denominator_pointer": "/remaining_uncovered_cases/total",
+            "derivation": "ratio",
+            "left_pointer": null,
+            "numerator_pointer": "/remaining_uncovered_cases/count",
+            "right_pointer": null,
+            "source_path": "data/eval_runs/q5-boundary-f-addendum-z-a/addendum_metrics.json",
+            "tolerance": 0.005,
+            "value_pointer": null
+          },
           "unit": "rate",
           "value": 0.0
         }
@@ -288,16 +597,26 @@
       "question_id": "Q5",
       "source_artifacts": [
         {
-          "evidence_commit": "17c6c7ddf641fc6b8e5c803f35743fd369f8b258",
+          "archived_from_path": "data/q5_frontier/dev-k0u-audit/boundary_f_summary.json",
+          "artifact_commit": "17c6c7ddf641fc6b8e5c803f35743fd369f8b258",
+          "execution_commit": "17c6c7ddf641fc6b8e5c803f35743fd369f8b258",
           "path": "data/q5_frontier/dev-k0u-audit/boundary_f_summary.json",
+          "release_commit": null,
+          "release_tag": null,
           "run_id": "q5-boundary-f-k0u",
-          "sha256": "a10d4cbff6fa9c7d554a87ad06dc63e79db235d289190d72af9addf0d6d97648"
+          "sha256": "a10d4cbff6fa9c7d554a87ad06dc63e79db235d289190d72af9addf0d6d97648",
+          "tag_object_sha": null
         },
         {
-          "evidence_commit": "c1fdecf0a4d3bb9fa6dbadecc8df7cdc05abe044",
+          "archived_from_path": "data/eval_runs/q5-boundary-f-addendum-z-a/addendum_metrics.json",
+          "artifact_commit": "c1fdecf0a4d3bb9fa6dbadecc8df7cdc05abe044",
+          "execution_commit": "c1fdecf0a4d3bb9fa6dbadecc8df7cdc05abe044",
           "path": "data/eval_runs/q5-boundary-f-addendum-z-a/addendum_metrics.json",
+          "release_commit": null,
+          "release_tag": null,
           "run_id": "q5-boundary-f-addendum-z-a",
-          "sha256": "1adf221729af61c0bbfa50c4fe28869710fc187ec1d09d7a522e11fde6e5efba"
+          "sha256": "1adf221729af61c0bbfa50c4fe28869710fc187ec1d09d7a522e11fde6e5efba",
+          "tag_object_sha": null
         }
       ],
       "split_or_frozen_scope": "frozen controlled-prose K0U 32-case scope",
@@ -319,10 +638,15 @@
       "question_id": "Q5",
       "source_artifacts": [
         {
-          "evidence_commit": "c1fdecf0a4d3bb9fa6dbadecc8df7cdc05abe044",
+          "archived_from_path": "data/eval_runs/q5-boundary-f-addendum-z-a/addendum_metrics.json",
+          "artifact_commit": "c1fdecf0a4d3bb9fa6dbadecc8df7cdc05abe044",
+          "execution_commit": "c1fdecf0a4d3bb9fa6dbadecc8df7cdc05abe044",
           "path": "data/eval_runs/q5-boundary-f-addendum-z-a/addendum_metrics.json",
+          "release_commit": null,
+          "release_tag": null,
           "run_id": "q5-boundary-f-addendum-z-a",
-          "sha256": "1adf221729af61c0bbfa50c4fe28869710fc187ec1d09d7a522e11fde6e5efba"
+          "sha256": "1adf221729af61c0bbfa50c4fe28869710fc187ec1d09d7a522e11fde6e5efba",
+          "tag_object_sha": null
         }
       ],
       "split_or_frozen_scope": "outside evaluated frozen scopes",
