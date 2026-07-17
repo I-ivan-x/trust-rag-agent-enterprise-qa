@@ -1,8 +1,11 @@
 import { defineConfig } from "astro/config";
-import tailwind from "@astrojs/tailwind";
+import tailwindcss from "@tailwindcss/vite";
 
 // Static showcase. Snapshot-first; optional live mode reads PUBLIC_API_BASE.
 export default defineConfig({
-  integrations: [tailwind({ applyBaseStyles: false })],
+  output: "static",
   site: "https://example.com",
+  vite: {
+    plugins: [tailwindcss()],
+  },
 });

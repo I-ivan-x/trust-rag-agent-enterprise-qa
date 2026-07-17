@@ -11,6 +11,11 @@ release tag、artifact schema 和 package identifier 为保持可复现性不迁
 
 ## 开发
 
+要求 Node.js `>=22.19.0`、npm `>=10.9.0`；CI 与 `.nvmrc` 固定到 Node 22.19.0。
+前端保持纯静态 Astro 输出，Tailwind 4 通过官方 Vite plugin 构建，不启用 SSR、server
+islands 或远程图片服务。依赖审计基线与剩余 moderate 的可达性分析见
+[`DEPENDENCY_SECURITY.md`](./DEPENDENCY_SECURITY.md)。
+
 ```bash
 cd frontend
 npm install
@@ -29,8 +34,8 @@ Q1–Q5 的当前招聘叙事由根目录 `data/claims/claim_registry.json` 单�
 - `src/data/q5-evidence.json`
 - `src/data/engineering-signals.json`
 
-每条记录都携带 `claim_id`、source artifact、SHA-256、run ID、evidence commit、
-evidence mode、scope 和 headline eligibility。修改 registry 后运行：
+每条记录都携带 `claim_id`、source artifact、SHA-256、run ID、execution commit、
+artifact commit、evidence mode、scope 和 headline eligibility。修改 registry 后运行：
 
 ```bash
 python scripts/build_public_claims.py

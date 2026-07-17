@@ -4,14 +4,24 @@
   "version": "0.1.0",
   "description": "Governed Runtime, Evaluation Harness, and Decision Frontier for Tool-Using Agents",
   "private": true,
+  "engines": {
+    "node": ">=22.19.0",
+    "npm": ">=10.9.0"
+  },
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview"
   },
   "dependencies": {
-    "astro": "^4.15.0",
-    "@astrojs/tailwind": "^5.1.0",
-    "tailwindcss": "^3.4.10"
+    "@lucide/astro": "1.25.0",
+    "@tailwindcss/vite": "4.3.3",
+    "astro": "7.1.1",
+    "tailwindcss": "4.3.3"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.61.1",
+    "lighthouse": "13.4.0",
+    "vite": "8.1.5"
   }
 }
