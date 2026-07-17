@@ -1,7 +1,7 @@
 [project]
 name = "trust-rag-agent-enterprise-qa"
 version = "0.1.0"
-description = "Trustworthy Enterprise Document RAG-Agent QA System"
+description = "Governed Runtime, Evaluation Harness, and Decision Frontier for Tool-Using Agents"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

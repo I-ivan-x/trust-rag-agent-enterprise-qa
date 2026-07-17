@@ -1,15 +1,19 @@
-# Interview QA（v2）
+# Agent Reliability Lab — Interview QA
+
+**Governed Runtime, Evaluation Harness, and Decision Frontier for Tool-Using Agents**
 
 > 第一部分：硬质疑题（负结果应对）。第二部分：基础概念题（每题答案锚定本项目实现）。
 > 原则：不美化、不隐藏；每个负结果按"现象 → 根因（带证据）→ 下一步"三段式回答；
-> 所有数字必须能对应到 Week 6 real run 的 run_id。
+> 当前公开数字必须对应 `data/claims/claim_registry.json` 的 claim ID；下方 Week 6 表是带 run_id
+> 的历史速查，不是第二份当前事实表。TrustRAG 是 legacy codename。
 > 配套补课清单：`docs/STUDY_CHECKLIST.md`。
 
 ------
 
 ## 数字速查表（必须背熟，面试中先于面试官说出口）
 
-全部来自 Week 6 真实评测（DeepSeek real run / 真实 embedding + reranker）：
+以下全部来自 Week 6 历史真实评测（DeepSeek real run / 真实 embedding + reranker）；当前可公开
+结论以 claim registry 为准：
 
 | 数字 | 含义 | 来源 run |
 | --- | --- | --- |
@@ -21,6 +25,21 @@
 | doc_hit@5：vector 0.60 / bm25 0.80 / hybrid 0.80 / +rerank 0.78 | 检索消融 | `week6-external-retrieval-ablation` |
 | hard_negative_error_rate 1.00 / doc_hit@5 0.05 | 压力测试全灭 | `week6-hard-negative-*` |
 | obfuscated：gated 0.3333 = agentic 0.3333 | agentic 零增益 | `week6-real-obfuscated-full` |
+
+------
+
+## 当前 Q5 结论怎么讲？
+
+> Q5 的 overall status 是 `scoped_negative_complete`。选择性 runtime、observation adaptation、
+> schema/transition safety 和 real-dev Hybrid efficiency 在各自冻结范围内得到展示；但预注册的
+> LLM semantic uplift 没过门，controlled-prose LLM necessity 又被 runtime-only deterministic
+> controls 在冻结范围内证伪。原 Boundary F 的 30/32 和 addendum 的 32/32 是先后两层证据，
+> 不能用后者覆盖前者。open-world LLM value 没有评测，所以绝不能说“LLM 普遍没价值”。
+
+证据问法：先给 claim ID——`q5.hybrid_efficiency`、`q5.llm_semantic_uplift`、
+`q5.controlled_prose_llm_necessity`、`q5.open_world_llm_value`——再打开生成的
+`docs/Q5_CLAIM_MATRIX.md`。历史 `q5_test` / K1 / confirmatory / Boundary G 计划已经 superseded，
+当前不应把它们讲成下一步承诺。
 
 ------
 

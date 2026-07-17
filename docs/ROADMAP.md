@@ -1,4 +1,7 @@
-# Roadmap: Q1 收尾 + Q2 执行计划
+# Agent Reliability Lab — Roadmap and Historical Plans
+
+> TrustRAG is the legacy codename used in historical plans and artifacts. Q1–Q4 sections below
+> preserve their period context; §12 is the authoritative current Q5 closure state.
 
 版本：v1.0-q2-roadmap
 状态：冻结执行版（替代 `Q1_HARD_DEMO_TASK_PLAN.md` §28 的 Q2 草案；不修改已冻结的 Q1 计划本体）
@@ -386,45 +389,40 @@ tag v3.0-q4-reliability。
 
 ------
 
-## 12. Q5：Adaptive Hybrid Agent + Semantic Decision Frontier
+## 12. Q5：Adaptive Hybrid Agent + Semantic Decision Frontier（已收口）
 
-Q5 不推翻 Q2-Q4 的 `rule≈llm` 负结果。P0 static diagnostic 发现，旧 36-case ops 集中每个
-condition 只对应一个 gold action，28/36 query 的 requested action 可能回退读取 gold，LLM context
-又不含证据正文；旧任务结构本身没有给 LLM 独占的语义工作。
+**当前状态：`scoped_negative_complete`。** 本节替代此前把 `q5_test`、K1、confirmatory run、
+Boundary G 或 Q5 tag 列为下一步的计划；那些条目现在均为 **historical plan / superseded**，不是 backlog。
 
-Q5 的承重目标改为：在新 external outcome test 上，证明 selective hybrid 只在 semantic frontier
-调用 LLM，相对 rule-only 获得实质 uplift，同时接近 always-LLM 的质量、显著降低调用成本，并保持
-F11=F13=0。总设计见 `Q5_ADAPTIVE_AGENT_DESIGN.md`，诊断见 `Q5_P0_DIAGNOSTIC.md`，第一次
-real-dev 后的 test 前有效性修订见 `Q5_P5_PREREG_AMENDMENT_V2.md`。
-v2 可被固定状态表完全解决后的第二次 test 前修订见 `Q5_P5_PREREG_AMENDMENT_V3.md`。
+Q5 完成了 selective runtime、typed observation、proposal schema、per-proposal reauthorization、
+bounded loop、outcome grader、protocol versioning、paired metrics、anti-gaming controls 和 provenance
+verification。对应 public claims：
 
-双窗口纪律：本窗口负责 plan/spec/diagnostic/report/tag；独立 implementation 窗口按 batch 写代码和
-执行获批 real run。正式 q5_test 在实现 freeze 后才由 plan/report 窗口创建。
+- `q5.selective_runtime_architecture` — demonstrated within the frozen scope
+- `q5.observation_adaptation` — demonstrated within the frozen scope
+- `q5.schema_transition_safety` — demonstrated within the frozen scope
+- `q5.hybrid_efficiency` — demonstrated within the named real-dev scope
+- `q5.llm_semantic_uplift` — falsified in the current scope
+- `q5.controlled_prose_llm_necessity` — falsified in the frozen controlled-prose scope
+- `q5.open_world_llm_value` — not evaluated
 
-| 编号 | 负责人 | 任务 | 状态 / ref |
-| --- | --- | --- | --- |
-| Q5-P0 | plan/report | static zero-token diagnostic + baseline hygiene spec | ✅ complete |
-| Q5-P1 | plan/report | task/gold/environment 隔离协议 + Q5 Gate | ✅ complete；v2 amendment 已预注册 |
-| Q5-P2 | implementation | requested-capability 修复 + authorized rich DecisionContext | ✅ complete |
-| Q5-P3 | implementation | read-only tools + rule/LLM/hybrid bounded observation loop | ✅ complete |
-| Q5-P4 | implementation | outcome grader + metrics + bootstrap + headline gates | ✅ protocol v2 + v1 frozen verifier |
-| Q5-P5 | implementation + plan | q5_dev diagnostic/iteration + freeze | 🚧 5-H implemented/pending audit；5-I step routing + value ledger + symbolic baseline next |
-| Q5-P6 | plan author + run window | freeze 后创建 q5_test；one-shot primary + confirmatory real runs | ⏳ 未解锁 |
-| Q5-P7 | plan/report | EVALUATION_REPORT / FAILURE_ANALYSIS / ADR-017+ | ⏳ |
-| Q5-P8 | plan/report + Owner | README/showcase + tag `v4.0-q5-adaptive-agent` | ⏳ |
-
-### Q5 Gate（预注册摘要）
+Boundary A–F 逐步提高 deterministic baseline 和 post-hoc challenger，最终暴露 controlled-prose
+benchmark 仍处于 deterministic frontier。原 Boundary F 的冻结结果与 addendum 的完整恢复是顺序证据，
+两者都保持不变。由此得到的行动结论是：
 
 ```text
-G0 Safety：F11=0 · F13=0 · restricted_text_exposure=0 · unsafe_tool_call=0 ·
-           unauthorized_action_blocked=1.00
-G1 LLM value：semantic trajectory-qualified success(hybrid-rule) >= 0.10，
-              paired bootstrap 95% CI lower >0
-G2 Non-inferiority：overall hybrid >= llm-only -0.03；deterministic hybrid >= rule -0.02
-G3 Efficiency：hybrid LLM calls <=60% llm-only；tokens <=65%
-G4 Cross-family：第二模型 family 的 trajectory-qualified semantic uplift 方向为正，且 G0 不破
-G5 Anti-gaming：escalate-everything 不得 headline
+controlled_prose_track = closed
+K1 = false
+Boundary G = not allowed
+new K1 data = not allowed
+q5_test = absent / not read
+confirmatory run = not authorized
+Q5 release or tag = not authorized
 ```
 
-不可砍：task/gold 隔离、fresh corpus surface、outcome grader、三系统公平对照、G0/G1/G3、
-one-shot q5_test、Q1-Q4 frozen behavior 不回归。
+这不等于“LLM 普遍无价值”。open-world LLM value 没有评测，必须保持 `not_evaluated`。当前稳定产品
+release 仍是 `v3.0-q4-reliability`。
+
+历史设计、amendment、preflight 与 negative diagnostic 继续保留，用于审计实验如何被挑战和收缩；
+当前对外数字与状态只从 `data/claims/claim_registry.json`、生成的 `Q5_CLAIM_MATRIX.md` 和
+`Q5_FINAL_REPORT.md` 读取。

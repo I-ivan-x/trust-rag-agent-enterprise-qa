@@ -1,7 +1,10 @@
-# TrustRAG Showcase (frontend)
+# Agent Reliability Lab (frontend)
 
-招聘向高级作品站，讲完整 Q1–Q4 叙事。Astro + Tailwind，**snapshot-first**（数据来自真实 run，
-独立部署随时可看），暗色 premium 技术风。中文界面。
+**Governed Runtime, Evaluation Harness, and Decision Frontier for Tool-Using Agents**
+
+招聘向静态作品站，讲完整 Q1–Q5 叙事。TrustRAG 是项目的 legacy codename；内部 run ID、
+release tag、artifact schema 和 package identifier 为保持可复现性不迁移。站点使用 Astro + Tailwind，
+保持 **snapshot-first**，中文界面。
 
 项目总整理见仓库根的 `docs/LATEST_RESULTS_AND_DEMO.md`。运行时控制台仍由 FastAPI 挂在
 `/console/`；本目录是对外展示用的静态 showcase。
@@ -16,7 +19,25 @@ npm run build    # 输出静态站到 frontend/dist
 npm run preview  # 本地预览构建产物
 ```
 
-## 数据快照（真实 run，可复现）
+## 数据与公开 claim
+
+Q1–Q5 的当前招聘叙事由根目录 `data/claims/claim_registry.json` 单源生成：
+
+- `src/data/questions.json`
+- `src/data/headline-results.json`
+- `src/data/decision-frontier.json`
+- `src/data/q5-evidence.json`
+- `src/data/engineering-signals.json`
+
+每条记录都携带 `claim_id`、source artifact、SHA-256、run ID、evidence commit、
+evidence mode、scope 和 headline eligibility。修改 registry 后运行：
+
+```bash
+python scripts/build_public_claims.py
+python scripts/check_claim_drift.py
+```
+
+以下旧页面快照继续支持既有 Q1–Q4 组件：
 
 `src/data/{triad,trajectories,audit,arc}.json` 由仓库根的脚本从真实 run 生成：
 
@@ -24,7 +45,7 @@ npm run preview  # 本地预览构建产物
 python scripts/build_showcase_snapshots.py     # 读 q3-p7 / q4-p5 等真实 run → 写 src/data/*.json
 ```
 
-所有数字标注 run_id；唯一的派生值是「全升级作弊者」的 triad（由留出 test gold 解析计算，
+旧快照数字标注 run_id；唯一的派生值是「全升级作弊者」的 triad（由留出 test gold 解析计算，
 标 `mode: "analytic"`）。before/after 是 Q3→Q4 状态比较（跨演进集），非同集 A/B——承重 claim 是
 after 留出集上 triad=True。
 
@@ -32,7 +53,7 @@ after 留出集上 triad=True。
 
 `Hero` 头条数字 · `Arc` 四季时间线 · `TrajectoryPlayer` 读→判→动→治 交互轨迹（含越权 fail-closed） ·
 `Pipeline` 管线图 + OpenInference span · `TriadGate` 反作弊门 + 作弊者对照 · `Honest` F1–F13 + 披露 ·
-`UnderHood` 栈/tag/CI 硬门。
+`UnderHood` 栈/tag/CI 硬门。Q5 的 public-truth 数据合同已经生成，但本批不重构展示组件。
 
 ## 部署
 

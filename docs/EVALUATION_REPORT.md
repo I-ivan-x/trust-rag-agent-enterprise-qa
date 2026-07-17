@@ -1,4 +1,16 @@
-# Evaluation Report
+# Agent Reliability Lab — Evaluation Report
+
+> TrustRAG is the legacy codename used by historical runs and artifacts. This report preserves
+> those historical sections. Current public claims are governed by `data/claims/claim_registry.json`;
+> narrative text here is not a numeric source of truth.
+
+## Current public-claim status
+
+Q1–Q4 historical results below remain evidence inputs. Q5 has now closed with overall status
+`scoped_negative_complete`: runtime/safety/efficiency mechanisms were demonstrated within named
+frozen scopes, while LLM semantic uplift and controlled-prose LLM necessity were falsified in the
+current scope. Open-world LLM value was not evaluated. See the generated `Q5_FINAL_REPORT.md` and
+`Q5_CLAIM_MATRIX.md`; their registry claim IDs and hash-bound source receipts are authoritative.
 
 > Pre-Week-6 obfuscated/agentic smoke results generated before the
 > expected_rewrite isolation fix are invalidated and must not be cited.
@@ -73,7 +85,7 @@ not a final system score.
 
 The raw-vs-grounded gap is used only to analyze memorization risk. It must not
 be quoted as headline quality, and raw correctness must not be presented as
-TrustRAG Enterprise QA accuracy.
+Agent Reliability Lab system accuracy.
 
 ## False Refusal vs False Answer Trade-off
 
@@ -547,3 +559,22 @@ boundary rather than hidden.
    set was never tuned to.
 ```
 
+## Q5 formal closure
+
+The Q5 conclusion is a scoped negative result, not an unfinished real-run plan. Boundary F's
+original frozen result and the later addendum are preserved as sequential evidence; the addendum
+does not rewrite history. The controlled-prose track is closed, K1 is false, and plans for
+`q5_test`, a confirmatory provider, Boundary G, new K1 data, or a Q5 release/tag are superseded.
+
+Current Q5 statements must cite these registry claims rather than copying metrics into a new table:
+
+- `q5.selective_runtime_architecture`
+- `q5.observation_adaptation`
+- `q5.schema_transition_safety`
+- `q5.hybrid_efficiency`
+- `q5.llm_semantic_uplift`
+- `q5.controlled_prose_llm_necessity`
+- `q5.open_world_llm_value`
+
+No `q5_test` split was read or created during closure. The latest stable product release remains
+`v3.0-q4-reliability`.

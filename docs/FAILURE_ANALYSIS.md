@@ -1,7 +1,10 @@
-# Failure Analysis
+# Agent Reliability Lab — Failure Analysis
 
 This report summarizes Week 6 full real-run and closeout artifacts. It is a
 failure taxonomy, not a single latest-run dump.
+
+TrustRAG is the legacy codename retained in historical run artifacts. Current public conclusions
+must cite `data/claims/claim_registry.json`; this historical taxonomy is not a second claim ledger.
 
 ## Run-Level Failure Counts
 
@@ -431,8 +434,8 @@ Week 6 boundary retained: hard_negative_error_rate=1.0 indicates a serious failu
 - observed evidence: `q3-p7-governance-ablation` F11 = **0** on both systems. The
   validator forces `escalate_to_human` whenever evidence is insufficient; the P6
   metric layer independently re-checks the rows and confirms 0.
-- status: **positive / target met (=0)**. The evidence-precondition machinery proven
-  on real data, not asserted.
+- status: **positive / target met (=0)**. The evidence-precondition machinery was
+  demonstrated within the named real-run scope, not merely asserted.
 
 ## F12 Over-Escalation
 
@@ -457,7 +460,7 @@ Week 6 boundary retained: hard_negative_error_rate=1.0 indicates a serious failu
   unauthorized request was blocked at the precondition gate and downgraded to
   `escalate_to_human`.
 - status: **positive / target met (=0)**. The fail-closed property promoted from
-  answers to actions, proven on real data. (Distinct from F12's under-escalation on
+  answers to actions was demonstrated within the named real-run scope. (Distinct from F12's under-escalation on
   the insufficient case, which is a usefulness defect, not an unauthorized execution.)
 
 ## F10–F13 — Q4 held-out update (`q4-p5-selection-calibrated`, rule)
@@ -485,3 +488,24 @@ held-out set (precision@authorized 0.4545 → 0.6471), thresholds frozen — a p
 earned by fixing detection/routing mechanisms, with the two-run §2.4 iteration disclosed in
 `EVALUATION_REPORT.md` and `Q4_P4_FREEZE.md`.
 
+## Q5 scoped-negative closure
+
+Q5 did not end with a hidden model failure or an unfinished promise. Its failure analysis became
+an attack on the benchmark itself: fixed-table, symbolic, shortcut, preregistered parser, and
+independent runtime-only challengers repeatedly recovered the supposed semantic frontier. The
+original Boundary F remained a partial deterministic recovery; a versioned addendum then closed
+the frozen controlled-prose scope without rewriting the original artifact.
+
+The public conclusion is therefore:
+
+- Runtime architecture, observation adaptation, schema/transition safety, and real-dev Hybrid
+  efficiency were demonstrated within their named scopes.
+- The preregistered LLM semantic-uplift claim was falsified in the current scope
+  (`q5.llm_semantic_uplift`).
+- Controlled-prose LLM necessity was falsified in the frozen controlled-prose scope
+  (`q5.controlled_prose_llm_necessity`).
+- Open-world LLM value was not evaluated (`q5.open_world_llm_value`).
+
+This closes the controlled-prose track. Historical plans for K1, `q5_test`, confirmatory runs,
+Boundary G, new K1 data, or a Q5 release/tag are superseded, not pending. See the generated
+`Q5_FINAL_REPORT.md` and `Q5_CLAIM_MATRIX.md` for metrics and hash-bound sources.

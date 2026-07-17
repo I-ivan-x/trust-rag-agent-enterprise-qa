@@ -2,6 +2,7 @@
   "name": "trustrag-showcase",
   "type": "module",
   "version": "0.1.0",
+  "description": "Governed Runtime, Evaluation Harness, and Decision Frontier for Tool-Using Agents",
   "private": true,
   "scripts": {
     "dev": "astro dev",

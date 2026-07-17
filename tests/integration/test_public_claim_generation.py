@@ -31,3 +31,51 @@ def test_generated_public_claim_files_are_current_and_provenanced() -> None:
             assert claim["source_artifacts"]
             assert all(source["sha256"] for source in claim["source_artifacts"])
             assert all(source["evidence_commit"] for source in claim["source_artifacts"])
+
+
+def test_recruiting_data_contract_is_complete_and_scoped() -> None:
+    metadata_fields = {
+        "claim_id",
+        "claim_scope",
+        "evidence_mode",
+        "headline_eligible",
+        "source_artifacts",
+        "split_or_frozen_scope",
+    }
+    data_paths = {
+        path.name: path
+        for path in GENERATED_PATHS
+        if path.suffix == ".json" and "frontend" in path.parts
+    }
+    assert set(data_paths) == {
+        "questions.json",
+        "headline-results.json",
+        "decision-frontier.json",
+        "q5-evidence.json",
+        "engineering-signals.json",
+    }
+    for path in data_paths.values():
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        claims = payload.get("claims") or payload.get("signals") or [
+            claim
+            for question in payload.get("questions", [])
+            for claim in question["claims"]
+        ]
+        assert claims, path
+        for claim in claims:
+            assert metadata_fields <= claim.keys(), (path, claim["claim_id"])
+            assert claim["source_artifacts"], (path, claim["claim_id"])
+            for source in claim["source_artifacts"]:
+                assert {
+                    "path",
+                    "sha256",
+                    "run_id",
+                    "evidence_commit",
+                } <= source.keys()
+    frontier = json.loads(data_paths["decision-frontier.json"].read_text(encoding="utf-8"))
+    assert [segment["segment_id"] for segment in frontier["segments"]] == [
+        "grammar",
+        "controlled_prose",
+        "open_semantics",
+        "unsafe",
+    ]
