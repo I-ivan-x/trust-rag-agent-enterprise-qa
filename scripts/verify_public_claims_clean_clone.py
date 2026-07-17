@@ -86,9 +86,24 @@ def verify_clean_clone(commit: str = "HEAD") -> CleanCloneVerificationReceipt:
 
 
 def verify_receipt(path: Path) -> CleanCloneVerificationReceipt:
+    try:
+        repository_path = path.resolve().relative_to(ROOT.resolve()).as_posix()
+    except ValueError as exc:
+        raise ValueError("clean-clone receipt must be inside the repository") from exc
+    if not _is_tracked(ROOT, repository_path):
+        raise ValueError("clean-clone receipt is not Git tracked")
     recorded = CleanCloneVerificationReceipt.model_validate_json(
         path.read_text(encoding="utf-8")
     )
+    if (
+        subprocess.run(
+            ["git", "merge-base", "--is-ancestor", recorded.tested_commit, "HEAD"],
+            cwd=ROOT,
+            capture_output=True,
+        ).returncode
+        != 0
+    ):
+        raise ValueError("clean-clone receipt tested commit is not a current ancestor")
     recomputed = verify_clean_clone(recorded.tested_commit)
     if recomputed != recorded:
         raise ValueError("clean-clone verification receipt does not match recomputation")

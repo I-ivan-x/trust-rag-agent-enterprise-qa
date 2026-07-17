@@ -1,0 +1,13 @@
+{
+  "claim_count": 14,
+  "generated_file_count": 9,
+  "generator_check": "passed",
+  "ignored_file_dependency_count": 0,
+  "raw_source_count": 9,
+  "schema_check": "passed",
+  "schema_version": "public-claim-clean-clone-receipt-v1",
+  "source_blob_count": 11,
+  "source_lineage_check": "passed",
+  "tested_commit": "02824810ecd515d106403fe69bc072fa7baaf06c",
+  "tested_tree": "a9caa92d9686dfc142b4694a5a95e4398070117a"
+}
