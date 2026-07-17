@@ -1,0 +1,9 @@
+{
+  "fallback": "none",
+  "frozen": true,
+  "hybrid_semantic_calls": 32,
+  "llm_only_semantic_calls": 64,
+  "retry": 0,
+  "schema_version": "q5-k0t-call-protocol-v1",
+  "theoretical_call_avoidance": 0.5
+}

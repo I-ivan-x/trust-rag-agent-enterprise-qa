@@ -1,0 +1,9 @@
+{
+  "files": {
+    "app/eval/q5_frontier_attack_suite_v5.py": "2596d5503c97d4546321484c889857b48afce1f40f325bb81d48e0fda00bd4f0",
+    "app/eval/q5_frontier_k0t_contract.py": "9fa9e958b7cc941270cc8e87eb8b1decef867baf177dda2274257e6bb65ba9f5",
+    "app/eval/q5_frontier_k0t_prereg.py": "76b45ed4bd833b8105cac70c8e35b6eece8ad5dd33c1dcfaa842b9588cc005f0",
+    "app/schemas/q5_frontier_v5.py": "34220243f6ad4281dfd0a3009248e78ca2f76797b7c8e10ebc115bd216bc9f5e"
+  },
+  "schema_version": "q5-k0t-prereg-source-inventory-v1"
+}

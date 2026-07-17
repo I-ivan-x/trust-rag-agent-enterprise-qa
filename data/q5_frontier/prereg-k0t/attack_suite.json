@@ -1,0 +1,16 @@
+{
+  "attacks": [
+    "family_only",
+    "phenomenon_only",
+    "renderer_template_only",
+    "token_pattern_state_equality",
+    "action_phrase_omitted",
+    "lexical_condition_action_parser",
+    "majority_action",
+    "pair_neighbor"
+  ],
+  "external_requests": 0,
+  "model_requests": 0,
+  "post_hoc_k0sr_16_of_16_included": true,
+  "schema_version": "q5-k0t-attack-suite-v1"
+}

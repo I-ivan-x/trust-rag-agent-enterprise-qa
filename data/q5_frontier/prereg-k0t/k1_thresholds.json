@@ -1,0 +1,9 @@
+{
+  "deterministic_conditional_risk_max": 0.0,
+  "parser_uncovered_min": 32,
+  "schema_version": "q5-k0t-k1-thresholds-v1",
+  "semantic_call_avoidance_min": 0.4,
+  "shortcut_success_rate_max": 0.5,
+  "uncovered_pair_direction_count_each": 8,
+  "unsafe_terminal_max": 0
+}

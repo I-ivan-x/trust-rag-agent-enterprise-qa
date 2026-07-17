@@ -1,0 +1,11 @@
+{
+  "artifacts": {
+    "attack_suite.json": "e02f1c470dae4c82ea14c9e6f9d689dd29be87ada86884e89be0be9f3cef66b8",
+    "call_protocol.json": "2617586956da1ca6424a5d34c99b3ceb30fb6192837dc7a40f463b644c0be33c",
+    "data_constraints.json": "d70c8be0be227e5abf13e6cab89a46637f8b6c56e9a23edc8dee766277bb64b9",
+    "k1_thresholds.json": "dc78b997e282386fdc02107c40e842489127128b13e3f515ba1fa23c1bb0709a",
+    "metric_contract.json": "8758f386fdbbc888a2557a6cfde44bac4b0aa1ace1ebc912f05889e151c0d63d",
+    "source_inventory.json": "6321dd6df21402a8a30e37c1b21d7be5897ce63b6c371e6c45bc9d9e59baa3a3"
+  },
+  "schema_version": "q5-k0t-prereg-hashes-v1"
+}

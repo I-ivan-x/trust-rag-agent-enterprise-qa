@@ -1,0 +1,14 @@
+{
+  "ambiguous_or_unsafe": 16,
+  "case_count": 96,
+  "covered_pair_directions_each": 8,
+  "families": 4,
+  "phenomena": 4,
+  "schema_version": "q5-k0t-data-constraints-v1",
+  "semantic_open": 64,
+  "semantic_pairs": 32,
+  "semantic_parser_covered": 32,
+  "semantic_parser_uncovered": 32,
+  "symbolic_complete": 16,
+  "uncovered_pair_directions_each": 8
+}

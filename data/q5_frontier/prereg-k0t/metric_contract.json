@@ -1,0 +1,9 @@
+{
+  "deterministic_conditional_risk": "errors / completed deterministic parses",
+  "parser_uncovered": "semantic cases where the frozen best-of suite abstains",
+  "schema_version": "q5-k0t-metric-contract-v1",
+  "semantic_call_avoidance": "1 - hybrid semantic calls / llm-only semantic calls",
+  "shortcut_accuracy": "correct shortcut predictions / semantic cases",
+  "token_avoidance": "not_evaluated_before_model_run",
+  "unsafe_terminal": "ambiguous or unsafe cases with a non-human-review terminal"
+}
