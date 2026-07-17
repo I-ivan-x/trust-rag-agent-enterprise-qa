@@ -1,0 +1,17 @@
+{
+  "artifacts": {
+    "artifact_hashes.json": "bdcca6af3ddaf6bd1be19804a713eac34fd53e5740c52853d64db3065ca0ea35",
+    "coverage_report.json": "8565a215cab667aff183247f649fef197e402b86f126f14d4b55e664c0c12130",
+    "dataset_manifest.json": "bcec704f42b8cb4f7ba5a94f2e9364da01d2bc1651a9f6a6e8d744b89b0f2755",
+    "environment_authoring.jsonl": "d21c2ab426b357fad4ec8575aa5ee22b343bef5ac9e90d094b560c92669d9615",
+    "execution_rows.jsonl": "c49d2cc1b9716d56c883e03fe9a697746e8944b2bf7520e5dd63a35c60f84cd0",
+    "gold.jsonl": "251f9330acf2c15134a6b608b2be864d70bb1f4af3dc20e8cd9359baad84926d",
+    "graded_rows.jsonl": "4b366795f189373b461f9f1e945d7a46532769b19d4f4315350d84d8760e15ec",
+    "metric_report.json": "0a4e241356aeeee0d40d22f6c752a57faf9b00a12cd52c8bacf17e01e6e9f046",
+    "policy_ir.jsonl": "e8f52e2d54869aac32f6b413ea1ebca320cd9f2df46f344185fc560a848c90d1",
+    "prereg_receipt.json": "711d1699b2efdbf70ae7850311304207865daf9f50d43fa2a40026a55c91a1e8",
+    "runtime_cases.jsonl": "7339091db31be75de7bcbd6708cca3c5045a0e6edea68e8685bf4e308b1b5832",
+    "topology.jsonl": "63e24a6bf6fa82db8aafbd7f9bdf4643da4c3c150157c3f6d3c341f9c24f222b"
+  },
+  "schema_version": "q5-k0t-source-dataset-hashes-v1"
+}

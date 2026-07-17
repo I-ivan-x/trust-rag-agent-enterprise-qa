@@ -1,0 +1,10 @@
+{
+  "artifacts": {
+    "attack_report.md": "2811548497d6c80b2e0173f0523b1f4d5af15fbe2862e2b21885bbdd57835e34",
+    "k1_readiness.json": "4285205e01973535ded00fdf43939909e98e6ce199009f7e74b9615ba4fe8efe",
+    "lineage_receipt.json": "4b2352e14ab5ebd2a2d03ba0d1a6bb6f0fd91b820716b26972c76f3cc83bdfd3",
+    "shortcut_audit.json": "ed528e83a34bdb6af1be974fba938c79f1a677314074f72e40b422f3f1d70ce9",
+    "source_dataset_hashes.json": "11d144b775881f7327bc51b5be4d247c7792cb588b432522c7b2139cf413e251"
+  },
+  "schema_version": "q5-k0t-audit-hashes-v1"
+}

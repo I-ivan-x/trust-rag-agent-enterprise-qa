@@ -1,0 +1,98 @@
+{
+  "action_phrase_audit": {
+    "action_occurrence_counts": {
+      "mark_stale": 32,
+      "no_action": 32,
+      "notify": 32,
+      "remediate": 32
+    },
+    "balanced": true,
+    "families_per_action": {
+      "mark_stale": [
+        "access",
+        "change",
+        "incident",
+        "retention"
+      ],
+      "no_action": [
+        "access",
+        "change",
+        "incident",
+        "retention"
+      ],
+      "notify": [
+        "access",
+        "change",
+        "incident",
+        "retention"
+      ],
+      "remediate": [
+        "access",
+        "change",
+        "incident",
+        "retention"
+      ]
+    },
+    "observed_phrase_count": 16,
+    "phenomena_per_action": {
+      "mark_stale": [
+        "cross_sentence_coreference",
+        "exception_precedence",
+        "negation_unless",
+        "temporal_ordering"
+      ],
+      "no_action": [
+        "cross_sentence_coreference",
+        "exception_precedence",
+        "negation_unless",
+        "temporal_ordering"
+      ],
+      "notify": [
+        "cross_sentence_coreference",
+        "exception_precedence",
+        "negation_unless",
+        "temporal_ordering"
+      ],
+      "remediate": [
+        "cross_sentence_coreference",
+        "exception_precedence",
+        "negation_unless",
+        "temporal_ordering"
+      ]
+    },
+    "phrase_occurrence_counts": {
+      "apply the stale classification": 8,
+      "begin the repair procedure": 8,
+      "communicate the policy notification": 8,
+      "deliver the prescribed alert": 8,
+      "designate the record as stale": 8,
+      "initiate corrective handling": 8,
+      "issue the required notice": 8,
+      "leave the record as it stands": 8,
+      "make no governance change": 8,
+      "move the record out of current standing": 8,
+      "open corrective resolution": 8,
+      "preserve the current governed state": 8,
+      "record the item as outdated": 8,
+      "retain the existing disposition": 8,
+      "send the governance advisory": 8,
+      "start the remediation path": 8
+    }
+  },
+  "checks": {
+    "action_paraphrase_balanced": true,
+    "deterministic_conditional_risk": true,
+    "family_action_nondeterministic": true,
+    "parser_uncovered": true,
+    "phenomenon_action_nondeterministic": true,
+    "semantic_call_avoidance": true,
+    "shortcut_headroom": true,
+    "uncovered_pair_directions_balanced": true,
+    "unsafe_terminal": true
+  },
+  "decision": "approved_for_separate_k1_real_model_evaluation",
+  "external_requests": 0,
+  "model_requests": 0,
+  "schema_version": "q5-k0t-k1-readiness-v1",
+  "valid": true
+}

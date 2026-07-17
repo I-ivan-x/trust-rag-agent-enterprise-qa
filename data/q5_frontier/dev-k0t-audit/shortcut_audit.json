@@ -1,0 +1,73 @@
+{
+  "attacks": [
+    {
+      "breached": false,
+      "evaluated_count": 64,
+      "name": "family_only",
+      "success_count": 0,
+      "success_rate": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "breached": false,
+      "evaluated_count": 64,
+      "name": "phenomenon_only",
+      "success_count": 0,
+      "success_rate": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "breached": false,
+      "evaluated_count": 64,
+      "name": "renderer_template_only",
+      "success_count": 0,
+      "success_rate": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "breached": false,
+      "evaluated_count": 64,
+      "name": "token_pattern_state_equality",
+      "success_count": 0,
+      "success_rate": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "breached": false,
+      "evaluated_count": 64,
+      "name": "action_phrase_omitted",
+      "success_count": 0,
+      "success_rate": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "breached": false,
+      "evaluated_count": 64,
+      "name": "lexical_condition_action_parser",
+      "success_count": 32,
+      "success_rate": 0.5,
+      "threshold": 0.5
+    },
+    {
+      "breached": false,
+      "evaluated_count": 64,
+      "name": "majority_action",
+      "success_count": 0,
+      "success_rate": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "breached": false,
+      "evaluated_count": 64,
+      "name": "pair_neighbor",
+      "success_count": 32,
+      "success_rate": 0.5,
+      "threshold": 0.5
+    }
+  ],
+  "external_requests": 0,
+  "headroom_survives": true,
+  "model_requests": 0,
+  "schema_version": "q5-k0t-shortcut-audit-v1",
+  "semantic_case_count": 64
+}
