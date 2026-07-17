@@ -1,0 +1,220 @@
+{
+  "$defs": {
+    "ClaimMetric": {
+      "additionalProperties": false,
+      "properties": {
+        "denominator": {
+          "exclusiveMinimum": 0,
+          "title": "Denominator",
+          "type": "number"
+        },
+        "numerator": {
+          "title": "Numerator",
+          "type": "number"
+        },
+        "unit": {
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "title": "Unit",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "numerator",
+        "denominator",
+        "value",
+        "unit"
+      ],
+      "title": "ClaimMetric",
+      "type": "object"
+    },
+    "ClaimSourceArtifact": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_commit": {
+          "pattern": "^[0-9a-f]{40}$",
+          "title": "Evidence Commit",
+          "type": "string"
+        },
+        "path": {
+          "minLength": 1,
+          "pattern": "^[^\\\\]+$",
+          "title": "Path",
+          "type": "string"
+        },
+        "run_id": {
+          "minLength": 1,
+          "title": "Run Id",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "sha256",
+        "run_id",
+        "evidence_commit"
+      ],
+      "title": "ClaimSourceArtifact",
+      "type": "object"
+    },
+    "ClaimStatus": {
+      "enum": [
+        "demonstrated_in_frozen_scope",
+        "falsified_in_current_scope",
+        "not_evaluated"
+      ],
+      "title": "ClaimStatus",
+      "type": "string"
+    },
+    "EvidenceMode": {
+      "enum": [
+        "real",
+        "mock",
+        "synthetic",
+        "replay",
+        "offline_control"
+      ],
+      "title": "EvidenceMode",
+      "type": "string"
+    },
+    "PublicClaim": {
+      "additionalProperties": false,
+      "properties": {
+        "claim_id": {
+          "pattern": "^q[1-5]\\.[a-z][a-z0-9_]*$",
+          "title": "Claim Id",
+          "type": "string"
+        },
+        "claim_scope": {
+          "minLength": 1,
+          "title": "Claim Scope",
+          "type": "string"
+        },
+        "evidence_mode": {
+          "$ref": "#/$defs/EvidenceMode"
+        },
+        "headline_eligible": {
+          "title": "Headline Eligible",
+          "type": "boolean"
+        },
+        "limitations": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Limitations",
+          "type": "array"
+        },
+        "metrics": {
+          "additionalProperties": {
+            "$ref": "#/$defs/ClaimMetric"
+          },
+          "title": "Metrics",
+          "type": "object"
+        },
+        "public_label": {
+          "minLength": 1,
+          "title": "Public Label",
+          "type": "string"
+        },
+        "public_summary": {
+          "minLength": 1,
+          "title": "Public Summary",
+          "type": "string"
+        },
+        "question_id": {
+          "enum": [
+            "Q1",
+            "Q2",
+            "Q3",
+            "Q4",
+            "Q5"
+          ],
+          "title": "Question Id",
+          "type": "string"
+        },
+        "source_artifacts": {
+          "items": {
+            "$ref": "#/$defs/ClaimSourceArtifact"
+          },
+          "minItems": 1,
+          "title": "Source Artifacts",
+          "type": "array"
+        },
+        "split_or_frozen_scope": {
+          "minLength": 1,
+          "title": "Split Or Frozen Scope",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/ClaimStatus"
+        }
+      },
+      "required": [
+        "claim_id",
+        "question_id",
+        "public_label",
+        "status",
+        "claim_scope",
+        "evidence_mode",
+        "split_or_frozen_scope",
+        "source_artifacts",
+        "metrics",
+        "headline_eligible",
+        "limitations",
+        "public_summary"
+      ],
+      "title": "PublicClaim",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "claims": {
+      "items": {
+        "$ref": "#/$defs/PublicClaim"
+      },
+      "minItems": 1,
+      "title": "Claims",
+      "type": "array"
+    },
+    "legacy_codename": {
+      "const": "TrustRAG",
+      "title": "Legacy Codename",
+      "type": "string"
+    },
+    "project_public_name": {
+      "const": "Agent Reliability Lab",
+      "title": "Project Public Name",
+      "type": "string"
+    },
+    "q5_overall_status": {
+      "const": "scoped_negative_complete",
+      "title": "Q5 Overall Status",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "public-claim-registry-v1",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "project_public_name",
+    "legacy_codename",
+    "q5_overall_status",
+    "claims"
+  ],
+  "title": "ClaimRegistry",
+  "type": "object"
+}

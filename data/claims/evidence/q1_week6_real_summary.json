@@ -1,0 +1,31 @@
+{
+  "schema_version": "public-claim-evidence-v1",
+  "question_id": "Q1",
+  "run_id": "week6-real-external-full",
+  "evidence_commit": "28c55f81d185fedab1d21a9a7f70af6272aa0b52",
+  "evidence_mode": "real",
+  "split": "external",
+  "source_runs": [
+    {
+      "run_id": "week6-real-external-full",
+      "original_path": "data/eval_runs/week6-real-external-full/summary.json",
+      "sha256": "44b0c99b0acdb6e6ff9e022612e6aa952d47f060e991e1017d7c472c894bc296"
+    },
+    {
+      "run_id": "week6-external-retrieval-ablation",
+      "original_path": "data/eval_runs/week6-external-retrieval-ablation/summary.json",
+      "sha256": "48309825fb871033c23faf5722c6d7bbf732c3b03e4197933eaba7f786f03cd6"
+    }
+  ],
+  "metrics": {
+    "gated_false_answers": {"numerator": 0, "denominator": 50, "value": 0.0, "unit": "rate"},
+    "grounded_correct": {"numerator": 12, "denominator": 50, "value": 0.24, "unit": "rate"},
+    "false_refusals": {"numerator": 23, "denominator": 50, "value": 0.46, "unit": "rate"},
+    "vector_doc_hit_at_5": {"numerator": 30, "denominator": 50, "value": 0.6, "unit": "rate"},
+    "hybrid_doc_hit_at_5": {"numerator": 40, "denominator": 50, "value": 0.8, "unit": "rate"}
+  },
+  "limitations": [
+    "Citation validity in the source run is structural, not a complete human semantic-support audit.",
+    "The fail-closed safety result coexists with a 23/50 false-refusal rate."
+  ]
+}

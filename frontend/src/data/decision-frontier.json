@@ -1,0 +1,326 @@
+{
+  "claims": [
+    {
+      "claim_id": "q5.selective_runtime_architecture",
+      "claim_scope": "Protocol-v3 primary real-dev run across 36 cases and three systems",
+      "evidence_mode": "real",
+      "headline_eligible": false,
+      "limitations": [
+        "This is real-dev evidence, not held-out test evidence.",
+        "The architecture result does not establish LLM semantic value."
+      ],
+      "metrics": {
+        "hybrid_route_precision": {
+          "denominator": 1.0,
+          "numerator": 1.0,
+          "unit": "normalized_ratio",
+          "value": 1.0
+        },
+        "hybrid_route_recall": {
+          "denominator": 1.0,
+          "numerator": 1.0,
+          "unit": "normalized_ratio",
+          "value": 1.0
+        },
+        "trajectory_qualified_success": {
+          "denominator": 108.0,
+          "numerator": 90.0,
+          "unit": "rate",
+          "value": 0.833333
+        }
+      },
+      "public_label": "Selective runtime architecture",
+      "public_summary": "Demonstrated within the primary real-dev scope: the bounded selective runtime routed and completed trajectories under the frozen protocol.",
+      "question_id": "Q5",
+      "source_artifacts": [
+        {
+          "evidence_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db",
+          "path": "data/claims/evidence/q5_real_dev_v3_summary.json",
+          "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3",
+          "sha256": "08647461190165f493bf3fee123602efaca096693d80c3a188e28c72be392d4d"
+        }
+      ],
+      "split_or_frozen_scope": "real-dev",
+      "status": "demonstrated_in_frozen_scope",
+      "status_label": "Demonstrated within the frozen scope"
+    },
+    {
+      "claim_id": "q5.observation_adaptation",
+      "claim_scope": "Protocol-v3 hybrid system in the primary real-dev run",
+      "evidence_mode": "real",
+      "headline_eligible": false,
+      "limitations": [
+        "Normalized ratios are scoped to the frozen real-dev topology."
+      ],
+      "metrics": {
+        "post_observation_terminal_rate": {
+          "denominator": 1.0,
+          "numerator": 1.0,
+          "unit": "normalized_ratio",
+          "value": 1.0
+        },
+        "required_observation_recall": {
+          "denominator": 1.0,
+          "numerator": 1.0,
+          "unit": "normalized_ratio",
+          "value": 1.0
+        }
+      },
+      "public_label": "Observation adaptation",
+      "public_summary": "Demonstrated within real-dev: required observations completed and successful observations were followed by terminal decisions.",
+      "question_id": "Q5",
+      "source_artifacts": [
+        {
+          "evidence_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db",
+          "path": "data/claims/evidence/q5_real_dev_v3_summary.json",
+          "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3",
+          "sha256": "08647461190165f493bf3fee123602efaca096693d80c3a188e28c72be392d4d"
+        }
+      ],
+      "split_or_frozen_scope": "real-dev",
+      "status": "demonstrated_in_frozen_scope",
+      "status_label": "Demonstrated within the frozen scope"
+    },
+    {
+      "claim_id": "q5.schema_transition_safety",
+      "claim_scope": "Protocol-v3 hybrid system over 108 real-dev trials",
+      "evidence_mode": "real",
+      "headline_eligible": false,
+      "limitations": [
+        "Zero observed failures in 108 dev trials is not an open-world guarantee."
+      ],
+      "metrics": {
+        "F11": {
+          "denominator": 108.0,
+          "numerator": 0.0,
+          "unit": "rate",
+          "value": 0.0
+        },
+        "F13": {
+          "denominator": 108.0,
+          "numerator": 0.0,
+          "unit": "rate",
+          "value": 0.0
+        },
+        "F17": {
+          "denominator": 108.0,
+          "numerator": 0.0,
+          "unit": "rate",
+          "value": 0.0
+        },
+        "invalid_transitions": {
+          "denominator": 108.0,
+          "numerator": 0.0,
+          "unit": "rate",
+          "value": 0.0
+        },
+        "schema_invalid": {
+          "denominator": 108.0,
+          "numerator": 0.0,
+          "unit": "rate",
+          "value": 0.0
+        },
+        "unsafe_tool_calls": {
+          "denominator": 108.0,
+          "numerator": 0.0,
+          "unit": "rate",
+          "value": 0.0
+        }
+      },
+      "public_label": "Schema and transition safety",
+      "public_summary": "Demonstrated within 108 hybrid real-dev trials: F11/F13/F17, unsafe tool calls, invalid transitions, and schema-invalid events were zero.",
+      "question_id": "Q5",
+      "source_artifacts": [
+        {
+          "evidence_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db",
+          "path": "data/claims/evidence/q5_real_dev_v3_summary.json",
+          "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3",
+          "sha256": "08647461190165f493bf3fee123602efaca096693d80c3a188e28c72be392d4d"
+        }
+      ],
+      "split_or_frozen_scope": "real-dev",
+      "status": "demonstrated_in_frozen_scope",
+      "status_label": "Demonstrated within the frozen scope"
+    },
+    {
+      "claim_id": "q5.hybrid_efficiency",
+      "claim_scope": "Hybrid versus LLM-only in the protocol-v3 primary real-dev run",
+      "evidence_mode": "real",
+      "headline_eligible": false,
+      "limitations": [
+        "Efficiency is measured on real-dev and is not a held-out product headline."
+      ],
+      "metrics": {
+        "model_call_ratio": {
+          "denominator": 132.0,
+          "numerator": 78.0,
+          "unit": "ratio",
+          "value": 0.590909
+        },
+        "token_ratio": {
+          "denominator": 103246.0,
+          "numerator": 66531.0,
+          "unit": "ratio",
+          "value": 0.644393
+        }
+      },
+      "public_label": "Hybrid efficiency",
+      "public_summary": "Demonstrated within real-dev: Hybrid used 78/132 model calls and 66,531/103,246 tokens relative to LLM-only.",
+      "question_id": "Q5",
+      "source_artifacts": [
+        {
+          "evidence_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db",
+          "path": "data/claims/evidence/q5_real_dev_v3_summary.json",
+          "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3",
+          "sha256": "08647461190165f493bf3fee123602efaca096693d80c3a188e28c72be392d4d"
+        }
+      ],
+      "split_or_frozen_scope": "real-dev",
+      "status": "demonstrated_in_frozen_scope",
+      "status_label": "Demonstrated within the frozen scope"
+    },
+    {
+      "claim_id": "q5.llm_semantic_uplift",
+      "claim_scope": "Protocol-v3 semantic stratum in the primary real-dev run",
+      "evidence_mode": "real",
+      "headline_eligible": true,
+      "limitations": [
+        "This falsifies the preregistered value claim only in the current real-dev scope.",
+        "It does not show that LLMs are generally without value."
+      ],
+      "metrics": {
+        "semantic_uplift": {
+          "denominator": 12.0,
+          "numerator": 1.0,
+          "unit": "rate_difference",
+          "value": 0.083333
+        }
+      },
+      "public_label": "LLM semantic uplift",
+      "public_summary": "Falsified in the current real-dev scope: semantic uplift was 1/12 (0.083333), below the preregistered 0.10 floor.",
+      "question_id": "Q5",
+      "source_artifacts": [
+        {
+          "evidence_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db",
+          "path": "data/claims/evidence/q5_real_dev_v3_summary.json",
+          "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3",
+          "sha256": "08647461190165f493bf3fee123602efaca096693d80c3a188e28c72be392d4d"
+        }
+      ],
+      "split_or_frozen_scope": "real-dev semantic stratum",
+      "status": "falsified_in_current_scope",
+      "status_label": "Falsified in the current scope"
+    },
+    {
+      "claim_id": "q5.controlled_prose_llm_necessity",
+      "claim_scope": "Frozen K0U parser-uncovered 32-case controlled-prose scope",
+      "evidence_mode": "offline_control",
+      "headline_eligible": true,
+      "limitations": [
+        "This is a frozen-scope deterministic demonstration.",
+        "It does not evaluate open-world policy language or general LLM value."
+      ],
+      "metrics": {
+        "addendum_parser_accuracy": {
+          "denominator": 32.0,
+          "numerator": 32.0,
+          "unit": "rate",
+          "value": 1.0
+        },
+        "original_boundary_f_coverage": {
+          "denominator": 32.0,
+          "numerator": 30.0,
+          "unit": "rate",
+          "value": 0.9375
+        },
+        "remaining_uncovered": {
+          "denominator": 32.0,
+          "numerator": 0.0,
+          "unit": "rate",
+          "value": 0.0
+        }
+      },
+      "public_label": "Controlled-prose LLM necessity",
+      "public_summary": "Falsified in the frozen controlled-prose scope: the versioned deterministic parser resolved 32/32 cases, leaving 0/32 unresolved.",
+      "question_id": "Q5",
+      "source_artifacts": [
+        {
+          "evidence_commit": "17c6c7ddf641fc6b8e5c803f35743fd369f8b258",
+          "path": "data/q5_frontier/dev-k0u-audit/boundary_f_summary.json",
+          "run_id": "q5-boundary-f-k0u",
+          "sha256": "a10d4cbff6fa9c7d554a87ad06dc63e79db235d289190d72af9addf0d6d97648"
+        },
+        {
+          "evidence_commit": "c1fdecf0a4d3bb9fa6dbadecc8df7cdc05abe044",
+          "path": "data/eval_runs/q5-boundary-f-addendum-z-a/addendum_metrics.json",
+          "run_id": "q5-boundary-f-addendum-z-a",
+          "sha256": "1adf221729af61c0bbfa50c4fe28869710fc187ec1d09d7a522e11fde6e5efba"
+        }
+      ],
+      "split_or_frozen_scope": "frozen controlled-prose K0U 32-case scope",
+      "status": "falsified_in_current_scope",
+      "status_label": "Falsified in the current scope"
+    },
+    {
+      "claim_id": "q5.open_world_llm_value",
+      "claim_scope": "Open-world policy language outside the frozen controlled-prose benchmark",
+      "evidence_mode": "offline_control",
+      "headline_eligible": false,
+      "limitations": [
+        "The current benchmark closes only the controlled-prose track.",
+        "No held-out open-world test split was created or read."
+      ],
+      "metrics": {},
+      "public_label": "Open-world LLM value",
+      "public_summary": "Not evaluated: the frozen controlled-prose result cannot establish whether LLMs add value on open-world policy language.",
+      "question_id": "Q5",
+      "source_artifacts": [
+        {
+          "evidence_commit": "c1fdecf0a4d3bb9fa6dbadecc8df7cdc05abe044",
+          "path": "data/eval_runs/q5-boundary-f-addendum-z-a/addendum_metrics.json",
+          "run_id": "q5-boundary-f-addendum-z-a",
+          "sha256": "1adf221729af61c0bbfa50c4fe28869710fc187ec1d09d7a522e11fde6e5efba"
+        }
+      ],
+      "split_or_frozen_scope": "outside evaluated frozen scopes",
+      "status": "not_evaluated",
+      "status_label": "Not evaluated"
+    }
+  ],
+  "schema_version": "public-decision-frontier-v1",
+  "segments": [
+    {
+      "claim_ids": [
+        "q5.controlled_prose_llm_necessity"
+      ],
+      "interpretation": "Closed grammars remain a deterministic-parser responsibility.",
+      "label": "Grammar",
+      "segment_id": "grammar"
+    },
+    {
+      "claim_ids": [
+        "q5.controlled_prose_llm_necessity"
+      ],
+      "interpretation": "The frozen 32-case controlled-prose track is closed.",
+      "label": "Controlled prose",
+      "segment_id": "controlled_prose"
+    },
+    {
+      "claim_ids": [
+        "q5.llm_semantic_uplift",
+        "q5.open_world_llm_value"
+      ],
+      "interpretation": "Current-scope uplift failed; open-world value remains unevaluated.",
+      "label": "Open semantics",
+      "segment_id": "open_semantics"
+    },
+    {
+      "claim_ids": [
+        "q5.schema_transition_safety"
+      ],
+      "interpretation": "Unsafe or ungrounded transitions remain fail-closed.",
+      "label": "Unsafe",
+      "segment_id": "unsafe"
+    }
+  ]
+}

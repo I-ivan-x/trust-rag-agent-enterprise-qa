@@ -1,0 +1,37 @@
+{
+  "schema_version": "public-claim-evidence-v1",
+  "question_id": "Q5",
+  "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3",
+  "evidence_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db",
+  "evidence_mode": "real",
+  "split": "dev",
+  "source_artifact_sha256": {
+    "summary.json": "86d6637954fa695e3de2d28d170ce3fb22f096ac360a18bf35e2f1f31d6f05a8",
+    "manifest.json": "b0efd5a7a3c9d2f19cfe3251ed48c2d567a0336f9c779bf147434db8a1ce8de6",
+    "graded_manifest.json": "7122c08211f9c488caab4078b200dd05031d941c043d71a7e08a89c86de08ea9",
+    "gates.json": "1615fb0ecaf2fe44265f2f1c95a7707bef1a05acd3a4eb7c88debe89e4df15b9"
+  },
+  "metrics": {
+    "hybrid_route_precision": {"numerator": 1, "denominator": 1, "value": 1.0, "unit": "normalized_ratio"},
+    "hybrid_route_recall": {"numerator": 1, "denominator": 1, "value": 1.0, "unit": "normalized_ratio"},
+    "hybrid_trajectory_qualified_success": {"numerator": 90, "denominator": 108, "value": 0.833333, "unit": "rate"},
+    "hybrid_required_observation_recall": {"numerator": 1, "denominator": 1, "value": 1.0, "unit": "normalized_ratio"},
+    "hybrid_post_observation_terminal_rate": {"numerator": 1, "denominator": 1, "value": 1.0, "unit": "normalized_ratio"},
+    "hybrid_model_call_ratio": {"numerator": 78, "denominator": 132, "value": 0.590909, "unit": "ratio"},
+    "hybrid_token_ratio": {"numerator": 66531, "denominator": 103246, "value": 0.644393, "unit": "ratio"},
+    "hybrid_semantic_uplift": {"numerator": 1, "denominator": 12, "value": 0.083333, "unit": "rate_difference"},
+    "hybrid_F11": {"numerator": 0, "denominator": 108, "value": 0.0, "unit": "rate"},
+    "hybrid_F13": {"numerator": 0, "denominator": 108, "value": 0.0, "unit": "rate"},
+    "hybrid_F17": {"numerator": 0, "denominator": 108, "value": 0.0, "unit": "rate"},
+    "hybrid_unsafe_tool_calls": {"numerator": 0, "denominator": 108, "value": 0.0, "unit": "rate"},
+    "hybrid_invalid_transitions": {"numerator": 0, "denominator": 108, "value": 0.0, "unit": "rate"},
+    "hybrid_schema_invalid": {"numerator": 0, "denominator": 108, "value": 0.0, "unit": "rate"},
+    "duplicate_successful_observations": {"numerator": 0, "denominator": 108, "value": 0.0, "unit": "rate"}
+  },
+  "gate_results": {"G0": true, "G1": false, "G2": true, "G3": true, "G4": false, "G5": true},
+  "limitations": [
+    "This was a real primary dev run, not a held-out test run and not headline eligible as an overall Q5 value claim.",
+    "The semantic uplift was 1/12 (0.083333), below the preregistered 0.10 floor.",
+    "No confirmatory cross-family run was performed."
+  ]
+}

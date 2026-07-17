@@ -37,6 +37,9 @@ jobs:
       - name: Pytest
         run: uv run --frozen pytest -ra
 
+      - name: Public claim drift gate
+        run: uv run --frozen python scripts/check_claim_drift.py
+
       - name: Synthetic release gates
         run: >-
           uv run --frozen python scripts/check_release_gates.py
