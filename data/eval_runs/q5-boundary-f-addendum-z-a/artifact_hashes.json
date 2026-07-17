@@ -1,0 +1,11 @@
+{
+  "artifacts": {
+    "addendum_metrics.json": "1adf221729af61c0bbfa50c4fe28869710fc187ec1d09d7a522e11fde6e5efba",
+    "addendum_report.md": "44b3c1db7fcba58a7482857deb71bd31b5e3866889ff7cb2452455d96abe7b42",
+    "addendum_rows.jsonl": "45e14da1b43f1585cb1be60b7027bdea70c7b87dd0c6e2c600e6af45ce98bba8",
+    "frozen_scope.json": "203a57dbaea4f2b62dac72dc4c289061f8908b24443855324f01b637b2d84b86",
+    "lineage_receipt.json": "109bf2785189a0beb114a18fb7f4fcaa6310b8c2afc99d03b34de845303670bf",
+    "parser_attestation.json": "199c06036a37e42925a1a08cde49852335ce9d9c46d4933fb9dafe831ae75b92"
+  },
+  "schema_version": "q5-boundary-f-addendum-hashes-v1"
+}

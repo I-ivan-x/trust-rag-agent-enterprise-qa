@@ -1,0 +1,25 @@
+{
+  "checks": {
+    "branch_count": true,
+    "case_specific_lookup_absent": true,
+    "closed_runtime_signature": true,
+    "exact_policy_table_absent": true,
+    "forbidden_inputs_absent": true,
+    "lexicon_count": true,
+    "regex_count": true,
+    "source_lines": true
+  },
+  "measurements": {
+    "action_lexicon_entry_count": 4,
+    "ast_branch_node_count": 10,
+    "case_specific_literals_found": [],
+    "forbidden_tokens_found": [],
+    "function_sha256": "ce55c95fe3ce93773cf2dff20df46b029924b9f155e88f4882b04cc86efff05c",
+    "long_literal_count": 0,
+    "regex_pattern_count": 5,
+    "source_nonblank_lines": 71,
+    "source_sha256": "b83827775ae0f21ec1ffb1cc58bde52312019d7552f9f791ffa149fbcb6d96e0"
+  },
+  "schema_version": "q5-boundary-f-addendum-parser-attestation-v1",
+  "valid": true
+}

@@ -1,0 +1,13 @@
+{
+  "data_commit": "d86003b82d8e5145bbdc0d63840e7c208072415c",
+  "external_requests": 0,
+  "implementation_base_head": "17c6c7ddf641fc6b8e5c803f35743fd369f8b258",
+  "model_requests": 0,
+  "original_boundary_f_artifacts_modified": false,
+  "original_boundary_f_audit_hashes_sha256": "28fda1e4174efdbbd20a8eece796e95363bec87275dca7e9b238b4f51846882a",
+  "original_boundary_f_summary_sha256": "a10d4cbff6fa9c7d554a87ad06dc63e79db235d289190d72af9addf0d6d97648",
+  "parser_function_sha256": "ce55c95fe3ce93773cf2dff20df46b029924b9f155e88f4882b04cc86efff05c",
+  "parser_source": "app/eval/q5_boundary_f_addendum_parser.py",
+  "parser_source_sha256": "b83827775ae0f21ec1ffb1cc58bde52312019d7552f9f791ffa149fbcb6d96e0",
+  "schema_version": "q5-boundary-f-addendum-lineage-v1"
+}
