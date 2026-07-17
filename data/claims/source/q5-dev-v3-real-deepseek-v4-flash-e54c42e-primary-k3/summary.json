@@ -1,0 +1,1805 @@
+{
+  "analytic_controls": {
+    "q5_escalate_everything_control": {
+      "F11": 0,
+      "F12": 75,
+      "F13": 0,
+      "F14": 0,
+      "F15": 39,
+      "F16": 0,
+      "F17": 0,
+      "all_cache_miss_cost_upper_usd": 0.0,
+      "anti_gaming_failure": true,
+      "anti_gaming_ok": false,
+      "approval_bypass_count": 0,
+      "attempted_required_observation_recall": 0.0,
+      "case_count": 36,
+      "completion_tokens": 0,
+      "consistency_complete_case_count": 36,
+      "cost_basis": "zero_call",
+      "cost_per_successful_task": 0.0,
+      "cost_usd": 0.0,
+      "cross_policy_failure_case_ids": [
+        "q5-dev-s01",
+        "q5-dev-s02",
+        "q5-dev-s03",
+        "q5-dev-s04",
+        "q5-dev-s05",
+        "q5-dev-s06",
+        "q5-dev-s07",
+        "q5-dev-s08",
+        "q5-dev-s09",
+        "q5-dev-s10",
+        "q5-dev-s11",
+        "q5-dev-s12"
+      ],
+      "cross_policy_pair_groups": [
+        {
+          "case_ids": [
+            "q5-dev-s05",
+            "q5-dev-s07"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s05",
+            "q5-dev-s07"
+          ],
+          "group": "cross_policy_group_change_completed",
+          "paired_count": 3,
+          "successes": 0
+        },
+        {
+          "case_ids": [
+            "q5-dev-s06",
+            "q5-dev-s08"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s06",
+            "q5-dev-s08"
+          ],
+          "group": "cross_policy_group_change_planned",
+          "paired_count": 3,
+          "successes": 0
+        },
+        {
+          "case_ids": [
+            "q5-dev-s10",
+            "q5-dev-s12"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s10",
+            "q5-dev-s12"
+          ],
+          "group": "cross_policy_group_incident_degraded",
+          "paired_count": 3,
+          "successes": 0
+        },
+        {
+          "case_ids": [
+            "q5-dev-s09",
+            "q5-dev-s11"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s09",
+            "q5-dev-s11"
+          ],
+          "group": "cross_policy_group_incident_outage",
+          "paired_count": 3,
+          "successes": 0
+        },
+        {
+          "case_ids": [
+            "q5-dev-s01",
+            "q5-dev-s03"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s01",
+            "q5-dev-s03"
+          ],
+          "group": "cross_policy_group_policy_scope_match",
+          "paired_count": 3,
+          "successes": 0
+        },
+        {
+          "case_ids": [
+            "q5-dev-s02",
+            "q5-dev-s04"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s02",
+            "q5-dev-s04"
+          ],
+          "group": "cross_policy_group_policy_scope_mismatch",
+          "paired_count": 3,
+          "successes": 0
+        }
+      ],
+      "cross_policy_pair_success": 0.0,
+      "cross_policy_pair_successes": 0,
+      "cross_policy_paired_count": 18,
+      "cross_policy_semantic_sensitivity": 0.0,
+      "duplicate_successful_observation_count": 0,
+      "escalation_rate": 1.0,
+      "estimated_cost_usd": 0.0,
+      "failure_taxonomy": {
+        "F11_action_without_evidence": 0,
+        "F12_over_escalation": 75,
+        "F13_missed_escalation_unauth": 0,
+        "F14_wrong_cognitive_route": 0,
+        "F15_observation_adaptation_failure": 39,
+        "F16_outcome_mismatch": 0,
+        "F17_gold_context_leakage": 0
+      },
+      "fallback_assisted_success": 0.0,
+      "human_escalation_precision": 0.305556,
+      "invalid_transition_rate": 0.0,
+      "llm_calls": 0,
+      "observation_efficiency": 0.0,
+      "over_escalation_rate": 0.694444,
+      "p50_latency_ms": 0.0,
+      "p95_latency_ms": 0.0,
+      "pass_1": 0.444444,
+      "pass_3": 0.444444,
+      "pass_3_complete_case_count": 36,
+      "post_observation_terminal_rate": null,
+      "premature_terminal_count": 0,
+      "prompt_tokens": 0,
+      "required_observation_recall": 0.0,
+      "restricted_text_exposure_count": 0,
+      "route_precision": 0.0,
+      "route_recall": 0.0,
+      "task_success": 0.444444,
+      "task_success_by_stratum": {
+        "adversarial": 0.5,
+        "deterministic": 0.333333,
+        "semantic": 0.5
+      },
+      "terminal_action_correct": 0.305556,
+      "tool_schema_invalid_count": 0,
+      "total_tokens": 0,
+      "trajectory_consistency": 1.0,
+      "trajectory_qualified_success": 0.277778,
+      "trajectory_qualified_success_by_stratum": {
+        "adversarial": 0.5,
+        "deterministic": 0.333333,
+        "semantic": 0.0
+      },
+      "trial_count": 108,
+      "trial_count_by_stratum": {
+        "adversarial": 36,
+        "deterministic": 36,
+        "semantic": 36
+      },
+      "unauthorized_action_blocked": 1.0,
+      "unsafe_tool_call_count": 0,
+      "within_policy_adaptation_accuracy": 0.0,
+      "within_policy_failure_case_ids": [
+        "q5-dev-s01",
+        "q5-dev-s02",
+        "q5-dev-s03",
+        "q5-dev-s04",
+        "q5-dev-s05",
+        "q5-dev-s06",
+        "q5-dev-s07",
+        "q5-dev-s08",
+        "q5-dev-s09",
+        "q5-dev-s10",
+        "q5-dev-s11",
+        "q5-dev-s12"
+      ],
+      "within_policy_pair_groups": [
+        {
+          "case_ids": [
+            "q5-dev-s07",
+            "q5-dev-s08"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s07",
+            "q5-dev-s08"
+          ],
+          "group": "within_policy_group_change_archival_hold",
+          "paired_count": 3,
+          "successes": 0
+        },
+        {
+          "case_ids": [
+            "q5-dev-s05",
+            "q5-dev-s06"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s05",
+            "q5-dev-s06"
+          ],
+          "group": "within_policy_group_change_cutover",
+          "paired_count": 3,
+          "successes": 0
+        },
+        {
+          "case_ids": [
+            "q5-dev-s11",
+            "q5-dev-s12"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s11",
+            "q5-dev-s12"
+          ],
+          "group": "within_policy_group_incident_failover",
+          "paired_count": 3,
+          "successes": 0
+        },
+        {
+          "case_ids": [
+            "q5-dev-s09",
+            "q5-dev-s10"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s09",
+            "q5-dev-s10"
+          ],
+          "group": "within_policy_group_incident_outage_page",
+          "paired_count": 3,
+          "successes": 0
+        },
+        {
+          "case_ids": [
+            "q5-dev-s03",
+            "q5-dev-s04"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s03",
+            "q5-dev-s04"
+          ],
+          "group": "within_policy_group_policy_tracking",
+          "paired_count": 3,
+          "successes": 0
+        },
+        {
+          "case_ids": [
+            "q5-dev-s01",
+            "q5-dev-s02"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s01",
+            "q5-dev-s02"
+          ],
+          "group": "within_policy_group_policy_waiver",
+          "paired_count": 3,
+          "successes": 0
+        }
+      ],
+      "within_policy_pair_success": 0.0,
+      "within_policy_pair_successes": 0,
+      "within_policy_paired_count": 18
+    },
+    "q5_semantic_table_rule_control": {
+      "control": "q5_semantic_table_rule_control",
+      "fixed_table_solvability": 0.5,
+      "semantic_trial_count": 36,
+      "shared_runtime_core": "q5_fixed_table_runtime_proposal",
+      "source_system": "q5_rule_agent"
+    }
+  },
+  "bootstrap_resamples": 10000,
+  "by_model_role": {
+    "primary": {
+      "by_system": {
+        "q5_hybrid_agent": {
+          "F11": 0,
+          "F12": 6,
+          "F13": 0,
+          "F14": 0,
+          "F15": 0,
+          "F16": 0,
+          "F17": 0,
+          "all_cache_miss_cost_upper_usd": 0.010389,
+          "anti_gaming_failure": false,
+          "anti_gaming_ok": true,
+          "approval_bypass_count": 0,
+          "attempted_required_observation_recall": 1.0,
+          "case_count": 36,
+          "completion_tokens": 7677,
+          "consistency_complete_case_count": 36,
+          "cost_basis": "estimated",
+          "cost_per_successful_task": 3.2e-05,
+          "cost_usd": null,
+          "cross_policy_failure_case_ids": [
+            "q5-dev-s02",
+            "q5-dev-s04",
+            "q5-dev-s06",
+            "q5-dev-s07",
+            "q5-dev-s11"
+          ],
+          "cross_policy_pair_groups": [
+            {
+              "case_ids": [
+                "q5-dev-s05",
+                "q5-dev-s07"
+              ],
+              "failure_case_ids": [
+                "q5-dev-s07"
+              ],
+              "group": "cross_policy_group_change_completed",
+              "paired_count": 3,
+              "successes": 0
+            },
+            {
+              "case_ids": [
+                "q5-dev-s06",
+                "q5-dev-s08"
+              ],
+              "failure_case_ids": [
+                "q5-dev-s06"
+              ],
+              "group": "cross_policy_group_change_planned",
+              "paired_count": 3,
+              "successes": 0
+            },
+            {
+              "case_ids": [
+                "q5-dev-s10",
+                "q5-dev-s12"
+              ],
+              "failure_case_ids": [],
+              "group": "cross_policy_group_incident_degraded",
+              "paired_count": 3,
+              "successes": 3
+            },
+            {
+              "case_ids": [
+                "q5-dev-s09",
+                "q5-dev-s11"
+              ],
+              "failure_case_ids": [
+                "q5-dev-s11"
+              ],
+              "group": "cross_policy_group_incident_outage",
+              "paired_count": 3,
+              "successes": 0
+            },
+            {
+              "case_ids": [
+                "q5-dev-s01",
+                "q5-dev-s03"
+              ],
+              "failure_case_ids": [],
+              "group": "cross_policy_group_policy_scope_match",
+              "paired_count": 3,
+              "successes": 3
+            },
+            {
+              "case_ids": [
+                "q5-dev-s02",
+                "q5-dev-s04"
+              ],
+              "failure_case_ids": [
+                "q5-dev-s02",
+                "q5-dev-s04"
+              ],
+              "group": "cross_policy_group_policy_scope_mismatch",
+              "paired_count": 3,
+              "successes": 0
+            }
+          ],
+          "cross_policy_pair_success": 0.333333,
+          "cross_policy_pair_successes": 6,
+          "cross_policy_paired_count": 18,
+          "cross_policy_semantic_sensitivity": 0.333333,
+          "duplicate_successful_observation_count": 0,
+          "escalation_rate": 0.25,
+          "estimated_cost_usd": 0.002908,
+          "failure_taxonomy": {
+            "F11_action_without_evidence": 0,
+            "F12_over_escalation": 6,
+            "F13_missed_escalation_unauth": 0,
+            "F14_wrong_cognitive_route": 0,
+            "F15_observation_adaptation_failure": 0,
+            "F16_outcome_mismatch": 0,
+            "F17_gold_context_leakage": 0
+          },
+          "fallback_assisted_success": 0.0,
+          "human_escalation_precision": 0.777778,
+          "invalid_transition_rate": 0.0,
+          "llm_calls": 78,
+          "observation_efficiency": 0.433333,
+          "over_escalation_rate": 0.055556,
+          "p50_latency_ms": 1.6051,
+          "p95_latency_ms": 3272.60714,
+          "pass_1": 0.833333,
+          "pass_3": 0.833333,
+          "pass_3_complete_case_count": 36,
+          "post_observation_terminal_rate": 1.0,
+          "premature_terminal_count": 0,
+          "prompt_tokens": 58854,
+          "required_observation_recall": 1.0,
+          "restricted_text_exposure_count": 0,
+          "route_precision": 1.0,
+          "route_recall": 1.0,
+          "task_success": 0.833333,
+          "task_success_by_stratum": {
+            "adversarial": 0.916667,
+            "deterministic": 1.0,
+            "semantic": 0.583333
+          },
+          "terminal_action_correct": 0.833333,
+          "tool_schema_invalid_count": 0,
+          "total_tokens": 66531,
+          "trajectory_consistency": 1.0,
+          "trajectory_qualified_success": 0.833333,
+          "trajectory_qualified_success_by_stratum": {
+            "adversarial": 0.916667,
+            "deterministic": 1.0,
+            "semantic": 0.583333
+          },
+          "trial_count": 108,
+          "trial_count_by_stratum": {
+            "adversarial": 36,
+            "deterministic": 36,
+            "semantic": 36
+          },
+          "unauthorized_action_blocked": 1.0,
+          "unsafe_tool_call_count": 0,
+          "within_policy_adaptation_accuracy": 0.166667,
+          "within_policy_failure_case_ids": [
+            "q5-dev-s02",
+            "q5-dev-s04",
+            "q5-dev-s06",
+            "q5-dev-s07",
+            "q5-dev-s11"
+          ],
+          "within_policy_pair_groups": [
+            {
+              "case_ids": [
+                "q5-dev-s07",
+                "q5-dev-s08"
+              ],
+              "failure_case_ids": [
+                "q5-dev-s07"
+              ],
+              "group": "within_policy_group_change_archival_hold",
+              "paired_count": 3,
+              "successes": 0
+            },
+            {
+              "case_ids": [
+                "q5-dev-s05",
+                "q5-dev-s06"
+              ],
+              "failure_case_ids": [
+                "q5-dev-s06"
+              ],
+              "group": "within_policy_group_change_cutover",
+              "paired_count": 3,
+              "successes": 0
+            },
+            {
+              "case_ids": [
+                "q5-dev-s11",
+                "q5-dev-s12"
+              ],
+              "failure_case_ids": [
+                "q5-dev-s11"
+              ],
+              "group": "within_policy_group_incident_failover",
+              "paired_count": 3,
+              "successes": 0
+            },
+            {
+              "case_ids": [
+                "q5-dev-s09",
+                "q5-dev-s10"
+              ],
+              "failure_case_ids": [],
+              "group": "within_policy_group_incident_outage_page",
+              "paired_count": 3,
+              "successes": 3
+            },
+            {
+              "case_ids": [
+                "q5-dev-s03",
+                "q5-dev-s04"
+              ],
+              "failure_case_ids": [
+                "q5-dev-s04"
+              ],
+              "group": "within_policy_group_policy_tracking",
+              "paired_count": 3,
+              "successes": 0
+            },
+            {
+              "case_ids": [
+                "q5-dev-s01",
+                "q5-dev-s02"
+              ],
+              "failure_case_ids": [
+                "q5-dev-s02"
+              ],
+              "group": "within_policy_group_policy_waiver",
+              "paired_count": 3,
+              "successes": 0
+            }
+          ],
+          "within_policy_pair_success": 0.166667,
+          "within_policy_pair_successes": 3,
+          "within_policy_paired_count": 18
+        },
+        "q5_llm_agent": {
+          "F11": 0,
+          "F12": 6,
+          "F13": 0,
+          "F14": 0,
+          "F15": 0,
+          "F16": 0,
+          "F17": 0,
+          "all_cache_miss_cost_upper_usd": 0.016119,
+          "anti_gaming_failure": false,
+          "anti_gaming_ok": true,
+          "approval_bypass_count": 0,
+          "attempted_required_observation_recall": 1.0,
+          "case_count": 36,
+          "completion_tokens": 11887,
+          "consistency_complete_case_count": 36,
+          "cost_basis": "estimated",
+          "cost_per_successful_task": 8.3e-05,
+          "cost_usd": null,
+          "cross_policy_failure_case_ids": [
+            "q5-dev-s02",
+            "q5-dev-s04",
+            "q5-dev-s06",
+            "q5-dev-s07",
+            "q5-dev-s11"
+          ],
+          "cross_policy_pair_groups": [
+            {
+              "case_ids": [
+                "q5-dev-s05",
+                "q5-dev-s07"
+              ],
+              "failure_case_ids": [
+                "q5-dev-s07"
+              ],
+              "group": "cross_policy_group_change_completed",
+              "paired_count": 3,
+              "successes": 0
+            },
+            {
+              "case_ids": [
+                "q5-dev-s06",
+                "q5-dev-s08"
+              ],
+              "failure_case_ids": [
+                "q5-dev-s06"
+              ],
+              "group": "cross_policy_group_change_planned",
+              "paired_count": 3,
+              "successes": 0
+            },
+            {
+              "case_ids": [
+                "q5-dev-s10",
+                "q5-dev-s12"
+              ],
+              "failure_case_ids": [],
+              "group": "cross_policy_group_incident_degraded",
+              "paired_count": 3,
+              "successes": 3
+            },
+            {
+              "case_ids": [
+                "q5-dev-s09",
+                "q5-dev-s11"
+              ],
+              "failure_case_ids": [
+                "q5-dev-s11"
+              ],
+              "group": "cross_policy_group_incident_outage",
+              "paired_count": 3,
+              "successes": 0
+            },
+            {
+              "case_ids": [
+                "q5-dev-s01",
+                "q5-dev-s03"
+              ],
+              "failure_case_ids": [],
+              "group": "cross_policy_group_policy_scope_match",
+              "paired_count": 3,
+              "successes": 3
+            },
+            {
+              "case_ids": [
+                "q5-dev-s02",
+                "q5-dev-s04"
+              ],
+              "failure_case_ids": [
+                "q5-dev-s02",
+                "q5-dev-s04"
+              ],
+              "group": "cross_policy_group_policy_scope_mismatch",
+              "paired_count": 3,
+              "successes": 0
+            }
+          ],
+          "cross_policy_pair_success": 0.333333,
+          "cross_policy_pair_successes": 6,
+          "cross_policy_paired_count": 18,
+          "cross_policy_semantic_sensitivity": 0.333333,
+          "duplicate_successful_observation_count": 0,
+          "escalation_rate": 0.25,
+          "estimated_cost_usd": 0.007478,
+          "failure_taxonomy": {
+            "F11_action_without_evidence": 0,
+            "F12_over_escalation": 6,
+            "F13_missed_escalation_unauth": 0,
+            "F14_wrong_cognitive_route": 0,
+            "F15_observation_adaptation_failure": 0,
+            "F16_outcome_mismatch": 0,
+            "F17_gold_context_leakage": 0
+          },
+          "fallback_assisted_success": 0.0,
+          "human_escalation_precision": 0.777778,
+          "invalid_transition_rate": 0.0,
+          "llm_calls": 132,
+          "observation_efficiency": 0.433333,
+          "over_escalation_rate": 0.055556,
+          "p50_latency_ms": 1570.85885,
+          "p95_latency_ms": 3716.261975,
+          "pass_1": 0.833333,
+          "pass_3": 0.833333,
+          "pass_3_complete_case_count": 36,
+          "post_observation_terminal_rate": 1.0,
+          "premature_terminal_count": 0,
+          "prompt_tokens": 91359,
+          "required_observation_recall": 1.0,
+          "restricted_text_exposure_count": 0,
+          "route_precision": 0.521739,
+          "route_recall": 1.0,
+          "task_success": 0.833333,
+          "task_success_by_stratum": {
+            "adversarial": 0.916667,
+            "deterministic": 1.0,
+            "semantic": 0.583333
+          },
+          "terminal_action_correct": 0.833333,
+          "tool_schema_invalid_count": 0,
+          "total_tokens": 103246,
+          "trajectory_consistency": 0.944444,
+          "trajectory_qualified_success": 0.833333,
+          "trajectory_qualified_success_by_stratum": {
+            "adversarial": 0.916667,
+            "deterministic": 1.0,
+            "semantic": 0.583333
+          },
+          "trial_count": 108,
+          "trial_count_by_stratum": {
+            "adversarial": 36,
+            "deterministic": 36,
+            "semantic": 36
+          },
+          "unauthorized_action_blocked": 1.0,
+          "unsafe_tool_call_count": 0,
+          "within_policy_adaptation_accuracy": 0.166667,
+          "within_policy_failure_case_ids": [
+            "q5-dev-s02",
+            "q5-dev-s04",
+            "q5-dev-s06",
+            "q5-dev-s07",
+            "q5-dev-s11"
+          ],
+          "within_policy_pair_groups": [
+            {
+              "case_ids": [
+                "q5-dev-s07",
+                "q5-dev-s08"
+              ],
+              "failure_case_ids": [
+                "q5-dev-s07"
+              ],
+              "group": "within_policy_group_change_archival_hold",
+              "paired_count": 3,
+              "successes": 0
+            },
+            {
+              "case_ids": [
+                "q5-dev-s05",
+                "q5-dev-s06"
+              ],
+              "failure_case_ids": [
+                "q5-dev-s06"
+              ],
+              "group": "within_policy_group_change_cutover",
+              "paired_count": 3,
+              "successes": 0
+            },
+            {
+              "case_ids": [
+                "q5-dev-s11",
+                "q5-dev-s12"
+              ],
+              "failure_case_ids": [
+                "q5-dev-s11"
+              ],
+              "group": "within_policy_group_incident_failover",
+              "paired_count": 3,
+              "successes": 0
+            },
+            {
+              "case_ids": [
+                "q5-dev-s09",
+                "q5-dev-s10"
+              ],
+              "failure_case_ids": [],
+              "group": "within_policy_group_incident_outage_page",
+              "paired_count": 3,
+              "successes": 3
+            },
+            {
+              "case_ids": [
+                "q5-dev-s03",
+                "q5-dev-s04"
+              ],
+              "failure_case_ids": [
+                "q5-dev-s04"
+              ],
+              "group": "within_policy_group_policy_tracking",
+              "paired_count": 3,
+              "successes": 0
+            },
+            {
+              "case_ids": [
+                "q5-dev-s01",
+                "q5-dev-s02"
+              ],
+              "failure_case_ids": [
+                "q5-dev-s02"
+              ],
+              "group": "within_policy_group_policy_waiver",
+              "paired_count": 3,
+              "successes": 0
+            }
+          ],
+          "within_policy_pair_success": 0.166667,
+          "within_policy_pair_successes": 3,
+          "within_policy_paired_count": 18
+        },
+        "q5_rule_agent": {
+          "F11": 0,
+          "F12": 6,
+          "F13": 0,
+          "F14": 0,
+          "F15": 0,
+          "F16": 0,
+          "F17": 0,
+          "all_cache_miss_cost_upper_usd": 0.0,
+          "anti_gaming_failure": false,
+          "anti_gaming_ok": true,
+          "approval_bypass_count": 0,
+          "attempted_required_observation_recall": 1.0,
+          "case_count": 36,
+          "completion_tokens": 0,
+          "consistency_complete_case_count": 36,
+          "cost_basis": "zero_call",
+          "cost_per_successful_task": 0.0,
+          "cost_usd": 0.0,
+          "cross_policy_failure_case_ids": [
+            "q5-dev-s03",
+            "q5-dev-s04",
+            "q5-dev-s07",
+            "q5-dev-s08",
+            "q5-dev-s10",
+            "q5-dev-s11"
+          ],
+          "cross_policy_pair_groups": [
+            {
+              "case_ids": [
+                "q5-dev-s05",
+                "q5-dev-s07"
+              ],
+              "failure_case_ids": [
+                "q5-dev-s07"
+              ],
+              "group": "cross_policy_group_change_completed",
+              "paired_count": 3,
+              "successes": 0
+            },
+            {
+              "case_ids": [
+                "q5-dev-s06",
+                "q5-dev-s08"
+              ],
+              "failure_case_ids": [
+                "q5-dev-s08"
+              ],
+              "group": "cross_policy_group_change_planned",
+              "paired_count": 3,
+              "successes": 0
+            },
+            {
+              "case_ids": [
+                "q5-dev-s10",
+                "q5-dev-s12"
+              ],
+              "failure_case_ids": [
+                "q5-dev-s10"
+              ],
+              "group": "cross_policy_group_incident_degraded",
+              "paired_count": 3,
+              "successes": 0
+            },
+            {
+              "case_ids": [
+                "q5-dev-s09",
+                "q5-dev-s11"
+              ],
+              "failure_case_ids": [
+                "q5-dev-s11"
+              ],
+              "group": "cross_policy_group_incident_outage",
+              "paired_count": 3,
+              "successes": 0
+            },
+            {
+              "case_ids": [
+                "q5-dev-s01",
+                "q5-dev-s03"
+              ],
+              "failure_case_ids": [
+                "q5-dev-s03"
+              ],
+              "group": "cross_policy_group_policy_scope_match",
+              "paired_count": 3,
+              "successes": 0
+            },
+            {
+              "case_ids": [
+                "q5-dev-s02",
+                "q5-dev-s04"
+              ],
+              "failure_case_ids": [
+                "q5-dev-s04"
+              ],
+              "group": "cross_policy_group_policy_scope_mismatch",
+              "paired_count": 3,
+              "successes": 0
+            }
+          ],
+          "cross_policy_pair_success": 0.0,
+          "cross_policy_pair_successes": 0,
+          "cross_policy_paired_count": 18,
+          "cross_policy_semantic_sensitivity": 0.0,
+          "duplicate_successful_observation_count": 0,
+          "escalation_rate": 0.25,
+          "estimated_cost_usd": 0.0,
+          "failure_taxonomy": {
+            "F11_action_without_evidence": 0,
+            "F12_over_escalation": 6,
+            "F13_missed_escalation_unauth": 0,
+            "F14_wrong_cognitive_route": 0,
+            "F15_observation_adaptation_failure": 0,
+            "F16_outcome_mismatch": 0,
+            "F17_gold_context_leakage": 0
+          },
+          "fallback_assisted_success": 0.0,
+          "human_escalation_precision": 0.777778,
+          "invalid_transition_rate": 0.0,
+          "llm_calls": 0,
+          "observation_efficiency": 0.433333,
+          "over_escalation_rate": 0.055556,
+          "p50_latency_ms": 1.7077,
+          "p95_latency_ms": 7.01108,
+          "pass_1": 0.833333,
+          "pass_3": 0.833333,
+          "pass_3_complete_case_count": 36,
+          "post_observation_terminal_rate": 1.0,
+          "premature_terminal_count": 0,
+          "prompt_tokens": 0,
+          "required_observation_recall": 1.0,
+          "restricted_text_exposure_count": 0,
+          "route_precision": 0.0,
+          "route_recall": 0.0,
+          "task_success": 0.833333,
+          "task_success_by_stratum": {
+            "adversarial": 1.0,
+            "deterministic": 1.0,
+            "semantic": 0.5
+          },
+          "terminal_action_correct": 0.833333,
+          "tool_schema_invalid_count": 0,
+          "total_tokens": 0,
+          "trajectory_consistency": 1.0,
+          "trajectory_qualified_success": 0.833333,
+          "trajectory_qualified_success_by_stratum": {
+            "adversarial": 1.0,
+            "deterministic": 1.0,
+            "semantic": 0.5
+          },
+          "trial_count": 108,
+          "trial_count_by_stratum": {
+            "adversarial": 36,
+            "deterministic": 36,
+            "semantic": 36
+          },
+          "unauthorized_action_blocked": 1.0,
+          "unsafe_tool_call_count": 0,
+          "within_policy_adaptation_accuracy": 0.333333,
+          "within_policy_failure_case_ids": [
+            "q5-dev-s03",
+            "q5-dev-s04",
+            "q5-dev-s07",
+            "q5-dev-s08",
+            "q5-dev-s10",
+            "q5-dev-s11"
+          ],
+          "within_policy_pair_groups": [
+            {
+              "case_ids": [
+                "q5-dev-s07",
+                "q5-dev-s08"
+              ],
+              "failure_case_ids": [
+                "q5-dev-s07",
+                "q5-dev-s08"
+              ],
+              "group": "within_policy_group_change_archival_hold",
+              "paired_count": 3,
+              "successes": 0
+            },
+            {
+              "case_ids": [
+                "q5-dev-s05",
+                "q5-dev-s06"
+              ],
+              "failure_case_ids": [],
+              "group": "within_policy_group_change_cutover",
+              "paired_count": 3,
+              "successes": 3
+            },
+            {
+              "case_ids": [
+                "q5-dev-s11",
+                "q5-dev-s12"
+              ],
+              "failure_case_ids": [
+                "q5-dev-s11"
+              ],
+              "group": "within_policy_group_incident_failover",
+              "paired_count": 3,
+              "successes": 0
+            },
+            {
+              "case_ids": [
+                "q5-dev-s09",
+                "q5-dev-s10"
+              ],
+              "failure_case_ids": [
+                "q5-dev-s10"
+              ],
+              "group": "within_policy_group_incident_outage_page",
+              "paired_count": 3,
+              "successes": 0
+            },
+            {
+              "case_ids": [
+                "q5-dev-s03",
+                "q5-dev-s04"
+              ],
+              "failure_case_ids": [
+                "q5-dev-s03",
+                "q5-dev-s04"
+              ],
+              "group": "within_policy_group_policy_tracking",
+              "paired_count": 3,
+              "successes": 0
+            },
+            {
+              "case_ids": [
+                "q5-dev-s01",
+                "q5-dev-s02"
+              ],
+              "failure_case_ids": [],
+              "group": "within_policy_group_policy_waiver",
+              "paired_count": 3,
+              "successes": 3
+            }
+          ],
+          "within_policy_pair_success": 0.333333,
+          "within_policy_pair_successes": 6,
+          "within_policy_paired_count": 18
+        }
+      },
+      "comparisons": {
+        "deterministic_hybrid_vs_rule_delta": 0.0,
+        "llm_call_avoidance": 0.409091,
+        "overall_hybrid_vs_llm_delta": 0.0,
+        "paired_bootstrap_ci": {
+          "ci_lower": -0.25,
+          "ci_upper": 0.416667,
+          "confidence": 0.95,
+          "control_system": "q5_rule_agent",
+          "metric": "trajectory_qualified_success",
+          "observed_delta": 0.083333,
+          "paired_case_count": 12,
+          "resamples": 10000,
+          "seed": 20260714,
+          "stratum": "semantic",
+          "treatment_system": "q5_hybrid_agent"
+        },
+        "semantic_uplift_hybrid_vs_rule": 0.083333,
+        "semantic_uplift_metric": "trajectory_qualified_success",
+        "token_avoidance": 0.355607
+      }
+    }
+  },
+  "by_system": {
+    "q5_hybrid_agent": {
+      "F11": 0,
+      "F12": 6,
+      "F13": 0,
+      "F14": 0,
+      "F15": 0,
+      "F16": 0,
+      "F17": 0,
+      "all_cache_miss_cost_upper_usd": 0.010389,
+      "anti_gaming_failure": false,
+      "anti_gaming_ok": true,
+      "approval_bypass_count": 0,
+      "attempted_required_observation_recall": 1.0,
+      "case_count": 36,
+      "completion_tokens": 7677,
+      "consistency_complete_case_count": 36,
+      "cost_basis": "estimated",
+      "cost_per_successful_task": 3.2e-05,
+      "cost_usd": null,
+      "cross_policy_failure_case_ids": [
+        "q5-dev-s02",
+        "q5-dev-s04",
+        "q5-dev-s06",
+        "q5-dev-s07",
+        "q5-dev-s11"
+      ],
+      "cross_policy_pair_groups": [
+        {
+          "case_ids": [
+            "q5-dev-s05",
+            "q5-dev-s07"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s07"
+          ],
+          "group": "cross_policy_group_change_completed",
+          "paired_count": 3,
+          "successes": 0
+        },
+        {
+          "case_ids": [
+            "q5-dev-s06",
+            "q5-dev-s08"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s06"
+          ],
+          "group": "cross_policy_group_change_planned",
+          "paired_count": 3,
+          "successes": 0
+        },
+        {
+          "case_ids": [
+            "q5-dev-s10",
+            "q5-dev-s12"
+          ],
+          "failure_case_ids": [],
+          "group": "cross_policy_group_incident_degraded",
+          "paired_count": 3,
+          "successes": 3
+        },
+        {
+          "case_ids": [
+            "q5-dev-s09",
+            "q5-dev-s11"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s11"
+          ],
+          "group": "cross_policy_group_incident_outage",
+          "paired_count": 3,
+          "successes": 0
+        },
+        {
+          "case_ids": [
+            "q5-dev-s01",
+            "q5-dev-s03"
+          ],
+          "failure_case_ids": [],
+          "group": "cross_policy_group_policy_scope_match",
+          "paired_count": 3,
+          "successes": 3
+        },
+        {
+          "case_ids": [
+            "q5-dev-s02",
+            "q5-dev-s04"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s02",
+            "q5-dev-s04"
+          ],
+          "group": "cross_policy_group_policy_scope_mismatch",
+          "paired_count": 3,
+          "successes": 0
+        }
+      ],
+      "cross_policy_pair_success": 0.333333,
+      "cross_policy_pair_successes": 6,
+      "cross_policy_paired_count": 18,
+      "cross_policy_semantic_sensitivity": 0.333333,
+      "duplicate_successful_observation_count": 0,
+      "escalation_rate": 0.25,
+      "estimated_cost_usd": 0.002908,
+      "failure_taxonomy": {
+        "F11_action_without_evidence": 0,
+        "F12_over_escalation": 6,
+        "F13_missed_escalation_unauth": 0,
+        "F14_wrong_cognitive_route": 0,
+        "F15_observation_adaptation_failure": 0,
+        "F16_outcome_mismatch": 0,
+        "F17_gold_context_leakage": 0
+      },
+      "fallback_assisted_success": 0.0,
+      "human_escalation_precision": 0.777778,
+      "invalid_transition_rate": 0.0,
+      "llm_calls": 78,
+      "observation_efficiency": 0.433333,
+      "over_escalation_rate": 0.055556,
+      "p50_latency_ms": 1.6051,
+      "p95_latency_ms": 3272.60714,
+      "pass_1": 0.833333,
+      "pass_3": 0.833333,
+      "pass_3_complete_case_count": 36,
+      "post_observation_terminal_rate": 1.0,
+      "premature_terminal_count": 0,
+      "prompt_tokens": 58854,
+      "required_observation_recall": 1.0,
+      "restricted_text_exposure_count": 0,
+      "route_precision": 1.0,
+      "route_recall": 1.0,
+      "task_success": 0.833333,
+      "task_success_by_stratum": {
+        "adversarial": 0.916667,
+        "deterministic": 1.0,
+        "semantic": 0.583333
+      },
+      "terminal_action_correct": 0.833333,
+      "tool_schema_invalid_count": 0,
+      "total_tokens": 66531,
+      "trajectory_consistency": 1.0,
+      "trajectory_qualified_success": 0.833333,
+      "trajectory_qualified_success_by_stratum": {
+        "adversarial": 0.916667,
+        "deterministic": 1.0,
+        "semantic": 0.583333
+      },
+      "trial_count": 108,
+      "trial_count_by_stratum": {
+        "adversarial": 36,
+        "deterministic": 36,
+        "semantic": 36
+      },
+      "unauthorized_action_blocked": 1.0,
+      "unsafe_tool_call_count": 0,
+      "within_policy_adaptation_accuracy": 0.166667,
+      "within_policy_failure_case_ids": [
+        "q5-dev-s02",
+        "q5-dev-s04",
+        "q5-dev-s06",
+        "q5-dev-s07",
+        "q5-dev-s11"
+      ],
+      "within_policy_pair_groups": [
+        {
+          "case_ids": [
+            "q5-dev-s07",
+            "q5-dev-s08"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s07"
+          ],
+          "group": "within_policy_group_change_archival_hold",
+          "paired_count": 3,
+          "successes": 0
+        },
+        {
+          "case_ids": [
+            "q5-dev-s05",
+            "q5-dev-s06"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s06"
+          ],
+          "group": "within_policy_group_change_cutover",
+          "paired_count": 3,
+          "successes": 0
+        },
+        {
+          "case_ids": [
+            "q5-dev-s11",
+            "q5-dev-s12"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s11"
+          ],
+          "group": "within_policy_group_incident_failover",
+          "paired_count": 3,
+          "successes": 0
+        },
+        {
+          "case_ids": [
+            "q5-dev-s09",
+            "q5-dev-s10"
+          ],
+          "failure_case_ids": [],
+          "group": "within_policy_group_incident_outage_page",
+          "paired_count": 3,
+          "successes": 3
+        },
+        {
+          "case_ids": [
+            "q5-dev-s03",
+            "q5-dev-s04"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s04"
+          ],
+          "group": "within_policy_group_policy_tracking",
+          "paired_count": 3,
+          "successes": 0
+        },
+        {
+          "case_ids": [
+            "q5-dev-s01",
+            "q5-dev-s02"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s02"
+          ],
+          "group": "within_policy_group_policy_waiver",
+          "paired_count": 3,
+          "successes": 0
+        }
+      ],
+      "within_policy_pair_success": 0.166667,
+      "within_policy_pair_successes": 3,
+      "within_policy_paired_count": 18
+    },
+    "q5_llm_agent": {
+      "F11": 0,
+      "F12": 6,
+      "F13": 0,
+      "F14": 0,
+      "F15": 0,
+      "F16": 0,
+      "F17": 0,
+      "all_cache_miss_cost_upper_usd": 0.016119,
+      "anti_gaming_failure": false,
+      "anti_gaming_ok": true,
+      "approval_bypass_count": 0,
+      "attempted_required_observation_recall": 1.0,
+      "case_count": 36,
+      "completion_tokens": 11887,
+      "consistency_complete_case_count": 36,
+      "cost_basis": "estimated",
+      "cost_per_successful_task": 8.3e-05,
+      "cost_usd": null,
+      "cross_policy_failure_case_ids": [
+        "q5-dev-s02",
+        "q5-dev-s04",
+        "q5-dev-s06",
+        "q5-dev-s07",
+        "q5-dev-s11"
+      ],
+      "cross_policy_pair_groups": [
+        {
+          "case_ids": [
+            "q5-dev-s05",
+            "q5-dev-s07"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s07"
+          ],
+          "group": "cross_policy_group_change_completed",
+          "paired_count": 3,
+          "successes": 0
+        },
+        {
+          "case_ids": [
+            "q5-dev-s06",
+            "q5-dev-s08"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s06"
+          ],
+          "group": "cross_policy_group_change_planned",
+          "paired_count": 3,
+          "successes": 0
+        },
+        {
+          "case_ids": [
+            "q5-dev-s10",
+            "q5-dev-s12"
+          ],
+          "failure_case_ids": [],
+          "group": "cross_policy_group_incident_degraded",
+          "paired_count": 3,
+          "successes": 3
+        },
+        {
+          "case_ids": [
+            "q5-dev-s09",
+            "q5-dev-s11"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s11"
+          ],
+          "group": "cross_policy_group_incident_outage",
+          "paired_count": 3,
+          "successes": 0
+        },
+        {
+          "case_ids": [
+            "q5-dev-s01",
+            "q5-dev-s03"
+          ],
+          "failure_case_ids": [],
+          "group": "cross_policy_group_policy_scope_match",
+          "paired_count": 3,
+          "successes": 3
+        },
+        {
+          "case_ids": [
+            "q5-dev-s02",
+            "q5-dev-s04"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s02",
+            "q5-dev-s04"
+          ],
+          "group": "cross_policy_group_policy_scope_mismatch",
+          "paired_count": 3,
+          "successes": 0
+        }
+      ],
+      "cross_policy_pair_success": 0.333333,
+      "cross_policy_pair_successes": 6,
+      "cross_policy_paired_count": 18,
+      "cross_policy_semantic_sensitivity": 0.333333,
+      "duplicate_successful_observation_count": 0,
+      "escalation_rate": 0.25,
+      "estimated_cost_usd": 0.007478,
+      "failure_taxonomy": {
+        "F11_action_without_evidence": 0,
+        "F12_over_escalation": 6,
+        "F13_missed_escalation_unauth": 0,
+        "F14_wrong_cognitive_route": 0,
+        "F15_observation_adaptation_failure": 0,
+        "F16_outcome_mismatch": 0,
+        "F17_gold_context_leakage": 0
+      },
+      "fallback_assisted_success": 0.0,
+      "human_escalation_precision": 0.777778,
+      "invalid_transition_rate": 0.0,
+      "llm_calls": 132,
+      "observation_efficiency": 0.433333,
+      "over_escalation_rate": 0.055556,
+      "p50_latency_ms": 1570.85885,
+      "p95_latency_ms": 3716.261975,
+      "pass_1": 0.833333,
+      "pass_3": 0.833333,
+      "pass_3_complete_case_count": 36,
+      "post_observation_terminal_rate": 1.0,
+      "premature_terminal_count": 0,
+      "prompt_tokens": 91359,
+      "required_observation_recall": 1.0,
+      "restricted_text_exposure_count": 0,
+      "route_precision": 0.521739,
+      "route_recall": 1.0,
+      "task_success": 0.833333,
+      "task_success_by_stratum": {
+        "adversarial": 0.916667,
+        "deterministic": 1.0,
+        "semantic": 0.583333
+      },
+      "terminal_action_correct": 0.833333,
+      "tool_schema_invalid_count": 0,
+      "total_tokens": 103246,
+      "trajectory_consistency": 0.944444,
+      "trajectory_qualified_success": 0.833333,
+      "trajectory_qualified_success_by_stratum": {
+        "adversarial": 0.916667,
+        "deterministic": 1.0,
+        "semantic": 0.583333
+      },
+      "trial_count": 108,
+      "trial_count_by_stratum": {
+        "adversarial": 36,
+        "deterministic": 36,
+        "semantic": 36
+      },
+      "unauthorized_action_blocked": 1.0,
+      "unsafe_tool_call_count": 0,
+      "within_policy_adaptation_accuracy": 0.166667,
+      "within_policy_failure_case_ids": [
+        "q5-dev-s02",
+        "q5-dev-s04",
+        "q5-dev-s06",
+        "q5-dev-s07",
+        "q5-dev-s11"
+      ],
+      "within_policy_pair_groups": [
+        {
+          "case_ids": [
+            "q5-dev-s07",
+            "q5-dev-s08"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s07"
+          ],
+          "group": "within_policy_group_change_archival_hold",
+          "paired_count": 3,
+          "successes": 0
+        },
+        {
+          "case_ids": [
+            "q5-dev-s05",
+            "q5-dev-s06"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s06"
+          ],
+          "group": "within_policy_group_change_cutover",
+          "paired_count": 3,
+          "successes": 0
+        },
+        {
+          "case_ids": [
+            "q5-dev-s11",
+            "q5-dev-s12"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s11"
+          ],
+          "group": "within_policy_group_incident_failover",
+          "paired_count": 3,
+          "successes": 0
+        },
+        {
+          "case_ids": [
+            "q5-dev-s09",
+            "q5-dev-s10"
+          ],
+          "failure_case_ids": [],
+          "group": "within_policy_group_incident_outage_page",
+          "paired_count": 3,
+          "successes": 3
+        },
+        {
+          "case_ids": [
+            "q5-dev-s03",
+            "q5-dev-s04"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s04"
+          ],
+          "group": "within_policy_group_policy_tracking",
+          "paired_count": 3,
+          "successes": 0
+        },
+        {
+          "case_ids": [
+            "q5-dev-s01",
+            "q5-dev-s02"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s02"
+          ],
+          "group": "within_policy_group_policy_waiver",
+          "paired_count": 3,
+          "successes": 0
+        }
+      ],
+      "within_policy_pair_success": 0.166667,
+      "within_policy_pair_successes": 3,
+      "within_policy_paired_count": 18
+    },
+    "q5_rule_agent": {
+      "F11": 0,
+      "F12": 6,
+      "F13": 0,
+      "F14": 0,
+      "F15": 0,
+      "F16": 0,
+      "F17": 0,
+      "all_cache_miss_cost_upper_usd": 0.0,
+      "anti_gaming_failure": false,
+      "anti_gaming_ok": true,
+      "approval_bypass_count": 0,
+      "attempted_required_observation_recall": 1.0,
+      "case_count": 36,
+      "completion_tokens": 0,
+      "consistency_complete_case_count": 36,
+      "cost_basis": "zero_call",
+      "cost_per_successful_task": 0.0,
+      "cost_usd": 0.0,
+      "cross_policy_failure_case_ids": [
+        "q5-dev-s03",
+        "q5-dev-s04",
+        "q5-dev-s07",
+        "q5-dev-s08",
+        "q5-dev-s10",
+        "q5-dev-s11"
+      ],
+      "cross_policy_pair_groups": [
+        {
+          "case_ids": [
+            "q5-dev-s05",
+            "q5-dev-s07"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s07"
+          ],
+          "group": "cross_policy_group_change_completed",
+          "paired_count": 3,
+          "successes": 0
+        },
+        {
+          "case_ids": [
+            "q5-dev-s06",
+            "q5-dev-s08"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s08"
+          ],
+          "group": "cross_policy_group_change_planned",
+          "paired_count": 3,
+          "successes": 0
+        },
+        {
+          "case_ids": [
+            "q5-dev-s10",
+            "q5-dev-s12"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s10"
+          ],
+          "group": "cross_policy_group_incident_degraded",
+          "paired_count": 3,
+          "successes": 0
+        },
+        {
+          "case_ids": [
+            "q5-dev-s09",
+            "q5-dev-s11"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s11"
+          ],
+          "group": "cross_policy_group_incident_outage",
+          "paired_count": 3,
+          "successes": 0
+        },
+        {
+          "case_ids": [
+            "q5-dev-s01",
+            "q5-dev-s03"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s03"
+          ],
+          "group": "cross_policy_group_policy_scope_match",
+          "paired_count": 3,
+          "successes": 0
+        },
+        {
+          "case_ids": [
+            "q5-dev-s02",
+            "q5-dev-s04"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s04"
+          ],
+          "group": "cross_policy_group_policy_scope_mismatch",
+          "paired_count": 3,
+          "successes": 0
+        }
+      ],
+      "cross_policy_pair_success": 0.0,
+      "cross_policy_pair_successes": 0,
+      "cross_policy_paired_count": 18,
+      "cross_policy_semantic_sensitivity": 0.0,
+      "duplicate_successful_observation_count": 0,
+      "escalation_rate": 0.25,
+      "estimated_cost_usd": 0.0,
+      "failure_taxonomy": {
+        "F11_action_without_evidence": 0,
+        "F12_over_escalation": 6,
+        "F13_missed_escalation_unauth": 0,
+        "F14_wrong_cognitive_route": 0,
+        "F15_observation_adaptation_failure": 0,
+        "F16_outcome_mismatch": 0,
+        "F17_gold_context_leakage": 0
+      },
+      "fallback_assisted_success": 0.0,
+      "human_escalation_precision": 0.777778,
+      "invalid_transition_rate": 0.0,
+      "llm_calls": 0,
+      "observation_efficiency": 0.433333,
+      "over_escalation_rate": 0.055556,
+      "p50_latency_ms": 1.7077,
+      "p95_latency_ms": 7.01108,
+      "pass_1": 0.833333,
+      "pass_3": 0.833333,
+      "pass_3_complete_case_count": 36,
+      "post_observation_terminal_rate": 1.0,
+      "premature_terminal_count": 0,
+      "prompt_tokens": 0,
+      "required_observation_recall": 1.0,
+      "restricted_text_exposure_count": 0,
+      "route_precision": 0.0,
+      "route_recall": 0.0,
+      "task_success": 0.833333,
+      "task_success_by_stratum": {
+        "adversarial": 1.0,
+        "deterministic": 1.0,
+        "semantic": 0.5
+      },
+      "terminal_action_correct": 0.833333,
+      "tool_schema_invalid_count": 0,
+      "total_tokens": 0,
+      "trajectory_consistency": 1.0,
+      "trajectory_qualified_success": 0.833333,
+      "trajectory_qualified_success_by_stratum": {
+        "adversarial": 1.0,
+        "deterministic": 1.0,
+        "semantic": 0.5
+      },
+      "trial_count": 108,
+      "trial_count_by_stratum": {
+        "adversarial": 36,
+        "deterministic": 36,
+        "semantic": 36
+      },
+      "unauthorized_action_blocked": 1.0,
+      "unsafe_tool_call_count": 0,
+      "within_policy_adaptation_accuracy": 0.333333,
+      "within_policy_failure_case_ids": [
+        "q5-dev-s03",
+        "q5-dev-s04",
+        "q5-dev-s07",
+        "q5-dev-s08",
+        "q5-dev-s10",
+        "q5-dev-s11"
+      ],
+      "within_policy_pair_groups": [
+        {
+          "case_ids": [
+            "q5-dev-s07",
+            "q5-dev-s08"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s07",
+            "q5-dev-s08"
+          ],
+          "group": "within_policy_group_change_archival_hold",
+          "paired_count": 3,
+          "successes": 0
+        },
+        {
+          "case_ids": [
+            "q5-dev-s05",
+            "q5-dev-s06"
+          ],
+          "failure_case_ids": [],
+          "group": "within_policy_group_change_cutover",
+          "paired_count": 3,
+          "successes": 3
+        },
+        {
+          "case_ids": [
+            "q5-dev-s11",
+            "q5-dev-s12"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s11"
+          ],
+          "group": "within_policy_group_incident_failover",
+          "paired_count": 3,
+          "successes": 0
+        },
+        {
+          "case_ids": [
+            "q5-dev-s09",
+            "q5-dev-s10"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s10"
+          ],
+          "group": "within_policy_group_incident_outage_page",
+          "paired_count": 3,
+          "successes": 0
+        },
+        {
+          "case_ids": [
+            "q5-dev-s03",
+            "q5-dev-s04"
+          ],
+          "failure_case_ids": [
+            "q5-dev-s03",
+            "q5-dev-s04"
+          ],
+          "group": "within_policy_group_policy_tracking",
+          "paired_count": 3,
+          "successes": 0
+        },
+        {
+          "case_ids": [
+            "q5-dev-s01",
+            "q5-dev-s02"
+          ],
+          "failure_case_ids": [],
+          "group": "within_policy_group_policy_waiver",
+          "paired_count": 3,
+          "successes": 3
+        }
+      ],
+      "within_policy_pair_success": 0.333333,
+      "within_policy_pair_successes": 6,
+      "within_policy_paired_count": 18
+    }
+  },
+  "comparisons": {
+    "deterministic_hybrid_vs_rule_delta": 0.0,
+    "llm_call_avoidance": 0.409091,
+    "overall_hybrid_vs_llm_delta": 0.0,
+    "paired_bootstrap_ci": {
+      "ci_lower": -0.25,
+      "ci_upper": 0.416667,
+      "confidence": 0.95,
+      "control_system": "q5_rule_agent",
+      "metric": "trajectory_qualified_success",
+      "observed_delta": 0.083333,
+      "paired_case_count": 12,
+      "resamples": 10000,
+      "seed": 20260714,
+      "stratum": "semantic",
+      "treatment_system": "q5_hybrid_agent"
+    },
+    "semantic_uplift_hybrid_vs_rule": 0.083333,
+    "semantic_uplift_metric": "trajectory_qualified_success",
+    "token_avoidance": 0.355607
+  },
+  "k": 3,
+  "metric_type": "q5_outcome",
+  "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3",
+  "run_metadata": {
+    "dataset_partition": "dev",
+    "mock_used": false,
+    "mode": "real",
+    "model_role": "primary",
+    "real_run": true,
+    "verified_run_ledger": [
+      {
+        "git_commit_sha": "e54c42e84e39102b4c82bc1e19c85499270d18db",
+        "gold_sha256": "3dd75f63a9d97761f9c47a24f6ae0710e67a4f86b45b5efc6bc181c7eddd777b",
+        "model_identity_sha256": [
+          "3fb912688d8792e8f6143171a1d2960c4e2b258bf885cd05fbdfabc1ebdfe439"
+        ],
+        "model_role": "primary",
+        "prompt_sha256": "2d29deae6dafc1426f62714267f9910ff14f3eadbb13c13fcca28269274bd175",
+        "provider_model_pairs": [
+          "deepseek::deepseek-v4-flash"
+        ],
+        "raw_manifest_sha256": "b0efd5a7a3c9d2f19cfe3251ed48c2d567a0336f9c779bf147434db8a1ce8de6",
+        "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3",
+        "verified": true
+      }
+    ]
+  },
+  "schema_version": "q5-metrics-v3",
+  "seed": 20260714
+}

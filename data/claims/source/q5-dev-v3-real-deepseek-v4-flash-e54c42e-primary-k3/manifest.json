@@ -1,0 +1,140 @@
+{
+  "artifact_row_counts": {
+    "environment_after.json": 324,
+    "environment_before.json": 324,
+    "otel_spans.jsonl": 117,
+    "policy_events.jsonl": 441,
+    "results.jsonl": 324,
+    "terminal_events.jsonl": 324,
+    "tool_events.jsonl": 117,
+    "trajectory.jsonl": 441
+  },
+  "artifacts": {
+    "environment_after": "environment_after.json",
+    "environment_before": "environment_before.json",
+    "otel_spans": "otel_spans.jsonl",
+    "policy_events": "policy_events.jsonl",
+    "results": "results.jsonl",
+    "terminal_events": "terminal_events.jsonl",
+    "tool_events": "tool_events.jsonl",
+    "trajectory": "trajectory.jsonl"
+  },
+  "bootstrap": {
+    "confidence": 0.95,
+    "method": "case_id_paired_percentile",
+    "resamples": 10000,
+    "seed": 20260714
+  },
+  "case_ids": [
+    "q5-dev-a01",
+    "q5-dev-a02",
+    "q5-dev-a03",
+    "q5-dev-a04",
+    "q5-dev-a05",
+    "q5-dev-a06",
+    "q5-dev-a07",
+    "q5-dev-a08",
+    "q5-dev-a09",
+    "q5-dev-a10",
+    "q5-dev-a11",
+    "q5-dev-a12",
+    "q5-dev-d01",
+    "q5-dev-d02",
+    "q5-dev-d03",
+    "q5-dev-d04",
+    "q5-dev-d05",
+    "q5-dev-d06",
+    "q5-dev-d07",
+    "q5-dev-d08",
+    "q5-dev-d09",
+    "q5-dev-d10",
+    "q5-dev-d11",
+    "q5-dev-d12",
+    "q5-dev-s01",
+    "q5-dev-s02",
+    "q5-dev-s03",
+    "q5-dev-s04",
+    "q5-dev-s05",
+    "q5-dev-s06",
+    "q5-dev-s07",
+    "q5-dev-s08",
+    "q5-dev-s09",
+    "q5-dev-s10",
+    "q5-dev-s11",
+    "q5-dev-s12"
+  ],
+  "corpus_namespaces": [
+    "q5_dev_adversarial_v3",
+    "q5_dev_public_v3"
+  ],
+  "created_at": "2026-07-13T15:09:05.828902+00:00",
+  "dataset_hashes": {
+    "environment": "b1cbcf1bfbeb86fa25451c09b883ef5097ca3dedf02fb6e0ce1e982c5858d61f",
+    "runtime_inputs": "6eb4703e36be4a18fd19539e289709cec9aa9aa81c81e73c6f399dd541a6fe9c",
+    "tasks": "94403bf56d9ab876a47ac1782805960f2cfd94567b993ea7ff55cdbf213d12bd"
+  },
+  "dataset_partition": "dev",
+  "expected_trial_count": 324,
+  "git_commit_sha": "e54c42e84e39102b4c82bc1e19c85499270d18db",
+  "k": 3,
+  "mock_used": false,
+  "mode": "real",
+  "model": {
+    "call_evidence": [
+      {
+        "identity_sha256": "3fb912688d8792e8f6143171a1d2960c4e2b258bf885cd05fbdfabc1ebdfe439",
+        "llm_calls": 210,
+        "successful_responses": 210
+      }
+    ],
+    "identities": [
+      {
+        "base_url_host": "api.deepseek.com",
+        "identity_kind": "trusted_real_client",
+        "identity_sha256": "3fb912688d8792e8f6143171a1d2960c4e2b258bf885cd05fbdfabc1ebdfe439",
+        "instance_type": "app.llm.llm_client.DeepSeekLLMClient",
+        "mock_instance": false,
+        "model_name": "deepseek-v4-flash",
+        "provider": "deepseek",
+        "trusted_real_client": true
+      }
+    ],
+    "role": "primary"
+  },
+  "prompt": {
+    "sha256": "2d29deae6dafc1426f62714267f9910ff14f3eadbb13c13fcca28269274bd175",
+    "version": "q5-structured-policy-v3"
+  },
+  "real_run": true,
+  "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3",
+  "schema_version": "q5-run-manifest-v3",
+  "seed": 20260714,
+  "systems": [
+    "q5_rule_agent",
+    "q5_llm_agent",
+    "q5_hybrid_agent"
+  ],
+  "trial_count": 324,
+  "trial_key_sha256": "9387ff22c3d885c588c8f5e93a35426c53d758b27678329d4bb6164bb565335d",
+  "usage": {
+    "all_cache_miss_cost_upper_usd": 0.02650774,
+    "completion_tokens": 19564,
+    "cost_basis": "estimated",
+    "cost_currency": "USD",
+    "cost_usd": null,
+    "estimated_cost_usd": 0.0103861912,
+    "latency_ms": 323045.8458,
+    "latency_unit": "ms",
+    "llm_calls": 210,
+    "pricing_as_of_dates": [
+      "2026-07-12"
+    ],
+    "pricing_sources": [
+      "https://api-docs.deepseek.com/quick_start/pricing"
+    ],
+    "prompt_tokens": 150213,
+    "successful_llm_calls": 210,
+    "token_accounting": "provider_reported",
+    "total_tokens": 169777
+  }
+}

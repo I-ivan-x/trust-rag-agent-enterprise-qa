@@ -1,0 +1,740 @@
+{
+  "agent_attribution": {
+    "agent_systems": [
+      "final_agentic_v2_llm",
+      "final_agentic_v2_rule"
+    ],
+    "controller": {
+      "by_system": {
+        "final_agentic_v2_llm": "llm",
+        "final_agentic_v2_rule": "rule"
+      },
+      "llm_accept_count": 10,
+      "llm_fallback_count": 8,
+      "llm_fallback_rate": 0.4444444444444444,
+      "llm_propose_count": 18
+    },
+    "notes": {
+      "counts_only": "Small-n agent attribution reports counts only, not rates.",
+      "headline_policy": "Agent attribution is diagnostic and is not merged into headline metrics.",
+      "tf1_policy": "TF1 is not auto-scored in P3-06; candidates require replay."
+    },
+    "per_action": {
+      "filtered_retrieval": {
+        "accept_count": 0,
+        "false_recovery_count": 0,
+        "ineffective": 0,
+        "success_count": 0,
+        "trigger_count": 0
+      },
+      "present_conflict_set": {
+        "accept_count": 0,
+        "false_recovery_count": 0,
+        "ineffective": 0,
+        "success_count": 0,
+        "trigger_count": 0
+      },
+      "refuse_with_explanation": {
+        "accept_count": 18,
+        "false_recovery_count": 0,
+        "ineffective": 0,
+        "success_count": 0,
+        "trigger_count": 36
+      },
+      "rewrite_query": {
+        "accept_count": 12,
+        "false_recovery_count": 0,
+        "ineffective": 6,
+        "success_count": 6,
+        "trigger_count": 18
+      }
+    },
+    "trajectory_failures": {
+      "tf1_auto_hit_count": 0,
+      "tf1_candidate_count": 0,
+      "tf1_candidates": [],
+      "tf2_ineffective_action_case_count": 2,
+      "tf3_validator_reject_step_count": 8,
+      "tf4_budget_exhausted_case_count": 0
+    }
+  },
+  "agent_attribution_by_system": {
+    "final_agentic_v2_llm": {
+      "agent_systems": [
+        "final_agentic_v2_llm"
+      ],
+      "controller": {
+        "by_system": {
+          "final_agentic_v2_llm": "llm"
+        },
+        "llm_accept_count": 10,
+        "llm_fallback_count": 8,
+        "llm_fallback_rate": 0.4444444444444444,
+        "llm_propose_count": 18
+      },
+      "notes": {
+        "counts_only": "Small-n agent attribution reports counts only, not rates.",
+        "headline_policy": "Agent attribution is diagnostic and is not merged into headline metrics.",
+        "tf1_policy": "TF1 is not auto-scored in P3-06; candidates require replay."
+      },
+      "per_action": {
+        "filtered_retrieval": {
+          "accept_count": 0,
+          "false_recovery_count": 0,
+          "ineffective": 0,
+          "success_count": 0,
+          "trigger_count": 0
+        },
+        "present_conflict_set": {
+          "accept_count": 0,
+          "false_recovery_count": 0,
+          "ineffective": 0,
+          "success_count": 0,
+          "trigger_count": 0
+        },
+        "refuse_with_explanation": {
+          "accept_count": 9,
+          "false_recovery_count": 0,
+          "ineffective": 0,
+          "success_count": 0,
+          "trigger_count": 18
+        },
+        "rewrite_query": {
+          "accept_count": 6,
+          "false_recovery_count": 0,
+          "ineffective": 3,
+          "success_count": 3,
+          "trigger_count": 9
+        }
+      },
+      "trajectory_failures": {
+        "tf1_auto_hit_count": 0,
+        "tf1_candidate_count": 0,
+        "tf1_candidates": [],
+        "tf2_ineffective_action_case_count": 1,
+        "tf3_validator_reject_step_count": 8,
+        "tf4_budget_exhausted_case_count": 0
+      }
+    },
+    "final_agentic_v2_rule": {
+      "agent_systems": [
+        "final_agentic_v2_rule"
+      ],
+      "controller": {
+        "by_system": {
+          "final_agentic_v2_rule": "rule"
+        }
+      },
+      "notes": {
+        "counts_only": "Small-n agent attribution reports counts only, not rates.",
+        "headline_policy": "Agent attribution is diagnostic and is not merged into headline metrics.",
+        "tf1_policy": "TF1 is not auto-scored in P3-06; candidates require replay."
+      },
+      "per_action": {
+        "filtered_retrieval": {
+          "accept_count": 0,
+          "false_recovery_count": 0,
+          "ineffective": 0,
+          "success_count": 0,
+          "trigger_count": 0
+        },
+        "present_conflict_set": {
+          "accept_count": 0,
+          "false_recovery_count": 0,
+          "ineffective": 0,
+          "success_count": 0,
+          "trigger_count": 0
+        },
+        "refuse_with_explanation": {
+          "accept_count": 9,
+          "false_recovery_count": 0,
+          "ineffective": 0,
+          "success_count": 0,
+          "trigger_count": 18
+        },
+        "rewrite_query": {
+          "accept_count": 6,
+          "false_recovery_count": 0,
+          "ineffective": 3,
+          "success_count": 3,
+          "trigger_count": 9
+        }
+      },
+      "trajectory_failures": {
+        "tf1_auto_hit_count": 0,
+        "tf1_candidate_count": 0,
+        "tf1_candidates": [],
+        "tf2_ineffective_action_case_count": 1,
+        "tf3_validator_reject_step_count": 0,
+        "tf4_budget_exhausted_case_count": 0
+      }
+    }
+  },
+  "agent_residual_run": true,
+  "answer_llm_call_count": 24,
+  "attempt_count": 198,
+  "audit_row_count": 198,
+  "controller_llm_call_count": 18,
+  "created_at": "2026-06-24T08:47:49.919354Z",
+  "diagnostic_anchor": {
+    "action_a_legal_trigger_count": 2,
+    "action_b_gold_doc_recoverable_count": 0,
+    "action_b_legal_trigger_count": 0,
+    "action_d_legal_trigger_count": 0,
+    "case_count": 33,
+    "failure_distribution": {
+      "NO_RECOVERY": 29,
+      "PERMISSION_BLOCKED": 2,
+      "WEAK_RECALL": 2
+    },
+    "precheck_doc": "docs/P3_09_DIAGNOSTIC_PRECHECK.md"
+  },
+  "eval_split": "mixed",
+  "expected_rewrite_policy": "expected_rewrite is informational only and is never used for retrieval or scoring.",
+  "expected_rewrite_used": false,
+  "formal_retrieval_baseline": false,
+  "full_split_run": false,
+  "headline_eligible": false,
+  "headline_policy": "P3 agent ablation mixes obfuscated, external false-refusal controls, and agent_residual diagnostic cases; it must not enter external headline metrics.",
+  "headline_scope": "agent_phase3_diagnostic",
+  "index_summaries": [
+    {
+      "chunks_loaded": 442,
+      "chunks_path": "data/generated/public/chunks.jsonl",
+      "embedding_model_name": "BAAI/bge-small-en-v1.5",
+      "embedding_provider": "sentence_transformer",
+      "include_agent_residual": false,
+      "include_redteam": false,
+      "index_metadata_path": "data/indexes/index_metadata.json",
+      "keyword_count": 442,
+      "keyword_index_built": true,
+      "qdrant_collection": "trust_rag_enterprise_qa",
+      "vector_count": 442,
+      "vector_index_built": true,
+      "vector_size": 384,
+      "warnings": [],
+      "whoosh_index_path": "data/indexes/whoosh"
+    },
+    {
+      "chunks_loaded": 33,
+      "chunks_path": "data/generated/agent_residual/chunks.jsonl",
+      "embedding_model_name": "BAAI/bge-small-en-v1.5",
+      "embedding_provider": "sentence_transformer",
+      "include_agent_residual": true,
+      "include_redteam": false,
+      "index_metadata_path": "data/indexes/index_metadata.json",
+      "keyword_count": 33,
+      "keyword_index_built": true,
+      "qdrant_collection": "trust_rag_enterprise_qa",
+      "vector_count": 33,
+      "vector_index_built": true,
+      "vector_size": 384,
+      "warnings": [],
+      "whoosh_index_path": "data/indexes/whoosh"
+    }
+  ],
+  "k": 3,
+  "llm_call_count": 42,
+  "llm_calls_by_system": {
+    "final_agentic_v2_llm": {
+      "answer_calls": 9,
+      "controller_calls": 18,
+      "rewrite_calls": 0,
+      "total_calls": 27
+    },
+    "final_agentic_v2_rule": {
+      "answer_calls": 9,
+      "controller_calls": 0,
+      "rewrite_calls": 0,
+      "total_calls": 9
+    },
+    "final_gated_calibrated": {
+      "answer_calls": 6,
+      "controller_calls": 0,
+      "rewrite_calls": 0,
+      "total_calls": 6
+    }
+  },
+  "llm_model_name": "deepseek-v4-flash",
+  "llm_provider": "deepseek",
+  "llm_usage_completion_tokens": 18133,
+  "llm_usage_prompt_tokens": 61061,
+  "llm_usage_reported": true,
+  "llm_usage_total_tokens": 79194,
+  "mock_used": false,
+  "mode": "real_run",
+  "num_cases": 22,
+  "p3_interpretation": {
+    "next_step": "Keep the mechanism; treat the apparent agent delta as qualitative small-n diagnostic evidence, not a headline gain.",
+    "phenomenon": "Agent action b/d effective trigger surface is zero and action-a recoveries are confined to the legal-trigger diagnostic corner.",
+    "root_cause": "Residual false-refusals are policy-adjudication failures, not gold-doc-recoverable metadata-filtering failures."
+  },
+  "passk": {
+    "by_system": {
+      "final_agentic_v2_llm": {
+        "action_sequence_consistency": 1.0,
+        "attempt_count": 66,
+        "case_count": 22,
+        "complete_case_count": 22,
+        "k": 3,
+        "pass_1_attempt_mean": 0.2727,
+        "pass_1_first_run": 0.2727,
+        "pass_3": 0.2727
+      },
+      "final_agentic_v2_rule": {
+        "action_sequence_consistency": 1.0,
+        "attempt_count": 66,
+        "case_count": 22,
+        "complete_case_count": 22,
+        "k": 3,
+        "pass_1_attempt_mean": 0.2727,
+        "pass_1_first_run": 0.2727,
+        "pass_3": 0.2727
+      },
+      "final_gated_calibrated": {
+        "action_sequence_consistency": 1.0,
+        "attempt_count": 66,
+        "case_count": 22,
+        "complete_case_count": 22,
+        "k": 3,
+        "pass_1_attempt_mean": 0.2273,
+        "pass_1_first_run": 0.2273,
+        "pass_3": 0.2273
+      }
+    },
+    "k": 3,
+    "notes": {
+      "action_sequence_consistency": "Share of cases whose action_sequence is identical across all repeats.",
+      "pass_1_attempt_mean": "Mean grounded_correct over all repeated attempts.",
+      "pass_k": "Case passes only when every repeated attempt is grounded_correct."
+    }
+  },
+  "pilot_eligible": false,
+  "real_llm_invoked": true,
+  "reranker_unavailable": false,
+  "rewrite_llm_call_count": 0,
+  "rewrite_llm_model_name": "deepseek-v4-flash",
+  "rewrite_llm_provider": "deepseek",
+  "run_dir": "data/eval_runs/p3-09-agent-ablation",
+  "run_id": "p3-09-agent-ablation",
+  "split": "p3_agent_ablation_mixed",
+  "summary_metrics": {
+    "final_agentic_v2_llm": {
+      "cases": 66,
+      "citation_valid": 1.0,
+      "deprecated_confusion": 0.4545,
+      "deprecated_confusion_rate": 0.4545,
+      "doc_hit@1": 0.6364,
+      "doc_hit@3": 0.7273,
+      "doc_hit@5": 0.8182,
+      "doc_recall": 0.8182,
+      "false_answer_rate": 0.0,
+      "false_refusal_rate": 0.6818,
+      "first_pass_doc_hit@5": 1.0,
+      "gold_doc_recall@1": 0.6364,
+      "gold_doc_recall@3": 0.7273,
+      "gold_doc_recall@5": 0.8182,
+      "grounded_correct": 0.2727,
+      "grounded_correctness": 0.2727,
+      "hard_negative_error": 0.0,
+      "hard_negative_error_rate": 0.0,
+      "hit@1": 0.0909,
+      "hit@3": 0.1364,
+      "hit@5": 0.2273,
+      "mrr": 0.6947,
+      "raw_correctness": 0.2727,
+      "refusal_accuracy": 0.3182,
+      "refusal_rate": 0.8636,
+      "second_pass_improvement": 0.0,
+      "supports_core_claim": 1.0,
+      "unsupported_claim_rate": 0.0
+    },
+    "final_agentic_v2_rule": {
+      "cases": 66,
+      "citation_valid": 1.0,
+      "deprecated_confusion": 0.4545,
+      "deprecated_confusion_rate": 0.4545,
+      "doc_hit@1": 0.6364,
+      "doc_hit@3": 0.7273,
+      "doc_hit@5": 0.8182,
+      "doc_recall": 0.8182,
+      "false_answer_rate": 0.0,
+      "false_refusal_rate": 0.6818,
+      "first_pass_doc_hit@5": 1.0,
+      "gold_doc_recall@1": 0.6364,
+      "gold_doc_recall@3": 0.7273,
+      "gold_doc_recall@5": 0.8182,
+      "grounded_correct": 0.2727,
+      "grounded_correctness": 0.2727,
+      "hard_negative_error": 0.0,
+      "hard_negative_error_rate": 0.0,
+      "hit@1": 0.0909,
+      "hit@3": 0.1364,
+      "hit@5": 0.2273,
+      "mrr": 0.6947,
+      "raw_correctness": 0.2727,
+      "refusal_accuracy": 0.3182,
+      "refusal_rate": 0.8636,
+      "second_pass_improvement": 0.0,
+      "supports_core_claim": 1.0,
+      "unsupported_claim_rate": 0.0
+    },
+    "final_gated_calibrated": {
+      "cases": 66,
+      "citation_valid": 1.0,
+      "deprecated_confusion": 0.4545,
+      "deprecated_confusion_rate": 0.4545,
+      "doc_hit@1": 0.6364,
+      "doc_hit@3": 0.7273,
+      "doc_hit@5": 0.8182,
+      "doc_recall": 0.8182,
+      "false_answer_rate": 0.0,
+      "false_refusal_rate": 0.7273,
+      "gold_doc_recall@1": 0.6364,
+      "gold_doc_recall@3": 0.7273,
+      "gold_doc_recall@5": 0.8182,
+      "grounded_correct": 0.2273,
+      "grounded_correctness": 0.2273,
+      "hard_negative_error": 0.0,
+      "hard_negative_error_rate": 0.0,
+      "hit@1": 0.0909,
+      "hit@3": 0.1364,
+      "hit@5": 0.2273,
+      "mrr": 0.6947,
+      "raw_correctness": 0.2273,
+      "refusal_accuracy": 0.2727,
+      "refusal_rate": 0.9091,
+      "supports_core_claim": 1.0,
+      "unsupported_claim_rate": 0.0
+    }
+  },
+  "summary_metrics_by_group": {
+    "external_false_refusal": {
+      "final_agentic_v2_llm": {
+        "cases": 18,
+        "citation_valid": 1.0,
+        "deprecated_confusion": 0.5,
+        "deprecated_confusion_rate": 0.5,
+        "doc_hit@1": 0.5,
+        "doc_hit@3": 0.5,
+        "doc_hit@5": 0.6667,
+        "doc_recall": 0.6667,
+        "false_answer_rate": 0.0,
+        "false_refusal_rate": 1.0,
+        "gold_doc_recall@1": 0.5,
+        "gold_doc_recall@3": 0.5,
+        "gold_doc_recall@5": 0.6667,
+        "grounded_correct": 0.0,
+        "grounded_correctness": 0.0,
+        "hard_negative_error": 0.0,
+        "hard_negative_error_rate": 0.0,
+        "hit@1": 0.0,
+        "hit@3": 0.0,
+        "hit@5": 0.0,
+        "mrr": 0.5417,
+        "raw_correctness": 0.0,
+        "refusal_accuracy": 0.0,
+        "refusal_rate": 1.0,
+        "supports_core_claim": 1.0,
+        "unsupported_claim_rate": 0.0
+      },
+      "final_agentic_v2_rule": {
+        "cases": 18,
+        "citation_valid": 1.0,
+        "deprecated_confusion": 0.5,
+        "deprecated_confusion_rate": 0.5,
+        "doc_hit@1": 0.5,
+        "doc_hit@3": 0.5,
+        "doc_hit@5": 0.6667,
+        "doc_recall": 0.6667,
+        "false_answer_rate": 0.0,
+        "false_refusal_rate": 1.0,
+        "gold_doc_recall@1": 0.5,
+        "gold_doc_recall@3": 0.5,
+        "gold_doc_recall@5": 0.6667,
+        "grounded_correct": 0.0,
+        "grounded_correctness": 0.0,
+        "hard_negative_error": 0.0,
+        "hard_negative_error_rate": 0.0,
+        "hit@1": 0.0,
+        "hit@3": 0.0,
+        "hit@5": 0.0,
+        "mrr": 0.5417,
+        "raw_correctness": 0.0,
+        "refusal_accuracy": 0.0,
+        "refusal_rate": 1.0,
+        "supports_core_claim": 1.0,
+        "unsupported_claim_rate": 0.0
+      },
+      "final_gated_calibrated": {
+        "cases": 18,
+        "citation_valid": 1.0,
+        "deprecated_confusion": 0.5,
+        "deprecated_confusion_rate": 0.5,
+        "doc_hit@1": 0.5,
+        "doc_hit@3": 0.5,
+        "doc_hit@5": 0.6667,
+        "doc_recall": 0.6667,
+        "false_answer_rate": 0.0,
+        "false_refusal_rate": 1.0,
+        "gold_doc_recall@1": 0.5,
+        "gold_doc_recall@3": 0.5,
+        "gold_doc_recall@5": 0.6667,
+        "grounded_correct": 0.0,
+        "grounded_correctness": 0.0,
+        "hard_negative_error": 0.0,
+        "hard_negative_error_rate": 0.0,
+        "hit@1": 0.0,
+        "hit@3": 0.0,
+        "hit@5": 0.0,
+        "mrr": 0.5417,
+        "raw_correctness": 0.0,
+        "refusal_accuracy": 0.0,
+        "refusal_rate": 1.0,
+        "supports_core_claim": 1.0,
+        "unsupported_claim_rate": 0.0
+      }
+    },
+    "legal_trigger": {
+      "final_agentic_v2_llm": {
+        "cases": 3,
+        "citation_valid": 1.0,
+        "deprecated_confusion": 1.0,
+        "deprecated_confusion_rate": 1.0,
+        "doc_hit@1": 1.0,
+        "doc_hit@3": 1.0,
+        "doc_hit@5": 1.0,
+        "doc_recall": 1.0,
+        "false_answer_rate": 0.0,
+        "false_refusal_rate": 0.0,
+        "first_pass_doc_hit@5": 1.0,
+        "gold_doc_recall@1": 1.0,
+        "gold_doc_recall@3": 1.0,
+        "gold_doc_recall@5": 1.0,
+        "grounded_correct": 1.0,
+        "grounded_correctness": 1.0,
+        "hard_negative_error": 0.0,
+        "hard_negative_error_rate": 0.0,
+        "hit@1": 1.0,
+        "hit@3": 1.0,
+        "hit@5": 1.0,
+        "mrr": 1.0,
+        "raw_correctness": 1.0,
+        "refusal_accuracy": 1.0,
+        "refusal_rate": 0.0,
+        "second_pass_improvement": 0.0,
+        "supports_core_claim": 1.0,
+        "unsupported_claim_rate": 0.0
+      },
+      "final_agentic_v2_rule": {
+        "cases": 3,
+        "citation_valid": 1.0,
+        "deprecated_confusion": 1.0,
+        "deprecated_confusion_rate": 1.0,
+        "doc_hit@1": 1.0,
+        "doc_hit@3": 1.0,
+        "doc_hit@5": 1.0,
+        "doc_recall": 1.0,
+        "false_answer_rate": 0.0,
+        "false_refusal_rate": 0.0,
+        "first_pass_doc_hit@5": 1.0,
+        "gold_doc_recall@1": 1.0,
+        "gold_doc_recall@3": 1.0,
+        "gold_doc_recall@5": 1.0,
+        "grounded_correct": 1.0,
+        "grounded_correctness": 1.0,
+        "hard_negative_error": 0.0,
+        "hard_negative_error_rate": 0.0,
+        "hit@1": 1.0,
+        "hit@3": 1.0,
+        "hit@5": 1.0,
+        "mrr": 1.0,
+        "raw_correctness": 1.0,
+        "refusal_accuracy": 1.0,
+        "refusal_rate": 0.0,
+        "second_pass_improvement": 0.0,
+        "supports_core_claim": 1.0,
+        "unsupported_claim_rate": 0.0
+      },
+      "final_gated_calibrated": {
+        "cases": 3,
+        "citation_valid": 1.0,
+        "deprecated_confusion": 1.0,
+        "deprecated_confusion_rate": 1.0,
+        "doc_hit@1": 1.0,
+        "doc_hit@3": 1.0,
+        "doc_hit@5": 1.0,
+        "doc_recall": 1.0,
+        "false_answer_rate": 0.0,
+        "false_refusal_rate": 1.0,
+        "gold_doc_recall@1": 1.0,
+        "gold_doc_recall@3": 1.0,
+        "gold_doc_recall@5": 1.0,
+        "grounded_correct": 0.0,
+        "grounded_correctness": 0.0,
+        "hard_negative_error": 0.0,
+        "hard_negative_error_rate": 0.0,
+        "hit@1": 1.0,
+        "hit@3": 1.0,
+        "hit@5": 1.0,
+        "mrr": 1.0,
+        "raw_correctness": 0.0,
+        "refusal_accuracy": 0.0,
+        "refusal_rate": 1.0,
+        "supports_core_claim": 1.0,
+        "unsupported_claim_rate": 0.0
+      }
+    },
+    "obfuscated": {
+      "final_agentic_v2_llm": {
+        "cases": 45,
+        "citation_valid": 1.0,
+        "deprecated_confusion": 0.4,
+        "deprecated_confusion_rate": 0.4,
+        "doc_hit@1": 0.6667,
+        "doc_hit@3": 0.8,
+        "doc_hit@5": 0.8667,
+        "doc_recall": 0.8667,
+        "false_answer_rate": 0.0,
+        "false_refusal_rate": 0.6,
+        "first_pass_doc_hit@5": 1.0,
+        "gold_doc_recall@1": 0.6667,
+        "gold_doc_recall@3": 0.8,
+        "gold_doc_recall@5": 0.8667,
+        "grounded_correct": 0.3333,
+        "grounded_correctness": 0.3333,
+        "hard_negative_error": 0.0,
+        "hard_negative_error_rate": 0.0,
+        "hit@1": 0.0667,
+        "hit@3": 0.1333,
+        "hit@5": 0.2667,
+        "mrr": 0.7356,
+        "raw_correctness": 0.3333,
+        "refusal_accuracy": 0.4,
+        "refusal_rate": 0.8667,
+        "second_pass_improvement": 0.0,
+        "supports_core_claim": 1.0,
+        "unsupported_claim_rate": 0.0
+      },
+      "final_agentic_v2_rule": {
+        "cases": 45,
+        "citation_valid": 1.0,
+        "deprecated_confusion": 0.4,
+        "deprecated_confusion_rate": 0.4,
+        "doc_hit@1": 0.6667,
+        "doc_hit@3": 0.8,
+        "doc_hit@5": 0.8667,
+        "doc_recall": 0.8667,
+        "false_answer_rate": 0.0,
+        "false_refusal_rate": 0.6,
+        "first_pass_doc_hit@5": 1.0,
+        "gold_doc_recall@1": 0.6667,
+        "gold_doc_recall@3": 0.8,
+        "gold_doc_recall@5": 0.8667,
+        "grounded_correct": 0.3333,
+        "grounded_correctness": 0.3333,
+        "hard_negative_error": 0.0,
+        "hard_negative_error_rate": 0.0,
+        "hit@1": 0.0667,
+        "hit@3": 0.1333,
+        "hit@5": 0.2667,
+        "mrr": 0.7356,
+        "raw_correctness": 0.3333,
+        "refusal_accuracy": 0.4,
+        "refusal_rate": 0.8667,
+        "second_pass_improvement": 0.0,
+        "supports_core_claim": 1.0,
+        "unsupported_claim_rate": 0.0
+      },
+      "final_gated_calibrated": {
+        "cases": 45,
+        "citation_valid": 1.0,
+        "deprecated_confusion": 0.4,
+        "deprecated_confusion_rate": 0.4,
+        "doc_hit@1": 0.6667,
+        "doc_hit@3": 0.8,
+        "doc_hit@5": 0.8667,
+        "doc_recall": 0.8667,
+        "false_answer_rate": 0.0,
+        "false_refusal_rate": 0.6,
+        "gold_doc_recall@1": 0.6667,
+        "gold_doc_recall@3": 0.8,
+        "gold_doc_recall@5": 0.8667,
+        "grounded_correct": 0.3333,
+        "grounded_correctness": 0.3333,
+        "hard_negative_error": 0.0,
+        "hard_negative_error_rate": 0.0,
+        "hit@1": 0.0667,
+        "hit@3": 0.1333,
+        "hit@5": 0.2667,
+        "mrr": 0.7356,
+        "raw_correctness": 0.3333,
+        "refusal_accuracy": 0.4,
+        "refusal_rate": 0.8667,
+        "supports_core_claim": 1.0,
+        "unsupported_claim_rate": 0.0
+      }
+    }
+  },
+  "systems": [
+    "final_gated_calibrated",
+    "final_agentic_v2_rule",
+    "final_agentic_v2_llm"
+  ],
+  "testbed": {
+    "case_keys": [
+      "obfuscated:obfuscated-001",
+      "obfuscated:obfuscated-002",
+      "obfuscated:obfuscated-003",
+      "obfuscated:obfuscated-004",
+      "obfuscated:obfuscated-005",
+      "obfuscated:obfuscated-006",
+      "obfuscated:obfuscated-007",
+      "obfuscated:obfuscated-008",
+      "obfuscated:obfuscated-009",
+      "obfuscated:obfuscated-010",
+      "obfuscated:obfuscated-011",
+      "obfuscated:obfuscated-012",
+      "obfuscated:obfuscated-013",
+      "obfuscated:obfuscated-014",
+      "obfuscated:obfuscated-015",
+      "external:external-003",
+      "external:external-004",
+      "external:external-010",
+      "external:external-014",
+      "external:external-015",
+      "external:external-017",
+      "agent_residual:AR-002"
+    ],
+    "external_false_refusal_case_ids": [
+      "external-003",
+      "external-004",
+      "external-010",
+      "external-014",
+      "external-015",
+      "external-017"
+    ],
+    "external_false_refusal_source": "data/eval_runs/q2-p1-06-reconciled-legacy-default/results.jsonl",
+    "hard_negative_included": false,
+    "legal_trigger_cases": [
+      {
+        "action": "rewrite_query",
+        "case_id": "obfuscated-015",
+        "split": "obfuscated"
+      },
+      {
+        "action": "rewrite_query",
+        "case_id": "AR-002",
+        "split": "agent_residual"
+      }
+    ],
+    "obfuscated_case_count": 15,
+    "policy": "obfuscated all 15 + first six calibrated external false-refusals by case_id + legal-trigger AR-002; hard-negative excluded.",
+    "unique_case_count": 22
+  },
+  "toy_retrieval": false,
+  "uses_real_embedding": true,
+  "uses_real_llm": true,
+  "uses_real_reranker": true,
+  "vector_unavailable": false
+}

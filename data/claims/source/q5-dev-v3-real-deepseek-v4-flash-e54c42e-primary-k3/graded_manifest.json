@@ -1,0 +1,19 @@
+{
+  "analytic_control_row_count": 108,
+  "dataset_hashes": {
+    "environment": "b1cbcf1bfbeb86fa25451c09b883ef5097ca3dedf02fb6e0ce1e982c5858d61f",
+    "gold": "3dd75f63a9d97761f9c47a24f6ae0710e67a4f86b45b5efc6bc181c7eddd777b",
+    "runtime_inputs": "6eb4703e36be4a18fd19539e289709cec9aa9aa81c81e73c6f399dd541a6fe9c",
+    "tasks": "94403bf56d9ab876a47ac1782805960f2cfd94567b993ea7ff55cdbf213d12bd"
+  },
+  "gate_source_sha256": "2065831349c68390e9fd1b37579b832ae5e8e86530be192944bf95f9a22fbcd9",
+  "graded_at": "2026-07-13T15:09:15.464538+00:00",
+  "graded_row_count": 324,
+  "grader_source_sha256": "af1abd528de7977a96e1cb44d69de3d94034c7e2b779808519165461a975fdb0",
+  "headline_eligible": false,
+  "metrics_source_sha256": "2065831349c68390e9fd1b37579b832ae5e8e86530be192944bf95f9a22fbcd9",
+  "raw_manifest_sha256": "b0efd5a7a3c9d2f19cfe3251ed48c2d567a0336f9c779bf147434db8a1ce8de6",
+  "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3",
+  "run_valid": true,
+  "schema_version": "q5-graded-manifest-v3"
+}

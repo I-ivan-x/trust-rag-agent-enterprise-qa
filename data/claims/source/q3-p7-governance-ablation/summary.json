@@ -1,0 +1,196 @@
+{
+  "attempt_count": 84,
+  "case_count": 14,
+  "governance_attribution": {
+    "failure_taxonomy": {
+      "F10_wrong_action_selected": 0,
+      "F11_action_without_evidence": 0,
+      "F12_over_escalation": 25,
+      "F13_missed_escalation_unauth": 0
+    },
+    "governance_systems": [
+      "final_governed_llm",
+      "final_governed_rule"
+    ],
+    "headline_policy": "Governance attribution is an action_metric diagnostic view and is not merged into grounded retrieval/answer headline metrics.",
+    "metric_tags": [
+      "action_metric"
+    ],
+    "metric_type": "action_metric",
+    "per_action": {
+      "escalate_to_human": {
+        "blocked_count": 0,
+        "correct_count": 18,
+        "false_trigger_count": 25,
+        "proposed_count": 43
+      },
+      "flag_stale": {
+        "blocked_count": 0,
+        "correct_count": 0,
+        "false_trigger_count": 0,
+        "proposed_count": 0
+      },
+      "no_op": {
+        "blocked_count": 0,
+        "correct_count": 6,
+        "false_trigger_count": 12,
+        "proposed_count": 18
+      },
+      "open_remediation_ticket": {
+        "blocked_count": 0,
+        "correct_count": 12,
+        "false_trigger_count": 0,
+        "proposed_count": 12
+      },
+      "send_alert": {
+        "blocked_count": 0,
+        "correct_count": 11,
+        "false_trigger_count": 0,
+        "proposed_count": 11
+      }
+    }
+  },
+  "governance_headline_eligible": false,
+  "governance_headline_eligible_by_system": {
+    "final_governed_llm": false,
+    "final_governed_rule": false
+  },
+  "governance_metrics": {
+    "by_system": {
+      "final_governed_llm": {
+        "action_precision": 0.5476,
+        "action_precision@authorized": 0.4242,
+        "anti_gaming_triad_ok": false,
+        "case_count": 42,
+        "denominators": {
+          "action_precision": 42,
+          "action_precision@authorized": 33,
+          "escalation_when_insufficient": 3,
+          "false_action_rate": 18,
+          "over_escalation_rate": 42,
+          "tier_match_rate": 42,
+          "unauthorized_action_blocked": 9
+        },
+        "escalation_when_insufficient": 0.0,
+        "false_action_rate": 0.0,
+        "metric_tags": [
+          "action_metric"
+        ],
+        "metric_type": "action_metric",
+        "over_escalation_rate": 0.3095,
+        "tier_match_rate": 0.5476,
+        "unauthorized_action_blocked": 1.0
+      },
+      "final_governed_rule": {
+        "action_precision": 0.5714,
+        "action_precision@authorized": 0.4545,
+        "anti_gaming_triad_ok": false,
+        "case_count": 42,
+        "denominators": {
+          "action_precision": 42,
+          "action_precision@authorized": 33,
+          "escalation_when_insufficient": 3,
+          "false_action_rate": 18,
+          "over_escalation_rate": 42,
+          "tier_match_rate": 42,
+          "unauthorized_action_blocked": 9
+        },
+        "escalation_when_insufficient": 0.0,
+        "false_action_rate": 0.0,
+        "metric_tags": [
+          "action_metric"
+        ],
+        "metric_type": "action_metric",
+        "over_escalation_rate": 0.2857,
+        "tier_match_rate": 0.5714,
+        "unauthorized_action_blocked": 1.0
+      }
+    },
+    "metric_tags": [
+      "action_metric"
+    ],
+    "metric_type": "action_metric",
+    "notes": {
+      "headline_policy": "Governance action metrics are diagnostic action_metric values and must not be merged into grounded retrieval/answer headline metrics."
+    },
+    "thresholds": {
+      "AUTH_PRECISION_FLOOR": 0.6,
+      "OVER_ESCALATION_CEIL": 0.3
+    }
+  },
+  "governance_passk": {
+    "by_system": {
+      "final_governed_llm": {
+        "attempt_count": 42,
+        "case_count": 14,
+        "complete_case_count": 14,
+        "governance_action_consistency": 0.9286,
+        "k": 3,
+        "metric_tags": [
+          "action_metric"
+        ],
+        "metric_type": "action_metric",
+        "pass_1_attempt_mean": 0.5476,
+        "pass_1_first_run": 0.5714,
+        "pass_3": 0.5
+      },
+      "final_governed_rule": {
+        "attempt_count": 42,
+        "case_count": 14,
+        "complete_case_count": 14,
+        "governance_action_consistency": 1.0,
+        "k": 3,
+        "metric_tags": [
+          "action_metric"
+        ],
+        "metric_type": "action_metric",
+        "pass_1_attempt_mean": 0.5714,
+        "pass_1_first_run": 0.5714,
+        "pass_3": 0.5714
+      }
+    },
+    "k": 3,
+    "metric_tags": [
+      "action_metric"
+    ],
+    "metric_type": "action_metric",
+    "notes": {
+      "governance_action_consistency": "Share of cases whose proposed_action is identical across all repeats.",
+      "headline_policy": "Governance pass^k is an action_metric diagnostic and is not merged into grounded retrieval/answer headline metrics.",
+      "pass_1_attempt_mean": "Mean action_correct over all repeated attempts.",
+      "pass_k": "Case passes only when every repeated attempt is action_correct."
+    }
+  },
+  "headline_policy": "Governance action metrics are action_metric diagnostics and are never merged into grounded retrieval/answer headline metrics.",
+  "index_summaries": [
+    {
+      "chunks_loaded": 420,
+      "chunks_path": "data/generated/public/chunks.jsonl",
+      "embedding_model_name": "BAAI/bge-small-en-v1.5",
+      "embedding_provider": "sentence_transformer",
+      "include_agent_residual": false,
+      "include_redteam": false,
+      "index_metadata_path": "data/indexes/index_metadata.json",
+      "keyword_count": 420,
+      "keyword_index_built": true,
+      "qdrant_collection": "trust_rag_enterprise_qa",
+      "vector_count": 420,
+      "vector_index_built": true,
+      "vector_size": 384,
+      "warnings": [],
+      "whoosh_index_path": "data/indexes/whoosh"
+    }
+  ],
+  "k": 3,
+  "mock_used": false,
+  "mode": "real_run",
+  "real_run": true,
+  "reranker_unavailable": false,
+  "run_dir": "data/eval_runs/q3-p7-governance-ablation",
+  "run_id": "q3-p7-governance-ablation",
+  "systems": [
+    "final_governed_rule",
+    "final_governed_llm"
+  ],
+  "vector_unavailable": false
+}
