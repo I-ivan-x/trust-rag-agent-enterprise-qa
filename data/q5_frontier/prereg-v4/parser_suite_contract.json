@@ -1,0 +1,15 @@
+{
+  "components": [
+    "structured_parser",
+    "boundary_b_parser",
+    "compositional_challenger",
+    "alias_condition_normalizer"
+  ],
+  "external_requests": 0,
+  "model_requests": 0,
+  "runtime_only": true,
+  "schema_version": "q5-deterministic-suite-contract-v4",
+  "selector": "best_of_deterministic_selector",
+  "selector_conflict_semantics": "ambiguous_fail_closed",
+  "suite_name": "q5-preregistered-deterministic-suite-v4"
+}

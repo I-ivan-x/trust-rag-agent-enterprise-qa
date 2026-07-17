@@ -1,0 +1,10 @@
+{
+  "artifacts": {
+    "metrics_contract.json": "2186814d654af7c8e39abf62e55716757aee166011b38f45215d4a52c2073513",
+    "parser_suite_contract.json": "039c5b0c685011aeb808fbb8a1922426821c2460c97ad8d88728ae6efffec626",
+    "prompt_contract.json": "57584df0e3364b4570be33b6ac3ee2821ee219da69c037f6e595162f502a3802",
+    "source_inventory.json": "187ca31cc0cf417c9a7d1b0d580b23d3faff0fc29bcc6a1d48119294d1089d4b",
+    "thresholds.json": "a066b236bcc828a8aaa1cfa39dd0a767f2d5c1e0702b338eddd14608c8173e01"
+  },
+  "schema_version": "q5-frontier-prereg-hashes-v1"
+}

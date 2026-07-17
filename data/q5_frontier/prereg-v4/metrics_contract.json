@@ -1,0 +1,24 @@
+{
+  "allowed_report_fields": [
+    "oracle_resolvable_abstentions",
+    "family_coverage",
+    "phenomenon_coverage",
+    "deterministic_conditional_risk",
+    "call_headroom",
+    "token_avoidance"
+  ],
+  "call_protocol": {
+    "fallback": "none",
+    "frozen": true,
+    "hybrid": "one semantic parse call only after best-of suite abstains",
+    "llm_only": "one semantic parse call for every semantic-open case",
+    "retry": 0
+  },
+  "forbidden_pre_model_fields": [
+    "beneficial_evidence",
+    "beneficial_capture",
+    "model_uplift"
+  ],
+  "schema_version": "q5-parser-uncovered-headroom-metrics-v1",
+  "token_avoidance": "not_evaluated"
+}

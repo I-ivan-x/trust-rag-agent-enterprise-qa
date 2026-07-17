@@ -1,0 +1,10 @@
+{
+  "headline_value_claim_allowed_before_model_run": false,
+  "maximum_deterministic_conditional_risk": 0.0,
+  "minimum_case_count": 80,
+  "minimum_family_count": 4,
+  "minimum_parser_uncovered_case_count": 16,
+  "minimum_phenomenon_count": 4,
+  "require_oracle_resolvable_abstentions": true,
+  "schema_version": "q5-parser-uncovered-thresholds-v1"
+}

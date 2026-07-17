@@ -1,0 +1,9 @@
+{
+  "files": {
+    "app/eval/q5_frontier_compiler_v4.py": "4920fc7d577a7a58c600cc914839420b16ed68da468bb5ae43eeeba05856c815",
+    "app/eval/q5_frontier_parser_suite_v4.py": "35c4a9442894edf9bc69498a98d367131a5d989148cb5e06bbf09372efcffe8f",
+    "app/eval/q5_frontier_prereg_v4.py": "918671c835e4ac161627580a23952a24c2ca192d081a570520e3c3bc4d696020",
+    "app/schemas/q5_frontier_v4.py": "f0a07a68754154e2ef13a4c1338beb25722f4e78e051a70b25a2e9630edb5fee"
+  },
+  "schema_version": "q5-frontier-prereg-source-inventory-v1"
+}
