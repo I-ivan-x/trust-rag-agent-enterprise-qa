@@ -81,9 +81,25 @@ def test_recruiting_data_contract_is_complete_and_scoped() -> None:
                     "artifact_commit",
                 } <= source.keys()
     frontier = json.loads(data_paths["decision-frontier.json"].read_text(encoding="utf-8"))
+    assert frontier["schema_version"] == "public-decision-frontier-v2"
     assert [segment["segment_id"] for segment in frontier["segments"]] == [
         "grammar",
         "controlled_prose",
         "open_semantics",
         "unsafe",
     ]
+    for segment in frontier["segments"]:
+        assert {
+            "route",
+            "parser_status",
+            "llm_called",
+            "evidence_basis",
+            "terminal_outcome",
+            "claim_status",
+            "states",
+        } <= segment.keys()
+        assert set(segment["states"]) == {
+            "hypothesis",
+            "real_result",
+            "final_decision",
+        }

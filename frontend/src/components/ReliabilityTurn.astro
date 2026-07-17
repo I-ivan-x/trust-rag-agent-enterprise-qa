@@ -1,0 +1,92 @@
+---
+import {
+  ArrowRight,
+  CircleCheck,
+  CircleX,
+  LockKeyhole,
+} from "@lucide/astro";
+import questionsData from "../data/questions.json";
+import { fraction, metricValue } from "../lib/claims";
+
+const claims = questionsData.questions.flatMap((question) => question.claims);
+const q3Usefulness = claims.find((claim) => claim.claim_id === "q3.action_usefulness")!;
+const q4Selection = claims.find((claim) => claim.claim_id === "q4.calibrated_selection")!;
+const q4Safety = claims.find((claim) => claim.claim_id === "q4.release_reliability")!;
+const beforePrecision = q3Usefulness.metrics.rule_precision_authorized;
+const afterPrecision = q4Selection.metrics.precision_authorized;
+const beforeTriad = q3Usefulness.metrics.anti_gaming_triad;
+const afterTriad = q4Selection.metrics.anti_gaming_triad;
+---
+
+<section
+  id="reliability-turn"
+  class="section section-compact reliability-section"
+  data-major-section
+  data-section-name="Reliability Turn"
+>
+  <div class="wrap reliability-layout">
+    <header class="section-heading">
+      <p class="eyebrow">Reliability Turn · Q3 → Q4</p>
+      <h2>先让安全门说“不够好”，再修选择机制。</h2>
+      <p>
+        Q3 安全但未过有用性门；Q4 在 held-out ops_test 上完成校准，安全地板保持不变。
+      </p>
+    </header>
+
+    <div class="turn-comparison" aria-label="Q3 到 Q4 的校准结果">
+      <a
+        class="turn-card turn-before"
+        href={`#evidence-${q3Usefulness.claim_id}`}
+        data-claim-id={q3Usefulness.claim_id}
+      >
+        <div class="turn-card-head">
+          <CircleX size={19} aria-hidden="true" />
+          <span>Q3 · anti-gaming rejected</span>
+        </div>
+        <strong
+          class="metric-value"
+          data-metric-claim={q3Usefulness.claim_id}
+          data-metric-name="rule_precision_authorized"
+        >{metricValue(beforePrecision, 4)}</strong>
+        <span>precision@authorized · {fraction(beforePrecision)}</span>
+        <small data-metric-claim={q3Usefulness.claim_id} data-metric-name="anti_gaming_triad">
+          triad {metricValue(beforeTriad)}
+        </small>
+      </a>
+
+      <div class="turn-arrow" aria-hidden="true"><ArrowRight size={24} /></div>
+
+      <a
+        class="turn-card turn-after"
+        href={`#evidence-${q4Selection.claim_id}`}
+        data-claim-id={q4Selection.claim_id}
+      >
+        <div class="turn-card-head">
+          <CircleCheck size={19} aria-hidden="true" />
+          <span>Q4 · held-out accepted</span>
+        </div>
+        <strong
+          class="metric-value"
+          data-metric-claim={q4Selection.claim_id}
+          data-metric-name="precision_authorized"
+        >{metricValue(afterPrecision, 4)}</strong>
+        <span>precision@authorized · {fraction(afterPrecision)}</span>
+        <small data-metric-claim={q4Selection.claim_id} data-metric-name="anti_gaming_triad">
+          triad {metricValue(afterTriad)}
+        </small>
+      </a>
+    </div>
+
+    <a
+      class="safety-floor"
+      href={`#evidence-${q4Safety.claim_id}`}
+      data-claim-id={q4Safety.claim_id}
+    >
+      <LockKeyhole size={18} aria-hidden="true" />
+      <span>
+        <strong>Safety floor unchanged</strong>
+        <small>{q4Safety.public_summary}</small>
+      </span>
+    </a>
+  </div>
+</section>

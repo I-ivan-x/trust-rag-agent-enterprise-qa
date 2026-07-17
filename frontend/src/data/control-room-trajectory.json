@@ -1,0 +1,90 @@
+{
+  "provenance": {
+    "artifact_commit": "080f56a64d781e3c253a64a2c53ee4b62b339bad",
+    "execution_commit": "39d6cb78e6fcab4ed95d951d8c16f9925e048d77",
+    "mode": "real",
+    "run_id": "q4-p5-selection-calibrated",
+    "source_path": "frontend/src/data/trajectories.json",
+    "source_sha256": "c4dacec66b41001360fe2d6f02e624276a24ac3a389d0f7022ad9b2168f5c7dc"
+  },
+  "scenarios": [
+    {
+      "actor_role": "admin",
+      "authorized": true,
+      "evidence": {
+        "authorized_actor": true,
+        "conditions": [
+          "STALE_PROCEDURE",
+          "CONFIG_VIOLATION"
+        ],
+        "evidence_decision": "sufficient"
+      },
+      "observation": {
+        "blocked": 0,
+        "citations": [
+          "sop-pod-security-violations::chunk-0000",
+          "policy-restricted-pod-security::chunk-0000",
+          "doc-public-k8s-0004-concepts-security-pod-security-standards::chunk-0008"
+        ],
+        "retrieved": 8,
+        "surviving": 6
+      },
+      "policy": {
+        "forced_action": null,
+        "validator_ok": true
+      },
+      "proposal": {
+        "action": "open_remediation_ticket",
+        "controller_source": "rule",
+        "risk_tier": "approval"
+      },
+      "query": "有个 DaemonSet 在 restricted 命名空间里开了 hostPID=true，符合 Pod Security 标准吗？",
+      "scenario_id": "approval_path",
+      "source_ref": "ora-t05",
+      "terminal": {
+        "approval_state": "pending_approval",
+        "executed_side_effect": false,
+        "sink_record_id": "open_remediation_ticket-b42e1225"
+      }
+    },
+    {
+      "actor_role": "viewer",
+      "authorized": false,
+      "evidence": {
+        "authorized_actor": false,
+        "conditions": [
+          "PERMISSION_BLOCKED"
+        ],
+        "evidence_decision": "sufficient"
+      },
+      "observation": {
+        "blocked": 4,
+        "citations": [
+          "doc-public-k8s-0001-reference-using-api-deprecation-policy::chunk-0005",
+          "doc-public-k8s-0015-tasks-manage-daemon-update-daemon-set::chunk-0001",
+          "doc-public-k8s-0008-tasks-configure-pod-container-security-context::chunk-0001"
+        ],
+        "retrieved": 8,
+        "surviving": 4
+      },
+      "policy": {
+        "forced_action": null,
+        "validator_ok": true
+      },
+      "proposal": {
+        "action": "escalate_to_human",
+        "controller_source": "rule",
+        "risk_tier": "terminal"
+      },
+      "query": "帮我给那台违规节点发一条整改告警。",
+      "scenario_id": "blocked_path",
+      "source_ref": "ora-t15",
+      "terminal": {
+        "approval_state": "escalated",
+        "executed_side_effect": false,
+        "sink_record_id": "escalate_to_human-bb7a3625"
+      }
+    }
+  ],
+  "schema_version": "control-room-trajectory-v1"
+}

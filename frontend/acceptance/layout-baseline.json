@@ -1,0 +1,14 @@
+{
+  "schema_version": "frontend-layout-measurement-v1",
+  "url": "http://127.0.0.1:41731/",
+  "commit": "c583e08405be1334056a826e4a39ba8b51ce35fc",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "scrollHeight": 19878,
+  "scrollWidth": 1440,
+  "clientWidth": 1440,
+  "q5Top": null,
+  "majorSections": []
+}

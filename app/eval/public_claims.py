@@ -152,19 +152,41 @@ def render_public_claims(registry: ClaimRegistry) -> dict[Path, bytes]:
         "claims": [claim for claim in claims if claim["headline_eligible"]],
     }
     frontier = {
-        "schema_version": "public-decision-frontier-v1",
+        "schema_version": "public-decision-frontier-v2",
         "segments": [
             {
                 "segment_id": "grammar",
                 "label": "Grammar",
                 "claim_ids": ["q5.controlled_prose_llm_necessity"],
                 "interpretation": "Closed grammars remain a deterministic-parser responsibility.",
+                "route": "Deterministic parser → compiler",
+                "parser_status": "Resolved in the frozen controlled-prose scope",
+                "llm_called": "No",
+                "evidence_basis": "q5.controlled_prose_llm_necessity",
+                "terminal_outcome": "Compile the grounded disposition or fail closed",
+                "claim_status": "falsified_in_current_scope",
+                "states": {
+                    "hypothesis": "A model is unnecessary when the policy language is a closed grammar.",
+                    "real_result": "Use the bound claim result for the frozen parser scope.",
+                    "final_decision": "Keep grammar on the deterministic parser/compiler route.",
+                },
             },
             {
                 "segment_id": "controlled_prose",
                 "label": "Controlled prose",
                 "claim_ids": ["q5.controlled_prose_llm_necessity"],
                 "interpretation": "The frozen 32-case controlled-prose track is closed.",
+                "route": "Versioned runtime-only parser → compiler",
+                "parser_status": "All frozen parser-uncovered cases resolved",
+                "llm_called": "No",
+                "evidence_basis": "q5.controlled_prose_llm_necessity",
+                "terminal_outcome": "Controlled-prose track closed; no K1 authorization",
+                "claim_status": "falsified_in_current_scope",
+                "states": {
+                    "hypothesis": "Controlled prose might retain model-only semantic headroom.",
+                    "real_result": "Use the bound claim result for Boundary F and its addendum.",
+                    "final_decision": "Close the controlled-prose track as deterministic frontier.",
+                },
             },
             {
                 "segment_id": "open_semantics",
@@ -173,12 +195,34 @@ def render_public_claims(registry: ClaimRegistry) -> dict[Path, bytes]:
                 "interpretation": (
                     "Current-scope uplift failed; open-world value remains unevaluated."
                 ),
+                "route": "Selective LLM candidate behind the governed runtime",
+                "parser_status": "Open-world parser coverage not evaluated",
+                "llm_called": "Yes in real-dev; open-world evaluation absent",
+                "evidence_basis": "q5.llm_semantic_uplift + q5.open_world_llm_value",
+                "terminal_outcome": "No uplift headline; preserve the open-world question",
+                "claim_status": "falsified_and_not_evaluated",
+                "states": {
+                    "hypothesis": "A selective model route should add semantic value beyond the rule baseline.",
+                    "real_result": "Use both the scoped uplift result and the open-world non-result.",
+                    "final_decision": "The current gate failed; open-world model value remains unevaluated.",
+                },
             },
             {
                 "segment_id": "unsafe",
                 "label": "Unsafe",
                 "claim_ids": ["q5.schema_transition_safety"],
                 "interpretation": "Unsafe or ungrounded transitions remain fail-closed.",
+                "route": "Validator → safe escalation",
+                "parser_status": "Invalid or ungrounded proposals rejected",
+                "llm_called": "Irrelevant to the safety floor",
+                "evidence_basis": "q5.schema_transition_safety",
+                "terminal_outcome": "No unsafe tool call or invalid transition",
+                "claim_status": "demonstrated_in_frozen_scope",
+                "states": {
+                    "hypothesis": "Action safety must not depend on model judgment.",
+                    "real_result": "Use the bound schema and transition safety claim.",
+                    "final_decision": "Retain fail-closed validation before every side effect.",
+                },
             },
         ],
         "claims": [claim for claim in claims if claim["question_id"] == "Q5"],

@@ -1,38 +1,111 @@
 ---
-const stack = [
-  "FastAPI", "Qdrant", "BM25 / Whoosh", "RRF 融合", "bge-small-en-v1.5", "bge-reranker-base",
-  "DeepSeek", "本地 MCP", "OpenInference / OTel", "pytest ×364", "uv",
+import {
+  Activity,
+  Braces,
+  Database,
+  Fingerprint,
+  Gauge,
+  GitCompareArrows,
+  LockKeyhole,
+  Route,
+} from "@lucide/astro";
+import signalsData from "../data/engineering-signals.json";
+import { fraction, metricValue } from "../lib/claims";
+
+const byId = Object.fromEntries(signalsData.signals.map((claim) => [claim.claim_id, claim]));
+const q5Safety = byId["q5.schema_transition_safety"];
+const q5Observation = byId["q5.observation_adaptation"];
+const q5Efficiency = byId["q5.hybrid_efficiency"];
+const runtimeStack = [
+  ["FastAPI", Route],
+  ["Qdrant + BM25 + RRF", Database],
+  ["Pydantic contracts", Braces],
+  ["OpenInference / OTel", Activity],
+  ["hash-bound claims", Fingerprint],
+  ["pytest + release gates", LockKeyhole],
 ];
-const tags = ["v0.3-q1-hard-demo", "v1.0-q2-agentic-eval", "v2.0-q3-action-governance", "v3.0-q4-reliability"];
 ---
 
-<section id="hood" class="border-t border-line/40">
-  <div class="wrap stage stage-center">
-    <p class="eyebrow reveal">Under the Hood</p>
-    <h2 class="reveal measure mt-7 display-2">真实栈 · 真实 run · <span class="gradient-text">契约进 CI</span></h2>
-    <p class="reveal mx-auto mt-7 max-w-2xl lead">
-      检索是真的，评测是真的。可靠性契约
-      <span class="num text-ink">F11=0 · F13=0 · leakage=0 · mock≠headline · triad 守 headline</span>
-      作为 CI 硬门运行。
-    </p>
+<section
+  id="evaluation-infrastructure"
+  class="section infrastructure-section"
+  data-major-section
+  data-section-name="Evaluation Infrastructure"
+>
+  <div class="wrap">
+    <header class="section-heading heading-inline">
+      <div>
+        <p class="eyebrow">Evaluation Infrastructure</p>
+        <h2>运行时约束与评测可信度，共用一条证据链。</h2>
+      </div>
+      <p>静态生成的公开视图只读取 canonical claim registry；runtime trace、grader 和 gate 各有独立校验边界。</p>
+    </header>
 
-    <div class="reveal mx-auto mt-12 flex max-w-3xl flex-wrap justify-center gap-2">
-      {stack.map((s) => <span class="pill pill-muted">{s}</span>)}
+    <div class="infrastructure-grid">
+      <article class="infrastructure-card infrastructure-flow">
+        <div class="card-title"><GitCompareArrows size={18} aria-hidden="true" /><h3>Evidence pipeline</h3></div>
+        <ol>
+          <li><span>01</span><strong>Raw artifact</strong><small>tracked, byte-hashed</small></li>
+          <li><span>02</span><strong>Metric derivation</strong><small>JSON pointer + tolerance</small></li>
+          <li><span>03</span><strong>Claim registry</strong><small>scope + status + lineage</small></li>
+          <li><span>04</span><strong>Public view</strong><small>deterministic generation</small></li>
+        </ol>
+      </article>
+
+      <a
+        class="infrastructure-card metric-card"
+        href={`#evidence-${q5Safety.claim_id}`}
+        data-claim-id={q5Safety.claim_id}
+      >
+        <div class="card-title"><LockKeyhole size={18} aria-hidden="true" /><h3>Schema + transition safety</h3></div>
+        <div class="metric-triplet">
+          {["F11", "F13", "F17"].map((name) => (
+            <span data-metric-claim={q5Safety.claim_id} data-metric-name={name}>
+              <strong>{metricValue(q5Safety.metrics[name], 0)}</strong><small>{name}</small>
+            </span>
+          ))}
+        </div>
+        <p>{q5Safety.public_summary}</p>
+      </a>
+
+      <a
+        class="infrastructure-card metric-card"
+        href={`#evidence-${q5Observation.claim_id}`}
+        data-claim-id={q5Observation.claim_id}
+      >
+        <div class="card-title"><Activity size={18} aria-hidden="true" /><h3>Observation completion</h3></div>
+        <strong
+          class="large-metric"
+          data-metric-claim={q5Observation.claim_id}
+          data-metric-name="required_observation_recall"
+        >{metricValue(q5Observation.metrics.required_observation_recall)}</strong>
+        <p>{q5Observation.public_summary}</p>
+      </a>
+
+      <a
+        class="infrastructure-card metric-card"
+        href={`#evidence-${q5Efficiency.claim_id}`}
+        data-claim-id={q5Efficiency.claim_id}
+      >
+        <div class="card-title"><Gauge size={18} aria-hidden="true" /><h3>Selective efficiency</h3></div>
+        <div class="efficiency-pair">
+          <span data-metric-claim={q5Efficiency.claim_id} data-metric-name="model_call_ratio">
+            <strong>{metricValue(q5Efficiency.metrics.model_call_ratio, 6)}</strong>
+            <small>calls · {fraction(q5Efficiency.metrics.model_call_ratio)}</small>
+          </span>
+          <span data-metric-claim={q5Efficiency.claim_id} data-metric-name="token_ratio">
+            <strong>{metricValue(q5Efficiency.metrics.token_ratio, 6)}</strong>
+            <small>tokens · {fraction(q5Efficiency.metrics.token_ratio)}</small>
+          </span>
+        </div>
+        <p>{q5Efficiency.public_summary}</p>
+      </a>
     </div>
 
-    <div class="reveal mx-auto mt-10 grid w-full max-w-3xl gap-3 sm:grid-cols-4">
-      {
-        tags.map((t, i) => (
-          <div class="card glass card-hover p-4 text-left">
-            <div class="num text-xs text-faint">里程碑 {i + 1}</div>
-            <div class="num mt-1 text-sm font-semibold text-brand">{t}</div>
-          </div>
-        ))
-      }
+    <div class="stack-strip" aria-label="主要工程栈">
+      {runtimeStack.map(([label, Icon]) => (
+        <span><Icon size={15} aria-hidden="true" />{label}</span>
+      ))}
     </div>
-
-    <div class="reveal mt-16 text-2xl font-semibold sm:text-3xl">一个会自证、敢报负结果、再把它修好的 RAG-Agent</div>
-    <div class="mt-2 text-sm text-muted">单人四季度构建 · 所有数字指向真实 run</div>
-    <a href="#top" class="pill pill-auto card-hover mt-8 px-5 py-2.5">回到顶部 ↑</a>
   </div>
 </section>

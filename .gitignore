@@ -7,6 +7,9 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+frontend/acceptance/runtime/
+frontend/acceptance/screenshots/
+frontend/test-results/
 data/generated/*
 data/traces/*
 data/eval_runs/*

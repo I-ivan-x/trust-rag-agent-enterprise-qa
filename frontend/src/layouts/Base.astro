@@ -1,6 +1,22 @@
 ---
+import { Menu, ShieldCheck } from "@lucide/astro";
 import "../styles/global.css";
-const { title = "Agent Reliability Lab — Governed Runtime and Evaluation" } = Astro.props;
+
+const {
+  title = "Agent Reliability Lab — Governed Runtime and Evaluation",
+} = Astro.props;
+const publicSubtitle =
+  "Governed Runtime, Evaluation Harness, and Decision Frontier for Tool-Using Agents";
+
+const navigation = [
+  ["hero", "Overview"],
+  ["five-questions", "Five Questions"],
+  ["governed-runtime", "Runtime"],
+  ["reliability-turn", "Reliability"],
+  ["q5-decision-frontier", "Q5 Frontier"],
+  ["evaluation-infrastructure", "Infrastructure"],
+  ["evidence-ledger", "Evidence"],
+];
 ---
 
 <!doctype html>
@@ -8,95 +24,56 @@ const { title = "Agent Reliability Lab — Governed Runtime and Evaluation" } = 
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Agent Reliability Lab — Governed Runtime, Evaluation Harness, and Decision Frontier for Tool-Using Agents." />
+    <meta
+      name="description"
+      content={`Agent Reliability Lab — ${publicSubtitle}.`}
+    />
+    <meta name="theme-color" content="#070b10" />
     <title>{title}</title>
+    <script is:inline>document.documentElement.classList.add("js");</script>
   </head>
   <body>
-    <header class="glass sticky top-0 z-20 border-b border-line/70">
-      <nav class="wrap flex h-14 items-center justify-between">
-        <a href="#top" class="flex items-center gap-2 font-bold tracking-tight">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" class="h-5 w-5"
-            ><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6l8-4z" /><path d="M9 12l2 2 4-4" /></svg
-          >
-          Agent Reliability Lab
+    <a class="skip-link" href="#main-content">跳到主要内容</a>
+    <header class="site-header" data-sticky-header>
+      <nav class="site-nav" aria-label="主要导航">
+        <a href="#hero" class="brand-link" aria-label="Agent Reliability Lab 首页">
+          <ShieldCheck size={19} strokeWidth={1.8} aria-hidden="true" />
+          <span>Agent Reliability Lab</span>
         </a>
-        <div class="hidden gap-6 text-sm text-muted md:flex">
-          <a href="#live" class="hover:text-ink">看 agent</a>
-          <a href="#trust" class="hover:text-ink">可信设计</a>
-          <a href="#gate" class="hover:text-ink">反作弊门</a>
-          <a href="#turn" class="hover:text-ink">那一转</a>
-          <a href="#honest" class="hover:text-ink">诚实</a>
+
+        <div class="desktop-nav">
+          {
+            navigation.slice(1).map(([id, label]) => (
+              <a href={`#${id}`}>{label}</a>
+            ))
+          }
         </div>
-        <a href="#arc" class="pill border-brand/40 bg-brand-weak text-brand">查看作品</a>
+
+        <details class="mobile-nav">
+          <summary aria-label="打开章节导航">
+            <Menu size={20} aria-hidden="true" />
+            <span>章节</span>
+          </summary>
+          <div class="mobile-nav-panel">
+            {
+              navigation.map(([id, label]) => (
+                <a href={`#${id}`}>{label}</a>
+              ))
+            }
+          </div>
+        </details>
       </nav>
     </header>
 
-    <main id="top">
+    <main id="main-content">
       <slot />
     </main>
 
-    <footer class="border-t border-line/70 py-10 text-sm text-muted">
-      <div class="wrap flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <span>Agent Reliability Lab · TrustRAG legacy codename · claims 由 hash-bound registry 管理</span>
-        <span class="num text-faint">v0.3-q1 · v1.0-q2 · v2.0-q3 · v3.0-q4</span>
+    <footer class="site-footer">
+      <div class="wrap footer-grid">
+        <p>Agent Reliability Lab · claims 由 hash-bound registry 管理</p>
+        <p class="mono">stable: v3.0-q4-reliability · Q5: scoped_negative_complete</p>
       </div>
     </footer>
-
-    <script>
-      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-      // staggered scroll reveal
-      const io = new IntersectionObserver(
-        (entries) => {
-          for (const e of entries) {
-            if (!e.isIntersecting) continue;
-            const el = e.target;
-            const sibs = Array.from(el.parentElement?.querySelectorAll(":scope > .reveal") || [el]);
-            const i = Math.max(0, sibs.indexOf(el));
-            el.style.setProperty("--d", Math.min(i, 8) * 70 + "ms");
-            el.classList.add("in");
-            io.unobserve(el);
-          }
-        },
-        { threshold: 0.12, rootMargin: "0px 0px -8% 0px" },
-      );
-      document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
-
-      // count-up for [data-count] (respects reduced motion)
-      const fmt = (v, dec) => (dec ? v.toFixed(dec) : Math.round(v).toString());
-      const countIO = new IntersectionObserver(
-        (entries) => {
-          for (const e of entries) {
-            if (!e.isIntersecting) continue;
-            const el = e.target;
-            countIO.unobserve(el);
-            const target = parseFloat(el.dataset.count);
-            const dec = (el.dataset.count.split(".")[1] || "").length;
-            if (reduce) { el.textContent = fmt(target, dec); continue; }
-            const dur = 1100, t0 = performance.now();
-            const tick = (t) => {
-              const p = Math.min(1, (t - t0) / dur);
-              const eased = 1 - Math.pow(1 - p, 3);
-              el.textContent = fmt(target * eased, dec);
-              if (p < 1) requestAnimationFrame(tick);
-              else el.textContent = fmt(target, dec);
-            };
-            requestAnimationFrame(tick);
-          }
-        },
-        { threshold: 0.4 },
-      );
-      document.querySelectorAll("[data-count]").forEach((el) => countIO.observe(el));
-
-      // pointer-follow spotlight
-      if (!reduce)
-        document.querySelectorAll("[data-spotlight]").forEach((el) => {
-          el.addEventListener("pointermove", (ev) => {
-            const r = el.getBoundingClientRect();
-            el.style.setProperty("--spot-x", ((ev.clientX - r.left) / r.width) * 100 + "%");
-            el.style.setProperty("--spot-y", ((ev.clientY - r.top) / r.height) * 100 + "%");
-          });
-        });
-    </script>
   </body>
 </html>

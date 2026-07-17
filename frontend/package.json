@@ -11,7 +11,9 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "test:e2e": "npm run build && playwright test",
+    "test:lighthouse": "npm run build && node scripts/run-lighthouse.mjs"
   },
   "dependencies": {
     "@lucide/astro": "1.25.0",

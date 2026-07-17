@@ -1,35 +1,127 @@
 ---
-import triad from "../data/triad.json";
-const after = triad.after.rule;
+import {
+  ArrowDown,
+  CircleCheck,
+  FileCheck2,
+  Gavel,
+  ScanSearch,
+  ShieldCheck,
+} from "@lucide/astro";
+import snapshot from "../data/control-room-trajectory.json";
+import questionsData from "../data/questions.json";
+import { fraction, metricValue } from "../lib/claims";
+
+const claims = questionsData.questions.flatMap((question) => question.claims);
+const q4Safety = claims.find((claim) => claim.claim_id === "q4.release_reliability")!;
+const q5Uplift = claims.find((claim) => claim.claim_id === "q5.llm_semantic_uplift")!;
+const q5Question = questionsData.questions.find((question) => question.question_id === "Q5")!;
+const safetyMetric = q4Safety.metrics.unauthorized_action_blocked;
+const f11Metric = q4Safety.metrics.F11_action_without_evidence;
+const f13Metric = q4Safety.metrics.F13_missed_escalation_unauth;
+const upliftMetric = q5Uplift.metrics.semantic_uplift;
+const trajectory = snapshot.scenarios.find((row) => row.scenario_id === "approval_path")!;
+const releaseTag = q4Safety.source_artifacts[0].release_tag;
+const publicSubtitle =
+  "Governed Runtime, Evaluation Harness, and Decision Frontier for Tool-Using Agents";
 ---
 
-<section data-spotlight class="spotlight relative overflow-hidden">
-  <div class="wrap stage stage-center">
-    <p class="eyebrow reveal">Agent Reliability Lab · Tool-Using Agent 可靠性与评测工程</p>
-    <h1 class="reveal measure mt-7 display">
-      把 agent 做成<br />
-      <span class="gradient-text">可测、可审、可回归。</span>
-    </h1>
-    <p class="reveal mx-auto mt-8 max-w-2xl lead">
-      Governed Runtime, Evaluation Harness, and Decision Frontier for Tool-Using Agents.
-      <span class="text-ink">公开结论由可验签的 claim registry 限定证据范围。</span>
-    </p>
-
-    <div class="reveal mt-16 flex items-end justify-center gap-12 sm:gap-20">
-      <div>
-        <div class="num text-6xl font-extrabold text-brand sm:text-8xl"><span data-count="0">0</span></div>
-        <div class="mt-3 text-sm text-muted">越权 / 无证据执行<br /><span class="num text-faint">F13 = F11 = 0</span></div>
+<section id="hero" class="hero-section" data-major-section data-section-name="Hero">
+  <div
+    class="hero-trajectory"
+    aria-hidden="true"
+    data-run-id={snapshot.provenance.run_id}
+    data-source-sha={snapshot.provenance.source_sha256}
+  >
+    <div class="hero-console-grid">
+      <div class="console-stage console-observation">
+        <ScanSearch size={17} />
+        <span>OBSERVATION</span>
+        <strong>{trajectory.observation.retrieved} retrieved</strong>
+        <small>{trajectory.observation.surviving} ACL surviving</small>
       </div>
-      <div class="h-16 w-px bg-line sm:h-24"></div>
-      <div>
-        <div class="num text-6xl font-extrabold sm:text-8xl"><span data-count={after.unauthorized_action_blocked.toFixed(2)}>1.00</span></div>
-        <div class="mt-3 text-sm text-muted">越权动作拦截率<br /><span class="num text-faint">真实留出 run</span></div>
+      <div class="console-stage console-evidence">
+        <FileCheck2 size={17} />
+        <span>EVIDENCE</span>
+        <strong>{trajectory.evidence.evidence_decision}</strong>
+        <small>{trajectory.evidence.conditions.join(" · ")}</small>
+      </div>
+      <div class="console-stage console-policy">
+        <Gavel size={17} />
+        <span>POLICY</span>
+        <strong>{trajectory.proposal.action}</strong>
+        <small>{trajectory.proposal.risk_tier} · validator {String(trajectory.policy.validator_ok)}</small>
+      </div>
+      <div class="console-stage console-terminal">
+        <CircleCheck size={17} />
+        <span>TERMINAL</span>
+        <strong>{trajectory.terminal.approval_state}</strong>
+        <small>side effect {String(trajectory.terminal.executed_side_effect)}</small>
       </div>
     </div>
+    <div class="hero-query">{trajectory.query}</div>
+  </div>
 
-    <a href="#live" class="reveal scroll-cue">
-      看 agent 跑一遍
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M6 13l6 6 6-6" /></svg>
-    </a>
+  <div class="wrap hero-content">
+    <div class="hero-kicker">
+      <span class="status-dot status-dot-pass"></span>
+      <span class="hero-project-name">Agent Reliability Lab</span>
+      <span class="kicker-separator" aria-hidden="true"></span>
+      <span>{releaseTag}</span>
+      <span class="kicker-separator" aria-hidden="true"></span>
+      <span class="status-reject-text">Q5 · {q5Question.status}</span>
+    </div>
+
+    <h1>让 tool-using agent<br /><span>可测、可审、可回归。</span></h1>
+    <p class="hero-lead">
+      <span class="hero-product-line">{publicSubtitle}</span>
+      一个把检索、证据、动作、审批和评测放进同一条可验签链路的可靠性工程项目。
+      正结果有边界，负结果不改名。
+    </p>
+
+    <div class="hero-metrics" aria-label="核心结果">
+      <a
+        href={`#evidence-${q4Safety.claim_id}`}
+        class="hero-metric"
+        data-claim-id={q4Safety.claim_id}
+        data-metric-claim={q4Safety.claim_id}
+        data-metric-name="unauthorized_action_blocked"
+      >
+        <ShieldCheck size={18} aria-hidden="true" />
+        <span class="metric-value">{metricValue(safetyMetric)}</span>
+        <span class="metric-label">越权动作拦截</span>
+        <span class="metric-scope">{fraction(safetyMetric)} · held-out ops_test</span>
+      </a>
+      <a
+        href={`#evidence-${q4Safety.claim_id}`}
+        class="hero-metric"
+        data-claim-id={q4Safety.claim_id}
+        data-metric-claim={q4Safety.claim_id}
+        data-metric-name="F11_action_without_evidence,F13_missed_escalation_unauth"
+      >
+        <FileCheck2 size={18} aria-hidden="true" />
+        <span class="metric-value">{metricValue(f11Metric, 0)} · {metricValue(f13Metric, 0)}</span>
+        <span class="metric-label">F11 · F13</span>
+        <span class="metric-scope">{q4Safety.split_or_frozen_scope} · evidence</span>
+      </a>
+      <a
+        href={`#evidence-${q5Uplift.claim_id}`}
+        class="hero-metric metric-negative"
+        data-claim-id={q5Uplift.claim_id}
+        data-metric-claim={q5Uplift.claim_id}
+        data-metric-name="semantic_uplift"
+      >
+        <Gavel size={18} aria-hidden="true" />
+        <span class="metric-value">{metricValue(upliftMetric, 6)}</span>
+        <span class="metric-label">Q5 semantic uplift</span>
+        <span class="metric-scope">{fraction(upliftMetric)} · below frozen gate</span>
+      </a>
+    </div>
+
+    <div class="hero-actions">
+      <a class="button button-primary" href="#governed-runtime">
+        看受治理轨迹 <ArrowDown size={17} aria-hidden="true" />
+      </a>
+      <a class="button button-secondary" href="#q5-decision-frontier">直接看 Q5 决策边界</a>
+    </div>
   </div>
 </section>

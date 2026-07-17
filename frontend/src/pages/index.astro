@@ -1,26 +1,20 @@
 ---
 import Base from "../layouts/Base.astro";
+import AgentControlRoom from "../components/AgentControlRoom.astro";
+import DecisionFrontier from "../components/DecisionFrontier.astro";
+import EvidenceLedger from "../components/EvidenceLedger.astro";
+import FiveQuestions from "../components/FiveQuestions.astro";
 import Hero from "../components/Hero.astro";
-import Claim from "../components/Claim.astro";
-import AgentWalkthrough from "../components/AgentWalkthrough.astro";
-import TrajectoryPlayer from "../components/TrajectoryPlayer.astro";
-import Pipeline from "../components/Pipeline.astro";
-import TriadGate from "../components/TriadGate.astro";
-import TheTurn from "../components/TheTurn.astro";
-import Arc from "../components/Arc.astro";
-import Honest from "../components/Honest.astro";
+import ReliabilityTurn from "../components/ReliabilityTurn.astro";
 import UnderHood from "../components/UnderHood.astro";
 ---
 
 <Base>
   <Hero />
-  <Claim />
-  <AgentWalkthrough />
-  <TrajectoryPlayer />
-  <Pipeline />
-  <TriadGate />
-  <TheTurn />
-  <Arc />
-  <Honest />
+  <FiveQuestions />
+  <AgentControlRoom />
+  <ReliabilityTurn />
+  <DecisionFrontier />
   <UnderHood />
+  <EvidenceLedger />
 </Base>

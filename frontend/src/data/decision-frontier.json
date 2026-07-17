@@ -653,40 +653,84 @@
       "status_label": "Not evaluated"
     }
   ],
-  "schema_version": "public-decision-frontier-v1",
+  "schema_version": "public-decision-frontier-v2",
   "segments": [
     {
       "claim_ids": [
         "q5.controlled_prose_llm_necessity"
       ],
+      "claim_status": "falsified_in_current_scope",
+      "evidence_basis": "q5.controlled_prose_llm_necessity",
       "interpretation": "Closed grammars remain a deterministic-parser responsibility.",
       "label": "Grammar",
-      "segment_id": "grammar"
+      "llm_called": "No",
+      "parser_status": "Resolved in the frozen controlled-prose scope",
+      "route": "Deterministic parser → compiler",
+      "segment_id": "grammar",
+      "states": {
+        "final_decision": "Keep grammar on the deterministic parser/compiler route.",
+        "hypothesis": "A model is unnecessary when the policy language is a closed grammar.",
+        "real_result": "Use the bound claim result for the frozen parser scope."
+      },
+      "terminal_outcome": "Compile the grounded disposition or fail closed"
     },
     {
       "claim_ids": [
         "q5.controlled_prose_llm_necessity"
       ],
+      "claim_status": "falsified_in_current_scope",
+      "evidence_basis": "q5.controlled_prose_llm_necessity",
       "interpretation": "The frozen 32-case controlled-prose track is closed.",
       "label": "Controlled prose",
-      "segment_id": "controlled_prose"
+      "llm_called": "No",
+      "parser_status": "All frozen parser-uncovered cases resolved",
+      "route": "Versioned runtime-only parser → compiler",
+      "segment_id": "controlled_prose",
+      "states": {
+        "final_decision": "Close the controlled-prose track as deterministic frontier.",
+        "hypothesis": "Controlled prose might retain model-only semantic headroom.",
+        "real_result": "Use the bound claim result for Boundary F and its addendum."
+      },
+      "terminal_outcome": "Controlled-prose track closed; no K1 authorization"
     },
     {
       "claim_ids": [
         "q5.llm_semantic_uplift",
         "q5.open_world_llm_value"
       ],
+      "claim_status": "falsified_and_not_evaluated",
+      "evidence_basis": "q5.llm_semantic_uplift + q5.open_world_llm_value",
       "interpretation": "Current-scope uplift failed; open-world value remains unevaluated.",
       "label": "Open semantics",
-      "segment_id": "open_semantics"
+      "llm_called": "Yes in real-dev; open-world evaluation absent",
+      "parser_status": "Open-world parser coverage not evaluated",
+      "route": "Selective LLM candidate behind the governed runtime",
+      "segment_id": "open_semantics",
+      "states": {
+        "final_decision": "The current gate failed; open-world model value remains unevaluated.",
+        "hypothesis": "A selective model route should add semantic value beyond the rule baseline.",
+        "real_result": "Use both the scoped uplift result and the open-world non-result."
+      },
+      "terminal_outcome": "No uplift headline; preserve the open-world question"
     },
     {
       "claim_ids": [
         "q5.schema_transition_safety"
       ],
+      "claim_status": "demonstrated_in_frozen_scope",
+      "evidence_basis": "q5.schema_transition_safety",
       "interpretation": "Unsafe or ungrounded transitions remain fail-closed.",
       "label": "Unsafe",
-      "segment_id": "unsafe"
+      "llm_called": "Irrelevant to the safety floor",
+      "parser_status": "Invalid or ungrounded proposals rejected",
+      "route": "Validator → safe escalation",
+      "segment_id": "unsafe",
+      "states": {
+        "final_decision": "Retain fail-closed validation before every side effect.",
+        "hypothesis": "Action safety must not depend on model judgment.",
+        "real_result": "Use the bound schema and transition safety claim."
+      },
+      "terminal_outcome": "No unsafe tool call or invalid transition"
     }
   ]
 }
