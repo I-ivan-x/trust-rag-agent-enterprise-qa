@@ -1,0 +1,17 @@
+{
+  "artifacts": {
+    "coverage_report.json": "6cd946acb8486248e8257011de18acb6aab3cd7847c5e13e9722ef12caadeea8",
+    "dataset_manifest.json": "d8294ace54cb0da17741086499cdadc01131e70e44c83f5468784c4e1785f44e",
+    "environment_authoring.jsonl": "e18df0c382af996d62d542ebd7130f63aa0418d821321013bf2e8ef6927abba0",
+    "execution_rows.jsonl": "2972f945c6b3e4d4489f9928099d70c7e8754643ea0a1c80a7cb76b64655333c",
+    "gold.jsonl": "226ff65a24fbd6078fcc7202246c6fff61a0e18cc8cd1e4e1059ba8c993899d9",
+    "graded_rows.jsonl": "bb28f5128a9d53562d9d3bc30ca0b4ce92a84ecf79e4e30efd0375e1622d969f",
+    "headroom_report.json": "5f5bcf530b84448c7d3cbfd4ed0bdff8a235bdd8012f9bd5f3de84b405af33b6",
+    "mutation_matrix.json": "d68b3cf598fa1f8c9ba58bf1cd0a29ea02fd78d012c6437925a543fa8e0ef998",
+    "policy_ir.jsonl": "e0e49794a169837b42e0b2984f9b9082efbd066fe6a3b7fa57256af0ef17fcfd",
+    "prereg_receipt.json": "918f91a8aaba3a28e29a8ddeb8aa5949334eb3be8fa6c1dbd0d8c06f18014607",
+    "runtime_cases.jsonl": "b4b096607a63d308159b32d8f9d5dd85f230897b7c31069da83ad3d868107275",
+    "topology.jsonl": "fe59efec172620efaced731956988adb45962b5029997239c2b02c0e0fdeef5f"
+  },
+  "schema_version": "q5-parser-uncovered-artifact-hashes-v1"
+}

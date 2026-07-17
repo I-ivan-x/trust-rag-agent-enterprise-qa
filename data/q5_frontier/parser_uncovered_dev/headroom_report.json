@@ -1,0 +1,24 @@
+{
+  "call_headroom": {
+    "avoided_calls": 0,
+    "hybrid_semantic_calls": 16,
+    "llm_only_semantic_calls": 16,
+    "protocol_frozen": true
+  },
+  "deterministic_conditional_risk": 0.0,
+  "family_coverage": [
+    "access",
+    "change",
+    "incident",
+    "retention"
+  ],
+  "oracle_resolvable_abstentions": 16,
+  "phenomenon_coverage": [
+    "cross_sentence_coreference",
+    "exception_precedence",
+    "negation_unless",
+    "temporal_ordering"
+  ],
+  "schema_version": "q5-parser-uncovered-headroom-report-v1",
+  "token_avoidance": "not_evaluated"
+}

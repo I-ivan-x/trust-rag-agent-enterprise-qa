@@ -1,0 +1,26 @@
+{
+  "expected_execution_parent": "ad3b9ea48a9df910d6816e3e5be4c1f24d747275",
+  "external_requests": 0,
+  "frozen_sources": {
+    "app/eval/q5_frontier_compiler_v4.py": {
+      "git_blob_sha": "39046f0fcae20f218214bb19ce52af7703f88f7f",
+      "source_sha256": "4920fc7d577a7a58c600cc914839420b16ed68da468bb5ae43eeeba05856c815"
+    },
+    "app/eval/q5_frontier_parser_suite_v4.py": {
+      "git_blob_sha": "d28759312f2854528bf7118c592ad4c17accea4c",
+      "source_sha256": "35c4a9442894edf9bc69498a98d367131a5d989148cb5e06bbf09372efcffe8f"
+    },
+    "app/eval/q5_frontier_prereg_v4.py": {
+      "git_blob_sha": "a8d1bf4cf692d4212e7b98fb9a50f39922513bf9",
+      "source_sha256": "918671c835e4ac161627580a23952a24c2ca192d081a570520e3c3bc4d696020"
+    },
+    "app/schemas/q5_frontier_v4.py": {
+      "git_blob_sha": "ee550790245af1a637164ab11b7d67e2856346d1",
+      "source_sha256": "f0a07a68754154e2ef13a4c1338beb25722f4e78e051a70b25a2e9630edb5fee"
+    }
+  },
+  "model_requests": 0,
+  "parser_blob_identical_to_parent": true,
+  "prereg_commit": "ad3b9ea48a9df910d6816e3e5be4c1f24d747275",
+  "schema_version": "q5-parser-uncovered-prereg-receipt-v1"
+}

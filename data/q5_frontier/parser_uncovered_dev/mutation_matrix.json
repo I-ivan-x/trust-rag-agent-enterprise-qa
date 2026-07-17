@@ -1,0 +1,55 @@
+{
+  "categories": {
+    "artifact": [
+      {
+        "expected_outcome": "reject",
+        "mutation": "prereg_commit"
+      },
+      {
+        "expected_outcome": "reject",
+        "mutation": "parser_blob"
+      },
+      {
+        "expected_outcome": "reject",
+        "mutation": "source_sha"
+      },
+      {
+        "expected_outcome": "reject",
+        "mutation": "rehashed_graded_row"
+      }
+    ],
+    "semantic": [
+      {
+        "expected_outcome": "reject",
+        "mutation": "gold_disposition"
+      },
+      {
+        "expected_outcome": "reject",
+        "mutation": "policy_ir_clause"
+      },
+      {
+        "expected_outcome": "safe_human_review",
+        "mutation": "observation_family"
+      },
+      {
+        "expected_outcome": "reject",
+        "mutation": "requirement_flag_false"
+      }
+    ],
+    "structural": [
+      {
+        "expected_outcome": "reject",
+        "mutation": "missing_artifact"
+      },
+      {
+        "expected_outcome": "reject",
+        "mutation": "extra_artifact"
+      },
+      {
+        "expected_outcome": "reject",
+        "mutation": "duplicate_runtime_ref"
+      }
+    ]
+  },
+  "schema_version": "q5-parser-uncovered-mutation-matrix-v1"
+}
