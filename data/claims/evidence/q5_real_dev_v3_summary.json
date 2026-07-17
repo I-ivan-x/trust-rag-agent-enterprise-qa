@@ -12,6 +12,7 @@
     "gates.json": "1615fb0ecaf2fe44265f2f1c95a7707bef1a05acd3a4eb7c88debe89e4df15b9"
   },
   "metrics": {
+    "real_run_model_calls": {"numerator": 210, "denominator": 1, "value": 210.0, "unit": "count"},
     "hybrid_route_precision": {"numerator": 1, "denominator": 1, "value": 1.0, "unit": "normalized_ratio"},
     "hybrid_route_recall": {"numerator": 1, "denominator": 1, "value": 1.0, "unit": "normalized_ratio"},
     "hybrid_trajectory_qualified_success": {"numerator": 90, "denominator": 108, "value": 0.833333, "unit": "rate"},

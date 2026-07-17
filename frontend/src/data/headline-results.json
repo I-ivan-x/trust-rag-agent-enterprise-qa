@@ -236,7 +236,7 @@
           "evidence_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db",
           "path": "data/claims/evidence/q5_real_dev_v3_summary.json",
           "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3",
-          "sha256": "08647461190165f493bf3fee123602efaca096693d80c3a188e28c72be392d4d"
+          "sha256": "b727f2d102911ae3fab49abaef3ab10683445b39c6ba61855b9087c2fe740174"
         }
       ],
       "split_or_frozen_scope": "real-dev semantic stratum",
@@ -253,6 +253,36 @@
         "It does not evaluate open-world policy language or general LLM value."
       ],
       "metrics": {
+        "addendum_abstention_count": {
+          "denominator": 32.0,
+          "numerator": 0.0,
+          "unit": "rate",
+          "value": 0.0
+        },
+        "addendum_conditional_risk": {
+          "denominator": 32.0,
+          "numerator": 0.0,
+          "unit": "rate",
+          "value": 0.0
+        },
+        "addendum_coverage": {
+          "denominator": 32.0,
+          "numerator": 32.0,
+          "unit": "rate",
+          "value": 1.0
+        },
+        "addendum_external_requests": {
+          "denominator": 1.0,
+          "numerator": 0.0,
+          "unit": "count",
+          "value": 0.0
+        },
+        "addendum_model_requests": {
+          "denominator": 1.0,
+          "numerator": 0.0,
+          "unit": "count",
+          "value": 0.0
+        },
         "addendum_parser_accuracy": {
           "denominator": 32.0,
           "numerator": 32.0,
@@ -264,6 +294,12 @@
           "numerator": 30.0,
           "unit": "rate",
           "value": 0.9375
+        },
+        "previously_uncovered_cases_resolved": {
+          "denominator": 32.0,
+          "numerator": 32.0,
+          "unit": "rate",
+          "value": 1.0
         },
         "remaining_uncovered": {
           "denominator": 32.0,

@@ -136,8 +136,9 @@
       "claim_scope": "Protocol-v3 primary real-dev run across 36 cases and three systems",
       "evidence_mode": "real",
       "split_or_frozen_scope": "real-dev",
-      "source_artifacts": [{"path": "data/claims/evidence/q5_real_dev_v3_summary.json", "sha256": "08647461190165f493bf3fee123602efaca096693d80c3a188e28c72be392d4d", "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3", "evidence_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db"}],
+      "source_artifacts": [{"path": "data/claims/evidence/q5_real_dev_v3_summary.json", "sha256": "b727f2d102911ae3fab49abaef3ab10683445b39c6ba61855b9087c2fe740174", "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3", "evidence_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db"}],
       "metrics": {
+        "historical_real_dev_model_calls": {"numerator": 210, "denominator": 1, "value": 210.0, "unit": "count"},
         "hybrid_route_precision": {"numerator": 1, "denominator": 1, "value": 1.0, "unit": "normalized_ratio"},
         "hybrid_route_recall": {"numerator": 1, "denominator": 1, "value": 1.0, "unit": "normalized_ratio"},
         "trajectory_qualified_success": {"numerator": 90, "denominator": 108, "value": 0.833333, "unit": "rate"}
@@ -154,7 +155,7 @@
       "claim_scope": "Protocol-v3 hybrid system in the primary real-dev run",
       "evidence_mode": "real",
       "split_or_frozen_scope": "real-dev",
-      "source_artifacts": [{"path": "data/claims/evidence/q5_real_dev_v3_summary.json", "sha256": "08647461190165f493bf3fee123602efaca096693d80c3a188e28c72be392d4d", "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3", "evidence_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db"}],
+      "source_artifacts": [{"path": "data/claims/evidence/q5_real_dev_v3_summary.json", "sha256": "b727f2d102911ae3fab49abaef3ab10683445b39c6ba61855b9087c2fe740174", "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3", "evidence_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db"}],
       "metrics": {
         "required_observation_recall": {"numerator": 1, "denominator": 1, "value": 1.0, "unit": "normalized_ratio"},
         "post_observation_terminal_rate": {"numerator": 1, "denominator": 1, "value": 1.0, "unit": "normalized_ratio"}
@@ -171,7 +172,7 @@
       "claim_scope": "Protocol-v3 hybrid system over 108 real-dev trials",
       "evidence_mode": "real",
       "split_or_frozen_scope": "real-dev",
-      "source_artifacts": [{"path": "data/claims/evidence/q5_real_dev_v3_summary.json", "sha256": "08647461190165f493bf3fee123602efaca096693d80c3a188e28c72be392d4d", "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3", "evidence_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db"}],
+      "source_artifacts": [{"path": "data/claims/evidence/q5_real_dev_v3_summary.json", "sha256": "b727f2d102911ae3fab49abaef3ab10683445b39c6ba61855b9087c2fe740174", "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3", "evidence_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db"}],
       "metrics": {
         "F11": {"numerator": 0, "denominator": 108, "value": 0.0, "unit": "rate"},
         "F13": {"numerator": 0, "denominator": 108, "value": 0.0, "unit": "rate"},
@@ -192,7 +193,7 @@
       "claim_scope": "Hybrid versus LLM-only in the protocol-v3 primary real-dev run",
       "evidence_mode": "real",
       "split_or_frozen_scope": "real-dev",
-      "source_artifacts": [{"path": "data/claims/evidence/q5_real_dev_v3_summary.json", "sha256": "08647461190165f493bf3fee123602efaca096693d80c3a188e28c72be392d4d", "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3", "evidence_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db"}],
+      "source_artifacts": [{"path": "data/claims/evidence/q5_real_dev_v3_summary.json", "sha256": "b727f2d102911ae3fab49abaef3ab10683445b39c6ba61855b9087c2fe740174", "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3", "evidence_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db"}],
       "metrics": {
         "model_call_ratio": {"numerator": 78, "denominator": 132, "value": 0.590909, "unit": "ratio"},
         "token_ratio": {"numerator": 66531, "denominator": 103246, "value": 0.644393, "unit": "ratio"}
@@ -209,7 +210,7 @@
       "claim_scope": "Protocol-v3 semantic stratum in the primary real-dev run",
       "evidence_mode": "real",
       "split_or_frozen_scope": "real-dev semantic stratum",
-      "source_artifacts": [{"path": "data/claims/evidence/q5_real_dev_v3_summary.json", "sha256": "08647461190165f493bf3fee123602efaca096693d80c3a188e28c72be392d4d", "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3", "evidence_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db"}],
+      "source_artifacts": [{"path": "data/claims/evidence/q5_real_dev_v3_summary.json", "sha256": "b727f2d102911ae3fab49abaef3ab10683445b39c6ba61855b9087c2fe740174", "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3", "evidence_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db"}],
       "metrics": {
         "semantic_uplift": {"numerator": 1, "denominator": 12, "value": 0.083333, "unit": "rate_difference"}
       },
@@ -232,7 +233,13 @@
       "metrics": {
         "original_boundary_f_coverage": {"numerator": 30, "denominator": 32, "value": 0.9375, "unit": "rate"},
         "addendum_parser_accuracy": {"numerator": 32, "denominator": 32, "value": 1.0, "unit": "rate"},
-        "remaining_uncovered": {"numerator": 0, "denominator": 32, "value": 0.0, "unit": "rate"}
+        "previously_uncovered_cases_resolved": {"numerator": 32, "denominator": 32, "value": 1.0, "unit": "rate"},
+        "remaining_uncovered": {"numerator": 0, "denominator": 32, "value": 0.0, "unit": "rate"},
+        "addendum_coverage": {"numerator": 32, "denominator": 32, "value": 1.0, "unit": "rate"},
+        "addendum_conditional_risk": {"numerator": 0, "denominator": 32, "value": 0.0, "unit": "rate"},
+        "addendum_abstention_count": {"numerator": 0, "denominator": 32, "value": 0.0, "unit": "rate"},
+        "addendum_model_requests": {"numerator": 0, "denominator": 1, "value": 0.0, "unit": "count"},
+        "addendum_external_requests": {"numerator": 0, "denominator": 1, "value": 0.0, "unit": "count"}
       },
       "headline_eligible": true,
       "limitations": ["This is a frozen-scope deterministic demonstration.", "It does not evaluate open-world policy language or general LLM value."],

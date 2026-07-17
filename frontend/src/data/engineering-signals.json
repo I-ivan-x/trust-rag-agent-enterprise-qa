@@ -161,7 +161,7 @@
           "evidence_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db",
           "path": "data/claims/evidence/q5_real_dev_v3_summary.json",
           "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3",
-          "sha256": "08647461190165f493bf3fee123602efaca096693d80c3a188e28c72be392d4d"
+          "sha256": "b727f2d102911ae3fab49abaef3ab10683445b39c6ba61855b9087c2fe740174"
         }
       ],
       "split_or_frozen_scope": "real-dev",
@@ -222,7 +222,7 @@
           "evidence_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db",
           "path": "data/claims/evidence/q5_real_dev_v3_summary.json",
           "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3",
-          "sha256": "08647461190165f493bf3fee123602efaca096693d80c3a188e28c72be392d4d"
+          "sha256": "b727f2d102911ae3fab49abaef3ab10683445b39c6ba61855b9087c2fe740174"
         }
       ],
       "split_or_frozen_scope": "real-dev",
@@ -259,7 +259,7 @@
           "evidence_commit": "e54c42e84e39102b4c82bc1e19c85499270d18db",
           "path": "data/claims/evidence/q5_real_dev_v3_summary.json",
           "run_id": "q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3",
-          "sha256": "08647461190165f493bf3fee123602efaca096693d80c3a188e28c72be392d4d"
+          "sha256": "b727f2d102911ae3fab49abaef3ab10683445b39c6ba61855b9087c2fe740174"
         }
       ],
       "split_or_frozen_scope": "real-dev",

@@ -10,7 +10,7 @@ def test_generated_public_claim_files_are_current_and_provenanced() -> None:
     assert result == {
         "claim_count": 14,
         "source_artifact_count": 7,
-        "generated_file_count": 7,
+        "generated_file_count": 9,
     }
     for path in GENERATED_PATHS:
         assert path.is_file()

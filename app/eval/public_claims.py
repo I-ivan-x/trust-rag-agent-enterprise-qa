@@ -1,5 +1,7 @@
 """Canonical public-claim verification and deterministic publication views."""
 
+# ruff: noqa: E501
+
 from __future__ import annotations
 
 import hashlib
@@ -14,6 +16,8 @@ REGISTRY_PATH = Path("data/claims/claim_registry.json")
 GENERATED_PATHS = (
     Path("data/claims/claim_registry.schema.json"),
     Path("docs/Q5_CLAIM_MATRIX.md"),
+    Path("docs/Q5_FINAL_REPORT.md"),
+    Path("docs/Q5_BOUNDARY_A_F_SUMMARY.md"),
     Path("frontend/src/data/questions.json"),
     Path("frontend/src/data/headline-results.json"),
     Path("frontend/src/data/decision-frontier.json"),
@@ -152,6 +156,8 @@ def render_public_claims(registry: ClaimRegistry) -> dict[Path, bytes]:
             ClaimRegistry.model_json_schema()
         ),
         Path("docs/Q5_CLAIM_MATRIX.md"): _claim_matrix(registry).encode(),
+        Path("docs/Q5_FINAL_REPORT.md"): _q5_final_report(registry).encode(),
+        Path("docs/Q5_BOUNDARY_A_F_SUMMARY.md"): _boundary_summary(registry).encode(),
         Path("frontend/src/data/questions.json"): _json_bytes(questions),
         Path("frontend/src/data/headline-results.json"): _json_bytes(headlines),
         Path("frontend/src/data/decision-frontier.json"): _json_bytes(frontier),
@@ -220,6 +226,119 @@ def _claim_matrix(registry: ClaimRegistry) -> str:
         ]
     )
     return "\n".join(lines) + "\n"
+
+
+def _q5_final_report(registry: ClaimRegistry) -> str:
+    by_id = {claim.claim_id: claim for claim in registry.claims}
+    controlled = by_id["q5.controlled_prose_llm_necessity"]
+    architecture = by_id["q5.selective_runtime_architecture"]
+    efficiency = by_id["q5.hybrid_efficiency"]
+    uplift = by_id["q5.llm_semantic_uplift"]
+    return (
+        "\n".join(
+            [
+                "# Q5 Final Report",
+                "",
+                "Generated from `data/claims/claim_registry.json`; do not edit numeric claims by hand.",
+                "",
+                f"Overall status: `{registry.q5_overall_status}`.",
+                "",
+                "## Formal conclusion",
+                "",
+                "Q5 demonstrated a bounded selective runtime, observation completion, schema and "
+                "transition safety, and hybrid efficiency within their named real-dev scopes. It "
+                "did not demonstrate the preregistered LLM semantic uplift, and deterministic "
+                "controls closed the frozen controlled-prose track. Open-world LLM value remains "
+                "not evaluated.",
+                "",
+                "## Sequential Boundary F evidence",
+                "",
+                f"The original Boundary F evidence remains {_fraction(controlled, 'original_boundary_f_coverage')} "
+                "coverage. The later addendum is a separate evidence layer; it does not overwrite "
+                "the historical artifact.",
+                "",
+                "Addendum metrics within the frozen K0U parser-uncovered 32-case scope:",
+                "",
+                f"- previously_uncovered_cases_resolved: {_fraction(controlled, 'previously_uncovered_cases_resolved')}",
+                f"- remaining_uncovered_cases: {_fraction(controlled, 'remaining_uncovered')}",
+                f"- coverage: {_value(controlled, 'addendum_coverage'):.1f}",
+                f"- conditional_risk: {_value(controlled, 'addendum_conditional_risk'):.1f}",
+                f"- abstention_count: {int(controlled.metrics['addendum_abstention_count'].numerator)}",
+                "",
+                "`controlled_prose_track=closed`; `K1=false`; Boundary G and new K1 data are not "
+                "authorized.",
+                "",
+                "## Real-run and request boundary",
+                "",
+                f"The historical protocol-v3 primary real-dev run made "
+                f"{int(architecture.metrics['historical_real_dev_model_calls'].value)} model calls. "
+                f"Its Hybrid/LLM-only call ratio was {_fraction(efficiency, 'model_call_ratio')} and "
+                f"token ratio was {_fraction(efficiency, 'token_ratio')}. The Boundary F addendum "
+                f"made {int(controlled.metrics['addendum_model_requests'].value)} model requests and "
+                f"{int(controlled.metrics['addendum_external_requests'].value)} external requests.",
+                "",
+                f"The semantic uplift was {_fraction(uplift, 'semantic_uplift')}, below the frozen "
+                "0.10 value threshold. This is a current-scope negative result, not a claim that "
+                "LLMs are generally without value.",
+                "",
+                "No `q5_test` split was created or read during closure. The latest stable product "
+                "release remains `v3.0-q4-reliability`; Q5 does not create a release or tag.",
+                "",
+                "## Evidence boundary",
+                "",
+                "Every number above is generated from registry claim IDs and hash-bound source "
+                "artifacts. See `docs/Q5_CLAIM_MATRIX.md` for the per-claim evidence mapping.",
+            ]
+        )
+        + "\n"
+    )
+
+
+def _boundary_summary(registry: ClaimRegistry) -> str:
+    controlled = next(
+        claim for claim in registry.claims if claim.claim_id == "q5.controlled_prose_llm_necessity"
+    )
+    return (
+        "\n".join(
+            [
+                "# Q5 Boundary A-F Summary",
+                "",
+                "This is a current public summary, not a replacement for historical artifacts.",
+                "",
+                "| Boundary | Interpretation | Public evidence role |",
+                "| --- | --- | --- |",
+                "| A | Explicit closed grammar was deterministic. | Historical diagnostic boundary. |",
+                "| B | Controlled prose remained inside an ordinary parser extension. | Historical diagnostic boundary. |",
+                "| C | A compositional challenger recovered the remaining template family. | Historical diagnostic boundary. |",
+                "| D | A label shortcut invalidated the apparent headroom. | Historical diagnostic boundary. |",
+                "| E | K0T controlled templates remained deterministic. | Historical diagnostic boundary. |",
+                f"| F | Runtime-only parsing reached {_fraction(controlled, 'original_boundary_f_coverage')}; "
+                f"the versioned addendum then reached {_fraction(controlled, 'addendum_parser_accuracy')} "
+                "in the frozen 32-case scope. | Current tracked controlled-prose evidence. |",
+                "",
+                "The original Boundary F and addendum are sequential evidence layers and remain "
+                "separate. Their tracked source hashes are recorded under claim "
+                "`q5.controlled_prose_llm_necessity`.",
+                "",
+                "The controlled-prose track is closed. This does not evaluate open-world LLM value, "
+                "does not approve K1, and does not authorize Boundary G or new K1 data.",
+            ]
+        )
+        + "\n"
+    )
+
+
+def _fraction(claim, metric_name: str) -> str:
+    metric = claim.metrics[metric_name]
+    return f"{_number(metric.numerator)}/{_number(metric.denominator)}"
+
+
+def _value(claim, metric_name: str) -> float:
+    return claim.metrics[metric_name].value
+
+
+def _number(value: float) -> str:
+    return str(int(value)) if value.is_integer() else f"{value:g}"
 
 
 def _verify_source_identity(evidence_mode: str, scope: str, source) -> None:
