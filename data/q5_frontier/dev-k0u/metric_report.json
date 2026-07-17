@@ -1,0 +1,12 @@
+{
+  "deterministic_complete_count": 32,
+  "deterministic_conditional_risk": 0.0,
+  "external_requests": 0,
+  "hybrid_semantic_calls": 32,
+  "hybrid_theoretical_call_avoidance": 0.5,
+  "llm_only_semantic_calls": 64,
+  "model_requests": 0,
+  "oracle_resolvable_abstentions": 32,
+  "schema_version": "q5-k0u-preaudit-metrics-v1",
+  "unsafe_terminal": 0
+}
