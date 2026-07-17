@@ -1,0 +1,12 @@
+{
+  "artifacts": {
+    "attack_metrics.json": "48a9c6896e1850467de865b62e27e07d47a2cfe615d2c4b92bd17e02cc9fff4b",
+    "audit_report.md": "b202c32c4ffaa314c8889728ddf76cb2d5ba60e31e26f19af009f22e4a9edc3c",
+    "audit_rows.jsonl": "8188e02abd00f7ea06c16a160aa418c152579b60e3caecaa11a19df631bba5f8",
+    "boundary_f_summary.json": "a10d4cbff6fa9c7d554a87ad06dc63e79db235d289190d72af9addf0d6d97648",
+    "k1_readiness.json": "ca26dc77fc81192b3f6911cf88d930ece2d2afae9ad2bed33262634b0986ded0",
+    "lineage_receipt.json": "c5e6b4ea53bad3b2b01d0ed6c4894dbc2475422ab6d7aeec1126ef56e86a8243",
+    "posthoc_complexity.json": "875c8485967c1b7904f0ef232de0a11763c4dd8c076445ae3dbde577da5d4852"
+  },
+  "schema_version": "q5-k0u-audit-hashes-v1"
+}

@@ -1,0 +1,22 @@
+{
+  "checks": {
+    "branch_count": true,
+    "closed_runtime_signature": true,
+    "exact_policy_table_absent": true,
+    "forbidden_inputs_absent": true,
+    "lexicon_count": true,
+    "regex_count": true,
+    "source_lines": true
+  },
+  "measurements": {
+    "action_lexicon_entry_count": 4,
+    "ast_branch_node_count": 10,
+    "function_sha256": "d57094efcce8d606e0a4bf88351fefd5e77ed90b38033481534fd3122f483bcb",
+    "long_literal_count": 0,
+    "regex_pattern_count": 5,
+    "source_nonblank_lines": 64,
+    "source_sha256": "c1510a5fa695b67ecfe5f330583ae0039e9d60385d5ef1c677f4b3322baf41e7"
+  },
+  "schema_version": "q5-k0u-posthoc-complexity-v1",
+  "valid": true
+}

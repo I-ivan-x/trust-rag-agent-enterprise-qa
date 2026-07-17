@@ -1,0 +1,14 @@
+{
+  "blockers": [
+    "posthoc_practical_frontier_breached",
+    "oracle_resolvable_abstentions_below_minimum"
+  ],
+  "external_requests": 0,
+  "hybrid_theoretical_call_avoidance": 0.5,
+  "k1_approved": false,
+  "model_requests": 0,
+  "oracle_resolvable_abstentions": 2,
+  "posthoc_boundary_triggered": true,
+  "schema_version": "q5-k0u-k1-readiness-v1",
+  "valid": false
+}

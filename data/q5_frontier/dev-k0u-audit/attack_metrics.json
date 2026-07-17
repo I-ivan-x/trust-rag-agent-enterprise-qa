@@ -1,0 +1,103 @@
+{
+  "external_requests": 0,
+  "model_requests": 0,
+  "parsers": {
+    "boundary_e_runtime_compositional": {
+      "parser_covered": {
+        "abstention_count": 32,
+        "case_count": 32,
+        "conditional_accuracy": null,
+        "conditional_risk": null,
+        "correct_count": 0,
+        "coverage": 0.0,
+        "overall_accuracy": 0.0,
+        "parsed_count": 0
+      },
+      "parser_uncovered": {
+        "abstention_count": 32,
+        "case_count": 32,
+        "conditional_accuracy": null,
+        "conditional_risk": null,
+        "correct_count": 0,
+        "coverage": 0.0,
+        "overall_accuracy": 0.0,
+        "parsed_count": 0
+      },
+      "semantic_overall": {
+        "abstention_count": 64,
+        "case_count": 64,
+        "conditional_accuracy": null,
+        "conditional_risk": null,
+        "correct_count": 0,
+        "coverage": 0.0,
+        "overall_accuracy": 0.0,
+        "parsed_count": 0
+      }
+    },
+    "independent_runtime_challenger": {
+      "parser_covered": {
+        "abstention_count": 16,
+        "case_count": 32,
+        "conditional_accuracy": 0.375,
+        "conditional_risk": 0.625,
+        "correct_count": 6,
+        "coverage": 0.5,
+        "overall_accuracy": 0.1875,
+        "parsed_count": 16
+      },
+      "parser_uncovered": {
+        "abstention_count": 2,
+        "case_count": 32,
+        "conditional_accuracy": 1.0,
+        "conditional_risk": 0.0,
+        "correct_count": 30,
+        "coverage": 0.9375,
+        "overall_accuracy": 0.9375,
+        "parsed_count": 30
+      },
+      "semantic_overall": {
+        "abstention_count": 18,
+        "case_count": 64,
+        "conditional_accuracy": 0.782608695652174,
+        "conditional_risk": 0.21739130434782608,
+        "correct_count": 36,
+        "coverage": 0.71875,
+        "overall_accuracy": 0.5625,
+        "parsed_count": 46
+      }
+    },
+    "preregistered_practical_parser": {
+      "parser_covered": {
+        "abstention_count": 0,
+        "case_count": 32,
+        "conditional_accuracy": 1.0,
+        "conditional_risk": 0.0,
+        "correct_count": 32,
+        "coverage": 1.0,
+        "overall_accuracy": 1.0,
+        "parsed_count": 32
+      },
+      "parser_uncovered": {
+        "abstention_count": 32,
+        "case_count": 32,
+        "conditional_accuracy": null,
+        "conditional_risk": null,
+        "correct_count": 0,
+        "coverage": 0.0,
+        "overall_accuracy": 0.0,
+        "parsed_count": 0
+      },
+      "semantic_overall": {
+        "abstention_count": 32,
+        "case_count": 64,
+        "conditional_accuracy": 1.0,
+        "conditional_risk": 0.0,
+        "correct_count": 32,
+        "coverage": 0.5,
+        "overall_accuracy": 0.5,
+        "parsed_count": 32
+      }
+    }
+  },
+  "schema_version": "q5-k0u-dual-attack-metrics-v1"
+}

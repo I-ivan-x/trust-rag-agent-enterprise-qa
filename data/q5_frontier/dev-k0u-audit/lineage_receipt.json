@@ -1,0 +1,43 @@
+{
+  "data_commit": "d86003b82d8e5145bbdc0d63840e7c208072415c",
+  "external_requests": 0,
+  "frozen_prereg_sources": {
+    "app/eval/q5_frontier_k0u_contract.py": {
+      "git_blob_sha": "2340b9bd5c62cdf88462ef6ff14708b4b8a56723",
+      "source_sha256": "81c0e1be8a024e0057e3a823bab34799b45f4843c1af175f792793039da77f04"
+    },
+    "app/eval/q5_frontier_k0u_prereg.py": {
+      "git_blob_sha": "282596312680e209ec2143436e714c8d67d7cea4",
+      "source_sha256": "cbf209b7866a3dd3531610f3eed1b93ec1739085c5ad2d90aef57ec30e189448"
+    },
+    "app/eval/q5_frontier_k0u_prereg_parser.py": {
+      "git_blob_sha": "37151300b5a6366b99aff79319ac8fe48824bc10",
+      "source_sha256": "13351a000ce14f89a0bbbe885183e51a401f2c480b4b8eb98c88a54f77219f09"
+    },
+    "app/schemas/q5_frontier_v6.py": {
+      "git_blob_sha": "f1ec5a4396654ad6f643e0883dd2dc7331989ed4",
+      "source_sha256": "249d077b3c6ac5decc482770e3d5da994d6d1b03102af441197765e9a7054226"
+    }
+  },
+  "model_requests": 0,
+  "posthoc_absent_at_data_commit": true,
+  "posthoc_source": "app/eval/q5_frontier_k0u_posthoc.py",
+  "posthoc_source_sha256": "c1510a5fa695b67ecfe5f330583ae0039e9d60385d5ef1c677f4b3322baf41e7",
+  "prereg_commit": "b11c97c52d95075b177baee42c0466f6639761fb",
+  "schema_version": "q5-k0u-audit-lineage-v1",
+  "sealed_data_artifact_hashes": {
+    "artifact_hashes.json": "0f3573568ef052a8fe755a5d4bb9a771484b4f2954a713f6a7737a346062ae07",
+    "coverage_report.json": "6f8f4a33ca0b5c5f529811e1c3b7150e2fd99b2d8dd6c999fe8ec792c01c2098",
+    "dataset_manifest.json": "73720fb53a6b3506e7988c987759c99682d5bd0c585fb94ac67a986376fcb5e2",
+    "environment_authoring.jsonl": "e2bf0e7daa4e90a518e1278dae2bb6e29120d628872751483c202a9a86b2e59b",
+    "execution_rows.jsonl": "54d88b906a091f40a0e0b54948e5545ae13b4b68c9383d6232c63993b0a199a3",
+    "gold.jsonl": "1616e1789872a4d0c5f9bd219f1b47930f8f2ccfad91b949aaea577f48430165",
+    "graded_rows.jsonl": "5b668ca9819d93807c42cdd23c0a1b4226dbb5e9138896841c853c85624209ca",
+    "metric_report.json": "279519fae396615e5f3c07ee337806469ec4de4e5bf8de836f57f45ae0614eb9",
+    "policy_inventory.jsonl": "4c79d5f93ef45f4206c2efddffbf3633812da6529ba5cffe684d2dbad4fb7f0a",
+    "policy_ir.jsonl": "a769227581f11c556dccae2d28c047dfe65b2e63621f571d79c80c53c44affbd",
+    "prereg_receipt.json": "c8d2c52ea6d08e6a01892c70104466af8f4a1d2dacf965111117221e0c49bc9d",
+    "runtime_cases.jsonl": "ecebb9983d310506ae59c1253654fef801dc3fecf714fbeeed2af86a03e39bd0",
+    "topology.jsonl": "3c6fc4724d6b161b6daf3efe2b1c3d5ed2f24859bbcaafc808f9c10b8b3b7370"
+  }
+}
