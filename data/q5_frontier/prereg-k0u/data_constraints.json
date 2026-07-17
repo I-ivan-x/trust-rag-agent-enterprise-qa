@@ -1,0 +1,13 @@
+{
+  "batch_renderer_for_semantic_policies_forbidden": true,
+  "case_count_min": 96,
+  "family_count": 4,
+  "handwritten_policy_inventory_required": true,
+  "parser_covered_min": 32,
+  "parser_uncovered_min": 32,
+  "policy_fixed_pairs_per_slice_min": 8,
+  "schema_version": "q5-k0u-data-constraints-v1",
+  "semantic_case_count_min": 64,
+  "semantic_phenomena_min": 6,
+  "state_fixed_pairs_per_slice_min": 8
+}

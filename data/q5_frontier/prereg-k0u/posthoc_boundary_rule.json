@@ -1,0 +1,7 @@
+{
+  "all_conditions_required_for_boundary": true,
+  "conditional_accuracy_required": 1.0,
+  "conditional_risk_required": 0.0,
+  "schema_version": "q5-k0u-posthoc-boundary-v1",
+  "uncovered_coverage_min": 0.5
+}

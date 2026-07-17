@@ -1,0 +1,9 @@
+{
+  "files": {
+    "app/eval/q5_frontier_k0u_contract.py": "81c0e1be8a024e0057e3a823bab34799b45f4843c1af175f792793039da77f04",
+    "app/eval/q5_frontier_k0u_prereg.py": "cbf209b7866a3dd3531610f3eed1b93ec1739085c5ad2d90aef57ec30e189448",
+    "app/eval/q5_frontier_k0u_prereg_parser.py": "13351a000ce14f89a0bbbe885183e51a401f2c480b4b8eb98c88a54f77219f09",
+    "app/schemas/q5_frontier_v6.py": "249d077b3c6ac5decc482770e3d5da994d6d1b03102af441197765e9a7054226"
+  },
+  "schema_version": "q5-k0u-source-inventory-v1"
+}

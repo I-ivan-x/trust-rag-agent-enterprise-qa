@@ -1,0 +1,7 @@
+{
+  "fallback": "none",
+  "hybrid_calls_scope": "preregistered parser abstentions only",
+  "llm_only_calls_scope": "all semantic cases",
+  "retry": 0,
+  "schema_version": "q5-k0u-call-protocol-v1"
+}

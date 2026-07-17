@@ -1,0 +1,9 @@
+{
+  "action_lexicon_entry_count_max": 24,
+  "ast_branch_node_count_max": 45,
+  "exact_policy_literal_count_max": 0,
+  "exact_policy_literal_length_max": 160,
+  "regex_pattern_count_max": 12,
+  "schema_version": "q5-practical-complexity-budget-v1",
+  "source_nonblank_lines_max": 260
+}

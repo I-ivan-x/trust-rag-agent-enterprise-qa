@@ -1,0 +1,13 @@
+{
+  "artifacts": {
+    "call_protocol.json": "265890d7bd027762b4cd910d867029916793c2d52e7fa3b55a21043452e7a404",
+    "complexity_attestation.json": "95b3df52cb9ee33b894ef4381c5ff09c3520099ea2795c7f579bce729efe0ba4",
+    "complexity_budget.json": "9c47442e6e657fd3d8315cd6bd627ff6b2811718e239bd6cc7f4f0cf725f7ca7",
+    "data_constraints.json": "2b9cdf6cd8042b47f08edf8bf80a9162f98ee52c225ba3d13ab163327cd68d6e",
+    "frontier_contract.json": "6676504d3ab3371ed7a41f82df7746caf65ac2e00420b5ae26f6b118a4ba2014",
+    "k1_gates.json": "5dbd051a4858798f9b8929892a8637d6125373453c14f40d3e2528b961554ea0",
+    "posthoc_boundary_rule.json": "cd0880420b02e8d262bf0e42c31b626cae35237d6c2160b91ace3f79f4f8e058",
+    "source_inventory.json": "c4b8bf205be0d8492b8d906885b17d0a8e583c12a8871eb6c43bd2e8b747dc62"
+  },
+  "schema_version": "q5-k0u-prereg-hashes-v1"
+}

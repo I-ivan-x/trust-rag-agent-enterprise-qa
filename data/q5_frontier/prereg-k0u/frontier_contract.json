@@ -1,0 +1,20 @@
+{
+  "exact_policy_text_table_forbidden": true,
+  "forbidden_inputs": [
+    "identity",
+    "renderer label",
+    "sealed labels",
+    "authored semantic representation",
+    "evaluation grouping"
+  ],
+  "generalization_requirements": [
+    "identifier-renaming invariance",
+    "clause-order invariance for labeled clauses",
+    "irrelevant-sentence tolerance",
+    "unknown syntax abstains"
+  ],
+  "parser_frozen_before_data_commit": true,
+  "posthoc_challenger_must_be_new_source_after_data_commit": true,
+  "runtime_input_only": true,
+  "schema_version": "q5-practical-frontier-contract-v1"
+}

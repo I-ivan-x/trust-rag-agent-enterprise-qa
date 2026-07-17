@@ -1,0 +1,7 @@
+{
+  "hybrid_theoretical_call_avoidance_min": 0.4,
+  "oracle_resolvable_abstentions_min": 24,
+  "posthoc_boundary_triggered_must_be": false,
+  "schema_version": "q5-k0u-k1-gates-v1",
+  "unsafe_terminal_max": 0
+}

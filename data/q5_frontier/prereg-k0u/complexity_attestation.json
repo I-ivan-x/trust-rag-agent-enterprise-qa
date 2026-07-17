@@ -1,0 +1,22 @@
+{
+  "checks": {
+    "branch_count": true,
+    "exact_policy_table_absent": true,
+    "forbidden_inputs_absent": true,
+    "lexicon_count": true,
+    "regex_count": true,
+    "runtime_signature_closed": true,
+    "source_lines": true
+  },
+  "measurements": {
+    "action_lexicon_entry_count": 20,
+    "ast_branch_node_count": 26,
+    "forbidden_tokens_found": [],
+    "long_literal_count": 0,
+    "parser_function_sha256": "60fb7f7bc35de3bb4c316e7f262a5a0042a7b47fe69d662ef2bb135fa00a9274",
+    "regex_pattern_count": 2,
+    "source_nonblank_lines": 89
+  },
+  "schema_version": "q5-practical-parser-complexity-v1",
+  "valid": true
+}
