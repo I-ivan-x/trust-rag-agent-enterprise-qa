@@ -62,6 +62,7 @@ def test_k0u_policy_inventory_is_explicit_and_balanced(dev_dir: Path) -> None:
         "policy_fixed_state_changed": 16,
         "state_fixed_policy_changed": 16,
     }
+    assert coverage["semantic_text_ir_status_alignment_count"] == 64
 
 
 @pytest.mark.parametrize(

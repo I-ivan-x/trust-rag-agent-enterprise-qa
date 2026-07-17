@@ -1,6 +1,6 @@
 {
   "authoring_joined_string_count": 0,
-  "authoring_source_sha256": "357926a0d8536df04224af461f7795b1acd09b342d6c9d82baf8aa048eae8ce7",
+  "authoring_source_sha256": "2e813b055c538f045929e6d3f5fcc8a18f1cf3d25a6a78ca50cef7c639f9c2e9",
   "capability_counts": {
     "ambiguous_or_unsafe": 16,
     "semantic_open": 64,
@@ -153,5 +153,6 @@
       "state_fixed_policy_changed": 8
     }
   },
+  "semantic_text_ir_status_alignment_count": 64,
   "unique_semantic_policy_text_count": 48
 }

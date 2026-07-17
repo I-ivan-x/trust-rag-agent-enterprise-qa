@@ -5,6 +5,7 @@ from __future__ import annotations
 import ast
 import hashlib
 import json
+import re
 import subprocess
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -531,6 +532,7 @@ def _coverage(authored, gold, inventory):
         for phenomenon in {row["semantic_phenomenon"] for row in semantic}
     }
     pair_audit = _audit_semantic_pairs(authored, pairs)
+    text_ir_alignment = _audit_text_ir_status_alignment(authored, semantic)
     source = _root() / "app/eval/q5_frontier_k0u_handwritten.py"
     tree = ast.parse(source.read_text(encoding="utf-8"))
     return {
@@ -545,6 +547,7 @@ def _coverage(authored, gold, inventory):
         "phenomenon_actions": phenomenon_actions,
         "global_action_counts": dict(Counter(labels[row["runtime_ref"]] for row in semantic)),
         "pair_constraints_verified": pair_audit,
+        "semantic_text_ir_status_alignment_count": text_ir_alignment,
         "unique_semantic_policy_text_count": len({row["policy_text"] for row in inventory}),
         "handwritten_inventory_count": len(inventory),
         "authoring_joined_string_count": sum(
@@ -612,6 +615,8 @@ def _enforce(coverage, metrics):
         "state_fixed_policy_changed": 16,
     }:
         raise ValueError("K0U counterfactual pair constraints failed")
+    if coverage["semantic_text_ir_status_alignment_count"] != 64:
+        raise ValueError("K0U prose condition does not match canonical policy IR")
     if metrics["deterministic_conditional_risk"] != 0 or metrics["unsafe_terminal"] != 0:
         raise ValueError("K0U deterministic safety metrics failed")
 
@@ -666,6 +671,27 @@ def _without_status_values(policy_ir):
 
     visit(clone)
     return clone, values
+
+
+def _audit_text_ir_status_alignment(authored, semantic):
+    runtime = {row["runtime_ref"]: row for row in authored["runtime"]}
+    policies = {row["runtime_ref"]: row["policy_ir"] for row in authored["policy_ir"]}
+    aligned = 0
+    for row in semantic:
+        ref = row["runtime_ref"]
+        tokens = {
+            token.lower()
+            for token in re.findall(
+                r"\b(?:signal|neutral)_[0-9]+\b",
+                runtime[ref]["policy_text"],
+                flags=re.IGNORECASE,
+            )
+        }
+        _, ir_values = _without_status_values(policies[ref])
+        if len(tokens) != 1 or ir_values != list(tokens):
+            raise ValueError(f"K0U prose/IR status mismatch: {ref}")
+        aligned += 1
+    return aligned
 
 
 def _prereg_receipt():
