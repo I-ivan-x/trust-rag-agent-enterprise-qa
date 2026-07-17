@@ -1,0 +1,24 @@
+{
+  "external_requests": 0,
+  "frozen_sources": {
+    "app/eval/q5_frontier_attack_suite_v5.py": {
+      "git_blob_sha": "9eb9190c7384c30e141d718617f17fe755bc9b01",
+      "source_sha256": "2596d5503c97d4546321484c889857b48afce1f40f325bb81d48e0fda00bd4f0"
+    },
+    "app/eval/q5_frontier_k0t_contract.py": {
+      "git_blob_sha": "58339194d6025e4c05a0c39636b0395a6a7f09b6",
+      "source_sha256": "9fa9e958b7cc941270cc8e87eb8b1decef867baf177dda2274257e6bb65ba9f5"
+    },
+    "app/eval/q5_frontier_k0t_prereg.py": {
+      "git_blob_sha": "5ee4f6964afcf1401c7075bd43a41271644f3519",
+      "source_sha256": "76b45ed4bd833b8105cac70c8e35b6eece8ad5dd33c1dcfaa842b9588cc005f0"
+    },
+    "app/schemas/q5_frontier_v5.py": {
+      "git_blob_sha": "aa163ec5c8c1eb152efc88e277cc1211ee6bc221",
+      "source_sha256": "34220243f6ad4281dfd0a3009248e78ca2f76797b7c8e10ebc115bd216bc9f5e"
+    }
+  },
+  "model_requests": 0,
+  "prereg_commit": "139378c62534660b2a50d771ef6d2c010b00cb62",
+  "schema_version": "q5-k0t-prereg-receipt-v1"
+}

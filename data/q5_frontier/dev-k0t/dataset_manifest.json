@@ -1,0 +1,17 @@
+{
+  "capability_counts": {
+    "ambiguous_or_unsafe": 16,
+    "semantic_open": 64,
+    "symbolic_complete": 16
+  },
+  "case_count": 96,
+  "external_requests": 0,
+  "model_requests": 0,
+  "partition": "parser_uncovered_dev",
+  "prereg_commit": "139378c62534660b2a50d771ef6d2c010b00cb62",
+  "schema_version": "q5-k0t-dev-manifest-v1",
+  "semantic_coverage_counts": {
+    "parser_covered": 32,
+    "parser_uncovered": 32
+  }
+}

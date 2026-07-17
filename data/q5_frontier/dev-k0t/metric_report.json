@@ -1,0 +1,13 @@
+{
+  "deterministic_complete_count": 32,
+  "deterministic_conditional_risk": 0.0,
+  "external_requests": 0,
+  "hybrid_semantic_calls": 32,
+  "llm_only_semantic_calls": 64,
+  "model_requests": 0,
+  "parser_uncovered": 32,
+  "schema_version": "q5-k0t-metrics-v1",
+  "semantic_call_avoidance": 0.5,
+  "token_avoidance": "not_evaluated_before_model_run",
+  "unsafe_terminal": 0
+}
