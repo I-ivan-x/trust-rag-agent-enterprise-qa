@@ -135,8 +135,8 @@ test("sticky navigation leaves section headings visible", async ({ page }) => {
 });
 
 test("runtime paths and technical disclosure support keyboard operation", async ({ page }) => {
-  const approval = page.getByRole("tab", { name: "合规回滚提案", exact: true });
-  const blocked = page.getByRole("tab", { name: "无权限证据", exact: true });
+  const approval = page.getByRole("tab", { name: "正确路径：等待审批", exact: true });
+  const blocked = page.getByRole("tab", { name: "危险路径：尝试绕过审批", exact: true });
   await approval.focus();
   await approval.press("ArrowRight");
   await expect(blocked).toBeFocused();
@@ -256,13 +256,40 @@ test("no-JavaScript view contains all static runtime and frontier conclusions", 
 });
 
 test("plain interview narrative answers the three core questions", async ({ page }) => {
-  await expect(page.locator("h1")).toContainText("不能绕过权限与审批");
-  await expect(page.locator("#governed-runtime")).toContainText("允许提议，但不允许直接执行");
+  await expect(page.locator("h1")).toContainText("不能越权执行");
+  for (const label of [
+    "项目价值",
+    "一次事故",
+    "怎么变可靠",
+    "何时需要模型",
+    "如何验真",
+    "完整证据",
+  ]) {
+    await expect(page.locator(".desktop-nav")).toContainText(label);
+  }
+  await expect(page.locator("#governed-runtime")).toContainText("执行前必须审批");
   await expect(page.locator("#governed-runtime")).toContainText("等待人工审批");
   await expect(page.locator("#q5-decision-frontier")).toContainText(
     "确定性解析器解决了 32/32",
   );
   await expect(page.locator("#q5-decision-frontier")).toContainText("开放语义场景尚未评估");
+  await expect(page.locator("#five-questions")).toContainText("当前实验没有证明它比简单规则带来额外收益");
+  await expect(page.locator("#evaluation-infrastructure")).toContainText(
+    "这个项目实际实现了什么",
+  );
+});
+
+test("hero presents three distinct canonical outcomes", async ({ page }) => {
+  const metrics = page.locator(".hero-metric");
+  await expect(metrics).toHaveCount(3);
+  await expect(metrics.nth(0)).toContainText("未授权动作全部阻断");
+  await expect(metrics.nth(1)).toContainText("受控文本由确定性解析器解决");
+  await expect(metrics.nth(2)).toContainText("模型增益未达到门槛");
+  expect(await metrics.evaluateAll((nodes) => nodes.map((node) => node.dataset.metricName))).toEqual([
+    "unauthorized_action_blocked",
+    "previously_uncovered_cases_resolved",
+    "semantic_uplift",
+  ]);
 });
 
 test("specialist abbreviations stay out of the default interview path", async ({ page }) => {

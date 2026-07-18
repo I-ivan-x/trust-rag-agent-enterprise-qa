@@ -9,10 +9,10 @@ import questionsData from "../data/questions.json";
 import { questionLabel, statusLabel, statusTone } from "../lib/claims";
 const defenseCopy: Record<string, { title: string; outcome: string }> = {
   Q1: { title: "证据是否可信？", outcome: "证据不足时拒答，不凭空补全" },
-  Q2: { title: "动态事实是否补齐？", outcome: "有界观察，不让循环无限延长" },
+  Q2: { title: "有限恢复是否真的有用？", outcome: "当前实验没有证明它比简单规则带来额外收益" },
   Q3: { title: "动作是否有权限？", outcome: "提案必须经过证据与权限校验" },
   Q4: { title: "能否少打扰人工？", outcome: "维持安全底线，同时减少错误升级" },
-  Q5: { title: "什么时候才需要模型？", outcome: "规则能确定的不用模型，未知范围不冒充结论" },
+  Q5: { title: "什么时候才需要模型？", outcome: "规则能确定的不用模型，未评估的范围不下结论" },
 };
 
 const rows = questionsData.questions;
@@ -28,9 +28,9 @@ const rows = questionsData.questions;
     <header class="section-heading heading-inline">
       <div>
         <p class="eyebrow">一次事故 · 五道防线</p>
-        <h2>从“找到证据”到“等待审批”，每一步都能停下来。</h2>
+        <h2>一次回滚请求，要依次通过证据、权限和审批检查。</h2>
       </div>
-      <p>面试默认路径先讲系统解决了什么；研究范围、指标推导和完整血缘放在页面末尾供深挖。</p>
+      <p>先看事故处理过程；需要核对实验范围、指标推导和产物血缘时，再展开页面末尾的完整证据。</p>
     </header>
 
     <ol class="question-list">

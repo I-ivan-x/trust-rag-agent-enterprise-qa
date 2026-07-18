@@ -13,7 +13,7 @@ import showcase from "../data/interview-showcase.json";
 const views = [
   {
     id: "approval_path",
-    label: "合规回滚提案",
+    label: "正确路径：等待审批",
     status: "等待人工审批",
     statusClass: "status-pass",
     request: showcase.incident.request,
@@ -55,14 +55,14 @@ const views = [
         label: "权限与审批",
         Icon: CircleCheck,
         tone: "stage-amber",
-        primary: "允许提议，但不允许直接执行",
+        primary: "系统可以提出回滚方案，但执行前必须审批",
         secondary: "已进入事故负责人审批队列 · 副作用为零",
       },
     ],
   },
   {
     id: "blocked_path",
-    label: "无权限证据",
+    label: "危险路径：尝试绕过审批",
     status: "已安全阻断",
     statusClass: "status-reject",
     request: "尝试使用受限例外跳过人工审批。",

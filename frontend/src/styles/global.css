@@ -1524,6 +1524,38 @@ main {
   background: var(--surface);
 }
 
+.engineering-ownership {
+  display: grid;
+  margin-bottom: 12px;
+  grid-template-columns: minmax(190px, 1.2fr) repeat(4, minmax(0, 1fr));
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg);
+}
+
+.engineering-ownership strong,
+.engineering-ownership span {
+  display: flex;
+  min-height: 52px;
+  align-items: center;
+  padding: 10px 12px;
+  border-right: 1px solid var(--line);
+  font-size: 0.7rem;
+  line-height: 1.45;
+}
+
+.engineering-ownership strong {
+  color: var(--cyan);
+}
+
+.engineering-ownership span {
+  color: var(--silver);
+}
+
+.engineering-ownership span:last-child {
+  border-right: 0;
+}
+
 .infrastructure-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2067,6 +2099,28 @@ a.infrastructure-card:hover {
   .frontier-summary,
   .infrastructure-grid {
     grid-template-columns: 1fr;
+  }
+
+  .engineering-ownership {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .engineering-ownership strong {
+    grid-column: 1 / -1;
+  }
+
+  .engineering-ownership strong,
+  .engineering-ownership span {
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .engineering-ownership span:nth-of-type(2n) {
+    border-right: 0;
+  }
+
+  .engineering-ownership span:nth-last-of-type(-n + 2) {
+    border-bottom: 0;
   }
 
   .frontier-summary-card {

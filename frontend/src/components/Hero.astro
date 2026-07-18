@@ -7,12 +7,16 @@ import {
 } from "@lucide/astro";
 import showcase from "../data/interview-showcase.json";
 import questionsData from "../data/questions.json";
-import { claimMeaning, fraction, metricPercent } from "../lib/claims";
+import { claimMeaning, fraction } from "../lib/claims";
 
 const claims = questionsData.questions.flatMap((question) => question.claims);
 const q4Safety = claims.find((claim) => claim.claim_id === "q4.release_reliability")!;
+const q5Controlled = claims.find(
+  (claim) => claim.claim_id === "q5.controlled_prose_llm_necessity",
+)!;
 const q5Uplift = claims.find((claim) => claim.claim_id === "q5.llm_semantic_uplift")!;
 const safetyMetric = q4Safety.metrics.unauthorized_action_blocked;
+const controlledMetric = q5Controlled.metrics.previously_uncovered_cases_resolved;
 const upliftMetric = q5Uplift.metrics.semantic_uplift;
 const publicSubtitle =
   "Governed Runtime, Evaluation Harness, and Decision Frontier for Tool-Using Agents";
@@ -44,7 +48,7 @@ const publicSubtitleZh =
         <Gavel size={17} />
         <span>动作提案</span>
         <strong>回滚到上一健康版本</strong>
-        <small>允许提议 · 不允许直接执行</small>
+        <small>可提出方案 · 执行需审批</small>
       </div>
       <div class="console-stage console-terminal">
         <CircleCheck size={17} />
@@ -64,11 +68,11 @@ const publicSubtitleZh =
       <span>公开安全的合成事故演示</span>
     </div>
 
-    <h1>智能体能提出动作，<br /><span>但不能绕过权限与审批。</span></h1>
+    <h1>智能体能提议，<br /><span>但不能越权执行。</span></h1>
     <p class="hero-lead">
       <span class="hero-product-line" data-public-subtitle={publicSubtitle}>{publicSubtitleZh}</span>
-      以一次虚构的 SaaS 发布事故为线索：系统找到当前手册与实时状态，提出回滚，
-      然后在权限不足时停在人工审批之前。
+      页面用一次虚构的 SaaS 发布事故展示完整流程：系统核对当前手册和实时状态，提出回滚；
+      发现执行权限不足后，转交人工审批。
     </p>
 
     <div class="hero-mobile-story" aria-label="事故处理结果">
@@ -91,16 +95,16 @@ const publicSubtitleZh =
         <span class="metric-scope">{claimMeaning(q4Safety)}</span>
       </a>
       <a
-        href={`#evidence-${q5Uplift.claim_id}`}
-        class="hero-metric metric-negative"
-        data-claim-id={q5Uplift.claim_id}
-        data-metric-claim={q5Uplift.claim_id}
-        data-metric-name="semantic_uplift"
+        href={`#evidence-${q5Controlled.claim_id}`}
+        class="hero-metric"
+        data-claim-id={q5Controlled.claim_id}
+        data-metric-claim={q5Controlled.claim_id}
+        data-metric-name="previously_uncovered_cases_resolved"
       >
         <Gavel size={18} aria-hidden="true" />
-        <span class="metric-value">{fraction(upliftMetric)}</span>
-        <span class="metric-label">当前语义增益未达门槛</span>
-        <span class="metric-scope">{claimMeaning(q5Uplift)}</span>
+        <span class="metric-value">{fraction(controlledMetric)}</span>
+        <span class="metric-label">受控文本由确定性解析器解决</span>
+        <span class="metric-scope">{claimMeaning(q5Controlled)}</span>
       </a>
       <a
         href={`#evidence-${q5Uplift.claim_id}`}
@@ -110,8 +114,8 @@ const publicSubtitleZh =
         data-metric-name="semantic_uplift"
       >
         <Gavel size={18} aria-hidden="true" />
-        <span class="metric-value">{metricPercent(upliftMetric)}</span>
-        <span class="metric-label">同一结果的百分比</span>
+        <span class="metric-value">{fraction(upliftMetric)}</span>
+        <span class="metric-label">模型增益未达到门槛</span>
         <span class="metric-scope">{claimMeaning(q5Uplift)}</span>
       </a>
     </div>
