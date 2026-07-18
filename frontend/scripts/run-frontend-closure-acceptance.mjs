@@ -14,8 +14,13 @@ if (git("status", "--porcelain", "--untracked-files=all")) {
   throw new Error("frontend closure acceptance requires a clean worktree");
 }
 
-const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
-execFileSync(npmCommand, ["run", "build"], { stdio: "inherit" });
+if (process.platform === "win32") {
+  execFileSync(process.env.ComSpec ?? "cmd.exe", ["/d", "/s", "/c", "npm run build"], {
+    stdio: "inherit",
+  });
+} else {
+  execFileSync("npm", ["run", "build"], { stdio: "inherit" });
+}
 
 const lighthouseRuns = [];
 for (let index = 1; index <= 3; index += 1) {
