@@ -1,18 +1,18 @@
 {
   "schema_version": "frontend-closure-acceptance-v1",
-  "tested_commit": "1ee13c45dae7ee4f53547179554dfcc0c18ca4d9",
-  "tested_tree": "36160e3c3890692d82467e2a46ba956b2b5f3668",
+  "tested_commit": "ca965c319ae67620f346426ecc5fe7b96489b770",
+  "tested_tree": "1b8d0a8f4a7c6f7a41191432248efc5db381b7bc",
   "package_name": "agent-reliability-lab-showcase",
   "browser": "playwright-chromium",
   "lighthouse_run_count": 3,
   "lighthouse_runs": [
     {
       "run_index": 1,
-      "performance": 92,
+      "performance": 91,
       "accessibility": 100,
       "external_requests": 0,
       "report_path": "frontend/acceptance/runtime/frontend-closure-lighthouse/run-1/report.json",
-      "report_sha256": "e931829da32272f68257c3985ecb4c35d1732e4947f68a89ce86c8da436935d7"
+      "report_sha256": "e6e0a52ee0545cce38f6b684f07659a29f8c314438676e8b3b0fb451bdf576a4"
     },
     {
       "run_index": 2,
@@ -20,7 +20,7 @@
       "accessibility": 100,
       "external_requests": 0,
       "report_path": "frontend/acceptance/runtime/frontend-closure-lighthouse/run-2/report.json",
-      "report_sha256": "d1cc788a0ef071afd1b3fbdabe0952d3b08acb1f3ef66b0e9234bdb8bf6d878d"
+      "report_sha256": "07de32f95125069f3982387eafb84b1fb43e6d4b96a3328c204d91a584854853"
     },
     {
       "run_index": 3,
@@ -28,7 +28,7 @@
       "accessibility": 100,
       "external_requests": 0,
       "report_path": "frontend/acceptance/runtime/frontend-closure-lighthouse/run-3/report.json",
-      "report_sha256": "e97898f90705df74982183c72edcdbcc3509492180a8391de876f4d64310e809"
+      "report_sha256": "13186d8bf7219fcee838051154b2cec852628042c58903993c3c1b8b141afaa4"
     }
   ],
   "thresholds": {
@@ -45,7 +45,7 @@
         "height": 900
       },
       "path": "frontend/acceptance/frontend-closure/desktop-1440x900.png",
-      "sha256": "c26776dfb659afe90eb61aaca85ea88b6b967779edf6c8d659d7c2797df2462a"
+      "sha256": "f2de179b8ce251de47cbd040270b4888618e3419c43eb4b8927218532498a313"
     },
     {
       "viewport": {
@@ -53,7 +53,7 @@
         "height": 720
       },
       "path": "frontend/acceptance/frontend-closure/laptop-1280x720.png",
-      "sha256": "940a605b704cb89b1cc85280c7fbe818c1a8632df189f3c3cdf16ee055cacec4"
+      "sha256": "82998604f31f2a890d925eb1a5b59b9499c4e14111c7bc60b843274c56faec3a"
     },
     {
       "viewport": {
@@ -61,7 +61,7 @@
         "height": 844
       },
       "path": "frontend/acceptance/frontend-closure/mobile-390x844.png",
-      "sha256": "05b084df9ab54da1ce521655e9d70cce7b5540f5899e4ec3d932cc683cfeeddd"
+      "sha256": "7a4ba6bed2d40285151e5d11b0f78d447d6b84b99bce3bdcd5d8626f91a9f043"
     }
   ],
   "model_requests": 0,
