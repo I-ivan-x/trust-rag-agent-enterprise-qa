@@ -1,0 +1,24 @@
+{
+  "schema_version": "interview-showcase-manifest-v1",
+  "corpus_id": "interview-v1",
+  "title": "SaaS 发布异常与受治理回滚演示",
+  "data_mode": "synthetic",
+  "use": "demonstration_only",
+  "headline_eligible": false,
+  "formal_evaluation": false,
+  "model_requests": 0,
+  "external_requests": 0,
+  "files": {
+    "access-policy.json": {"role": "authorization", "sha256": "f1863079c23bd79a9248a6ff1593c381ae006066b5000b8838d4fb6748d204bd"},
+    "approval-policy.json": {"role": "approval", "sha256": "ec096695ffc2de39fc1e2d1f8e45e5f8196ed12d476364b38948977f5a4dd9da"},
+    "authorized-trajectory.json": {"role": "authorized_path", "sha256": "e5fb06098f502eb85903bd98b4376f06f7538a8f3519c4826696b318ef34a1d1"},
+    "blocked-trajectory.json": {"role": "blocked_path", "sha256": "f93a119829cba5bb5c42889230cff0ec7c308b9beed9476a63fad5241eef6244"},
+    "current-runbook.md": {"role": "authorized_current_evidence", "sha256": "c2e263fe2fdd6bce12e9f4393b0815b5d292bfb481f57168160918108ae4158b"},
+    "deprecated-runbook.md": {"role": "deprecated_evidence", "sha256": "36d2f0f4e237e5b6ec6292efa0ad99f928e49fafd1d267a8a361045345fb916a"},
+    "expected-journey.json": {"role": "demonstration_contract", "sha256": "faf7cc24250f65786109e4ed1a56c3738961355dc8c797ace41287f02f748132"},
+    "incident-ticket.md": {"role": "incident_request", "sha256": "ea4af31291bc21de1b9923be444b792c9a7ab5c333302cbc77e4aad4dcf936c2"},
+    "live-observation.json": {"role": "trusted_observation", "sha256": "f34f454708050b142d30bbb9152cdfea92a8af19eee6f2c4d3a302bc5cab71ea"},
+    "restricted-exception.md": {"role": "blocked_evidence", "sha256": "79592b4d596d7c216ebacdd2fccb37b18c2ea76823b87c0066f719a35d36583b"},
+    "tool-contract.json": {"role": "tool_contract", "sha256": "9089cee65318bc5641af62ee9c9cd4095924429a2e8783378838257cd1e9a052"}
+  }
+}

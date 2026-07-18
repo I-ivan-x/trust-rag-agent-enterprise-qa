@@ -1,0 +1,23 @@
+{
+  "schema_version": "interview-showcase-observation-v1",
+  "request_id": "observation:checkout-0718",
+  "status": "ok",
+  "observed_at": "2026-07-18T09:31:00Z",
+  "deployment": {
+    "service_ref": "resource:checkout-api",
+    "current_release": "2026.07.18-1",
+    "previous_release": "2026.07.11-3",
+    "previous_release_health": "healthy"
+  },
+  "error_rate": {
+    "window_minutes": 5,
+    "before_release": 0.004,
+    "after_release": 0.087,
+    "threshold": 0.05
+  },
+  "authorized": true,
+  "authorized_evidence_ids": [
+    "chunk:ticket-0718",
+    "chunk:runbook-current"
+  ]
+}

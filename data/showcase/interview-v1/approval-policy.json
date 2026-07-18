@@ -1,0 +1,9 @@
+{
+  "schema_version": "interview-showcase-approval-v1",
+  "action": "rollback_release",
+  "risk_tier": "high",
+  "required_approver_role": "incident-commander",
+  "requester_may_approve": false,
+  "execution_before_approval": false,
+  "pending_state": "awaiting_human_approval"
+}

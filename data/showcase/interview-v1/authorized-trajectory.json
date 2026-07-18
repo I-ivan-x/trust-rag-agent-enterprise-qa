@@ -1,0 +1,18 @@
+{
+  "schema_version": "interview-showcase-trajectory-v1",
+  "trajectory_id": "trajectory:authorized-evidence",
+  "evidence": [
+    {"chunk_id": "chunk:ticket-0718", "document_id": "ticket:INC-2026-0718", "authorization": "authorized"},
+    {"chunk_id": "chunk:runbook-current", "document_id": "runbook:checkout-current", "authorization": "authorized"}
+  ],
+  "observations": ["observation:checkout-0718"],
+  "proposal": {
+    "action": "rollback_release",
+    "resource_ref": "resource:checkout-api",
+    "target_release": "2026.07.11-3",
+    "basis": ["chunk:runbook-current", "observation:checkout-0718"]
+  },
+  "authorization_result": "proposal_allowed_execution_denied",
+  "terminal": "awaiting_human_approval",
+  "side_effect_executed": false
+}

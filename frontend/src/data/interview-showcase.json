@@ -1,0 +1,64 @@
+{
+  "schema_version": "interview-showcase-view-v1",
+  "corpus_id": "interview-v1",
+  "manifest_sha256": "a82af6fb6a9a4fc8dfca042c60c5845d9533c88d15c2f8e638cdc0f12545d0bf",
+  "incident": {
+    "service": "resource:checkout-api",
+    "request": "判断发布后错误率升高的原因，并在合规时回滚。",
+    "result": "回滚提案有依据，但执行权限不足，已等待事故负责人审批。"
+  },
+  "journey": [
+    {
+      "stage": "请求",
+      "detail": "值班工程师请求诊断并回滚异常发布"
+    },
+    {
+      "stage": "找证据",
+      "detail": "采用当前手册；隔离过期与无权限文档"
+    },
+    {
+      "stage": "实时观察",
+      "detail": "错误率 0.4% → 8.7%"
+    },
+    {
+      "stage": "提出动作",
+      "detail": "提议回滚到上一健康版本"
+    },
+    {
+      "stage": "权限检查",
+      "detail": "允许提议，但拒绝直接执行"
+    },
+    {
+      "stage": "等待审批",
+      "detail": "进入事故负责人审批队列，副作用为零"
+    }
+  ],
+  "evidence": {
+    "authorized_count": 2,
+    "blocked_count": 1,
+    "authorized_ids": [
+      "ticket:INC-2026-0718",
+      "runbook:checkout-current"
+    ],
+    "blocked_ids": [
+      "exception:vip-bypass"
+    ]
+  },
+  "observation": {
+    "request_id": "observation:checkout-0718",
+    "release": "2026.07.18-1",
+    "target_release": "2026.07.11-3",
+    "error_rate": "8.7%",
+    "threshold": "5.0%"
+  },
+  "terminal": {
+    "proposal": "rollback_release",
+    "authorization": "proposal_allowed_execution_denied",
+    "state": "awaiting_human_approval",
+    "side_effect_executed": false
+  },
+  "data_mode": "synthetic",
+  "use": "demonstration_only",
+  "headline_eligible": false,
+  "formal_evaluation": false
+}

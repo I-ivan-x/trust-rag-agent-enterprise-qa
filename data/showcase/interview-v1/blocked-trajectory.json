@@ -1,0 +1,14 @@
+{
+  "schema_version": "interview-showcase-trajectory-v1",
+  "trajectory_id": "trajectory:blocked-evidence",
+  "blocked_evidence": [
+    {"document_id": "exception:vip-bypass", "block_reason": "acl_denied"}
+  ],
+  "rejected_inputs": [
+    {"document_id": "runbook:checkout-legacy", "reason": "deprecated"},
+    {"document_id": "exception:vip-bypass", "reason": "unauthorized"}
+  ],
+  "terminal": "safe_escalation",
+  "side_effect_executed": false,
+  "trusted_context_contains_restricted_text": false
+}

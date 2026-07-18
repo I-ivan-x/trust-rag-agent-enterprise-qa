@@ -1,0 +1,24 @@
+{
+  "schema_version": "interview-showcase-tool-contract-v1",
+  "tools": {
+    "observe_deployment": {
+      "read_only": true,
+      "required": ["resource_ref"],
+      "additionalProperties": false,
+      "resource_ref_pattern": "^resource:[a-z0-9-]+$"
+    },
+    "observe_error_rate": {
+      "read_only": true,
+      "required": ["resource_ref", "window_minutes"],
+      "additionalProperties": false,
+      "resource_ref_pattern": "^resource:[a-z0-9-]+$"
+    },
+    "rollback_release": {
+      "read_only": false,
+      "required": ["resource_ref", "target_release", "approval_ref"],
+      "additionalProperties": false,
+      "requires_capability": "execute:rollback",
+      "requires_approval": true
+    }
+  }
+}

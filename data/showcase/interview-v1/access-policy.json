@@ -1,0 +1,21 @@
+{
+  "schema_version": "interview-showcase-access-v1",
+  "principal": "role:oncall-engineer",
+  "authorized_documents": [
+    "ticket:INC-2026-0718",
+    "runbook:checkout-current",
+    "runbook:checkout-legacy"
+  ],
+  "blocked_documents": {
+    "exception:vip-bypass": "acl_denied"
+  },
+  "capabilities": [
+    "observe:deployment",
+    "observe:error-rate",
+    "propose:rollback"
+  ],
+  "denied_capabilities": [
+    "execute:rollback",
+    "approve:rollback"
+  ]
+}
