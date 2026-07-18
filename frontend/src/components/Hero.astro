@@ -2,63 +2,58 @@
 import {
   ArrowDown,
   CircleCheck,
-  FileCheck2,
   Gavel,
-  ScanSearch,
   ShieldCheck,
 } from "@lucide/astro";
-import snapshot from "../data/control-room-trajectory.json";
+import showcase from "../data/interview-showcase.json";
 import questionsData from "../data/questions.json";
-import { fraction, metricValue } from "../lib/claims";
+import { claimMeaning, fraction, metricPercent } from "../lib/claims";
 
 const claims = questionsData.questions.flatMap((question) => question.claims);
 const q4Safety = claims.find((claim) => claim.claim_id === "q4.release_reliability")!;
 const q5Uplift = claims.find((claim) => claim.claim_id === "q5.llm_semantic_uplift")!;
-const q5Question = questionsData.questions.find((question) => question.question_id === "Q5")!;
 const safetyMetric = q4Safety.metrics.unauthorized_action_blocked;
-const f11Metric = q4Safety.metrics.F11_action_without_evidence;
-const f13Metric = q4Safety.metrics.F13_missed_escalation_unauth;
 const upliftMetric = q5Uplift.metrics.semantic_uplift;
-const trajectory = snapshot.scenarios.find((row) => row.scenario_id === "approval_path")!;
-const releaseTag = q4Safety.source_artifacts[0].release_tag;
 const publicSubtitle =
   "Governed Runtime, Evaluation Harness, and Decision Frontier for Tool-Using Agents";
+const publicSubtitleZh =
+  "面向工具调用智能体的受治理运行时、评测框架与决策边界";
 ---
 
 <section id="hero" class="hero-section" data-major-section data-section-name="Hero">
   <div
     class="hero-trajectory"
     aria-hidden="true"
-    data-run-id={snapshot.provenance.run_id}
-    data-source-sha={snapshot.provenance.source_sha256}
+    data-corpus-id={showcase.corpus_id}
+    data-manifest-sha={showcase.manifest_sha256}
   >
     <div class="hero-console-grid">
       <div class="console-stage console-observation">
-        <ScanSearch size={17} />
-        <span>OBSERVATION</span>
-        <strong>{trajectory.observation.retrieved} retrieved</strong>
-        <small>{trajectory.observation.surviving} ACL surviving</small>
+        <Gavel size={17} />
+        <span>现实任务</span>
+        <strong>发布后错误率升高</strong>
+        <small>请求判断原因并回滚</small>
       </div>
       <div class="console-stage console-evidence">
-        <FileCheck2 size={17} />
-        <span>EVIDENCE</span>
-        <strong>{trajectory.evidence.evidence_decision}</strong>
-        <small>{trajectory.evidence.conditions.join(" · ")}</small>
+        <ShieldCheck size={17} />
+        <span>治理动作</span>
+        <strong>隔离过期与无权限证据</strong>
+        <small>核验实时状态和动作权限</small>
       </div>
       <div class="console-stage console-policy">
         <Gavel size={17} />
-        <span>POLICY</span>
-        <strong>{trajectory.proposal.action}</strong>
-        <small>{trajectory.proposal.risk_tier} · validator {String(trajectory.policy.validator_ok)}</small>
+        <span>动作提案</span>
+        <strong>回滚到上一健康版本</strong>
+        <small>允许提议 · 不允许直接执行</small>
       </div>
       <div class="console-stage console-terminal">
         <CircleCheck size={17} />
-        <span>TERMINAL</span>
-        <strong>{trajectory.terminal.approval_state}</strong>
-        <small>side effect {String(trajectory.terminal.executed_side_effect)}</small>
+        <span>可理解结果</span>
+        <strong>等待人工审批</strong>
+        <small>执行前安全停止 · 副作用为零</small>
       </div>
     </div>
-    <div class="hero-query">{trajectory.query}</div>
+    <div class="hero-query">{showcase.incident.request}</div>
   </div>
 
   <div class="wrap hero-content">
@@ -66,17 +61,21 @@ const publicSubtitle =
       <span class="status-dot status-dot-pass"></span>
       <span class="hero-project-name">Agent Reliability Lab</span>
       <span class="kicker-separator" aria-hidden="true"></span>
-      <span>{releaseTag}</span>
-      <span class="kicker-separator" aria-hidden="true"></span>
-      <span class="status-reject-text">Q5 · {q5Question.status}</span>
+      <span>公开安全的合成事故演示</span>
     </div>
 
-    <h1>让 tool-using agent<br /><span>可测、可审、可回归。</span></h1>
+    <h1>智能体能提出动作，<br /><span>但不能绕过权限与审批。</span></h1>
     <p class="hero-lead">
-      <span class="hero-product-line">{publicSubtitle}</span>
-      一个把检索、证据、动作、审批和评测放进同一条可验签链路的可靠性工程项目。
-      正结果有边界，负结果不改名。
+      <span class="hero-product-line" data-public-subtitle={publicSubtitle}>{publicSubtitleZh}</span>
+      以一次虚构的 SaaS 发布事故为线索：系统找到当前手册与实时状态，提出回滚，
+      然后在权限不足时停在人工审批之前。
     </p>
+
+    <div class="hero-mobile-story" aria-label="事故处理结果">
+      <span><strong>现实任务</strong>{showcase.incident.request}</span>
+      <span><strong>治理动作</strong>{showcase.journey[4].detail}</span>
+      <span><strong>当前结果</strong>{showcase.journey[5].detail}</span>
+    </div>
 
     <div class="hero-metrics" aria-label="核心结果">
       <a
@@ -87,21 +86,9 @@ const publicSubtitle =
         data-metric-name="unauthorized_action_blocked"
       >
         <ShieldCheck size={18} aria-hidden="true" />
-        <span class="metric-value">{metricValue(safetyMetric)}</span>
-        <span class="metric-label">越权动作拦截</span>
-        <span class="metric-scope">{fraction(safetyMetric)} · held-out ops_test</span>
-      </a>
-      <a
-        href={`#evidence-${q4Safety.claim_id}`}
-        class="hero-metric"
-        data-claim-id={q4Safety.claim_id}
-        data-metric-claim={q4Safety.claim_id}
-        data-metric-name="F11_action_without_evidence,F13_missed_escalation_unauth"
-      >
-        <FileCheck2 size={18} aria-hidden="true" />
-        <span class="metric-value">{metricValue(f11Metric, 0)} · {metricValue(f13Metric, 0)}</span>
-        <span class="metric-label">F11 · F13</span>
-        <span class="metric-scope">{q4Safety.split_or_frozen_scope} · evidence</span>
+        <span class="metric-value">{fraction(safetyMetric)}</span>
+        <span class="metric-label">未授权动作全部阻断</span>
+        <span class="metric-scope">{claimMeaning(q4Safety)}</span>
       </a>
       <a
         href={`#evidence-${q5Uplift.claim_id}`}
@@ -111,9 +98,21 @@ const publicSubtitle =
         data-metric-name="semantic_uplift"
       >
         <Gavel size={18} aria-hidden="true" />
-        <span class="metric-value">{metricValue(upliftMetric, 6)}</span>
-        <span class="metric-label">Q5 semantic uplift</span>
-        <span class="metric-scope">{fraction(upliftMetric)} · below frozen gate</span>
+        <span class="metric-value">{fraction(upliftMetric)}</span>
+        <span class="metric-label">当前语义增益未达门槛</span>
+        <span class="metric-scope">{claimMeaning(q5Uplift)}</span>
+      </a>
+      <a
+        href={`#evidence-${q5Uplift.claim_id}`}
+        class="hero-metric metric-negative"
+        data-claim-id={q5Uplift.claim_id}
+        data-metric-claim={q5Uplift.claim_id}
+        data-metric-name="semantic_uplift"
+      >
+        <Gavel size={18} aria-hidden="true" />
+        <span class="metric-value">{metricPercent(upliftMetric)}</span>
+        <span class="metric-label">同一结果的百分比</span>
+        <span class="metric-scope">{claimMeaning(q5Uplift)}</span>
       </a>
     </div>
 

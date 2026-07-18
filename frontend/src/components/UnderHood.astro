@@ -2,27 +2,32 @@
 import {
   Activity,
   Braces,
+  ChevronDown,
   Database,
   Fingerprint,
-  Gauge,
   GitCompareArrows,
   LockKeyhole,
   Route,
 } from "@lucide/astro";
 import signalsData from "../data/engineering-signals.json";
-import { fraction, metricValue } from "../lib/claims";
+import questionsData from "../data/questions.json";
+import { claimMeaning, fraction, metricPercent, metricValue } from "../lib/claims";
 
-const byId = Object.fromEntries(signalsData.signals.map((claim) => [claim.claim_id, claim]));
-const q5Safety = byId["q5.schema_transition_safety"];
-const q5Observation = byId["q5.observation_adaptation"];
-const q5Efficiency = byId["q5.hybrid_efficiency"];
+const allClaims = questionsData.questions.flatMap((question) => question.claims);
+const byId = Object.fromEntries(allClaims.map((claim) => [claim.claim_id, claim]));
+const q4Safety = byId["q4.release_reliability"];
+const q5Controlled = byId["q5.controlled_prose_llm_necessity"];
+const q5Uplift = byId["q5.llm_semantic_uplift"];
+const q5Safety = signalsData.signals.find(
+  (claim) => claim.claim_id === "q5.schema_transition_safety",
+)!;
 const runtimeStack = [
   ["FastAPI", Route],
   ["Qdrant + BM25 + RRF", Database],
-  ["Pydantic contracts", Braces],
+  ["Pydantic 数据契约", Braces],
   ["OpenInference / OTel", Activity],
-  ["hash-bound claims", Fingerprint],
-  ["pytest + release gates", LockKeyhole],
+  ["哈希绑定结论", Fingerprint],
+  ["pytest + 发布门禁", LockKeyhole],
 ];
 ---
 
@@ -35,77 +40,87 @@ const runtimeStack = [
   <div class="wrap">
     <header class="section-heading heading-inline">
       <div>
-        <p class="eyebrow">Evaluation Infrastructure</p>
-        <h2>运行时约束与评测可信度，共用一条证据链。</h2>
+        <p class="eyebrow">评测基础设施 · 结果如何防伪</p>
+        <h2>数字来自原始产物，中文结论由生成器统一生成。</h2>
       </div>
-      <p>静态生成的公开视图只读取 canonical claim registry；runtime trace、grader 和 gate 各有独立校验边界。</p>
+      <p>修改数据却不重生成会失败；修改生成文件而不改注册表也会失败；页面上的公开数字必须反链到证据账本。</p>
     </header>
 
     <div class="infrastructure-grid">
       <article class="infrastructure-card infrastructure-flow">
-        <div class="card-title"><GitCompareArrows size={18} aria-hidden="true" /><h3>Evidence pipeline</h3></div>
+        <div class="card-title"><GitCompareArrows size={18} aria-hidden="true" /><h3>四步证据链</h3></div>
         <ol>
-          <li><span>01</span><strong>Raw artifact</strong><small>tracked, byte-hashed</small></li>
-          <li><span>02</span><strong>Metric derivation</strong><small>JSON pointer + tolerance</small></li>
-          <li><span>03</span><strong>Claim registry</strong><small>scope + status + lineage</small></li>
-          <li><span>04</span><strong>Public view</strong><small>deterministic generation</small></li>
+          <li><span>01</span><strong>冻结原始产物</strong><small>文件纳入版本管理并计算哈希</small></li>
+          <li><span>02</span><strong>绑定指标来源</strong><small>每个数字指向明确字段</small></li>
+          <li><span>03</span><strong>生成公开结论</strong><small>范围、状态和中文文案来自单一数据源</small></li>
+          <li><span>04</span><strong>浏览器反链</strong><small>页面数字可以回到对应结论</small></li>
         </ol>
       </article>
 
       <a
         class="infrastructure-card metric-card"
-        href={`#evidence-${q5Safety.claim_id}`}
-        data-claim-id={q5Safety.claim_id}
+        href={`#evidence-${q4Safety.claim_id}`}
+        data-claim-id={q4Safety.claim_id}
       >
-        <div class="card-title"><LockKeyhole size={18} aria-hidden="true" /><h3>Schema + transition safety</h3></div>
-        <div class="metric-triplet">
-          {["F11", "F13", "F17"].map((name) => (
-            <span data-metric-claim={q5Safety.claim_id} data-metric-name={name}>
-              <strong>{metricValue(q5Safety.metrics[name], 0)}</strong><small>{name}</small>
-            </span>
-          ))}
-        </div>
-        <p>{q5Safety.public_summary}</p>
-      </a>
-
-      <a
-        class="infrastructure-card metric-card"
-        href={`#evidence-${q5Observation.claim_id}`}
-        data-claim-id={q5Observation.claim_id}
-      >
-        <div class="card-title"><Activity size={18} aria-hidden="true" /><h3>Observation completion</h3></div>
+        <div class="card-title"><LockKeyhole size={18} aria-hidden="true" /><h3>安全底线</h3></div>
         <strong
           class="large-metric"
-          data-metric-claim={q5Observation.claim_id}
-          data-metric-name="required_observation_recall"
-        >{metricValue(q5Observation.metrics.required_observation_recall)}</strong>
-        <p>{q5Observation.public_summary}</p>
+          data-metric-claim={q4Safety.claim_id}
+          data-metric-name="unauthorized_action_blocked"
+        >{fraction(q4Safety.metrics.unauthorized_action_blocked)}</strong>
+        <p>{claimMeaning(q4Safety)}</p>
       </a>
 
       <a
         class="infrastructure-card metric-card"
-        href={`#evidence-${q5Efficiency.claim_id}`}
-        data-claim-id={q5Efficiency.claim_id}
+        href={`#evidence-${q5Controlled.claim_id}`}
+        data-claim-id={q5Controlled.claim_id}
       >
-        <div class="card-title"><Gauge size={18} aria-hidden="true" /><h3>Selective efficiency</h3></div>
+        <div class="card-title"><Braces size={18} aria-hidden="true" /><h3>确定性边界</h3></div>
+        <strong
+          class="large-metric"
+          data-metric-claim={q5Controlled.claim_id}
+          data-metric-name="previously_uncovered_cases_resolved"
+        >{fraction(q5Controlled.metrics.previously_uncovered_cases_resolved)}</strong>
+        <p>{claimMeaning(q5Controlled)}</p>
+      </a>
+
+      <a
+        class="infrastructure-card metric-card"
+        href={`#evidence-${q5Uplift.claim_id}`}
+        data-claim-id={q5Uplift.claim_id}
+      >
+        <div class="card-title"><Activity size={18} aria-hidden="true" /><h3>负结果也照实发布</h3></div>
         <div class="efficiency-pair">
-          <span data-metric-claim={q5Efficiency.claim_id} data-metric-name="model_call_ratio">
-            <strong>{metricValue(q5Efficiency.metrics.model_call_ratio, 6)}</strong>
-            <small>calls · {fraction(q5Efficiency.metrics.model_call_ratio)}</small>
-          </span>
-          <span data-metric-claim={q5Efficiency.claim_id} data-metric-name="token_ratio">
-            <strong>{metricValue(q5Efficiency.metrics.token_ratio, 6)}</strong>
-            <small>tokens · {fraction(q5Efficiency.metrics.token_ratio)}</small>
+          <span
+            data-metric-claim={q5Uplift.claim_id}
+            data-metric-name="semantic_uplift"
+          >
+            <strong>{fraction(q5Uplift.metrics.semantic_uplift)}</strong>
+            <small>{metricPercent(q5Uplift.metrics.semantic_uplift)}</small>
           </span>
         </div>
-        <p>{q5Efficiency.public_summary}</p>
+        <p>{claimMeaning(q5Uplift)}</p>
       </a>
     </div>
 
-    <div class="stack-strip" aria-label="主要工程栈">
-      {runtimeStack.map(([label, Icon]) => (
-        <span><Icon size={15} aria-hidden="true" />{label}</span>
-      ))}
-    </div>
+    <details class="infrastructure-technical technical-details">
+      <summary>
+        <span>技术证据：工程栈与安全分类指标</span>
+        <ChevronDown size={17} aria-hidden="true" />
+      </summary>
+      <div class="metric-triplet">
+        {["F11", "F13", "F17"].map((name) => (
+          <span data-metric-claim={q5Safety.claim_id} data-metric-name={name}>
+            <strong>{metricValue(q5Safety.metrics[name], 0)}</strong><small>{name}</small>
+          </span>
+        ))}
+      </div>
+      <div class="stack-strip" aria-label="主要工程栈">
+        {runtimeStack.map(([label, Icon]) => (
+          <span><Icon size={15} aria-hidden="true" />{label}</span>
+        ))}
+      </div>
+    </details>
   </div>
 </section>

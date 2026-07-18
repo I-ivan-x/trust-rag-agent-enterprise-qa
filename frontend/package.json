@@ -1,5 +1,5 @@
 {
-  "name": "trustrag-showcase",
+  "name": "agent-reliability-lab-showcase",
   "type": "module",
   "version": "0.1.0",
   "description": "Governed Runtime, Evaluation Harness, and Decision Frontier for Tool-Using Agents",
@@ -13,7 +13,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "test:e2e": "npm run build && playwright test",
-    "test:lighthouse": "npm run build && node scripts/run-lighthouse.mjs"
+    "test:lighthouse": "npm run build && node scripts/run-lighthouse.mjs",
+    "test:closure-acceptance": "node scripts/run-frontend-closure-acceptance.mjs"
   },
   "dependencies": {
     "@lucide/astro": "1.25.0",

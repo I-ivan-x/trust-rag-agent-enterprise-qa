@@ -1,6 +1,6 @@
 ---
 import { Fingerprint, ShieldAlert } from "@lucide/astro";
-import snapshot from "../data/control-room-trajectory.json";
+import showcase from "../data/interview-showcase.json";
 import Pipeline from "./Pipeline.astro";
 import TrajectoryPlayer from "./TrajectoryPlayer.astro";
 ---
@@ -14,14 +14,14 @@ import TrajectoryPlayer from "./TrajectoryPlayer.astro";
   <div class="wrap">
     <header class="section-heading heading-inline">
       <div>
-        <p class="eyebrow">Governed Runtime · real trajectory</p>
-        <h2>模型只提议；宿主重新鉴权、审批、落盘。</h2>
+        <p class="eyebrow">受治理运行时 · 虚构事故演示</p>
+        <h2>请求 → 找证据 → 提议 → 权限检查 → 等待审批。</h2>
       </div>
       <div class="runtime-boundary">
         <Fingerprint size={18} aria-hidden="true" />
         <span>
-          <strong>{snapshot.provenance.mode}</strong>
-          <small>{snapshot.provenance.run_id}</small>
+          <strong>合成演示语料</strong>
+          <small>{showcase.corpus_id} · 不参与正式评测</small>
         </span>
       </div>
     </header>
@@ -30,7 +30,7 @@ import TrajectoryPlayer from "./TrajectoryPlayer.astro";
 
     <div class="runtime-note">
       <ShieldAlert size={17} aria-hidden="true" />
-      <p>同一条 runtime 展示授权审批与越权拒绝；页面不读取或展示 gold action。</p>
+      <p>当前手册和实时观察可以支撑回滚提案；过期手册与无权限例外不能支撑动作。</p>
     </div>
 
     <TrajectoryPlayer />

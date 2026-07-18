@@ -40,6 +40,9 @@ jobs:
       - name: Public claim drift gate
         run: uv run --frozen python scripts/check_claim_drift.py
 
+      - name: Interview showcase isolation gate
+        run: uv run --frozen python scripts/build_interview_showcase.py --check
+
       - name: Synthetic release gates
         run: >-
           uv run --frozen python scripts/check_release_gates.py
@@ -63,4 +66,12 @@ jobs:
 
       - name: Build frontend
         run: npm run build
+        working-directory: frontend
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+        working-directory: frontend
+
+      - name: Playwright Chromium acceptance
+        run: npm run test:e2e
         working-directory: frontend

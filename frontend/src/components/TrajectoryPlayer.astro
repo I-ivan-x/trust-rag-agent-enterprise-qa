@@ -8,84 +8,113 @@ import {
   ScanSearch,
   Send,
 } from "@lucide/astro";
-import snapshot from "../data/control-room-trajectory.json";
+import showcase from "../data/interview-showcase.json";
 
-const actionLabels: Record<string, string> = {
-  open_remediation_ticket: "Open remediation ticket",
-  escalate_to_human: "Escalate to human",
-};
-const stateLabels: Record<string, string> = {
-  pending_approval: "Pending approval",
-  escalated: "Safely escalated",
-};
-
-const views = snapshot.scenarios.map((scenario) => ({
-  ...scenario,
-  label: scenario.scenario_id === "approval_path" ? "Authorized · approval" : "Unauthorized · blocked",
-  stages: [
-    {
-      key: "observation",
-      label: "Observation",
-      Icon: ScanSearch,
-      tone: "stage-cyan",
-      primary: `${scenario.observation.retrieved} retrieved · ${scenario.observation.surviving} surviving`,
-      secondary: `${scenario.observation.blocked} ACL blocked`,
-    },
-    {
-      key: "evidence",
-      label: "Evidence",
-      Icon: FileCheck2,
-      tone: "stage-cyan",
-      primary: scenario.evidence.conditions.join(" · ") || "No condition",
-      secondary: `${scenario.evidence.evidence_decision} · actor ${scenario.evidence.authorized_actor ? "authorized" : "unauthorized"}`,
-    },
-    {
-      key: "proposal",
-      label: "Proposal",
-      Icon: Send,
-      tone: "stage-silver",
-      primary: actionLabels[scenario.proposal.action] ?? scenario.proposal.action,
-      secondary: `${scenario.proposal.controller_source} · ${scenario.proposal.risk_tier}`,
-    },
-    {
-      key: "policy",
-      label: "Policy",
-      Icon: Gavel,
-      tone: "stage-amber",
-      primary: `validator ${scenario.policy.validator_ok ? "accepted" : "rejected"}`,
-      secondary: scenario.policy.forced_action ?? "no forced action",
-    },
-    {
-      key: "terminal",
-      label: "Terminal",
-      Icon: scenario.authorized ? CircleCheck : CircleX,
-      tone: scenario.authorized ? "stage-amber" : "stage-red",
-      primary: stateLabels[scenario.terminal.approval_state] ?? scenario.terminal.approval_state,
-      secondary: `side effect ${scenario.terminal.executed_side_effect ? "committed" : "not executed"}`,
-    },
-  ],
-}));
+const views = [
+  {
+    id: "approval_path",
+    label: "合规回滚提案",
+    status: "等待人工审批",
+    statusClass: "status-pass",
+    request: showcase.incident.request,
+    stages: [
+      {
+        key: "request",
+        label: "请求",
+        Icon: Send,
+        tone: "stage-cyan",
+        primary: "诊断发布异常并尝试回滚",
+        secondary: "目标明确，但动作尚未获准执行",
+      },
+      {
+        key: "evidence",
+        label: "找证据",
+        Icon: FileCheck2,
+        tone: "stage-cyan",
+        primary: "采用当前手册，隔离冲突资料",
+        secondary: `可用证据 ${showcase.evidence.authorized_count} 份 · 阻断 ${showcase.evidence.blocked_count} 份`,
+      },
+      {
+        key: "observation",
+        label: "实时观察",
+        Icon: ScanSearch,
+        tone: "stage-cyan",
+        primary: `错误率 ${showcase.observation.error_rate}，超过 ${showcase.observation.threshold} 阈值`,
+        secondary: "上一版本健康，满足提出回滚的事实条件",
+      },
+      {
+        key: "proposal",
+        label: "提出动作",
+        Icon: Gavel,
+        tone: "stage-silver",
+        primary: "回滚到上一健康版本",
+        secondary: "提案引用当前手册和成功的实时观察",
+      },
+      {
+        key: "terminal",
+        label: "权限与审批",
+        Icon: CircleCheck,
+        tone: "stage-amber",
+        primary: "允许提议，但不允许直接执行",
+        secondary: "已进入事故负责人审批队列 · 副作用为零",
+      },
+    ],
+  },
+  {
+    id: "blocked_path",
+    label: "无权限证据",
+    status: "已安全阻断",
+    statusClass: "status-reject",
+    request: "尝试使用受限例外跳过人工审批。",
+    stages: [
+      {
+        key: "request",
+        label: "请求",
+        Icon: Send,
+        tone: "stage-cyan",
+        primary: "请求引用受限例外",
+        secondary: "该资料不在当前角色的可见范围",
+      },
+      {
+        key: "evidence",
+        label: "证据隔离",
+        Icon: FileCheck2,
+        tone: "stage-red",
+        primary: "只保留不透明标识与阻断原因",
+        secondary: "受限正文不会进入可信上下文或动作决策",
+      },
+      {
+        key: "terminal",
+        label: "安全停止",
+        Icon: CircleX,
+        tone: "stage-red",
+        primary: "拒绝跳过审批",
+        secondary: "没有调用执行工具 · 没有产生副作用",
+      },
+    ],
+  },
+];
 ---
 
 <div
   class="trajectory-player"
   data-trajectory-player
-  data-run-id={snapshot.provenance.run_id}
-  data-source-sha={snapshot.provenance.source_sha256}
+  data-corpus-id={showcase.corpus_id}
+  data-manifest-sha={showcase.manifest_sha256}
 >
-  <div class="trajectory-tabs" role="tablist" aria-label="选择真实治理轨迹" data-trajectory-tabs>
+  <div class="trajectory-tabs" role="tablist" aria-label="选择事故处理路径" data-trajectory-tabs>
     {
-      views.map((scenario, index) => (
+      views.map((view, index) => (
         <button
-          id={`trajectory-tab-${scenario.scenario_id}`}
+          id={`trajectory-tab-${view.id}`}
           type="button"
           role="tab"
           aria-selected={index === 0 ? "true" : "false"}
-          aria-controls={`trajectory-panel-${scenario.scenario_id}`}
+          aria-controls={`trajectory-panel-${view.id}`}
           tabindex={index === 0 ? 0 : -1}
           data-trajectory-tab
         >
-          {scenario.label}
+          {view.label}
         </button>
       ))
     }
@@ -93,27 +122,25 @@ const views = snapshot.scenarios.map((scenario) => ({
 
   <div class="trajectory-panels">
     {
-      views.map((scenario, index) => (
+      views.map((view, index) => (
         <article
-          id={`trajectory-panel-${scenario.scenario_id}`}
+          id={`trajectory-panel-${view.id}`}
           class="trajectory-panel"
           role="tabpanel"
-          aria-labelledby={`trajectory-tab-${scenario.scenario_id}`}
+          aria-labelledby={`trajectory-tab-${view.id}`}
           data-trajectory-panel
           data-active={index === 0 ? "true" : "false"}
         >
           <div class="trajectory-context">
             <div>
-              <span class="context-label">Runtime request · {scenario.actor_role}</span>
-              <p>{scenario.query}</p>
+              <span class="context-label">事故请求</span>
+              <p>{view.request}</p>
             </div>
-            <span class={`status-chip ${scenario.authorized ? "status-pass" : "status-reject"}`}>
-              {scenario.authorized ? "authorized" : "permission blocked"}
-            </span>
+            <span class={`status-chip ${view.statusClass}`}>{view.status}</span>
           </div>
 
-          <ol class="trajectory-stages" aria-label={`${scenario.label} stages`}>
-            {scenario.stages.map(({ key, label, Icon, tone, primary, secondary }) => (
+          <ol class="trajectory-stages" aria-label={`${view.label}处理阶段`}>
+            {view.stages.map(({ key, label, Icon, tone, primary, secondary }) => (
               <li class={`trajectory-stage ${tone}`} data-stage={key}>
                 <span class="trajectory-stage-icon">
                   <Icon size={18} strokeWidth={1.8} aria-hidden="true" />
@@ -126,33 +153,33 @@ const views = snapshot.scenarios.map((scenario) => ({
               </li>
             ))}
           </ol>
-
-          <details class="trajectory-foot">
-            <summary>
-              <span>Trace lineage · citations + terminal record</span>
-              <ChevronDown size={16} aria-hidden="true" />
-            </summary>
-            <div class="trajectory-foot-grid">
-              <div>
-                <span>Evidence citations</span>
-                <ul>
-                  {scenario.observation.citations.map((citation) => <li class="mono">{citation}</li>)}
-                </ul>
-              </div>
-              <div>
-                <span>Terminal record</span>
-                <strong class="mono">{scenario.terminal.sink_record_id ?? "none"}</strong>
-              </div>
-            </div>
-          </details>
         </article>
       ))
     }
   </div>
 
-  <p class="trajectory-provenance mono">
-    real · {snapshot.provenance.run_id} · source {snapshot.provenance.source_sha256.slice(0, 12)}…
-  </p>
+  <details class="trajectory-foot technical-details">
+    <summary>
+      <span>技术证据：语料血缘与请求标识</span>
+      <ChevronDown size={16} aria-hidden="true" />
+    </summary>
+    <div class="trajectory-foot-grid">
+      <div>
+        <span>演示语料</span>
+        <strong class="mono">{showcase.corpus_id}</strong>
+      </div>
+      <div>
+        <span>观察请求</span>
+        <strong class="mono">{showcase.observation.request_id}</strong>
+      </div>
+      <div>
+        <span>Manifest SHA-256</span>
+        <strong class="mono">{showcase.manifest_sha256}</strong>
+      </div>
+    </div>
+  </details>
+
+  <p class="trajectory-provenance">虚构合成语料 · 仅用于演示 · 不进入正式结论</p>
 </div>
 
 <script>

@@ -10,43 +10,43 @@ import {
 const stages = [
   {
     key: "01",
-    label: "Observation",
-    detail: "typed tool output",
+    label: "接收请求",
+    detail: "诊断并尝试回滚",
     tone: "stage-cyan",
     Icon: ScanSearch,
   },
   {
     key: "02",
-    label: "Evidence",
-    detail: "ACL-surviving only",
+    label: "找证据",
+    detail: "当前手册 + 实时状态",
     tone: "stage-cyan",
     Icon: FileCheck2,
   },
   {
     key: "03",
-    label: "Proposal",
-    detail: "strict schema",
+    label: "提出动作",
+    detail: "回滚上一健康版本",
     tone: "stage-silver",
     Icon: Send,
   },
   {
     key: "04",
-    label: "Policy",
-    detail: "reauthorize + validate",
+    label: "权限检查",
+    detail: "允许提议，不允许执行",
     tone: "stage-amber",
     Icon: Gavel,
   },
   {
     key: "05",
-    label: "Terminal",
-    detail: "sink or safe stop",
+    label: "等待审批",
+    detail: "执行前安全停止",
     tone: "stage-emerald",
     Icon: CircleCheck,
   },
 ];
 ---
 
-<div class="runtime-pipeline" aria-label="Governed runtime stages">
+<div class="runtime-pipeline" aria-label="受治理运行时阶段">
   {
     stages.map(({ key, label, detail, tone, Icon }) => (
       <div class={`pipeline-stage ${tone}`}>

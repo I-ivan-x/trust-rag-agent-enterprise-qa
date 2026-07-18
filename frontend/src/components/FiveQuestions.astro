@@ -1,28 +1,21 @@
 ---
 import {
   AlertTriangle,
-  ArrowUpRight,
   CircleCheck,
   CircleX,
   MinusCircle,
 } from "@lucide/astro";
 import questionsData from "../data/questions.json";
-import { statusLabel, statusTone } from "../lib/claims";
-
-const representativeIds: Record<string, string[]> = {
-  Q1: ["q1.fail_closed_answers"],
-  Q2: ["q2.agentic_recovery"],
-  Q3: ["q3.action_usefulness", "q3.action_safety"],
-  Q4: ["q4.calibrated_selection"],
-  Q5: ["q5.controlled_prose_llm_necessity", "q5.llm_semantic_uplift", "q5.open_world_llm_value"],
+import { questionLabel, statusLabel, statusTone } from "../lib/claims";
+const defenseCopy: Record<string, { title: string; outcome: string }> = {
+  Q1: { title: "证据是否可信？", outcome: "证据不足时拒答，不凭空补全" },
+  Q2: { title: "动态事实是否补齐？", outcome: "有界观察，不让循环无限延长" },
+  Q3: { title: "动作是否有权限？", outcome: "提案必须经过证据与权限校验" },
+  Q4: { title: "能否少打扰人工？", outcome: "维持安全底线，同时减少错误升级" },
+  Q5: { title: "什么时候才需要模型？", outcome: "规则能确定的不用模型，未知范围不冒充结论" },
 };
 
-const rows = questionsData.questions.map((question) => ({
-  ...question,
-  representativeClaims: representativeIds[question.question_id]
-    .map((id) => question.claims.find((claim) => claim.claim_id === id))
-    .filter(Boolean),
-}));
+const rows = questionsData.questions;
 ---
 
 <section
@@ -34,10 +27,10 @@ const rows = questionsData.questions.map((question) => ({
   <div class="wrap">
     <header class="section-heading heading-inline">
       <div>
-        <p class="eyebrow">Five Questions · one evidence discipline</p>
-        <h2>五个问题，不把负结果藏进附录。</h2>
+        <p class="eyebrow">一次事故 · 五道防线</p>
+        <h2>从“找到证据”到“等待审批”，每一步都能停下来。</h2>
       </div>
-      <p>每个结论都带 scope、headline 状态和可展开证据；Q5 保持 scoped negative。</p>
+      <p>面试默认路径先讲系统解决了什么；研究范围、指标推导和完整血缘放在页面末尾供深挖。</p>
     </header>
 
     <ol class="question-list">
@@ -57,27 +50,12 @@ const rows = questionsData.questions.map((question) => ({
               <span>{row.question_id}</span>
             </div>
             <div class="question-copy">
-              <h3>{row.question}</h3>
-              <div class="question-findings">
-                {row.representativeClaims.map((claim) => (
-                  <a
-                    href={`#evidence-${claim.claim_id}`}
-                    data-claim-id={claim.claim_id}
-                    title={claim.public_summary}
-                  >
-                    <span>{claim.public_label}</span>
-                    <ArrowUpRight size={14} aria-hidden="true" />
-                  </a>
-                ))}
-              </div>
+              <h3>{defenseCopy[row.question_id].title}</h3>
+              <p>{defenseCopy[row.question_id].outcome}</p>
             </div>
             <div class="question-status">
               <strong>{statusLabel(row.status)}</strong>
-              <span>
-                {row.claims.some((claim) => claim.headline_eligible)
-                  ? "contains headline-eligible claim"
-                  : "diagnostic / non-headline"}
-              </span>
+              <span>{questionLabel(row.question_id, row.question)}</span>
             </div>
           </li>
         ))

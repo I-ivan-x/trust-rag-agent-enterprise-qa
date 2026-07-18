@@ -5,7 +5,22 @@ import {
   Fingerprint,
 } from "@lucide/astro";
 import questionsData from "../data/questions.json";
-import { fraction, metricValue, statusLabel, statusTone } from "../lib/claims";
+import {
+  booleanLabel,
+  claimLabel,
+  claimMeaning,
+  claimScope,
+  claimSummary,
+  derivationLabel,
+  evidenceModeLabel,
+  fraction,
+  frozenScope,
+  limitations,
+  metricLabel,
+  metricValue,
+  statusLabel,
+  statusTone,
+} from "../lib/claims";
 
 const claims = questionsData.questions.flatMap((question) => question.claims);
 ---
@@ -19,16 +34,16 @@ const claims = questionsData.questions.flatMap((question) => question.claims);
   <div class="wrap">
     <header class="section-heading heading-inline">
       <div>
-        <p class="eyebrow">Evidence Ledger · canonical registry</p>
-        <h2>每条公开结论都能回到原始 artifact。</h2>
+        <p class="eyebrow">证据账本 · 规范注册表</p>
+        <h2>每条公开结论都能回到原始产物。</h2>
       </div>
-      <p>负结论与 not evaluated 不折叠出视野；使用键盘可展开完整 lineage、metric derivation 与 limitations。</p>
+      <p>负结论与“尚未评估”不会被隐藏；使用键盘可展开完整血缘、指标推导和适用限制。</p>
     </header>
 
     <div class="ledger-toolbar" role="note">
       <FileCheck2 size={17} aria-hidden="true" />
-      <span><strong>{claims.length} claims</strong> · Q1–Q5 · generated from tracked registry</span>
-      <span class="mono">schema public-claim-registry-v2</span>
+      <span><strong>{claims.length} 条结论</strong> · Q1–Q5 · 由版本化注册表生成</span>
+      <span class="mono">结构版本：public-claim-registry-v2</span>
     </div>
 
     <div class="ledger-list">
@@ -42,33 +57,34 @@ const claims = questionsData.questions.flatMap((question) => question.claims);
             <summary>
               <span class="ledger-claim-id mono">{claim.claim_id}</span>
               <span class="ledger-summary-copy">
-                <strong>{claim.public_label}</strong>
-                <small>{claim.claim_scope}</small>
+                <strong>{claimLabel(claim)}</strong>
+                <small>{claimScope(claim)}</small>
               </span>
               <span class="ledger-state">
                 <strong>{statusLabel(claim.status)}</strong>
-                <small>headline {String(claim.headline_eligible)}</small>
+                <small>可作为主结论：{booleanLabel(claim.headline_eligible)}</small>
               </span>
               <ChevronDown class="ledger-chevron" size={18} aria-hidden="true" />
             </summary>
 
             <div class="ledger-body">
               <div class="ledger-conclusion">
-                <h3>Public conclusion</h3>
-                <p>{claim.public_summary}</p>
+                <h3>公开结论</h3>
+                <p>{claimSummary(claim)}</p>
+                <p class="metric-meaning">{claimMeaning(claim)}</p>
                 <dl>
-                  <div><dt>Evidence mode</dt><dd>{claim.evidence_mode}</dd></div>
-                  <div><dt>Frozen scope</dt><dd>{claim.split_or_frozen_scope}</dd></div>
-                  <div><dt>Status</dt><dd>{claim.status_label}</dd></div>
+                  <div><dt>证据模式</dt><dd>{evidenceModeLabel(claim.evidence_mode)}</dd></div>
+                  <div><dt>冻结范围</dt><dd>{frozenScope(claim)}</dd></div>
+                  <div><dt>状态</dt><dd>{statusLabel(claim.status)}</dd></div>
                 </dl>
               </div>
 
               <div class="ledger-metrics">
-                <h3>Metrics</h3>
+                <h3>指标</h3>
                 {Object.keys(claim.metrics).length === 0 ? (
-                  <p class="ledger-empty">No metric: this claim is explicitly not evaluated.</p>
+                  <p class="ledger-empty">无指标：该结论被明确标记为尚未评估。</p>
                 ) : (
-                  <div class="metric-table" role="table" aria-label={`${claim.claim_id} metrics`}>
+                  <div class="metric-table" role="table" aria-label={`${claim.claim_id} 指标`}>
                     {Object.entries(claim.metrics).map(([name, metric]) => (
                       <div
                         class="metric-row"
@@ -76,10 +92,10 @@ const claims = questionsData.questions.flatMap((question) => question.claims);
                         data-metric-claim={claim.claim_id}
                         data-metric-name={name}
                       >
-                        <span role="cell" class="mono">{name}</span>
+                        <span role="cell" title={name}>{metricLabel(name)}</span>
                         <strong role="cell">{metricValue(metric, 6)}</strong>
                         <span role="cell" class="mono">{fraction(metric)}</span>
-                        <span role="cell">{metric.source.derivation}</span>
+                        <span role="cell">{derivationLabel(metric.source.derivation)}</span>
                       </div>
                     ))}
                   </div>
@@ -87,22 +103,22 @@ const claims = questionsData.questions.flatMap((question) => question.claims);
               </div>
 
               <div class="ledger-sources">
-                <h3><Fingerprint size={16} aria-hidden="true" /> Source lineage</h3>
+                <h3><Fingerprint size={16} aria-hidden="true" /> 来源血缘</h3>
                 {claim.source_artifacts.map((source) => (
                   <dl class="source-record">
-                    <div><dt>run_id</dt><dd class="mono">{source.run_id}</dd></div>
-                    <div><dt>source_path</dt><dd class="mono">{source.path}</dd></div>
-                    <div><dt>artifact_sha256</dt><dd class="mono">{source.sha256}</dd></div>
-                    <div><dt>execution_commit</dt><dd class="mono">{source.execution_commit}</dd></div>
-                    <div><dt>artifact_commit</dt><dd class="mono">{source.artifact_commit}</dd></div>
-                    <div><dt>release_tag</dt><dd class="mono">{source.release_tag ?? "none"}</dd></div>
+                    <div><dt>运行 ID</dt><dd class="mono">{source.run_id}</dd></div>
+                    <div><dt>来源路径</dt><dd class="mono">{source.path}</dd></div>
+                    <div><dt>产物 SHA-256</dt><dd class="mono">{source.sha256}</dd></div>
+                    <div><dt>执行提交</dt><dd class="mono">{source.execution_commit}</dd></div>
+                    <div><dt>产物提交</dt><dd class="mono">{source.artifact_commit}</dd></div>
+                    <div><dt>发布标签</dt><dd class="mono">{source.release_tag ?? "无"}</dd></div>
                   </dl>
                 ))}
               </div>
 
               <div class="ledger-limitations">
-                <h3>Limitations</h3>
-                <ul>{claim.limitations.map((limitation) => <li>{limitation}</li>)}</ul>
+                <h3>适用限制</h3>
+                <ul>{limitations(claim).map((limitation) => <li>{limitation}</li>)}</ul>
               </div>
             </div>
           </details>

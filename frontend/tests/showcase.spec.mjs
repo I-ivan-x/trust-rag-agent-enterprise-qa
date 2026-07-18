@@ -134,23 +134,20 @@ test("sticky navigation leaves section headings visible", async ({ page }) => {
   }
 });
 
-test("frontier segment and state controls support keyboard operation", async ({ page }) => {
-  const controlled = page.getByRole("tab", { name: "Controlled prose", exact: true });
-  const open = page.getByRole("tab", { name: "Open semantics", exact: true });
-  await controlled.focus();
-  await controlled.press("ArrowRight");
-  await expect(open).toBeFocused();
-  await open.press("Enter");
-  await expect(open).toHaveAttribute("aria-selected", "true");
-  await expect(page.locator("#frontier-segment-panel-open_semantics")).toBeVisible();
+test("runtime paths and technical disclosure support keyboard operation", async ({ page }) => {
+  const approval = page.getByRole("tab", { name: "合规回滚提案", exact: true });
+  const blocked = page.getByRole("tab", { name: "无权限证据", exact: true });
+  await approval.focus();
+  await approval.press("ArrowRight");
+  await expect(blocked).toBeFocused();
+  await blocked.press("Enter");
+  await expect(blocked).toHaveAttribute("aria-selected", "true");
+  await expect(page.locator("#trajectory-panel-blocked_path")).toBeVisible();
 
-  const realResult = page.locator("#frontier-open_semantics-real_result-tab");
-  const finalDecision = page.locator("#frontier-open_semantics-final_decision-tab");
-  await realResult.focus();
-  await realResult.press("ArrowRight");
-  await expect(finalDecision).toBeFocused();
-  await finalDecision.press("Space");
-  await expect(finalDecision).toHaveAttribute("aria-selected", "true");
+  const disclosure = page.locator(".frontier-technical summary");
+  await disclosure.focus();
+  await disclosure.press("Enter");
+  await expect(page.locator(".frontier-technical")).toHaveAttribute("open", "");
 });
 
 test("keyboard focus is visibly styled", async ({ page }) => {
@@ -194,6 +191,12 @@ test("375px portrait preserves core layout integrity", async ({ browser }, testI
   const page = await context.newPage();
   await page.goto(localPage, { waitUntil: "networkidle" });
   await expectResponsiveIntegrity(page);
+  const mobileStory = page.locator(".hero-mobile-story");
+  await expect(mobileStory).toContainText("现实任务");
+  await expect(mobileStory).toContainText("治理动作");
+  await expect(mobileStory).toContainText("当前结果");
+  const storyBottom = await mobileStory.evaluate((node) => node.getBoundingClientRect().bottom);
+  expect(storyBottom).toBeLessThanOrEqual(812);
   await context.close();
 });
 
@@ -221,9 +224,9 @@ test("reduced motion preserves the complete core conclusion", async ({ page }) =
   await page.reload({ waitUntil: "networkidle" });
   const summary = page.locator(".frontier-summary");
   await expect(summary.locator(".frontier-summary-card")).toHaveCount(3);
-  await expect(summary.getByText(/resolved 32\/32 cases/).first()).toBeVisible();
-  await expect(summary.getByText(/semantic uplift was 1\/12/).first()).toBeVisible();
-  await expect(summary.getByText(/Not evaluated:/).first()).toBeVisible();
+  await expect(summary.getByText(/解决了 32\/32 条案例/).first()).toBeVisible();
+  await expect(summary.getByText(/语义提升为 1\/12/).first()).toBeVisible();
+  await expect(summary.getByText(/尚未评估：/).first()).toBeVisible();
   const hiddenByOpacity = await page.locator("[data-major-section]").evaluateAll((nodes) =>
     nodes.filter((node) => getComputedStyle(node).opacity === "0").map((node) => node.id),
   );
@@ -244,15 +247,49 @@ test("no-JavaScript view contains all static runtime and frontier conclusions", 
   for (const panel of await page.locator("[data-trajectory-panel]").all()) {
     await expect(panel).toBeVisible();
   }
-  await expect(page.locator("[data-frontier-segment-panel]")).toHaveCount(4);
-  for (const panel of await page.locator("[data-frontier-segment-panel]").all()) {
-    await expect(panel).toBeVisible();
-  }
+  await expect(page.locator(".frontier-route-card")).toHaveCount(3);
   const summary = page.locator(".frontier-summary");
-  await expect(summary.getByText(/resolved 32\/32 cases/).first()).toBeVisible();
-  await expect(summary.getByText(/semantic uplift was 1\/12/).first()).toBeVisible();
-  await expect(summary.getByText(/Not evaluated:/).first()).toBeVisible();
+  await expect(summary.getByText(/解决了 32\/32 条案例/).first()).toBeVisible();
+  await expect(summary.getByText(/语义提升为 1\/12/).first()).toBeVisible();
+  await expect(summary.getByText(/尚未评估：/).first()).toBeVisible();
   await context.close();
+});
+
+test("plain interview narrative answers the three core questions", async ({ page }) => {
+  await expect(page.locator("h1")).toContainText("不能绕过权限与审批");
+  await expect(page.locator("#governed-runtime")).toContainText("允许提议，但不允许直接执行");
+  await expect(page.locator("#governed-runtime")).toContainText("等待人工审批");
+  await expect(page.locator("#q5-decision-frontier")).toContainText(
+    "确定性解析器解决了 32/32",
+  );
+  await expect(page.locator("#q5-decision-frontier")).toContainText("开放语义场景尚未评估");
+});
+
+test("specialist abbreviations stay out of the default interview path", async ({ page }) => {
+  const visibleText = await page.locator("body").evaluate((node) => node.innerText);
+  for (const forbidden of [
+    "F11",
+    "F13",
+    "F17",
+    "K1",
+    "Boundary G",
+    "headline eligibility",
+    "real-dev",
+    "parser-uncovered",
+    "anti-gaming triad",
+  ]) {
+    expect(visibleText).not.toContain(forbidden);
+  }
+});
+
+test("demonstration corpus never enters the formal claim ledger", async ({ page }) => {
+  await expect(page.locator("[data-trajectory-player]")).toHaveAttribute(
+    "data-corpus-id",
+    "interview-v1",
+  );
+  const ledgerText = await page.locator("#evidence-ledger").textContent();
+  expect(ledgerText).not.toContain("interview-v1");
+  expect(ledgerText).not.toContain("data/showcase/");
 });
 
 test("every rendered metric reverses to a claim ledger entry", async ({ page }) => {

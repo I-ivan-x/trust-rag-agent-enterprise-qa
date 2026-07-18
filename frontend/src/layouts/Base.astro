@@ -3,19 +3,22 @@ import { Menu, ShieldCheck } from "@lucide/astro";
 import "../styles/global.css";
 
 const {
-  title = "Agent Reliability Lab — Governed Runtime and Evaluation",
+  title = "Agent Reliability Lab — 受治理运行时与评测体系",
 } = Astro.props;
+const publicName = "Agent Reliability Lab";
 const publicSubtitle =
   "Governed Runtime, Evaluation Harness, and Decision Frontier for Tool-Using Agents";
+const publicSubtitleZh =
+  "面向工具调用智能体的受治理运行时、评测框架与决策边界";
 
 const navigation = [
-  ["hero", "Overview"],
-  ["five-questions", "Five Questions"],
-  ["governed-runtime", "Runtime"],
-  ["reliability-turn", "Reliability"],
-  ["q5-decision-frontier", "Q5 Frontier"],
-  ["evaluation-infrastructure", "Infrastructure"],
-  ["evidence-ledger", "Evidence"],
+  ["hero", "概览"],
+  ["five-questions", "五个问题"],
+  ["governed-runtime", "受治理运行时"],
+  ["reliability-turn", "可靠性转折"],
+  ["q5-decision-frontier", "Q5 决策边界"],
+  ["evaluation-infrastructure", "评测基础设施"],
+  ["evidence-ledger", "证据账本"],
 ];
 ---
 
@@ -26,7 +29,7 @@ const navigation = [
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content={`Agent Reliability Lab — ${publicSubtitle}.`}
+      content={`${publicName} — ${publicSubtitleZh}。${publicSubtitle}`}
     />
     <meta name="theme-color" content="#070b10" />
     <title>{title}</title>
@@ -71,8 +74,8 @@ const navigation = [
 
     <footer class="site-footer">
       <div class="wrap footer-grid">
-        <p>Agent Reliability Lab · claims 由 hash-bound registry 管理</p>
-        <p class="mono">stable: v3.0-q4-reliability · Q5: scoped_negative_complete</p>
+        <p>Agent Reliability Lab · 公开结论由哈希绑定注册表管理</p>
+        <p>完整研究术语、适用范围和产物血缘见证据账本</p>
       </div>
     </footer>
   </body>

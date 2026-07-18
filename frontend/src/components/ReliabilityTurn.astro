@@ -6,7 +6,7 @@ import {
   LockKeyhole,
 } from "@lucide/astro";
 import questionsData from "../data/questions.json";
-import { fraction, metricValue } from "../lib/claims";
+import { claimMeaning, claimSummary, fraction, metricPercent } from "../lib/claims";
 
 const claims = questionsData.questions.flatMap((question) => question.claims);
 const q3Usefulness = claims.find((claim) => claim.claim_id === "q3.action_usefulness")!;
@@ -14,8 +14,6 @@ const q4Selection = claims.find((claim) => claim.claim_id === "q4.calibrated_sel
 const q4Safety = claims.find((claim) => claim.claim_id === "q4.release_reliability")!;
 const beforePrecision = q3Usefulness.metrics.rule_precision_authorized;
 const afterPrecision = q4Selection.metrics.precision_authorized;
-const beforeTriad = q3Usefulness.metrics.anti_gaming_triad;
-const afterTriad = q4Selection.metrics.anti_gaming_triad;
 ---
 
 <section
@@ -26,10 +24,10 @@ const afterTriad = q4Selection.metrics.anti_gaming_triad;
 >
   <div class="wrap reliability-layout">
     <header class="section-heading">
-      <p class="eyebrow">Reliability Turn · Q3 → Q4</p>
-      <h2>先让安全门说“不够好”，再修选择机制。</h2>
+      <p class="eyebrow">可靠性转折 · 从安全到好用</p>
+      <h2>拦住危险动作之后，还要减少不必要的人工升级。</h2>
       <p>
-        Q3 安全但未过有用性门；Q4 在 held-out ops_test 上完成校准，安全地板保持不变。
+        第一阶段虽然安全，但动作选择不够准；校准后在独立留出集上改善选择，安全底线保持不变。
       </p>
     </header>
 
@@ -41,17 +39,15 @@ const afterTriad = q4Selection.metrics.anti_gaming_triad;
       >
         <div class="turn-card-head">
           <CircleX size={19} aria-hidden="true" />
-          <span>Q3 · anti-gaming rejected</span>
+          <span>校准前 · 动作选择不够准</span>
         </div>
         <strong
           class="metric-value"
           data-metric-claim={q3Usefulness.claim_id}
           data-metric-name="rule_precision_authorized"
-        >{metricValue(beforePrecision, 4)}</strong>
-        <span>precision@authorized · {fraction(beforePrecision)}</span>
-        <small data-metric-claim={q3Usefulness.claim_id} data-metric-name="anti_gaming_triad">
-          triad {metricValue(beforeTriad)}
-        </small>
+        >{fraction(beforePrecision)}</strong>
+        <span>授权动作精确率 · {metricPercent(beforePrecision)}</span>
+        <small>{claimMeaning(q3Usefulness)}</small>
       </a>
 
       <div class="turn-arrow" aria-hidden="true"><ArrowRight size={24} /></div>
@@ -63,17 +59,15 @@ const afterTriad = q4Selection.metrics.anti_gaming_triad;
       >
         <div class="turn-card-head">
           <CircleCheck size={19} aria-hidden="true" />
-          <span>Q4 · held-out accepted</span>
+          <span>校准后 · 独立留出集通过</span>
         </div>
         <strong
           class="metric-value"
           data-metric-claim={q4Selection.claim_id}
           data-metric-name="precision_authorized"
-        >{metricValue(afterPrecision, 4)}</strong>
-        <span>precision@authorized · {fraction(afterPrecision)}</span>
-        <small data-metric-claim={q4Selection.claim_id} data-metric-name="anti_gaming_triad">
-          triad {metricValue(afterTriad)}
-        </small>
+        >{fraction(afterPrecision)}</strong>
+        <span>授权动作精确率 · {metricPercent(afterPrecision)}</span>
+        <small>{claimMeaning(q4Selection)}</small>
       </a>
     </div>
 
@@ -84,8 +78,8 @@ const afterTriad = q4Selection.metrics.anti_gaming_triad;
     >
       <LockKeyhole size={18} aria-hidden="true" />
       <span>
-        <strong>Safety floor unchanged</strong>
-        <small>{q4Safety.public_summary}</small>
+        <strong>安全底线保持不变</strong>
+        <small>{claimSummary(q4Safety)}</small>
       </span>
     </a>
   </div>

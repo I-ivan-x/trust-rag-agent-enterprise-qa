@@ -1,33 +1,43 @@
 ---
-import {
-  Bot,
-  Braces,
-  FileQuestion,
-  ShieldAlert,
-} from "@lucide/astro";
+import { Bot, Braces, ChevronDown, ShieldAlert } from "@lucide/astro";
 import frontier from "../data/decision-frontier.json";
 import q5Evidence from "../data/q5-evidence.json";
-import { statusLabel, statusTone } from "../lib/claims";
+import {
+  booleanLabel,
+  claimLabel,
+  claimMeaning,
+  claimSummary,
+  fraction,
+  metricPercent,
+  statusLabel,
+} from "../lib/claims";
 
 const claimsById = Object.fromEntries(frontier.claims.map((claim) => [claim.claim_id, claim]));
-const summaryIds = [
-  "q5.controlled_prose_llm_necessity",
-  "q5.llm_semantic_uplift",
-  "q5.open_world_llm_value",
+const controlled = claimsById["q5.controlled_prose_llm_necessity"];
+const uplift = claimsById["q5.llm_semantic_uplift"];
+const openWorld = claimsById["q5.open_world_llm_value"];
+const controlledMetric = controlled.metrics.previously_uncovered_cases_resolved;
+const upliftMetric = uplift.metrics.semantic_uplift;
+const routes = [
+  {
+    title: "规则能确定的",
+    description: "交给版本化的确定性解析器和编译器，结果更容易复现与审计。",
+    outcome: "不用调用模型",
+    Icon: Braces,
+  },
+  {
+    title: "含义真正开放的",
+    description: "只有确定性系统无法可靠覆盖时，才把模型作为受治理的候选路径。",
+    outcome: "开放语义尚未评估",
+    Icon: Bot,
+  },
+  {
+    title: "高风险或越权的",
+    description: "无论提案来自规则还是模型，都必须拒绝副作用或交给人处理。",
+    outcome: "安全底线不依赖模型判断",
+    Icon: ShieldAlert,
+  },
 ];
-const summaries = summaryIds.map((id) => claimsById[id]);
-const stateOrder = [
-  ["hypothesis", "Hypothesis"],
-  ["real_result", "Real result"],
-  ["final_decision", "Final decision"],
-] as const;
-
-const iconFor = (segmentId: string) => {
-  if (segmentId === "grammar") return Braces;
-  if (segmentId === "controlled_prose") return FileQuestion;
-  if (segmentId === "open_semantics") return Bot;
-  return ShieldAlert;
-};
 ---
 
 <section
@@ -35,199 +45,79 @@ const iconFor = (segmentId: string) => {
   class="section frontier-section"
   data-major-section
   data-section-name="Q5 Decision Frontier"
-  data-frontier-root
 >
   <div class="wrap">
-    <header class="section-heading heading-inline frontier-heading">
+    <header class="section-heading heading-inline">
       <div>
-        <p class="eyebrow">Q5 Decision Frontier · {q5Evidence.overall_status}</p>
-        <h2>哪里用 parser，哪里保留模型问题，哪里必须拒绝。</h2>
+        <p class="eyebrow">决策边界 · 什么时候需要模型</p>
+        <h2>能确定的用规则，含义开放的才考虑模型。</h2>
       </div>
-      <div class="frontier-closure">
-        <strong>controlled_prose_track={q5Evidence.controlled_prose_track}</strong>
-        <span>K1={String(q5Evidence.k1_approved)} · Boundary G={String(q5Evidence.boundary_g_allowed)}</span>
-      </div>
+      <p>高风险、无依据或越权的请求，不进入副作用路径；它们会被拒绝或交给人工。</p>
     </header>
 
-    <div class="frontier-summary" aria-label="Q5 核心结论">
-      {
-        summaries.map((claim) => (
-          <a
-            href={`#evidence-${claim.claim_id}`}
-            class={`frontier-summary-card ${statusTone(claim.status)}`}
-            data-claim-id={claim.claim_id}
-          >
-            <strong>{claim.public_label}</strong>
-            <span>{claim.public_summary}</span>
-            <small>{statusLabel(claim.status)} · headline {String(claim.headline_eligible)}</small>
-          </a>
-        ))
-      }
+    <div class="frontier-route-grid" aria-label="三类决策路径">
+      {routes.map(({ title, description, outcome, Icon }) => (
+        <article class="frontier-route-card">
+          <Icon size={20} aria-hidden="true" />
+          <h3>{title}</h3>
+          <p>{description}</p>
+          <strong>{outcome}</strong>
+        </article>
+      ))}
     </div>
 
-    <div class="frontier-workbench">
-      <div class="segmented-control" role="tablist" aria-label="Q5 decision segment">
-        {
-          frontier.segments.map((segment, index) => {
-            const Icon = iconFor(segment.segment_id);
-            const selected = index === 1;
-            return (
-              <button
-                id={`frontier-segment-tab-${segment.segment_id}`}
-                type="button"
-                role="tab"
-                aria-selected={String(selected)}
-                aria-controls={`frontier-segment-panel-${segment.segment_id}`}
-                tabindex={selected ? 0 : -1}
-                data-frontier-segment-tab
-              >
-                <Icon size={16} strokeWidth={1.8} aria-hidden="true" />
-                <span>{segment.label}</span>
-              </button>
-            );
-          })
-        }
-      </div>
-
-      <div class="frontier-segment-panels">
-        {
-          frontier.segments.map((segment, segmentIndex) => {
-            const segmentClaims = segment.claim_ids.map((id) => claimsById[id]);
-            return (
-              <article
-                id={`frontier-segment-panel-${segment.segment_id}`}
-                class="frontier-segment-panel"
-                role="tabpanel"
-                aria-labelledby={`frontier-segment-tab-${segment.segment_id}`}
-                data-frontier-segment-panel
-                data-active={String(segmentIndex === 1)}
-              >
-                <div class="frontier-facts">
-                  <dl>
-                    <div><dt>Route</dt><dd>{segment.route}</dd></div>
-                    <div><dt>Parser status</dt><dd>{segment.parser_status}</dd></div>
-                    <div><dt>LLM called?</dt><dd>{segment.llm_called}</dd></div>
-                    <div><dt>Evidence basis</dt><dd>{segment.evidence_basis}</dd></div>
-                    <div><dt>Terminal outcome</dt><dd>{segment.terminal_outcome}</dd></div>
-                    <div><dt>Claim status</dt><dd>{statusLabel(segment.claim_status)}</dd></div>
-                  </dl>
-                </div>
-
-                <div class="frontier-state" data-frontier-state-group>
-                  <div class="state-tabs" role="tablist" aria-label={`${segment.label} evidence state`}>
-                    {stateOrder.map(([key, label]) => (
-                      <button
-                        id={`frontier-${segment.segment_id}-${key}-tab`}
-                        type="button"
-                        role="tab"
-                        aria-selected={String(key === "real_result")}
-                        aria-controls={`frontier-${segment.segment_id}-${key}-panel`}
-                        tabindex={key === "real_result" ? 0 : -1}
-                        data-frontier-state-tab
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div class="state-panels">
-                    {stateOrder.map(([key, label]) => (
-                      <div
-                        id={`frontier-${segment.segment_id}-${key}-panel`}
-                        class="state-panel"
-                        role="tabpanel"
-                        aria-labelledby={`frontier-${segment.segment_id}-${key}-tab`}
-                        data-frontier-state-panel
-                        data-state={key}
-                      >
-                        <span class="state-panel-label">{label}</span>
-                        {key === "real_result" ? (
-                          <div class="state-claim-results">
-                            {segmentClaims.map((claim) => (
-                              <a href={`#evidence-${claim.claim_id}`} data-claim-id={claim.claim_id}>
-                                <strong>{claim.public_label}</strong>
-                                <span>{claim.public_summary}</span>
-                              </a>
-                            ))}
-                          </div>
-                        ) : (
-                          <p>{segment.states[key]}</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </article>
-            );
-          })
-        }
-      </div>
+    <div class="frontier-plain-conclusion" role="note">
+      <p>
+        在这组受控文本里，确定性解析器解决了
+        <a
+          href={`#evidence-${controlled.claim_id}`}
+          data-claim-id={controlled.claim_id}
+          data-metric-claim={controlled.claim_id}
+          data-metric-name="previously_uncovered_cases_resolved"
+        >{fraction(controlledMetric)}</a>；
+        大模型只带来
+        <a
+          href={`#evidence-${uplift.claim_id}`}
+          data-claim-id={uplift.claim_id}
+          data-metric-claim={uplift.claim_id}
+          data-metric-name="semantic_uplift"
+        >{fraction(upliftMetric)}</a>
+        （{metricPercent(upliftMetric)}）的提升，没有达到预设门槛；开放语义场景尚未评估。
+      </p>
     </div>
+
+    <div class="frontier-summary" aria-label="Q5 三条核心结论">
+      {[controlled, uplift, openWorld].map((claim) => (
+        <a
+          class="frontier-summary-card"
+          href={`#evidence-${claim.claim_id}`}
+          data-claim-id={claim.claim_id}
+        >
+          <span>{claimLabel(claim)}</span>
+          <strong>{statusLabel(claim.status)}</strong>
+          <p>{claimSummary(claim)}</p>
+          <small>{claimMeaning(claim)}</small>
+        </a>
+      ))}
+    </div>
+
+    <details class="frontier-technical technical-details">
+      <summary>
+        <span>技术证据与审计详情</span>
+        <ChevronDown size={17} aria-hidden="true" />
+      </summary>
+      <div class="frontier-technical-grid">
+        <dl>
+          <div><dt>协议状态</dt><dd>{q5Evidence.overall_status}</dd></div>
+          <div><dt>受控文本轨道</dt><dd>{q5Evidence.controlled_prose_track}</dd></div>
+          <div><dt>K1 批准</dt><dd>{booleanLabel(q5Evidence.k1_approved)}</dd></div>
+          <div><dt>Boundary G 允许</dt><dd>{booleanLabel(q5Evidence.boundary_g_allowed)}</dd></div>
+        </dl>
+        <p>
+          F11/F13/F17、real-dev、parser-uncovered、headline eligibility 与 anti-gaming triad
+          等研究术语仅在此审计层和证据账本中保留，不作为默认叙事入口。
+        </p>
+      </div>
+    </details>
   </div>
 </section>
-
-<script>
-  const frontierRoot = document.querySelector("[data-frontier-root]");
-
-  const wireKeys = (buttons, activate) => {
-    buttons.forEach((button, index) => {
-      button.addEventListener("click", () => activate(button));
-      button.addEventListener("keydown", (event) => {
-        let next = index;
-        if (event.key === "ArrowRight") next = (index + 1) % buttons.length;
-        else if (event.key === "ArrowLeft") next = (index - 1 + buttons.length) % buttons.length;
-        else if (event.key === "Home") next = 0;
-        else if (event.key === "End") next = buttons.length - 1;
-        else if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          activate(button);
-          return;
-        } else return;
-        event.preventDefault();
-        buttons[next]?.focus();
-      });
-    });
-  };
-
-  if (frontierRoot instanceof HTMLElement) {
-    const segmentTabs = Array.from(
-      frontierRoot.querySelectorAll("[data-frontier-segment-tab]"),
-    );
-    const segmentPanels = Array.from(
-      frontierRoot.querySelectorAll("[data-frontier-segment-panel]"),
-    );
-    const activateSegment = (tab) => {
-      if (!(tab instanceof HTMLButtonElement)) return;
-      segmentTabs.forEach((candidate) => {
-        const selected = candidate === tab;
-        candidate.setAttribute("aria-selected", String(selected));
-        candidate.setAttribute("tabindex", selected ? "0" : "-1");
-      });
-      segmentPanels.forEach((panel) => {
-        const selected = panel.id === tab.getAttribute("aria-controls");
-        panel.toggleAttribute("hidden", !selected);
-        panel.setAttribute("data-active", String(selected));
-      });
-    };
-    wireKeys(segmentTabs, activateSegment);
-    activateSegment(segmentTabs[1]);
-
-    frontierRoot.querySelectorAll("[data-frontier-state-group]").forEach((group) => {
-      const stateTabs = Array.from(group.querySelectorAll("[data-frontier-state-tab]"));
-      const statePanels = Array.from(group.querySelectorAll("[data-frontier-state-panel]"));
-      const activateState = (tab) => {
-        if (!(tab instanceof HTMLButtonElement)) return;
-        stateTabs.forEach((candidate) => {
-          const selected = candidate === tab;
-          candidate.setAttribute("aria-selected", String(selected));
-          candidate.setAttribute("tabindex", selected ? "0" : "-1");
-        });
-        statePanels.forEach((panel) => {
-          panel.toggleAttribute("hidden", panel.id !== tab.getAttribute("aria-controls"));
-        });
-      };
-      wireKeys(stateTabs, activateState);
-      activateState(stateTabs[1]);
-    });
-  }
-</script>

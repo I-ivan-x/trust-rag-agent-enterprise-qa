@@ -58,4 +58,3 @@ class ShowcaseManifest(BaseModel):
         if set(self.files) != expected:
             raise ValueError("showcase manifest file matrix is incomplete or contains extras")
         return self
-
