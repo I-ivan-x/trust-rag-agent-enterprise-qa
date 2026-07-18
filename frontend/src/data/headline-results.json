@@ -59,6 +59,26 @@
           "value": 0.24
         }
       },
+      "presentation": {
+        "canonical_status": "demonstrated_in_frozen_scope",
+        "claim_scope": "第六周外部 50 条样本，最终门禁系统",
+        "frozen_scope": "外部 50 条样本",
+        "headline_eligible": true,
+        "label": "失败关闭式回答安全",
+        "limitations": [
+          "错误回答为零的同时存在 23/50 次错误拒答。",
+          "引用有效性只做了结构校验，不等同于完整的人工语义支持审计。"
+        ],
+        "locale": "zh-CN",
+        "meaning": "这意味着系统宁可拒答，也不会在证据不足时编造答案。",
+        "metric_labels": {
+          "false_answer_rate": "错误回答率",
+          "false_refusal_rate": "错误拒答率",
+          "grounded_correctness": "有依据回答正确率"
+        },
+        "status": "已验证 · 冻结范围",
+        "summary": "在外部样本范围内得到验证：失败关闭门禁使错误回答为 0/50，代价是 23/50 次错误拒答。"
+      },
       "public_label": "Fail-closed answer safety",
       "public_summary": "Demonstrated within the 50-case external scope: fail-closed gating produced 0/50 false answers, with a disclosed 23/50 false-refusal cost.",
       "question_id": "Q1",
@@ -120,6 +140,24 @@
           "unit": "rate",
           "value": 0.6
         }
+      },
+      "presentation": {
+        "canonical_status": "demonstrated_in_frozen_scope",
+        "claim_scope": "第六周外部 50 条检索消融样本",
+        "frozen_scope": "外部 50 条检索样本",
+        "headline_eligible": true,
+        "label": "混合检索提升",
+        "limitations": [
+          "加入重排后没有超过基础混合 RRF。"
+        ],
+        "locale": "zh-CN",
+        "meaning": "这意味着关键词与向量检索互补，能找到更多相关文档。",
+        "metric_labels": {
+          "hybrid_doc_hit_at_5": "混合检索文档命中率@5",
+          "vector_doc_hit_at_5": "向量检索文档命中率@5"
+        },
+        "status": "已验证 · 冻结范围",
+        "summary": "在外部检索样本中得到验证：混合 RRF 将文档命中率从 30/50 提升到 40/50。"
       },
       "public_label": "Hybrid retrieval uplift",
       "public_summary": "Demonstrated within the external retrieval split: hybrid RRF increased document hit@5 from 30/50 to 40/50.",
@@ -198,6 +236,25 @@
           "unit": "rate",
           "value": 1.0
         }
+      },
+      "presentation": {
+        "canonical_status": "demonstrated_in_frozen_scope",
+        "claim_scope": "真实运维开发消融",
+        "frozen_scope": "运维开发集",
+        "headline_eligible": true,
+        "label": "受治理动作安全",
+        "limitations": [
+          "安全并不代表动作选择有效；该阶段的有效性三联门未通过。"
+        ],
+        "locale": "zh-CN",
+        "meaning": "这意味着提案即使看似合理，也不能绕过证据和权限门禁。",
+        "metric_labels": {
+          "F11_action_without_evidence": "无证据动作",
+          "F13_missed_escalation_unauth": "未授权漏升级",
+          "unauthorized_action_blocked": "未授权动作阻断率"
+        },
+        "status": "已验证 · 冻结范围",
+        "summary": "在运维开发范围内得到验证：9/9 次未授权尝试全部被阻断，无证据动作与未授权漏升级均为零。"
       },
       "public_label": "Governed action safety",
       "public_summary": "Demonstrated within the Q3 ops scope: all 9 unauthorized attempts were blocked and F11/F13 remained zero.",
@@ -278,6 +335,26 @@
           "value": 0.6471
         }
       },
+      "presentation": {
+        "canonical_status": "demonstrated_in_frozen_scope",
+        "claim_scope": "独立留出集上的规则控制器评测",
+        "frozen_scope": "独立留出集 ops_test",
+        "headline_eligible": true,
+        "label": "留出集校准动作选择",
+        "limitations": [
+          "该结果来自真实运行，但样本仍薄，授权精确率仅以约一个案例的余量越过门槛。",
+          "模型控制器未通过有效性三联门。"
+        ],
+        "locale": "zh-CN",
+        "meaning": "这意味着校准让系统在维持安全底线的同时，减少了错误升级。",
+        "metric_labels": {
+          "anti_gaming_triad": "有效性三联门",
+          "over_escalation_rate": "过度升级率",
+          "precision_authorized": "授权精确率"
+        },
+        "status": "已验证 · 冻结范围",
+        "summary": "在独立留出集中得到验证：校准后的规则控制器授权精确率达到 33/51，并通过有效性三联门。"
+      },
       "public_label": "Held-out calibrated action selection",
       "public_summary": "Demonstrated within held-out ops_test: the calibrated rule controller reached 33/51 authorized precision and passed the anti-gaming triad.",
       "question_id": "Q4",
@@ -356,6 +433,25 @@
           "value": 1.0
         }
       },
+      "presentation": {
+        "canonical_status": "demonstrated_in_frozen_scope",
+        "claim_scope": "独立留出集安全底线",
+        "frozen_scope": "独立留出集 ops_test",
+        "headline_eligible": true,
+        "label": "留出集治理安全底线",
+        "limitations": [
+          "稳定产品版本仍为既有可靠性版本；后续研究不取代该版本。"
+        ],
+        "locale": "zh-CN",
+        "meaning": "这意味着改善动作选择没有削弱原有安全门。",
+        "metric_labels": {
+          "F11_action_without_evidence": "无证据动作",
+          "F13_missed_escalation_unauth": "未授权漏升级",
+          "unauthorized_action_blocked": "未授权动作阻断率"
+        },
+        "status": "已验证 · 冻结范围",
+        "summary": "在独立留出集中得到验证：9/9 次未授权动作全部被阻断，无证据动作与未授权漏升级保持为零。"
+      },
       "public_label": "Held-out governance safety floor",
       "public_summary": "Demonstrated within held-out ops_test: unauthorized actions remained blocked and F11/F13 stayed at zero.",
       "question_id": "Q4",
@@ -402,6 +498,24 @@
           "unit": "rate_difference",
           "value": 0.083333
         }
+      },
+      "presentation": {
+        "canonical_status": "falsified_in_current_scope",
+        "claim_scope": "主开发运行的语义分层",
+        "frozen_scope": "真实开发运行语义分层",
+        "headline_eligible": true,
+        "label": "大模型语义提升",
+        "limitations": [
+          "该结果只否定当前开发运行范围内的预注册价值主张。",
+          "它不能推出大模型在一般场景中没有价值。"
+        ],
+        "locale": "zh-CN",
+        "meaning": "这意味着当前受控任务没有证明模型比规则基线更有价值。",
+        "metric_labels": {
+          "semantic_uplift": "语义提升"
+        },
+        "status": "已否定 · 当前范围",
+        "summary": "在当前开发运行范围内被否定：语义提升为 1/12（8.3%），低于预注册门槛。"
       },
       "public_label": "LLM semantic uplift",
       "public_summary": "Falsified in the current real-dev scope: semantic uplift was 1/12 (0.083333), below the preregistered 0.10 floor.",
@@ -588,6 +702,32 @@
           "unit": "rate",
           "value": 0.0
         }
+      },
+      "presentation": {
+        "canonical_status": "falsified_in_current_scope",
+        "claim_scope": "冻结的受控文本 32 条案例",
+        "frozen_scope": "冻结的受控文本 32 条案例",
+        "headline_eligible": true,
+        "label": "受控文本中的大模型必要性",
+        "limitations": [
+          "这是冻结范围内的确定性演示。",
+          "它不评估开放世界策略语言或一般性大模型价值。"
+        ],
+        "locale": "zh-CN",
+        "meaning": "这意味着这组受控文本应优先交给可审计的确定性解析器。",
+        "metric_labels": {
+          "addendum_abstention_count": "补充审计弃答率",
+          "addendum_conditional_risk": "补充审计条件风险",
+          "addendum_coverage": "补充审计覆盖率",
+          "addendum_external_requests": "补充审计外部请求数",
+          "addendum_model_requests": "补充审计模型请求数",
+          "addendum_parser_accuracy": "补充审计解析准确率",
+          "original_boundary_f_coverage": "原边界审计覆盖率",
+          "previously_uncovered_cases_resolved": "原未覆盖案例解决率",
+          "remaining_uncovered": "剩余未覆盖率"
+        },
+        "status": "已否定 · 当前范围",
+        "summary": "在冻结受控文本范围内被否定：版本化确定性解析器解决了 32/32 条案例，剩余未解决为 0/32。"
       },
       "public_label": "Controlled-prose LLM necessity",
       "public_summary": "Falsified in the frozen controlled-prose scope: the versioned deterministic parser resolved 32/32 cases, leaving 0/32 unresolved.",

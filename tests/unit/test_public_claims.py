@@ -23,6 +23,63 @@ def test_registry_is_strict_complete_and_generates_all_public_views() -> None:
         assert b"uncovered 32/32" not in payload
 
 
+def test_zh_cn_presentation_covers_every_claim_and_metric() -> None:
+    registry = load_and_verify_registry()
+    catalog = public_claims.load_and_verify_presentation_catalog(registry)
+    assert len(catalog.claims) == len(registry.claims) == 14
+    assert set(catalog.metric_labels) == {
+        metric_name for claim in registry.claims for metric_name in claim.metrics
+    }
+    rendered = render_public_claims(registry, catalog)
+    questions = json.loads(rendered[Path("frontend/src/data/questions.json")])
+    for question in questions["questions"]:
+        for claim in question["claims"]:
+            assert claim["presentation"]["canonical_status"] == claim["status"]
+            assert claim["presentation"]["headline_eligible"] == claim["headline_eligible"]
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    ["missing_claim", "unknown_status", "unknown_metric_label", "unknown_template_metric"],
+)
+def test_zh_cn_presentation_mutations_fail_closed(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    mutation: str,
+) -> None:
+    registry = load_and_verify_registry()
+    payload = json.loads(public_claims.PRESENTATION_PATH.read_text(encoding="utf-8"))
+    if mutation == "missing_claim":
+        payload["claims"].pop(registry.claims[0].claim_id)
+    elif mutation == "unknown_status":
+        payload["status_labels"]["proven"] = "已证明"
+    elif mutation == "unknown_metric_label":
+        payload["metric_labels"]["invented_metric"] = "虚构指标"
+    else:
+        payload["claims"][registry.claims[0].claim_id]["summary_template"] += (
+            " {invented_metric|fraction}"
+        )
+    target = tmp_path / "presentation.json"
+    target.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+    original_tracked = public_claims._is_git_tracked
+    monkeypatch.setattr(
+        public_claims,
+        "_is_git_tracked",
+        lambda path: True if Path(path) == target else original_tracked(path),
+    )
+    with pytest.raises((ValidationError, ValueError)):
+        public_claims.load_and_verify_presentation_catalog(registry, target)
+
+
+def test_frontend_components_do_not_reimplement_claim_semantics() -> None:
+    component_source = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in Path("frontend/src/components").glob("*.astro")
+    )
+    assert not __import__("re").search(r"switch\s*\([^)]*claim_id", component_source)
+    assert not __import__("re").search(r"\b(?:9/9|1/12|32/32|0\.083333)\b", component_source)
+
+
 @pytest.mark.parametrize(
     "mutation",
     [
@@ -118,10 +175,33 @@ def test_check_mode_detects_drift_without_writing(
     registry = load_and_verify_registry()
     monkeypatch.setattr(public_claims, "load_and_verify_registry", lambda: registry)
     monkeypatch.setattr(public_claims, "GENERATED_PATHS", (target,))
-    monkeypatch.setattr(public_claims, "render_public_claims", lambda _: {target: b"expected\n"})
+    monkeypatch.setattr(
+        public_claims,
+        "render_public_claims",
+        lambda _registry, _catalog: {target: b"expected\n"},
+    )
     with pytest.raises(ValueError, match="drifted"):
         public_claims.build_public_claims(check=True)
     assert target.read_bytes() == before
+
+
+def test_presentation_catalog_change_requires_regeneration(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    registry = load_and_verify_registry()
+    catalog = public_claims.load_and_verify_presentation_catalog(registry)
+    first_id = registry.claims[0].claim_id
+    mutated_claim = catalog.claims[first_id].model_copy(update={"label": "已修改中文标签"})
+    mutated = catalog.model_copy(
+        update={"claims": {**catalog.claims, first_id: mutated_claim}}
+    )
+    monkeypatch.setattr(
+        public_claims,
+        "load_and_verify_presentation_catalog",
+        lambda _registry: mutated,
+    )
+    with pytest.raises(ValueError, match="generated files drifted"):
+        public_claims.build_public_claims(check=True)
 
 
 def test_not_evaluated_claim_cannot_self_report_metrics() -> None:

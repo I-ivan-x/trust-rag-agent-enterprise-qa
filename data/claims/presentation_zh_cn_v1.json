@@ -1,0 +1,209 @@
+{
+  "schema_version": "public-claim-presentation-zh-cn-v1",
+  "locale": "zh-CN",
+  "question_labels": {
+    "Q1": "证据门禁能否让检索增强回答更安全？",
+    "Q2": "有界恢复循环能否带来可测量价值？",
+    "Q3": "信任门禁能否治理具有副作用的动作？",
+    "Q4": "校准能否在不削弱安全性的前提下改善动作选择？",
+    "Q5": "选择性工具调用智能体究竟在哪里产生价值？"
+  },
+  "status_labels": {
+    "demonstrated_in_frozen_scope": "已验证 · 冻结范围",
+    "falsified_in_current_scope": "已否定 · 当前范围",
+    "not_evaluated": "尚未评估",
+    "mixed_scoped_results": "限定范围内结果混合",
+    "scoped_negative_complete": "限定范围负结论 · 已闭环",
+    "falsified_and_not_evaluated": "当前范围已否定 · 开放语义未评估"
+  },
+  "evidence_mode_labels": {
+    "real": "真实运行",
+    "mock": "模拟运行",
+    "synthetic": "合成数据",
+    "replay": "离线回放",
+    "offline_control": "离线控制实验"
+  },
+  "derivation_labels": {
+    "direct": "直接取值",
+    "ratio": "比率",
+    "rate_from_value": "从数值计算比率",
+    "difference": "差值",
+    "boolean": "布尔门"
+  },
+  "metric_labels": {
+    "false_answer_rate": "错误回答率",
+    "false_refusal_rate": "错误拒答率",
+    "grounded_correctness": "有依据回答正确率",
+    "hybrid_doc_hit_at_5": "混合检索文档命中率@5",
+    "vector_doc_hit_at_5": "向量检索文档命中率@5",
+    "gated_success": "门禁系统成功率",
+    "llm_agent_success": "模型智能体成功率",
+    "rule_agent_success": "规则智能体成功率",
+    "F11_action_without_evidence": "无证据动作",
+    "F13_missed_escalation_unauth": "未授权漏升级",
+    "unauthorized_action_blocked": "未授权动作阻断率",
+    "anti_gaming_triad": "有效性三联门",
+    "rule_precision_authorized": "规则系统授权精确率",
+    "over_escalation_rate": "过度升级率",
+    "precision_authorized": "授权精确率",
+    "historical_real_dev_model_calls": "历史开发运行模型调用数",
+    "hybrid_route_precision": "混合路由精确率",
+    "hybrid_route_recall": "混合路由召回率",
+    "trajectory_qualified_success": "轨迹合格成功率",
+    "post_observation_terminal_rate": "观察后终止率",
+    "required_observation_recall": "必需观察召回率",
+    "F11": "无证据动作",
+    "F13": "未授权漏升级",
+    "F17": "受限信息暴露",
+    "invalid_transitions": "非法状态转移",
+    "schema_invalid": "结构校验失败",
+    "unsafe_tool_calls": "不安全工具调用",
+    "model_call_ratio": "模型调用比",
+    "token_ratio": "Token 用量比",
+    "semantic_uplift": "语义提升",
+    "addendum_abstention_count": "补充审计弃答率",
+    "addendum_conditional_risk": "补充审计条件风险",
+    "addendum_coverage": "补充审计覆盖率",
+    "addendum_external_requests": "补充审计外部请求数",
+    "addendum_model_requests": "补充审计模型请求数",
+    "addendum_parser_accuracy": "补充审计解析准确率",
+    "original_boundary_f_coverage": "原边界审计覆盖率",
+    "previously_uncovered_cases_resolved": "原未覆盖案例解决率",
+    "remaining_uncovered": "剩余未覆盖率"
+  },
+  "claims": {
+    "q1.fail_closed_answers": {
+      "label": "失败关闭式回答安全",
+      "claim_scope_template": "第六周外部 {false_answer_rate|denominator} 条样本，最终门禁系统",
+      "frozen_scope_template": "外部 {false_answer_rate|denominator} 条样本",
+      "limitations_templates": [
+        "错误回答为零的同时存在 {false_refusal_rate|fraction} 次错误拒答。",
+        "引用有效性只做了结构校验，不等同于完整的人工语义支持审计。"
+      ],
+      "summary_template": "在外部样本范围内得到验证：失败关闭门禁使错误回答为 {false_answer_rate|fraction}，代价是 {false_refusal_rate|fraction} 次错误拒答。",
+      "meaning_template": "这意味着系统宁可拒答，也不会在证据不足时编造答案。"
+    },
+    "q1.hybrid_retrieval": {
+      "label": "混合检索提升",
+      "claim_scope_template": "第六周外部 {hybrid_doc_hit_at_5|denominator} 条检索消融样本",
+      "frozen_scope_template": "外部 {hybrid_doc_hit_at_5|denominator} 条检索样本",
+      "limitations_templates": ["加入重排后没有超过基础混合 RRF。"],
+      "summary_template": "在外部检索样本中得到验证：混合 RRF 将文档命中率从 {vector_doc_hit_at_5|fraction} 提升到 {hybrid_doc_hit_at_5|fraction}。",
+      "meaning_template": "这意味着关键词与向量检索互补，能找到更多相关文档。"
+    },
+    "q2.agentic_recovery": {
+      "label": "智能体恢复收益",
+      "claim_scope_template": "{gated_success|denominator} 条混合智能体残差诊断样本",
+      "frozen_scope_template": "智能体混合消融",
+      "limitations_templates": [
+        "该运行仅用于诊断，不具备主结论资格。",
+        "规则控制器与模型控制器的结果率相同。"
+      ],
+      "summary_template": "在混合诊断范围内未得到验证：模型控制器成功 {llm_agent_success|fraction}，门禁系统成功 {gated_success|fraction}，而且规则与模型控制器结果相同，不能证明智能体恢复的独立价值。",
+      "meaning_template": "这意味着增加智能体循环并不自动带来可靠性收益。"
+    },
+    "q3.action_safety": {
+      "label": "受治理动作安全",
+      "claim_scope_template": "真实运维开发消融",
+      "frozen_scope_template": "运维开发集",
+      "limitations_templates": ["安全并不代表动作选择有效；该阶段的有效性三联门未通过。"],
+      "summary_template": "在运维开发范围内得到验证：{unauthorized_action_blocked|fraction} 次未授权尝试全部被阻断，无证据动作与未授权漏升级均为零。",
+      "meaning_template": "这意味着提案即使看似合理，也不能绕过证据和权限门禁。"
+    },
+    "q3.action_usefulness": {
+      "label": "动作选择有效性",
+      "claim_scope_template": "真实运维开发消融",
+      "frozen_scope_template": "运维开发集",
+      "limitations_templates": ["该负结果后来由独立留出集上的校准结果接替。"],
+      "summary_template": "在运维开发范围内被否定：安全动作仍存在过度升级，规则系统授权精确率为 {rule_precision_authorized|fraction}，有效性三联门未通过。",
+      "meaning_template": "这意味着只会拦截危险动作还不够，系统也要减少不必要的人工升级。"
+    },
+    "q4.calibrated_selection": {
+      "label": "留出集校准动作选择",
+      "claim_scope_template": "独立留出集上的规则控制器评测",
+      "frozen_scope_template": "独立留出集 ops_test",
+      "limitations_templates": [
+        "该结果来自真实运行，但样本仍薄，授权精确率仅以约一个案例的余量越过门槛。",
+        "模型控制器未通过有效性三联门。"
+      ],
+      "summary_template": "在独立留出集中得到验证：校准后的规则控制器授权精确率达到 {precision_authorized|fraction}，并通过有效性三联门。",
+      "meaning_template": "这意味着校准让系统在维持安全底线的同时，减少了错误升级。"
+    },
+    "q4.release_reliability": {
+      "label": "留出集治理安全底线",
+      "claim_scope_template": "独立留出集安全底线",
+      "frozen_scope_template": "独立留出集 ops_test",
+      "limitations_templates": ["稳定产品版本仍为既有可靠性版本；后续研究不取代该版本。"],
+      "summary_template": "在独立留出集中得到验证：{unauthorized_action_blocked|fraction} 次未授权动作全部被阻断，无证据动作与未授权漏升级保持为零。",
+      "meaning_template": "这意味着改善动作选择没有削弱原有安全门。"
+    },
+    "q5.selective_runtime_architecture": {
+      "label": "选择性运行时架构",
+      "claim_scope_template": "冻结协议的主开发运行：案例、系统与轨迹矩阵",
+      "frozen_scope_template": "真实开发运行",
+      "limitations_templates": [
+        "这是开发运行证据，不是独立留出测试证据。",
+        "架构结果不能证明大模型具有语义价值。"
+      ],
+      "summary_template": "在主开发运行范围内得到验证：有界选择性运行时按冻结协议完成路由与轨迹，轨迹合格成功率为 {trajectory_qualified_success|fraction}。",
+      "meaning_template": "这意味着系统可以在统一预算和安全门下选择规则或模型路径。"
+    },
+    "q5.observation_adaptation": {
+      "label": "观察后自适应",
+      "claim_scope_template": "主开发运行中的混合系统",
+      "frozen_scope_template": "真实开发运行",
+      "limitations_templates": ["归一化比率仅适用于冻结的开发运行拓扑。"],
+      "summary_template": "在开发运行中得到验证：必需观察召回率为 {required_observation_recall|percent1}，观察后终止率为 {post_observation_terminal_rate|percent1}。",
+      "meaning_template": "这意味着智能体先补齐动态事实，再作出一次终止决策。"
+    },
+    "q5.schema_transition_safety": {
+      "label": "结构与状态转移安全",
+      "claim_scope_template": "混合系统的 {F11|denominator} 次开发试验",
+      "frozen_scope_template": "真实开发运行",
+      "limitations_templates": ["{F11|denominator} 次开发试验中未观察到失败，不代表开放世界保证。"],
+      "summary_template": "在 {F11|denominator} 次混合系统开发试验中得到验证：无证据动作、未授权漏升级、受限信息暴露、不安全工具调用、非法状态转移和结构校验失败均为零。",
+      "meaning_template": "这意味着格式错误、越权或状态机违规都会在副作用前失败关闭。"
+    },
+    "q5.hybrid_efficiency": {
+      "label": "混合系统效率",
+      "claim_scope_template": "主开发运行：混合系统对比纯模型系统",
+      "frozen_scope_template": "真实开发运行",
+      "limitations_templates": ["效率来自开发运行，不是独立留出的产品级主结论。"],
+      "summary_template": "在开发运行中得到验证：混合系统相对纯模型系统使用了 {model_call_ratio|fraction} 次模型调用和 {token_ratio|fraction} 个 Token。",
+      "meaning_template": "这意味着确定性路径可以减少模型调用和 Token 消耗。"
+    },
+    "q5.llm_semantic_uplift": {
+      "label": "大模型语义提升",
+      "claim_scope_template": "主开发运行的语义分层",
+      "frozen_scope_template": "真实开发运行语义分层",
+      "limitations_templates": [
+        "该结果只否定当前开发运行范围内的预注册价值主张。",
+        "它不能推出大模型在一般场景中没有价值。"
+      ],
+      "summary_template": "在当前开发运行范围内被否定：语义提升为 {semantic_uplift|fraction}（{semantic_uplift|percent1}），低于预注册门槛。",
+      "meaning_template": "这意味着当前受控任务没有证明模型比规则基线更有价值。"
+    },
+    "q5.controlled_prose_llm_necessity": {
+      "label": "受控文本中的大模型必要性",
+      "claim_scope_template": "冻结的受控文本 {previously_uncovered_cases_resolved|denominator} 条案例",
+      "frozen_scope_template": "冻结的受控文本 {previously_uncovered_cases_resolved|denominator} 条案例",
+      "limitations_templates": [
+        "这是冻结范围内的确定性演示。",
+        "它不评估开放世界策略语言或一般性大模型价值。"
+      ],
+      "summary_template": "在冻结受控文本范围内被否定：版本化确定性解析器解决了 {previously_uncovered_cases_resolved|fraction} 条案例，剩余未解决为 {remaining_uncovered|fraction}。",
+      "meaning_template": "这意味着这组受控文本应优先交给可审计的确定性解析器。"
+    },
+    "q5.open_world_llm_value": {
+      "label": "开放语义中的大模型价值",
+      "claim_scope_template": "冻结受控文本基准之外的开放策略语言",
+      "frozen_scope_template": "已评测冻结范围之外",
+      "limitations_templates": [
+        "当前基准只关闭了受控文本轨道。",
+        "没有建立独立留出的开放语义测试集。"
+      ],
+      "summary_template": "尚未评估：冻结受控文本的结果不能证明大模型在开放语义策略语言中是否有增量价值。",
+      "meaning_template": "这意味着项目保留未知，不把未做过的实验包装成结论。"
+    }
+  }
+}

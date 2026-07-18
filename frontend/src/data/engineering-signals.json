@@ -60,6 +60,26 @@
           "value": 0.24
         }
       },
+      "presentation": {
+        "canonical_status": "demonstrated_in_frozen_scope",
+        "claim_scope": "第六周外部 50 条样本，最终门禁系统",
+        "frozen_scope": "外部 50 条样本",
+        "headline_eligible": true,
+        "label": "失败关闭式回答安全",
+        "limitations": [
+          "错误回答为零的同时存在 23/50 次错误拒答。",
+          "引用有效性只做了结构校验，不等同于完整的人工语义支持审计。"
+        ],
+        "locale": "zh-CN",
+        "meaning": "这意味着系统宁可拒答，也不会在证据不足时编造答案。",
+        "metric_labels": {
+          "false_answer_rate": "错误回答率",
+          "false_refusal_rate": "错误拒答率",
+          "grounded_correctness": "有依据回答正确率"
+        },
+        "status": "已验证 · 冻结范围",
+        "summary": "在外部样本范围内得到验证：失败关闭门禁使错误回答为 0/50，代价是 23/50 次错误拒答。"
+      },
       "public_label": "Fail-closed answer safety",
       "public_summary": "Demonstrated within the 50-case external scope: fail-closed gating produced 0/50 false answers, with a disclosed 23/50 false-refusal cost.",
       "question_id": "Q1",
@@ -137,6 +157,25 @@
           "unit": "rate",
           "value": 1.0
         }
+      },
+      "presentation": {
+        "canonical_status": "demonstrated_in_frozen_scope",
+        "claim_scope": "真实运维开发消融",
+        "frozen_scope": "运维开发集",
+        "headline_eligible": true,
+        "label": "受治理动作安全",
+        "limitations": [
+          "安全并不代表动作选择有效；该阶段的有效性三联门未通过。"
+        ],
+        "locale": "zh-CN",
+        "meaning": "这意味着提案即使看似合理，也不能绕过证据和权限门禁。",
+        "metric_labels": {
+          "F11_action_without_evidence": "无证据动作",
+          "F13_missed_escalation_unauth": "未授权漏升级",
+          "unauthorized_action_blocked": "未授权动作阻断率"
+        },
+        "status": "已验证 · 冻结范围",
+        "summary": "在运维开发范围内得到验证：9/9 次未授权尝试全部被阻断，无证据动作与未授权漏升级均为零。"
       },
       "public_label": "Governed action safety",
       "public_summary": "Demonstrated within the Q3 ops scope: all 9 unauthorized attempts were blocked and F11/F13 remained zero.",
@@ -216,6 +255,25 @@
           "value": 1.0
         }
       },
+      "presentation": {
+        "canonical_status": "demonstrated_in_frozen_scope",
+        "claim_scope": "独立留出集安全底线",
+        "frozen_scope": "独立留出集 ops_test",
+        "headline_eligible": true,
+        "label": "留出集治理安全底线",
+        "limitations": [
+          "稳定产品版本仍为既有可靠性版本；后续研究不取代该版本。"
+        ],
+        "locale": "zh-CN",
+        "meaning": "这意味着改善动作选择没有削弱原有安全门。",
+        "metric_labels": {
+          "F11_action_without_evidence": "无证据动作",
+          "F13_missed_escalation_unauth": "未授权漏升级",
+          "unauthorized_action_blocked": "未授权动作阻断率"
+        },
+        "status": "已验证 · 冻结范围",
+        "summary": "在独立留出集中得到验证：9/9 次未授权动作全部被阻断，无证据动作与未授权漏升级保持为零。"
+      },
       "public_label": "Held-out governance safety floor",
       "public_summary": "Demonstrated within held-out ops_test: unauthorized actions remained blocked and F11/F13 stayed at zero.",
       "question_id": "Q4",
@@ -277,6 +335,24 @@
           "unit": "normalized_ratio",
           "value": 1.0
         }
+      },
+      "presentation": {
+        "canonical_status": "demonstrated_in_frozen_scope",
+        "claim_scope": "主开发运行中的混合系统",
+        "frozen_scope": "真实开发运行",
+        "headline_eligible": false,
+        "label": "观察后自适应",
+        "limitations": [
+          "归一化比率仅适用于冻结的开发运行拓扑。"
+        ],
+        "locale": "zh-CN",
+        "meaning": "这意味着智能体先补齐动态事实，再作出一次终止决策。",
+        "metric_labels": {
+          "post_observation_terminal_rate": "观察后终止率",
+          "required_observation_recall": "必需观察召回率"
+        },
+        "status": "已验证 · 冻结范围",
+        "summary": "在开发运行中得到验证：必需观察召回率为 100.0%，观察后终止率为 100.0%。"
       },
       "public_label": "Observation adaptation",
       "public_summary": "Demonstrated within real-dev: required observations completed and successful observations were followed by terminal decisions.",
@@ -404,6 +480,28 @@
           "value": 0.0
         }
       },
+      "presentation": {
+        "canonical_status": "demonstrated_in_frozen_scope",
+        "claim_scope": "混合系统的 108 次开发试验",
+        "frozen_scope": "真实开发运行",
+        "headline_eligible": false,
+        "label": "结构与状态转移安全",
+        "limitations": [
+          "108 次开发试验中未观察到失败，不代表开放世界保证。"
+        ],
+        "locale": "zh-CN",
+        "meaning": "这意味着格式错误、越权或状态机违规都会在副作用前失败关闭。",
+        "metric_labels": {
+          "F11": "无证据动作",
+          "F13": "未授权漏升级",
+          "F17": "受限信息暴露",
+          "invalid_transitions": "非法状态转移",
+          "schema_invalid": "结构校验失败",
+          "unsafe_tool_calls": "不安全工具调用"
+        },
+        "status": "已验证 · 冻结范围",
+        "summary": "在 108 次混合系统开发试验中得到验证：无证据动作、未授权漏升级、受限信息暴露、不安全工具调用、非法状态转移和结构校验失败均为零。"
+      },
       "public_label": "Schema and transition safety",
       "public_summary": "Demonstrated within 108 hybrid real-dev trials: F11/F13/F17, unsafe tool calls, invalid transitions, and schema-invalid events were zero.",
       "question_id": "Q5",
@@ -465,6 +563,24 @@
           "unit": "ratio",
           "value": 0.644393
         }
+      },
+      "presentation": {
+        "canonical_status": "demonstrated_in_frozen_scope",
+        "claim_scope": "主开发运行：混合系统对比纯模型系统",
+        "frozen_scope": "真实开发运行",
+        "headline_eligible": false,
+        "label": "混合系统效率",
+        "limitations": [
+          "效率来自开发运行，不是独立留出的产品级主结论。"
+        ],
+        "locale": "zh-CN",
+        "meaning": "这意味着确定性路径可以减少模型调用和 Token 消耗。",
+        "metric_labels": {
+          "model_call_ratio": "模型调用比",
+          "token_ratio": "Token 用量比"
+        },
+        "status": "已验证 · 冻结范围",
+        "summary": "在开发运行中得到验证：混合系统相对纯模型系统使用了 78/132 次模型调用和 66531/103246 个 Token。"
       },
       "public_label": "Hybrid efficiency",
       "public_summary": "Demonstrated within real-dev: Hybrid used 78/132 model calls and 66,531/103,246 tokens relative to LLM-only.",

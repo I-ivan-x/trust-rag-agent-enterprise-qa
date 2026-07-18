@@ -12,7 +12,7 @@ def test_generated_public_claim_files_are_current_and_provenanced() -> None:
         "source_artifact_count": 11,
         "source_blob_count": 11,
         "imported_snapshot_count": 9,
-        "generated_file_count": 9,
+        "generated_file_count": 10,
     }
     for path in GENERATED_PATHS:
         assert path.is_file()
@@ -59,9 +59,13 @@ def test_recruiting_data_contract_is_complete_and_scoped() -> None:
         "decision-frontier.json",
         "q5-evidence.json",
         "engineering-signals.json",
+        "presentation-zh-cn.json",
     }
     for path in data_paths.values():
         payload = json.loads(path.read_text(encoding="utf-8"))
+        if path.name == "presentation-zh-cn.json":
+            assert payload["locale"] == "zh-CN"
+            continue
         claims = payload.get("claims") or payload.get("signals") or [
             claim
             for question in payload.get("questions", [])
@@ -80,6 +84,11 @@ def test_recruiting_data_contract_is_complete_and_scoped() -> None:
                     "execution_commit",
                     "artifact_commit",
                 } <= source.keys()
+            presentation = claim["presentation"]
+            assert presentation["locale"] == "zh-CN"
+            assert presentation["canonical_status"] == claim["status"]
+            assert presentation["headline_eligible"] == claim["headline_eligible"]
+            assert set(presentation["metric_labels"]) == set(claim["metrics"])
     frontier = json.loads(data_paths["decision-frontier.json"].read_text(encoding="utf-8"))
     assert frontier["schema_version"] == "public-decision-frontier-v2"
     assert [segment["segment_id"] for segment in frontier["segments"]] == [

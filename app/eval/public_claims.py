@@ -18,11 +18,14 @@ from app.schemas.public_claims import (
     ClaimRegistry,
     ClaimSourceArtifact,
     ClaimStatus,
+    EvidenceMode,
     MetricDerivation,
     SourceImportAudit,
+    ZhCnPresentationCatalog,
 )
 
 REGISTRY_PATH = Path("data/claims/claim_registry.json")
+PRESENTATION_PATH = Path("data/claims/presentation_zh_cn_v1.json")
 SOURCE_IMPORT_AUDIT_PATH = Path("data/claims/source_import_audit.json")
 GENERATED_PATHS = (
     Path("data/claims/claim_registry.schema.json"),
@@ -34,6 +37,7 @@ GENERATED_PATHS = (
     Path("frontend/src/data/decision-frontier.json"),
     Path("frontend/src/data/q5-evidence.json"),
     Path("frontend/src/data/engineering-signals.json"),
+    Path("frontend/src/data/presentation-zh-cn.json"),
 )
 STATUS_LABELS = {
     ClaimStatus.demonstrated_in_frozen_scope: "Demonstrated within the frozen scope",
@@ -47,6 +51,15 @@ QUESTION_TITLES = {
     "Q4": "Can calibration improve action selection without weakening safety?",
     "Q5": "Where does a selective tool-using agent add value?",
 }
+FRONTEND_STATUS_KEYS = {
+    "demonstrated_in_frozen_scope",
+    "falsified_in_current_scope",
+    "not_evaluated",
+    "mixed_scoped_results",
+    "scoped_negative_complete",
+    "falsified_and_not_evaluated",
+}
+_TEMPLATE_PATTERN = re.compile(r"\{([A-Za-z0-9_]+)\|(fraction|numerator|denominator|value[0-6]|percent[0-2])\}")
 
 
 def load_and_verify_registry(path: Path | str = REGISTRY_PATH) -> ClaimRegistry:
@@ -55,6 +68,7 @@ def load_and_verify_registry(path: Path | str = REGISTRY_PATH) -> ClaimRegistry:
         raise ValueError("canonical claim registry is not Git tracked")
     payload = json.loads(registry_path.read_text(encoding="utf-8"))
     registry = ClaimRegistry.model_validate(payload)
+    _verify_showcase_isolation(payload)
     serialized = json.dumps(payload, ensure_ascii=False).lower()
     if "uncovered 32/32" in serialized:
         raise ValueError("ambiguous uncovered 32/32 wording is forbidden")
@@ -98,6 +112,44 @@ def load_and_verify_registry(path: Path | str = REGISTRY_PATH) -> ClaimRegistry:
     return registry
 
 
+def load_and_verify_presentation_catalog(
+    registry: ClaimRegistry,
+    path: Path | str = PRESENTATION_PATH,
+) -> ZhCnPresentationCatalog:
+    catalog_path = Path(path)
+    if not catalog_path.is_file() or not _is_git_tracked(catalog_path.as_posix()):
+        raise ValueError("zh-CN presentation catalog is missing or not Git tracked")
+    catalog = ZhCnPresentationCatalog.model_validate(_load_json(catalog_path.as_posix()))
+    claim_ids = {claim.claim_id for claim in registry.claims}
+    if set(catalog.claims) != claim_ids:
+        raise ValueError("zh-CN presentation must cover exactly 14/14 canonical claims")
+    if set(catalog.question_labels) != set(QUESTION_TITLES):
+        raise ValueError("zh-CN question presentation keys are incomplete or unknown")
+    if set(catalog.status_labels) != FRONTEND_STATUS_KEYS:
+        raise ValueError("zh-CN status presentation keys are incomplete or unknown")
+    if set(catalog.evidence_mode_labels) != {mode.value for mode in EvidenceMode}:
+        raise ValueError("zh-CN evidence-mode keys are incomplete or unknown")
+    if set(catalog.derivation_labels) != {item.value for item in MetricDerivation}:
+        raise ValueError("zh-CN metric-derivation keys are incomplete or unknown")
+    canonical_metric_keys = {
+        metric_name for claim in registry.claims for metric_name in claim.metrics
+    }
+    if set(catalog.metric_labels) != canonical_metric_keys:
+        raise ValueError("zh-CN metric labels are incomplete or contain unknown keys")
+    for claim in registry.claims:
+        presentation = catalog.claims[claim.claim_id]
+        templates = (
+            presentation.claim_scope_template,
+            presentation.frozen_scope_template,
+            presentation.summary_template,
+            presentation.meaning_template,
+            *presentation.limitations_templates,
+        )
+        for template in templates:
+            _render_zh_template(claim, template)
+    return catalog
+
+
 def load_and_verify_source_import_audit(
     path: Path | str = SOURCE_IMPORT_AUDIT_PATH,
 ) -> SourceImportAudit:
@@ -120,8 +172,12 @@ def load_and_verify_source_import_audit(
     return audit
 
 
-def render_public_claims(registry: ClaimRegistry) -> dict[Path, bytes]:
-    claims = [_public_claim(claim) for claim in registry.claims]
+def render_public_claims(
+    registry: ClaimRegistry,
+    catalog: ZhCnPresentationCatalog | None = None,
+) -> dict[Path, bytes]:
+    presentation = catalog or load_and_verify_presentation_catalog(registry)
+    claims = [_public_claim(claim, presentation) for claim in registry.claims]
     by_question = {
         question_id: [claim for claim in claims if claim["question_id"] == question_id]
         for question_id in QUESTION_TITLES
@@ -140,6 +196,11 @@ def render_public_claims(registry: ClaimRegistry) -> dict[Path, bytes]:
             {
                 "question_id": question_id,
                 "question": title,
+                "presentation": {
+                    "locale": presentation.locale,
+                    "question": presentation.question_labels[question_id],
+                    "status": presentation.status_labels[question_status[question_id]],
+                },
                 "status": question_status[question_id],
                 "claim_ids": [claim["claim_id"] for claim in by_question[question_id]],
                 "claims": by_question[question_id],
@@ -252,6 +313,15 @@ def render_public_claims(registry: ClaimRegistry) -> dict[Path, bytes]:
             }
         ],
     }
+    presentation_payload = {
+        "schema_version": presentation.schema_version,
+        "locale": presentation.locale,
+        "question_labels": presentation.question_labels,
+        "status_labels": presentation.status_labels,
+        "evidence_mode_labels": presentation.evidence_mode_labels,
+        "derivation_labels": presentation.derivation_labels,
+        "metric_labels": presentation.metric_labels,
+    }
     return {
         Path("data/claims/claim_registry.schema.json"): _json_bytes(
             ClaimRegistry.model_json_schema()
@@ -264,12 +334,16 @@ def render_public_claims(registry: ClaimRegistry) -> dict[Path, bytes]:
         Path("frontend/src/data/decision-frontier.json"): _json_bytes(frontier),
         Path("frontend/src/data/q5-evidence.json"): _json_bytes(q5),
         Path("frontend/src/data/engineering-signals.json"): _json_bytes(signals),
+        Path("frontend/src/data/presentation-zh-cn.json"): _json_bytes(
+            presentation_payload
+        ),
     }
 
 
 def build_public_claims(*, check: bool = False) -> dict[str, int]:
     registry = load_and_verify_registry()
-    rendered = render_public_claims(registry)
+    catalog = load_and_verify_presentation_catalog(registry)
+    rendered = render_public_claims(registry, catalog)
     if set(rendered) != set(GENERATED_PATHS):
         raise ValueError("public claim generated-file contract mismatch")
     drift = []
@@ -301,10 +375,65 @@ def build_public_claims(*, check: bool = False) -> dict[str, int]:
     }
 
 
-def _public_claim(claim) -> dict[str, Any]:
+def _public_claim(claim, catalog: ZhCnPresentationCatalog) -> dict[str, Any]:
     payload = claim.model_dump(mode="json")
     payload["status_label"] = STATUS_LABELS[claim.status]
+    localized = catalog.claims[claim.claim_id]
+    payload["presentation"] = {
+        "locale": catalog.locale,
+        "label": localized.label,
+        "status": catalog.status_labels[claim.status.value],
+        "claim_scope": _render_zh_template(claim, localized.claim_scope_template),
+        "frozen_scope": _render_zh_template(claim, localized.frozen_scope_template),
+        "limitations": [
+            _render_zh_template(claim, item)
+            for item in localized.limitations_templates
+        ],
+        "summary": _render_zh_template(claim, localized.summary_template),
+        "meaning": _render_zh_template(claim, localized.meaning_template),
+        "headline_eligible": claim.headline_eligible,
+        "canonical_status": claim.status.value,
+        "metric_labels": {
+            key: catalog.metric_labels[key] for key in claim.metrics
+        },
+    }
     return payload
+
+
+def _render_zh_template(claim, template: str) -> str:
+    def replace(match: re.Match[str]) -> str:
+        metric_name, formatter = match.groups()
+        if metric_name not in claim.metrics:
+            raise ValueError(
+                f"unknown metric template key: {claim.claim_id}.{metric_name}"
+            )
+        metric = claim.metrics[metric_name]
+        if formatter == "fraction":
+            return f"{_plain_number(metric.numerator)}/{_plain_number(metric.denominator)}"
+        if formatter == "numerator":
+            return _plain_number(metric.numerator)
+        if formatter == "denominator":
+            return _plain_number(metric.denominator)
+        if formatter.startswith("value"):
+            return f"{metric.value:.{int(formatter[-1])}f}"
+        if formatter.startswith("percent"):
+            return f"{metric.value * 100:.{int(formatter[-1])}f}%"
+        raise ValueError(f"unsupported presentation formatter: {formatter}")
+
+    rendered = _TEMPLATE_PATTERN.sub(replace, template)
+    if "{" in rendered or "}" in rendered:
+        raise ValueError(f"invalid presentation template syntax: {claim.claim_id}")
+    return rendered
+
+
+def _plain_number(value: float) -> str:
+    return str(int(value)) if float(value).is_integer() else str(value)
+
+
+def _verify_showcase_isolation(payload: Any) -> None:
+    serialized = json.dumps(payload, ensure_ascii=False).replace("\\", "/").lower()
+    if "data/showcase/" in serialized:
+        raise ValueError("formal public claims must not reference showcase corpus files")
 
 
 def _claim_matrix(registry: ClaimRegistry) -> str:

@@ -223,6 +223,50 @@ class PublicClaim(BaseModel):
         return self
 
 
+class ZhCnClaimPresentation(BaseModel):
+    """Chinese presentation templates; canonical metrics remain the only number source."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    label: str = Field(min_length=1)
+    claim_scope_template: str = Field(min_length=1)
+    frozen_scope_template: str = Field(min_length=1)
+    limitations_templates: list[str] = Field(min_length=1)
+    summary_template: str = Field(min_length=1)
+    meaning_template: str = Field(min_length=1)
+
+
+class ZhCnPresentationCatalog(BaseModel):
+    """Versioned localization SSOT consumed by the public-claim generator."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    schema_version: Literal["public-claim-presentation-zh-cn-v1"]
+    locale: Literal["zh-CN"]
+    question_labels: dict[str, str]
+    status_labels: dict[str, str]
+    evidence_mode_labels: dict[str, str]
+    derivation_labels: dict[str, str]
+    metric_labels: dict[str, str]
+    claims: dict[str, ZhCnClaimPresentation]
+
+    @model_validator(mode="after")
+    def _nonempty_catalog_values(self) -> ZhCnPresentationCatalog:
+        collections = (
+            self.question_labels,
+            self.status_labels,
+            self.evidence_mode_labels,
+            self.derivation_labels,
+            self.metric_labels,
+        )
+        if any(
+            not values or any(not value.strip() for value in values.values())
+            for values in collections
+        ):
+            raise ValueError("presentation catalog mappings must be non-empty")
+        return self
+
+
 class ClaimRegistry(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
