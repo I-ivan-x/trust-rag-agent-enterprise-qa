@@ -40,7 +40,7 @@ body {
   font-family: Inter, "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
   font-size: 16px;
   line-height: 1.55;
-  text-rendering: optimizeLegibility;
+  text-rendering: auto;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -82,13 +82,16 @@ main {
   overflow: clip;
 }
 
-#evaluation-infrastructure {
+.section {
   content-visibility: auto;
+  contain-intrinsic-size: auto 440px;
+}
+
+#evaluation-infrastructure {
   contain-intrinsic-size: auto 1100px;
 }
 
 #evidence-ledger {
-  content-visibility: auto;
   contain-intrinsic-size: auto 3000px;
 }
 
@@ -126,8 +129,7 @@ main {
   top: 0;
   height: var(--header-height);
   border-bottom: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
-  background: color-mix(in srgb, var(--bg) 94%, transparent);
-  backdrop-filter: blur(14px);
+  background: color-mix(in srgb, var(--bg) 98%, var(--surface));
 }
 
 .site-nav {
@@ -395,6 +397,7 @@ main {
   inset: 9% max(18px, calc((100vw - 1180px) / 2)) auto auto;
   width: min(56vw, 780px);
   height: 78%;
+  contain: layout paint;
   opacity: 0.42;
   transform: perspective(1000px) rotateY(-5deg) rotateX(1deg);
   transform-origin: right center;
