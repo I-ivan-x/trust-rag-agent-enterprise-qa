@@ -19,7 +19,7 @@ class RedistributionStatus(StrEnum):
     project_owned = "project-owned"
     synthetic_project_owned = "synthetic-project-owned"
     upstream_license_with_attribution = "upstream-license-with-attribution"
-    immutable_evidence_only = "immutable-evidence-only"
+    canonical_evidence_byte_frozen = "canonical-evidence-byte-frozen"
 
 
 class DataRootAudit(BaseModel):
@@ -55,15 +55,42 @@ class LegacyCodenamePolicy(BaseModel):
 class RepositoryLicenseDecision(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    status: Literal["owner-decision-pending"]
-    recommendations: list[Literal["Apache-2.0", "MIT"]] = Field(min_length=2, max_length=2)
-    license_file_created: Literal[False]
+    status: Literal["selected"]
+    spdx_identifier: Literal["Apache-2.0"]
+    license_file_created: Literal[True]
+    license_path: Literal["LICENSE"]
+    license_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    third_party_notices_path: Literal["THIRD_PARTY_NOTICES.md"]
+    third_party_notices_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    applies_to: list[str] = Field(min_length=1)
+    excludes: list[str] = Field(min_length=1)
+
+
+class ThirdPartyMaterial(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    name: str = Field(min_length=1)
+    path_prefixes: list[str] = Field(min_length=1)
+    spdx_identifier: Literal["MIT", "CC-BY-4.0"]
+    copyright_notice: str = Field(min_length=1)
+    source_repository: str = Field(pattern=r"^https://github\.com/")
+    exact_upstream_commit: str = Field(pattern=r"^(unknown|[0-9a-f]{40})$")
+    license_copy_path: Literal[
+        "LICENSES/FASTAPI-MIT.txt",
+        "LICENSES/KUBERNETES-CC-BY-4.0.txt",
+    ]
+    license_copy_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    modification_status: str = Field(min_length=1)
+    canonical_evidence_policy: Literal[
+        "byte-frozen-in-this-repository; downstream modification remains permitted "
+        "under the applicable upstream license but is no longer canonical evidence"
+    ]
 
 
 class PublicRepositoryAuditRegistry(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    schema_version: Literal["public-repository-audit-v1"]
+    schema_version: Literal["public-repository-audit-v2"]
     public_project_name: Literal["Agent Reliability Lab"]
     public_subtitle: Literal[
         "Governed Runtime, Evaluation Harness, and Decision Frontier for Tool-Using Agents"
@@ -74,6 +101,7 @@ class PublicRepositoryAuditRegistry(BaseModel):
     data_roots: list[DataRootAudit] = Field(min_length=1)
     legacy_codename_policy: LegacyCodenamePolicy
     repository_license: RepositoryLicenseDecision
+    third_party_materials: list[ThirdPartyMaterial] = Field(min_length=2, max_length=2)
     secret_fixture_path_prefixes: list[str]
     tracked_ignored_exceptions: list[str]
     public_brand_surfaces: list[str] = Field(min_length=1)

@@ -76,6 +76,10 @@ Every generated record includes a claim ID, tracked artifact, artifact SHA-256, 
 
 ## Three-minute narrative
 
+The exact timed, claim-bounded version is
+`docs/THREE_MINUTE_DEMO_SCRIPT.md`. The outline below is only a navigation
+summary.
+
 1. Start with Q1: fail-closed answers make the safety/coverage trade-off explicit.
 2. Move to Q3/Q4: the trust boundary reaches side effects, and a weak selection result is corrected without relaxing the gate.
 3. Show the runtime console: unauthorized and under-evidenced actions fail closed before the sink.
@@ -89,11 +93,14 @@ Every generated record includes a claim ID, tracked artifact, artifact SHA-256, 
 - Mock, synthetic, replay, and offline-control evidence are labeled and cannot masquerade as real-run evidence.
 - Q5 efficiency does not imply Q5 semantic value.
 - The controlled-prose closure says nothing about open-world language understanding.
-- Historical plans to create `q5_test`, enter K1, run confirmatory providers, create Boundary G, or publish a Q5 tag are superseded.
+- Historical plans to create `q5_test`, enter K1, run confirmatory providers,
+  create Boundary G, or publish a Q5 product release are superseded. The exact
+  annotated tag `agent-reliability-lab-q5-closed-20260717` is a non-product
+  research marker; it does not authorize `v4.0`.
 
 ## Verification
 
-Batch 5-ZM/ZN test result: `966 passed, 1 skipped, 23 warnings`. The detached
+Final local-archive regression: `971 passed, 1 skipped, 23 warnings`. The detached
 clean clone passed Lighthouse `95/95/94`, accessibility `100/100/100`,
 Playwright `48 passed / 12 skipped`, and release gates `6/6`. Verify the
 canonical release envelope and generated claims with:
@@ -105,3 +112,8 @@ py -m uv run --frozen python scripts/check_claim_drift.py
 ```
 
 For detailed evidence, use `docs/EVALUATION_REPORT.md`, `docs/FAILURE_ANALYSIS.md`, `docs/Q5_FINAL_REPORT.md`, and `data/claims/claim_registry.json`.
+
+For handoff and maintenance authority, use
+`docs/PROJECT_ARCHIVE_AND_MAINTENANCE.md`. The active envelope is
+`data/releases/release_manifest_v2.json`; V1 is retained as the pre-archive
+historical envelope.

@@ -15,11 +15,13 @@ from app.schemas.public_repository import (
     DataSourceType,
     DependencyAudit,
     PublicRepositoryAuditRegistry,
+    RepositoryLicenseDecision,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
-REGISTRY_PATH = Path("data/public_repository/audit_registry_v1.json")
+REGISTRY_PATH = Path("data/public_repository/audit_registry_v2.json")
 DEPENDENCY_AUDIT_PATH = Path("data/public_repository/dependency_audit_v1.json")
+REGISTRY_SCHEMA_PATH = Path("data/public_repository/audit_registry_v2.schema.json")
 IGNORED_GENERATED_PREFIXES = (
     "data/generated/",
     "data/indexes/",
@@ -65,9 +67,18 @@ def verify_public_repository(
     dependencies = DependencyAudit.model_validate_json(
         dependency_path.read_text(encoding="utf-8")
     )
+    schema_path = root / REGISTRY_SCHEMA_PATH
+    if (
+        not schema_path.is_file()
+        or (require_tracked_registry and not _tracked(root, REGISTRY_SCHEMA_PATH.as_posix()))
+        or schema_path.read_bytes() != public_registry_schema_bytes()
+    ):
+        raise ValueError("public repository audit registry schema drifted")
     tracked = _tracked_paths(root)
     verify_q5_test_absent(root, tracked)
     _verify_data_provenance_closure(registry, root, tracked)
+    _verify_repository_license(registry.repository_license, root, tracked)
+    _verify_third_party_materials(registry, root, tracked)
     _verify_dependency_audit(dependencies, root)
     _verify_tracked_ignored_boundary(registry, root, tracked)
     _verify_showcase_claim_isolation(registry, root)
@@ -88,12 +99,34 @@ def verify_public_repository(
         "showcase_formal_references": 0,
         "legacy_codename_violations": 0,
         "repository_license_status": registry.repository_license.status,
-        "license_recommendations": registry.repository_license.recommendations,
+        "repository_license": registry.repository_license.spdx_identifier,
+        "license_sha256": registry.repository_license.license_sha256,
+        "third_party_notices_sha256": (
+            registry.repository_license.third_party_notices_sha256
+        ),
         "model_requests": registry.model_requests,
         "external_requests": registry.external_requests,
         "q5_test": registry.q5_test,
         "status": "passed",
     }
+
+
+def public_registry_schema_bytes() -> bytes:
+    return (
+        json.dumps(
+            PublicRepositoryAuditRegistry.model_json_schema(),
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n"
+    ).encode()
+
+
+def write_public_registry_schema(root: Path = ROOT) -> Path:
+    target = root / REGISTRY_SCHEMA_PATH
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_bytes(public_registry_schema_bytes())
+    return target
 
 
 def verify_q5_test_absent(root: Path, tracked: Iterable[str] = ()) -> None:
@@ -199,6 +232,131 @@ def _verify_dependency_audit(audit: DependencyAudit, root: Path) -> None:
     npm_audited = {row.package for row in audit.npm}
     if npm_declared != npm_audited:
         raise ValueError("npm direct dependency license inventory is incomplete or extra")
+
+
+def _verify_repository_license(
+    decision: RepositoryLicenseDecision,
+    root: Path,
+    tracked: set[str],
+) -> None:
+    expected_exclusions = {
+        "third-party source-page content under data/public_corpus/",
+        "third-party copied source-page content under data/hard_negative_corpus/",
+        "21 upstream Kubernetes documents under data/ops_runbook_corpus/",
+    }
+    if set(decision.excludes) != expected_exclusions or decision.applies_to != [
+        "project-authored code, documentation, configuration, synthetic data, "
+        "labels, overlays and original metadata"
+    ]:
+        raise ValueError("repository license scope or exclusions drifted")
+    required = {
+        decision.license_path: decision.license_sha256,
+        decision.third_party_notices_path: decision.third_party_notices_sha256,
+    }
+    for path, expected_hash in required.items():
+        target = root / path
+        if path not in tracked or not target.is_file():
+            raise ValueError(f"repository license artifact is missing or untracked: {path}")
+        if _sha256(target) != expected_hash:
+            raise ValueError(f"repository license artifact hash drifted: {path}")
+
+    license_text = (root / decision.license_path).read_text(encoding="utf-8")
+    if (
+        "Apache License" not in license_text
+        or "Version 2.0, January 2004" not in license_text
+        or "http://www.apache.org/licenses/" not in license_text
+    ):
+        raise ValueError("LICENSE is not the audited Apache-2.0 license text")
+
+    project = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
+    if project["project"].get("license") != decision.spdx_identifier:
+        raise ValueError("Python project license metadata drifted")
+    package = json.loads((root / "frontend/package.json").read_text(encoding="utf-8"))
+    if package.get("license") != decision.spdx_identifier:
+        raise ValueError("frontend package license metadata drifted")
+
+
+def _verify_third_party_materials(
+    registry: PublicRepositoryAuditRegistry,
+    root: Path,
+    tracked: set[str],
+) -> None:
+    expected = {
+        "FastAPI documentation": {
+            "paths": {"data/public_corpus/", "data/hard_negative_corpus/"},
+            "spdx": "MIT",
+            "license": "LICENSES/FASTAPI-MIT.txt",
+            "tokens": ("The MIT License", "Sebastián Ramírez"),
+            "min_size": 900,
+        },
+        "Kubernetes documentation": {
+            "paths": {"data/ops_runbook_corpus/"},
+            "spdx": "CC-BY-4.0",
+            "license": "LICENSES/KUBERNETES-CC-BY-4.0.txt",
+            "tokens": (
+                "Creative Commons Attribution 4.0 International Public License",
+                "Section 3 -- License Conditions.",
+            ),
+            "min_size": 15_000,
+        },
+    }
+    actual = {item.name: item for item in registry.third_party_materials}
+    if set(actual) != set(expected):
+        raise ValueError("third-party material inventory is incomplete or extra")
+    excluded = set(registry.repository_license.excludes)
+    notice = (root / registry.repository_license.third_party_notices_path).read_text(
+        encoding="utf-8"
+    )
+    for name, contract in expected.items():
+        item = actual[name]
+        if (
+            set(item.path_prefixes) != contract["paths"]
+            or item.spdx_identifier != contract["spdx"]
+            or item.license_copy_path != contract["license"]
+        ):
+            raise ValueError(f"third-party material scope or SPDX drifted: {name}")
+        if any(
+            not any(prefix in exclusion for exclusion in excluded)
+            for prefix in item.path_prefixes
+        ):
+            raise ValueError(f"third-party material is not excluded from Apache-2.0: {name}")
+        target = root / item.license_copy_path
+        if item.license_copy_path not in tracked or not target.is_file():
+            raise ValueError(f"third-party license copy is missing or untracked: {name}")
+        if _sha256(target) != item.license_copy_sha256:
+            raise ValueError(f"third-party license copy hash drifted: {name}")
+        text = target.read_text(encoding="utf-8")
+        if (
+            target.stat().st_size < contract["min_size"]
+            or any(token not in text for token in contract["tokens"])
+        ):
+            raise ValueError(f"third-party license copy content drifted: {name}")
+        if (
+            name not in notice
+            or item.spdx_identifier not in notice
+            or item.source_repository not in notice
+            or item.copyright_notice not in notice
+        ):
+            raise ValueError(f"third-party attribution notice is incomplete: {name}")
+    expected_root_spdx = {
+        "data/public_corpus/": "MIT",
+        "data/hard_negative_corpus/": "MIT",
+        "data/ops_runbook_corpus/": "CC-BY-4.0",
+    }
+    audited_roots = {
+        row.root: row
+        for row in registry.data_roots
+        if DataSourceType.public_third_party in row.source_types
+    }
+    if set(audited_roots) != set(expected_root_spdx):
+        raise ValueError("third-party data-root inventory is incomplete or extra")
+    for path, spdx in expected_root_spdx.items():
+        row = audited_roots[path]
+        if (
+            spdx not in row.license_status
+            or row.redistribution_status.value != "upstream-license-with-attribution"
+        ):
+            raise ValueError(f"third-party data was incorrectly relicensed: {path}")
 
 
 def _verify_tracked_ignored_boundary(

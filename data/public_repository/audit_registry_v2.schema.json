@@ -1,0 +1,381 @@
+{
+  "$defs": {
+    "DataRootAudit": {
+      "additionalProperties": false,
+      "properties": {
+        "license_status": {
+          "minLength": 1,
+          "title": "License Status",
+          "type": "string"
+        },
+        "notes": {
+          "minLength": 1,
+          "title": "Notes",
+          "type": "string"
+        },
+        "provenance_evidence": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Provenance Evidence",
+          "type": "array"
+        },
+        "redistribution_status": {
+          "$ref": "#/$defs/RedistributionStatus"
+        },
+        "root": {
+          "pattern": "^data/[a-z0-9_]+/$",
+          "title": "Root",
+          "type": "string"
+        },
+        "source_types": {
+          "items": {
+            "$ref": "#/$defs/DataSourceType"
+          },
+          "minItems": 1,
+          "title": "Source Types",
+          "type": "array"
+        }
+      },
+      "required": [
+        "root",
+        "source_types",
+        "redistribution_status",
+        "license_status",
+        "provenance_evidence",
+        "notes"
+      ],
+      "title": "DataRootAudit",
+      "type": "object"
+    },
+    "DataSourceType": {
+      "enum": [
+        "project-authored",
+        "synthetic",
+        "public-third-party",
+        "historical-immutable-artifact"
+      ],
+      "title": "DataSourceType",
+      "type": "string"
+    },
+    "LegacyCodenamePolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "allowed_exact_paths": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Allowed Exact Paths",
+          "type": "array"
+        },
+        "allowed_path_prefixes": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Allowed Path Prefixes",
+          "type": "array"
+        },
+        "codename": {
+          "const": "TrustRAG",
+          "title": "Codename",
+          "type": "string"
+        },
+        "current_public_identity": {
+          "const": "Agent Reliability Lab",
+          "title": "Current Public Identity",
+          "type": "string"
+        }
+      },
+      "required": [
+        "codename",
+        "allowed_path_prefixes",
+        "allowed_exact_paths",
+        "current_public_identity"
+      ],
+      "title": "LegacyCodenamePolicy",
+      "type": "object"
+    },
+    "RedistributionStatus": {
+      "enum": [
+        "project-owned",
+        "synthetic-project-owned",
+        "upstream-license-with-attribution",
+        "canonical-evidence-byte-frozen"
+      ],
+      "title": "RedistributionStatus",
+      "type": "string"
+    },
+    "RepositoryLicenseDecision": {
+      "additionalProperties": false,
+      "properties": {
+        "applies_to": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Applies To",
+          "type": "array"
+        },
+        "excludes": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Excludes",
+          "type": "array"
+        },
+        "license_file_created": {
+          "const": true,
+          "title": "License File Created",
+          "type": "boolean"
+        },
+        "license_path": {
+          "const": "LICENSE",
+          "title": "License Path",
+          "type": "string"
+        },
+        "license_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "License Sha256",
+          "type": "string"
+        },
+        "spdx_identifier": {
+          "const": "Apache-2.0",
+          "title": "Spdx Identifier",
+          "type": "string"
+        },
+        "status": {
+          "const": "selected",
+          "title": "Status",
+          "type": "string"
+        },
+        "third_party_notices_path": {
+          "const": "THIRD_PARTY_NOTICES.md",
+          "title": "Third Party Notices Path",
+          "type": "string"
+        },
+        "third_party_notices_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Third Party Notices Sha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "status",
+        "spdx_identifier",
+        "license_file_created",
+        "license_path",
+        "license_sha256",
+        "third_party_notices_path",
+        "third_party_notices_sha256",
+        "applies_to",
+        "excludes"
+      ],
+      "title": "RepositoryLicenseDecision",
+      "type": "object"
+    },
+    "ThirdPartyMaterial": {
+      "additionalProperties": false,
+      "properties": {
+        "canonical_evidence_policy": {
+          "const": "byte-frozen-in-this-repository; downstream modification remains permitted under the applicable upstream license but is no longer canonical evidence",
+          "title": "Canonical Evidence Policy",
+          "type": "string"
+        },
+        "copyright_notice": {
+          "minLength": 1,
+          "title": "Copyright Notice",
+          "type": "string"
+        },
+        "exact_upstream_commit": {
+          "pattern": "^(unknown|[0-9a-f]{40})$",
+          "title": "Exact Upstream Commit",
+          "type": "string"
+        },
+        "license_copy_path": {
+          "enum": [
+            "LICENSES/FASTAPI-MIT.txt",
+            "LICENSES/KUBERNETES-CC-BY-4.0.txt"
+          ],
+          "title": "License Copy Path",
+          "type": "string"
+        },
+        "license_copy_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "License Copy Sha256",
+          "type": "string"
+        },
+        "modification_status": {
+          "minLength": 1,
+          "title": "Modification Status",
+          "type": "string"
+        },
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "path_prefixes": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Path Prefixes",
+          "type": "array"
+        },
+        "source_repository": {
+          "pattern": "^https://github\\.com/",
+          "title": "Source Repository",
+          "type": "string"
+        },
+        "spdx_identifier": {
+          "enum": [
+            "MIT",
+            "CC-BY-4.0"
+          ],
+          "title": "Spdx Identifier",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "path_prefixes",
+        "spdx_identifier",
+        "copyright_notice",
+        "source_repository",
+        "exact_upstream_commit",
+        "license_copy_path",
+        "license_copy_sha256",
+        "modification_status",
+        "canonical_evidence_policy"
+      ],
+      "title": "ThirdPartyMaterial",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "data_roots": {
+      "items": {
+        "$ref": "#/$defs/DataRootAudit"
+      },
+      "minItems": 1,
+      "title": "Data Roots",
+      "type": "array"
+    },
+    "external_requests": {
+      "const": 0,
+      "title": "External Requests",
+      "type": "integer"
+    },
+    "formal_claim_surfaces": {
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Formal Claim Surfaces",
+      "type": "array"
+    },
+    "frontend_package_name": {
+      "const": "agent-reliability-lab-showcase",
+      "title": "Frontend Package Name",
+      "type": "string"
+    },
+    "legacy_codename_policy": {
+      "$ref": "#/$defs/LegacyCodenamePolicy"
+    },
+    "legacy_python_distribution_name": {
+      "const": "trust-rag-agent-enterprise-qa",
+      "title": "Legacy Python Distribution Name",
+      "type": "string"
+    },
+    "model_requests": {
+      "const": 0,
+      "title": "Model Requests",
+      "type": "integer"
+    },
+    "public_brand_surfaces": {
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Public Brand Surfaces",
+      "type": "array"
+    },
+    "public_project_name": {
+      "const": "Agent Reliability Lab",
+      "title": "Public Project Name",
+      "type": "string"
+    },
+    "public_subtitle": {
+      "const": "Governed Runtime, Evaluation Harness, and Decision Frontier for Tool-Using Agents",
+      "title": "Public Subtitle",
+      "type": "string"
+    },
+    "q5_test": {
+      "const": "absent",
+      "title": "Q5 Test",
+      "type": "string"
+    },
+    "repository_license": {
+      "$ref": "#/$defs/RepositoryLicenseDecision"
+    },
+    "schema_version": {
+      "const": "public-repository-audit-v2",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "secret_fixture_path_prefixes": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Secret Fixture Path Prefixes",
+      "type": "array"
+    },
+    "stable_release": {
+      "const": "v3.0-q4-reliability",
+      "title": "Stable Release",
+      "type": "string"
+    },
+    "third_party_materials": {
+      "items": {
+        "$ref": "#/$defs/ThirdPartyMaterial"
+      },
+      "maxItems": 2,
+      "minItems": 2,
+      "title": "Third Party Materials",
+      "type": "array"
+    },
+    "tracked_ignored_exceptions": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Tracked Ignored Exceptions",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema_version",
+    "public_project_name",
+    "public_subtitle",
+    "frontend_package_name",
+    "legacy_python_distribution_name",
+    "stable_release",
+    "data_roots",
+    "legacy_codename_policy",
+    "repository_license",
+    "third_party_materials",
+    "secret_fixture_path_prefixes",
+    "tracked_ignored_exceptions",
+    "public_brand_surfaces",
+    "formal_claim_surfaces",
+    "q5_test",
+    "model_requests",
+    "external_requests"
+  ],
+  "title": "PublicRepositoryAuditRegistry",
+  "type": "object"
+}

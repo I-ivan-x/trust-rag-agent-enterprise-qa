@@ -47,16 +47,19 @@ The engineering value is the ability to discover that a benchmark is too easy, p
 
 ## Verification and release boundary
 
-- Batch 5-ZM/ZN test result: `966 passed, 1 skipped, 23 warnings`.
+- Final local-archive regression: `971 passed, 1 skipped, 23 warnings`.
 - The detached clean clone passed Lighthouse `95/95/94`, accessibility
   `100/100/100`, Playwright `48 passed / 12 skipped`, and release gates `6/6`.
-- `data/releases/release_manifest_v1.json` binds the tested commit/tree, locks,
+- `data/releases/release_manifest_v2.json` binds the tested commit/tree, locks,
   claims, reports, Boundary F evidence, public audit, frontend receipt, and
   clean-clone receipt; CI rejects drift.
 - The current npm production and development audit is clean after the
   non-breaking Lighthouse 13.4.1 patch.
 - Latest stable product release: `v3.0-q4-reliability`.
-- Q5 creates no tag or release; K1, Boundary G, new K1 data, `q5_test`, and confirmatory runs are not authorized.
+- Q5 creates no product release: K1, Boundary G, new K1 data, `q5_test`, and
+  confirmatory runs are not authorized. The exact annotated tag
+  `agent-reliability-lab-q5-closed-20260717` is a non-product research marker;
+  it does not create `v4.0`.
 - Evidence commits in the registry identify evidence-producing states; they are not claims about the commit containing this document.
 
 ## Pointers
@@ -68,5 +71,8 @@ The engineering value is the ability to discover that a benchmark is too easy, p
 - Full evaluation history: `docs/EVALUATION_REPORT.md`
 - Failure taxonomy: `docs/FAILURE_ANALYSIS.md`
 - Engineering process: `docs/ENGINEERING_DISCIPLINE.md`
+- Exact 180-second demo: `docs/THREE_MINUTE_DEMO_SCRIPT.md`
+- Role-specific resume wording: `docs/RESUME_BULLETS.md`
+- Archive/maintenance contract: `docs/PROJECT_ARCHIVE_AND_MAINTENANCE.md`
 - Runtime demo: `uvicorn app.main:app` then `/console/`
 - Static showcase: `cd frontend && npm ci && npm run build`

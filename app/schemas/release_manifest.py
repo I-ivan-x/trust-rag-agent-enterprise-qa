@@ -47,12 +47,15 @@ class StableReleaseBinding(BaseModel):
     release_commit: str = Field(pattern=GIT_SHA_PATTERN)
 
 
-class PendingResearchMilestone(BaseModel):
+class ResearchMilestoneBinding(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    name: Literal["q5-scoped-negative-research-closure"]
-    tag_created: Literal[False]
+    name: Literal["agent-reliability-lab-q5-closed-20260717"]
+    status: Literal["scoped_negative_complete"]
+    tag_kind: Literal["annotated"]
+    target_policy: Literal["manifest-envelope-commit"]
     release_created: Literal[False]
+    stable_product_release_unchanged: Literal[True]
 
 
 class ClaimReleaseBindings(BaseModel):
@@ -97,7 +100,7 @@ class FrontendReleaseBindings(BaseModel):
 class ReleaseManifest(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    schema_version: Literal["agent-reliability-release-manifest-v1"]
+    schema_version: Literal["agent-reliability-release-manifest-v2"]
     public_project_name: Literal["Agent Reliability Lab"]
     tested_commit: str = Field(pattern=GIT_SHA_PATTERN)
     tested_tree: str = Field(pattern=GIT_SHA_PATTERN)
@@ -112,8 +115,9 @@ class ReleaseManifest(BaseModel):
     frontend: FrontendReleaseBindings
     clean_clone_receipt: ReleaseArtifact
     public_repository_audit: list[ReleaseArtifact] = Field(min_length=1)
+    closure_documents: list[ReleaseArtifact] = Field(min_length=7, max_length=7)
     stable_release: StableReleaseBinding
-    pending_research_milestone: PendingResearchMilestone
+    research_milestone: ResearchMilestoneBinding
     model_requests: Literal[0]
     external_requests: Literal[0]
     q5_test: Literal["absent"]
@@ -126,6 +130,9 @@ class ReleaseManifest(BaseModel):
         generated = [item.path for item in self.claims.generated_views]
         if len(generated) != len(set(generated)):
             raise ValueError("generated claim view paths must be unique")
+        closure = [item.path for item in self.closure_documents]
+        if len(closure) != len(set(closure)):
+            raise ValueError("closure document paths must be unique")
         return self
 
 

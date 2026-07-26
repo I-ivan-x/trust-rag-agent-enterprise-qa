@@ -3,6 +3,7 @@
   "type": "module",
   "version": "0.1.0",
   "description": "Governed Runtime, Evaluation Harness, and Decision Frontier for Tool-Using Agents",
+  "license": "Apache-2.0",
   "private": true,
   "engines": {
     "node": ">=22.19.0",

@@ -1,0 +1,278 @@
+{
+  "schema_version": "public-repository-audit-v2",
+  "public_project_name": "Agent Reliability Lab",
+  "public_subtitle": "Governed Runtime, Evaluation Harness, and Decision Frontier for Tool-Using Agents",
+  "frontend_package_name": "agent-reliability-lab-showcase",
+  "legacy_python_distribution_name": "trust-rag-agent-enterprise-qa",
+  "stable_release": "v3.0-q4-reliability",
+  "data_roots": [
+    {
+      "root": "data/action_store/",
+      "source_types": ["synthetic"],
+      "redistribution_status": "synthetic-project-owned",
+      "license_status": "Project-authored fixtures under Apache-2.0.",
+      "provenance_evidence": ["data/action_store/alerts.jsonl"],
+      "notes": "Local deterministic action and approval sink fixtures; no production records."
+    },
+    {
+      "root": "data/agent_residual_corpus/",
+      "source_types": ["project-authored", "synthetic"],
+      "redistribution_status": "synthetic-project-owned",
+      "license_status": "Project-authored evaluation corpus under Apache-2.0.",
+      "provenance_evidence": ["data/agent_residual_corpus/ar-001-gold.md"],
+      "notes": "Fictional residual-case evaluation material."
+    },
+    {
+      "root": "data/citation_audit/",
+      "source_types": ["project-authored", "historical-immutable-artifact"],
+      "redistribution_status": "canonical-evidence-byte-frozen",
+      "license_status": "Project-authored probes and labels under Apache-2.0.",
+      "provenance_evidence": ["data/citation_audit/discriminative_probes.jsonl"],
+      "notes": "Canonical copies remain byte-frozen for evidence validity; licensed downstream modification is still permitted."
+    },
+    {
+      "root": "data/claims/",
+      "source_types": ["project-authored", "historical-immutable-artifact"],
+      "redistribution_status": "canonical-evidence-byte-frozen",
+      "license_status": "Project-authored registry and snapshots under Apache-2.0.",
+      "provenance_evidence": ["data/claims/source_import_audit.json"],
+      "notes": "Canonical public claims and minimal evidence imports are hash-bound for evidence validity."
+    },
+    {
+      "root": "data/eval_baselines/",
+      "source_types": ["project-authored", "historical-immutable-artifact"],
+      "redistribution_status": "canonical-evidence-byte-frozen",
+      "license_status": "Project-authored regression baseline under Apache-2.0.",
+      "provenance_evidence": ["data/eval_baselines/regression_baseline_v1.json"],
+      "notes": "Versioned metric baseline, not user data."
+    },
+    {
+      "root": "data/eval_runs/",
+      "source_types": ["historical-immutable-artifact"],
+      "redistribution_status": "canonical-evidence-byte-frozen",
+      "license_status": "Project-generated evaluation artifacts under Apache-2.0.",
+      "provenance_evidence": ["data/eval_runs/q5-boundary-f-addendum-z-a/lineage_receipt.json"],
+      "notes": "Only explicitly tracked canonical evidence is public; bulk runtime outputs remain ignored."
+    },
+    {
+      "root": "data/gold_eval/",
+      "source_types": ["project-authored", "synthetic"],
+      "redistribution_status": "synthetic-project-owned",
+      "license_status": "Project-authored evaluation labels under Apache-2.0.",
+      "provenance_evidence": ["data/gold_eval/agent_residual_eval.jsonl"],
+      "notes": "Synthetic or project-authored answer and action labels."
+    },
+    {
+      "root": "data/hard_negative_corpus/",
+      "source_types": ["public-third-party", "project-authored"],
+      "redistribution_status": "upstream-license-with-attribution",
+      "license_status": "FastAPI source pages remain MIT; local pairing metadata is Apache-2.0.",
+      "provenance_evidence": ["data/hard_negative_corpus/hard_negative_manifest.jsonl", "docs/CORPUS_PROTOCOL.md"],
+      "notes": "Twenty local pairs contain forty copied FastAPI pages; attribution and license scope are in THIRD_PARTY_NOTICES.md."
+    },
+    {
+      "root": "data/ops_runbook_corpus/",
+      "source_types": ["public-third-party", "project-authored"],
+      "redistribution_status": "upstream-license-with-attribution",
+      "license_status": "Twenty-one Kubernetes source documents remain CC-BY-4.0; local overlays are Apache-2.0.",
+      "provenance_evidence": ["data/ops_runbook_corpus/public_corpus_manifest.jsonl", "docs/CORPUS_PROTOCOL.md"],
+      "notes": "Historical front matter has a wrong local source_path prefix; the runtime manifest is authoritative and the frozen documents were not rewritten."
+    },
+    {
+      "root": "data/public_corpus/",
+      "source_types": ["public-third-party"],
+      "redistribution_status": "upstream-license-with-attribution",
+      "license_status": "Forty FastAPI documentation pages remain under the upstream MIT license.",
+      "provenance_evidence": ["data/public_corpus/public_corpus_manifest.jsonl", "docs/CORPUS_PROTOCOL.md"],
+      "notes": "Verbatim public documentation with historical moving-branch source URLs; exact upstream commit is unknown."
+    },
+    {
+      "root": "data/public_repository/",
+      "source_types": ["project-authored", "historical-immutable-artifact"],
+      "redistribution_status": "canonical-evidence-byte-frozen",
+      "license_status": "Project-authored audit declarations under Apache-2.0.",
+      "provenance_evidence": ["data/public_repository/audit_registry_v2.json", "data/public_repository/audit_registry_v2.schema.json", "data/public_repository/dependency_audit_v1.json"],
+      "notes": "V1 is retained as historical evidence; V2 is the active license-aware registry."
+    },
+    {
+      "root": "data/q5/",
+      "source_types": ["project-authored", "synthetic", "historical-immutable-artifact"],
+      "redistribution_status": "canonical-evidence-byte-frozen",
+      "license_status": "Project-authored research data under Apache-2.0.",
+      "provenance_evidence": ["data/q5/archive/dev-v1/README.md"],
+      "notes": "No q5_test split is present; archived dev generations remain canonical and byte-frozen."
+    },
+    {
+      "root": "data/q5_frontier/",
+      "source_types": ["project-authored", "synthetic", "historical-immutable-artifact"],
+      "redistribution_status": "canonical-evidence-byte-frozen",
+      "license_status": "Project-authored frontier data under Apache-2.0.",
+      "provenance_evidence": ["data/q5_frontier/dev-k0u-audit/lineage_receipt.json"],
+      "notes": "Frozen Boundary evidence and synthetic frontier authoring."
+    },
+    {
+      "root": "data/redteam_adjudication/",
+      "source_types": ["project-authored", "historical-immutable-artifact"],
+      "redistribution_status": "canonical-evidence-byte-frozen",
+      "license_status": "Project-authored adjudication labels under Apache-2.0.",
+      "provenance_evidence": ["data/redteam_adjudication/manual_adjudication_v1.jsonl"],
+      "notes": "Human review labels over fictional red-team fixtures."
+    },
+    {
+      "root": "data/redteam_corpus/",
+      "source_types": ["project-authored", "synthetic"],
+      "redistribution_status": "synthetic-project-owned",
+      "license_status": "Project-authored adversarial fixtures under Apache-2.0.",
+      "provenance_evidence": ["data/redteam_corpus/rt-001-deployment-notes.md"],
+      "notes": "Fictional injection and credential-shaped canaries; never real secrets."
+    },
+    {
+      "root": "data/releases/",
+      "source_types": ["project-authored", "historical-immutable-artifact"],
+      "redistribution_status": "canonical-evidence-byte-frozen",
+      "license_status": "Project-authored release schemas and receipts under Apache-2.0.",
+      "provenance_evidence": ["data/releases/release_manifest_v2.schema.json"],
+      "notes": "Receipt-bearing release evidence; an annotated research tag is not a product release."
+    },
+    {
+      "root": "data/sample_corpus/",
+      "source_types": ["project-authored", "synthetic"],
+      "redistribution_status": "synthetic-project-owned",
+      "license_status": "Project-authored fixtures under Apache-2.0.",
+      "provenance_evidence": ["docs/CORPUS_PROTOCOL.md"],
+      "notes": "Fictional smoke-test and local demonstration documents."
+    },
+    {
+      "root": "data/showcase/",
+      "source_types": ["project-authored", "synthetic"],
+      "redistribution_status": "synthetic-project-owned",
+      "license_status": "Project-authored interview demonstration corpus under Apache-2.0.",
+      "provenance_evidence": ["data/showcase/interview-v1/manifest.json"],
+      "notes": "Demonstration-only, headline-ineligible and isolated from formal claims."
+    }
+  ],
+  "legacy_codename_policy": {
+    "codename": "TrustRAG",
+    "allowed_path_prefixes": [
+      "app/",
+      "tests/",
+      "data/claims/source/"
+    ],
+    "allowed_exact_paths": [
+      "README.md",
+      ".env.example",
+      "frontend/README.md",
+      "data/public_repository/audit_registry_v1.json",
+      "data/public_repository/audit_registry_v2.json",
+      "data/public_repository/audit_registry_v2.schema.json",
+      "pyproject.toml",
+      "uv.lock",
+      "docker-compose.yml",
+      "data/claims/claim_registry.json",
+      "data/claims/claim_registry.schema.json",
+      "scripts/export_otel_trace.py",
+      "docs/ENGINEERING_DISCIPLINE.md",
+      "docs/PUBLIC_REPOSITORY_AUDIT.md",
+      "docs/EVALUATION_REPORT.md",
+      "docs/FAILURE_ANALYSIS.md",
+      "docs/INTERVIEW_QA.md",
+      "docs/LATEST_RESULTS_AND_DEMO.md",
+      "docs/PROJECT_OVERVIEW.md",
+      "docs/Q1_HARD_DEMO_TASK_PLAN.md",
+      "docs/ROADMAP.md",
+      "docs/SHOWCASE_PLAN.md",
+      "docs/SHOWCASE_PLAN_V2.md",
+      "docs/SPEC_Q4_P6_P7.md",
+      "docs/STUDY_CHECKLIST.md",
+      "docs/TECHNICAL_DESIGN.md",
+      "docs/TRUST_POLICY.md",
+      "docs/WEEK6_CLOSEOUT_REVIEW_PACKET.md"
+    ],
+    "current_public_identity": "Agent Reliability Lab"
+  },
+  "repository_license": {
+    "status": "selected",
+    "spdx_identifier": "Apache-2.0",
+    "license_file_created": true,
+    "license_path": "LICENSE",
+    "license_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+    "third_party_notices_path": "THIRD_PARTY_NOTICES.md",
+    "third_party_notices_sha256": "e764f7ad20bdcd1d3125bdbe6c02be160c28f490d00a429625f73b37448d6b51",
+    "applies_to": [
+      "project-authored code, documentation, configuration, synthetic data, labels, overlays and original metadata"
+    ],
+    "excludes": [
+      "third-party source-page content under data/public_corpus/",
+      "third-party copied source-page content under data/hard_negative_corpus/",
+      "21 upstream Kubernetes documents under data/ops_runbook_corpus/"
+    ]
+  },
+  "third_party_materials": [
+    {
+      "name": "FastAPI documentation",
+      "path_prefixes": ["data/public_corpus/", "data/hard_negative_corpus/"],
+      "spdx_identifier": "MIT",
+      "copyright_notice": "Copyright (c) 2018 Sebastián Ramírez",
+      "source_repository": "https://github.com/fastapi/fastapi",
+      "exact_upstream_commit": "unknown",
+      "license_copy_path": "LICENSES/FASTAPI-MIT.txt",
+      "license_copy_sha256": "4ec89ffc81485b97fec584b2d4a961032eeffe834453894fd9c1274906cc744e",
+      "modification_status": "Source pages retained as collected; local manifests, pair metadata, labels and evaluation structure are separate project-authored additions.",
+      "canonical_evidence_policy": "byte-frozen-in-this-repository; downstream modification remains permitted under the applicable upstream license but is no longer canonical evidence"
+    },
+    {
+      "name": "Kubernetes documentation",
+      "path_prefixes": ["data/ops_runbook_corpus/"],
+      "spdx_identifier": "CC-BY-4.0",
+      "copyright_notice": "Kubernetes Authors / Kubernetes website contributors",
+      "source_repository": "https://github.com/kubernetes/website",
+      "exact_upstream_commit": "unknown",
+      "license_copy_path": "LICENSES/KUBERNETES-CC-BY-4.0.txt",
+      "license_copy_sha256": "9e5f1b3c610b9c2da5c313bf81d577a7d1acec686bdb0384edefa6df0f90cd94",
+      "modification_status": "Twenty-one upstream documents retained as collected; nine local SOP overlays and runtime manifests are separate project-authored additions. Historical source_path front matter is inaccurate and the runtime manifest is authoritative.",
+      "canonical_evidence_policy": "byte-frozen-in-this-repository; downstream modification remains permitted under the applicable upstream license but is no longer canonical evidence"
+    }
+  ],
+  "secret_fixture_path_prefixes": [
+    "data/public_corpus/",
+    "data/hard_negative_corpus/",
+    "data/ops_runbook_corpus/",
+    "data/q5/",
+    "data/q5_frontier/",
+    "data/sample_corpus/",
+    "data/redteam_corpus/",
+    "tests/"
+  ],
+  "tracked_ignored_exceptions": [
+    "data/eval_runs/q5-boundary-f-addendum-z-a/addendum_metrics.json",
+    "data/eval_runs/q5-boundary-f-addendum-z-a/addendum_report.md",
+    "data/eval_runs/q5-boundary-f-addendum-z-a/addendum_rows.jsonl",
+    "data/eval_runs/q5-boundary-f-addendum-z-a/artifact_hashes.json",
+    "data/eval_runs/q5-boundary-f-addendum-z-a/frozen_scope.json",
+    "data/eval_runs/q5-boundary-f-addendum-z-a/lineage_receipt.json",
+    "data/eval_runs/q5-boundary-f-addendum-z-a/parser_attestation.json"
+  ],
+  "public_brand_surfaces": [
+    "README.md",
+    "frontend/README.md",
+    "frontend/src/layouts/Base.astro",
+    "frontend/src/components/Hero.astro",
+    "app/web/index.html",
+    "pyproject.toml",
+    "frontend/package.json"
+  ],
+  "formal_claim_surfaces": [
+    "data/claims/claim_registry.json",
+    "docs/Q5_FINAL_REPORT.md",
+    "docs/Q5_CLAIM_MATRIX.md",
+    "docs/Q5_BOUNDARY_A_F_SUMMARY.md",
+    "frontend/src/data/questions.json",
+    "frontend/src/data/headline-results.json",
+    "frontend/src/data/decision-frontier.json",
+    "frontend/src/data/q5-evidence.json",
+    "frontend/src/data/engineering-signals.json"
+  ],
+  "q5_test": "absent",
+  "model_requests": 0,
+  "external_requests": 0
+}

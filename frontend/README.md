@@ -97,3 +97,9 @@ keyboard/focus behavior, reduced motion, no-JavaScript conclusions, interview
 narrative, corpus isolation, and claim reverse linkage. After an implementation
 commit, `npm run test:closure-acceptance` performs three consecutive Lighthouse
 runs and writes the compact receipt plus three viewport screenshots.
+
+The exact recruiter walkthrough is
+[`docs/THREE_MINUTE_DEMO_SCRIPT.md`](../docs/THREE_MINUTE_DEMO_SCRIPT.md).
+Project-authored frontend source is Apache-2.0; repository-wide third-party
+boundaries remain documented in
+[`THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md).

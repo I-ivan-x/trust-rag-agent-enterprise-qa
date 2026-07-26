@@ -3,12 +3,15 @@
 ## Decision
 
 Agent Reliability Lab is suitable for a public source repository at the audited
-commit, subject to the owner choosing a repository license. The audit is
-fail-closed and is enforced by `scripts/verify_public_repository.py`.
+commit. Apache-2.0 is selected for project-authored material; third-party
+material remains under its upstream license. The active machine-readable
+contract is `data/public_repository/audit_registry_v2.json`, and the fail-closed
+gate is `scripts/verify_public_repository.py`.
 
-The latest stable release remains `v3.0-q4-reliability`. The pending research
-milestone is named `q5-scoped-negative-research-closure`; this audit does not
-create a tag or release.
+The latest stable product release remains `v3.0-q4-reliability`. The only Q5
+tag authorized by closure is the annotated, non-product research marker
+`agent-reliability-lab-q5-closed-20260717`; it does not create a GitHub Release
+or `v4.0`.
 
 ## Publication checks
 
@@ -21,7 +24,9 @@ create a tag or release.
 | Brand | Current public surfaces use **Agent Reliability Lab**. | Exact public-surface registry |
 | Legacy codename | **TrustRAG** is limited to declared historical artifacts, internal identifiers, and three explicit public explanations of the rename. | Path allowlist |
 | Image accessibility | HTML/Astro images require `alt`; Markdown images cannot use an empty label. | Source scan |
-| Q5 boundary | `q5_test` is absent. No Boundary G, K1 data, provider run, tag, or release is created. | Repository and release verifier |
+| Q5 boundary | `q5_test` is absent. No Boundary G, K1 data, provider run, product release, or `v4.0` is created; the one exact annotated research marker is separately constrained. | Repository and release verifier |
+| Project license | Root Apache-2.0 text, package metadata, notices, exclusions, and SHA-256 values agree. | V2 registry plus mutation tests |
+| Third-party material | FastAPI MIT and Kubernetes CC BY 4.0 scopes, attribution, license references, and hashes remain explicit. | Structured third-party inventory |
 
 Synthetic red-team files intentionally contain credential-shaped canaries and
 public upstream documentation contains fictional example identities. Those
@@ -56,20 +61,27 @@ request. It records no known direct-runtime advisory in the repository, but it
 does not claim that an offline lock inspection replaces a current OSV or
 GitHub Advisory Database query before a later release.
 
-## License recommendation for the owner
+## Repository-license decision
 
-No `LICENSE` file was created.
+The Owner decision is closed: project-authored material uses **Apache-2.0**.
+The repository gate verifies:
 
-- **Apache-2.0** is the stronger fit when the owner wants an explicit patent
-  grant and clearer notice obligations for a governance/runtime project.
-- **MIT** is the shortest and most familiar option for interview and portfolio
-  reuse, with minimal redistribution conditions, but without Apache-2.0's
-  explicit patent language.
+- root `LICENSE` content and SHA-256;
+- `pyproject.toml`, `frontend/package.json`, and package-lock metadata;
+- `THIRD_PARTY_NOTICES.md`;
+- the FastAPI MIT and Kubernetes CC BY 4.0 license references; and
+- exact third-party path exclusions from the root project license.
 
-Either choice concerns project-authored code and data only. It cannot replace
-the upstream MIT terms for FastAPI documentation, CC BY 4.0 attribution for
-Kubernetes documentation, or the provenance restrictions on immutable
-evaluation artifacts. The owner must make the final choice.
+Apache-2.0 covers project-authored code, documentation, configuration,
+synthetic data, labels, overlays, and original metadata. It does not relicense
+FastAPI source pages under `data/public_corpus/` or
+`data/hard_negative_corpus/`, nor the 21 Kubernetes documents under
+`data/ops_runbook_corpus/`. Those remain MIT and CC BY 4.0 respectively.
+
+Canonical or byte-frozen evidence is a scientific-lineage rule, not a
+copyright restriction. Downstream modification remains allowed under the
+applicable license; a changed copy simply ceases to be canonical evidence for
+this project.
 
 ## Residual risks
 
@@ -79,6 +91,15 @@ evaluation artifacts. The owner must make the final choice.
 - Historical artifacts are intentionally retained for reproducibility; their
   public meaning must continue to come through the Claim registry rather than
   isolated raw fields.
+- Historical corpus URLs use moving `master`/`main` branches, so exact upstream
+  revisions are recorded as `unknown` rather than invented.
+- The 21 frozen Kubernetes files contain an inaccurate local `source_path`
+  front-matter prefix. The correct runtime paths and source URLs are in
+  `data/ops_runbook_corpus/public_corpus_manifest.jsonl`; the historical files
+  were not silently rewritten.
+- This source release does not redistribute environments, `node_modules`, or
+  transitive `libvips` binaries. A future binary distribution needs a separate
+  license audit.
 - A future change to dependency locks, data roots, public brand surfaces, or
   legacy-codename locations invalidates this audit until the registry is
   updated and reverified.

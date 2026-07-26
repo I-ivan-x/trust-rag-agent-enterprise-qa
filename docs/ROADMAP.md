@@ -392,7 +392,9 @@ tag v3.0-q4-reliability。
 ## 12. Q5：Adaptive Hybrid Agent + Semantic Decision Frontier（已收口）
 
 **当前状态：`scoped_negative_complete`。** 本节替代此前把 `q5_test`、K1、confirmatory run、
-Boundary G 或 Q5 tag 列为下一步的计划；那些条目现在均为 **historical plan / superseded**，不是 backlog。
+Boundary G 或 Q5 产品 tag 列为下一步的计划；那些条目现在均为
+**historical plan / superseded**，不是 backlog。唯一例外是封存用 annotated、
+non-product research marker：`agent-reliability-lab-q5-closed-20260717`。
 
 Q5 完成了 selective runtime、typed observation、proposal schema、per-proposal reauthorization、
 bounded loop、outcome grader、protocol versioning、paired metrics、anti-gaming controls 和 provenance
@@ -417,7 +419,8 @@ Boundary G = not allowed
 new K1 data = not allowed
 q5_test = absent / not read
 confirmatory run = not authorized
-Q5 release or tag = not authorized
+Q5 product release / v4.0 = not authorized
+exact annotated research marker = authorized as non-product archive metadata
 ```
 
 这不等于“LLM 普遍无价值”。open-world LLM value 没有评测，必须保持 `not_evaluated`。当前稳定产品
@@ -437,6 +440,9 @@ release 仍是 `v3.0-q4-reliability`。
   为 `100/100/100`。
 - Z-N：18 个 tracked data roots、secret/PII、品牌、showcase 隔离、依赖许可与再分发边界审计
   已完成；Lighthouse 13.4.1 后 npm 全树在线审计为 0 漏洞。
-- 仓库级 `LICENSE` 仍是 Owner 决策：Apache-2.0 或 MIT。未选择前不擅自创建。
-- 项目最终归档仍待 Z-O；研究 milestone tag 仍未创建，稳定产品 release 继续保持
-  `v3.0-q4-reliability`。
+- Z-N 许可证决策已关闭：项目自有材料使用 Apache-2.0；FastAPI 文档保持 MIT，
+  Kubernetes 文档保持 CC BY 4.0；V2 registry 和 `THIRD_PARTY_NOTICES.md` 机械检查边界。
+- Z-O 本地封存与维护规则已完成；远端发布、远端 CI 与部署不是本地封存完成的既成事实。
+- 唯一研究 milestone 是 annotated、non-product tag
+  `agent-reliability-lab-q5-closed-20260717`；稳定产品 release 继续保持
+  `v3.0-q4-reliability`，不创建 `v4.0`。

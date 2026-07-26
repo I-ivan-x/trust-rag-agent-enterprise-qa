@@ -14,19 +14,19 @@ from app.schemas.release_manifest import (
     BoundaryFReleaseBindings,
     ClaimReleaseBindings,
     FrontendReleaseBindings,
-    PendingResearchMilestone,
     ReleaseArtifact,
     ReleaseCleanCloneReceipt,
     ReleaseManifest,
     ReportReleaseBindings,
+    ResearchMilestoneBinding,
     RuntimeVersions,
     StableReleaseBinding,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
 RELEASE_ROOT = Path("data/releases")
-RELEASE_SCHEMA_PATH = RELEASE_ROOT / "release_manifest_v1.schema.json"
-RELEASE_MANIFEST_PATH = RELEASE_ROOT / "release_manifest_v1.json"
+RELEASE_SCHEMA_PATH = RELEASE_ROOT / "release_manifest_v2.schema.json"
+RELEASE_MANIFEST_PATH = RELEASE_ROOT / "release_manifest_v2.json"
 CLEAN_CLONE_RECEIPT_PATH = RELEASE_ROOT / "clean_clone_receipt_v1.json"
 
 CLAIM_GENERATED_VIEWS = (
@@ -63,10 +63,21 @@ FRONTEND_SCREENSHOTS = (
 )
 PUBLIC_AUDIT_ARTIFACTS = (
     "data/public_repository/audit_registry_v1.json",
+    "data/public_repository/audit_registry_v2.json",
+    "data/public_repository/audit_registry_v2.schema.json",
     "data/public_repository/dependency_audit_v1.json",
     "docs/PUBLIC_REPOSITORY_AUDIT.md",
     "docs/DATA_PROVENANCE_AUDIT.md",
     "SECURITY.md",
+)
+CLOSURE_DOCUMENTS = (
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
+    "LICENSES/FASTAPI-MIT.txt",
+    "LICENSES/KUBERNETES-CC-BY-4.0.txt",
+    "docs/THREE_MINUTE_DEMO_SCRIPT.md",
+    "docs/RESUME_BULLETS.md",
+    "docs/PROJECT_ARCHIVE_AND_MAINTENANCE.md",
 )
 REPORT_PATHS = {
     "q5_final_report": "docs/Q5_FINAL_REPORT.md",
@@ -103,7 +114,7 @@ def build_release_manifest(
         raise ValueError("clean-clone receipt does not target the manifest commit/tree")
 
     manifest = ReleaseManifest(
-        schema_version="agent-reliability-release-manifest-v1",
+        schema_version="agent-reliability-release-manifest-v2",
         public_project_name="Agent Reliability Lab",
         tested_commit=commit,
         tested_tree=tree,
@@ -152,11 +163,17 @@ def build_release_manifest(
         public_repository_audit=[
             _artifact(root, path, commit) for path in PUBLIC_AUDIT_ARTIFACTS
         ],
+        closure_documents=[
+            _artifact(root, path, commit) for path in CLOSURE_DOCUMENTS
+        ],
         stable_release=_stable_release(root),
-        pending_research_milestone=PendingResearchMilestone(
-            name="q5-scoped-negative-research-closure",
-            tag_created=False,
+        research_milestone=ResearchMilestoneBinding(
+            name="agent-reliability-lab-q5-closed-20260717",
+            status="scoped_negative_complete",
+            tag_kind="annotated",
+            target_policy="manifest-envelope-commit",
             release_created=False,
+            stable_product_release_unchanged=True,
         ),
         model_requests=0,
         external_requests=0,
@@ -210,7 +227,7 @@ def verify_release_manifest(
         "tested_commit": manifest.tested_commit,
         "tested_tree": manifest.tested_tree,
         "stable_release": manifest.stable_release.tag,
-        "pending_research_milestone": manifest.pending_research_milestone.name,
+        "research_milestone": manifest.research_milestone.name,
         "model_requests": manifest.model_requests,
         "external_requests": manifest.external_requests,
         "q5_test": manifest.q5_test,
@@ -231,8 +248,7 @@ def verify_release_manifest_payload(
         raise ValueError("release manifest tested commit is not a current ancestor")
     if (root / "data/q5_test").exists():
         raise ValueError("q5_test must remain absent")
-    if _git(root, "tag", "--list", manifest.pending_research_milestone.name):
-        raise ValueError("pending research milestone tag already exists")
+    _verify_research_milestone(manifest.research_milestone, root)
 
     expected = _expected_paths()
     actual = _paths_by_role(manifest)
@@ -294,6 +310,7 @@ def _expected_paths() -> dict[str, tuple[str, ...]]:
         "frontend_screenshots": FRONTEND_SCREENSHOTS,
         "clean_clone_receipt": (CLEAN_CLONE_RECEIPT_PATH.as_posix(),),
         "public_repository_audit": PUBLIC_AUDIT_ARTIFACTS,
+        "closure_documents": CLOSURE_DOCUMENTS,
     }
 
 
@@ -327,6 +344,7 @@ def _paths_by_role(manifest: ReleaseManifest) -> dict[str, tuple[str, ...]]:
         "public_repository_audit": tuple(
             item.path for item in manifest.public_repository_audit
         ),
+        "closure_documents": tuple(item.path for item in manifest.closure_documents),
     }
 
 
@@ -349,7 +367,33 @@ def _all_artifacts(manifest: ReleaseManifest) -> list[ReleaseArtifact]:
         *manifest.frontend.screenshots,
         manifest.clean_clone_receipt,
         *manifest.public_repository_audit,
+        *manifest.closure_documents,
     ]
+
+
+def _verify_research_milestone(
+    milestone: ResearchMilestoneBinding,
+    root: Path,
+) -> None:
+    if _git(root, "tag", "--list", "v4.0*"):
+        raise ValueError("v4.0 product release must remain absent")
+    if not _git(root, "tag", "--list", milestone.name):
+        return
+    reference = f"refs/tags/{milestone.name}"
+    if _git(root, "cat-file", "-t", reference) != "tag":
+        raise ValueError("research milestone must be an annotated tag")
+    target = _git(root, "rev-parse", f"{reference}^{{commit}}")
+    if target != _git(root, "rev-parse", "HEAD"):
+        raise ValueError("research milestone must target the manifest envelope commit")
+    message = _git(root, "for-each-ref", "--format=%(contents)", reference).lower()
+    required = (
+        "scoped_negative_complete",
+        "open-world llm value was not evaluated",
+        "v3.0-q4-reliability",
+        "not a product release",
+    )
+    if any(token not in message for token in required):
+        raise ValueError("research milestone annotation is incomplete")
 
 
 def _artifact(root: Path, path: str, tested_commit: str | None) -> ReleaseArtifact:

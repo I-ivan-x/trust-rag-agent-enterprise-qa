@@ -4,8 +4,9 @@
 
 This audit covers every Git-tracked top-level directory under `data/`.
 Ignored indexes, generated chunks, local traces, bulk run output, and frontend
-runtime reports are not publication inputs. The machine-readable source of
-truth is `data/public_repository/audit_registry_v1.json`.
+runtime reports are not publication inputs. The active machine-readable source
+of truth is `data/public_repository/audit_registry_v2.json`; V1 remains a
+historical pre-license snapshot.
 
 ## Tracked data inventory
 
@@ -13,20 +14,20 @@ truth is `data/public_repository/audit_registry_v1.json`.
 | --- | --- | --- |
 | `data/action_store/` | Synthetic | Project-authored fixture |
 | `data/agent_residual_corpus/` | Project-authored, synthetic | Project-authored fixture |
-| `data/citation_audit/` | Project-authored, immutable evidence | Evidence-only |
-| `data/claims/` | Project-authored, immutable evidence | Evidence-only |
-| `data/eval_baselines/` | Project-authored, immutable evidence | Evidence-only |
-| `data/eval_runs/` | Historical immutable artifact | Evidence-only |
+| `data/citation_audit/` | Project-authored, canonical evidence | Apache-2.0; canonical copy byte-frozen |
+| `data/claims/` | Project-authored, canonical evidence | Apache-2.0; canonical copy byte-frozen |
+| `data/eval_baselines/` | Project-authored, canonical evidence | Apache-2.0; canonical copy byte-frozen |
+| `data/eval_runs/` | Historical canonical artifact | Apache-2.0; canonical copy byte-frozen |
 | `data/gold_eval/` | Project-authored, synthetic | Project-authored labels |
 | `data/hard_negative_corpus/` | FastAPI public text plus local pairing | Upstream MIT with attribution |
 | `data/ops_runbook_corpus/` | Kubernetes public text plus local SOP/overlay | Upstream CC BY 4.0 with attribution |
 | `data/public_corpus/` | FastAPI public documentation | Upstream MIT with attribution |
-| `data/public_repository/` | Project-authored audit artifacts | Evidence-only |
-| `data/q5/` | Project-authored, synthetic, archived dev evidence | Evidence-only |
-| `data/q5_frontier/` | Project-authored, synthetic, immutable evidence | Evidence-only |
-| `data/redteam_adjudication/` | Project-authored labels | Evidence-only |
+| `data/public_repository/` | Project-authored audit artifacts | Apache-2.0; canonical copy byte-frozen |
+| `data/q5/` | Project-authored, synthetic, archived dev evidence | Apache-2.0; canonical copy byte-frozen |
+| `data/q5_frontier/` | Project-authored, synthetic, canonical evidence | Apache-2.0; canonical copy byte-frozen |
+| `data/redteam_adjudication/` | Project-authored labels | Apache-2.0; canonical copy byte-frozen |
 | `data/redteam_corpus/` | Project-authored, synthetic | Project-authored fixture |
-| `data/releases/` | Project-authored schemas, manifests, receipts | Evidence-only |
+| `data/releases/` | Project-authored schemas, manifests, receipts | Apache-2.0; canonical copy byte-frozen |
 | `data/sample_corpus/` | Project-authored Northstar Cloud fixtures | Project-authored fixture |
 | `data/showcase/` | Project-authored, synthetic | Demonstration-only fixture |
 
@@ -37,18 +38,25 @@ unclassified data roots fail the repository gate.
 
 ### FastAPI
 
-`data/public_corpus/` contains attributed FastAPI documentation sourced from
-the public `fastapi/fastapi` repository. The hard-negative corpus reuses
-attributed pages and adds project-authored pair metadata. Redistribution
-follows the upstream MIT license. Synthetic access/state overlays are marked
-as local metadata and do not claim to be upstream history.
+`data/public_corpus/` contains 40 attributed FastAPI documentation pages
+sourced from the public `fastapi/fastapi` repository. The hard-negative corpus
+contains 20 pairs / 40 copied pages and adds project-authored pair metadata.
+The source pages remain MIT; local metadata is Apache-2.0. Historical URLs use
+the moving `master` branch, so the exact upstream commit is explicitly
+`unknown`.
 
 ### Kubernetes
 
-`data/ops_runbook_corpus/` combines attributed Kubernetes documentation under
-CC BY 4.0 with project-authored SOPs and controlled policy overlays. The
-manifest preserves source URLs and license notes. Local overlays do not alter
-the upstream prose or grant additional rights over it.
+`data/ops_runbook_corpus/` combines 21 attributed Kubernetes documents under
+CC BY 4.0 with nine project-authored SOPs/controlled overlays under
+Apache-2.0. Historical URLs use the moving `main` branch, so the exact upstream
+commit is explicitly `unknown`.
+
+The 21 frozen upstream files have an inaccurate local `source_path`
+front-matter prefix. The authoritative runtime manifest
+`data/ops_runbook_corpus/public_corpus_manifest.jsonl` records the correct
+local paths and source URLs. The defect is disclosed rather than silently
+rewriting the historical corpus.
 
 ## Synthetic and project-authored material
 
@@ -87,7 +95,12 @@ open-world LLM value.
 
 ## Repository-license boundary
 
-The owner has not selected Apache-2.0 or MIT, so no repository-wide license is
-asserted. A future project license must not silently relicense FastAPI,
-Kubernetes, or immutable third-party-derived evidence. Source-level
-attribution and upstream terms continue to apply independently.
+Apache-2.0 is selected for project-authored material. The repository is still
+multi-license: FastAPI pages remain MIT and Kubernetes pages remain CC BY 4.0.
+`THIRD_PARTY_NOTICES.md` and `LICENSES/` carry path-specific attribution and
+license references.
+
+“Canonical,” “immutable,” and “byte-frozen” express evidence validity at a
+recorded commit. They do not add a no-derivatives restriction. Downstream
+modification remains permitted under the applicable license, but modified
+copies are no longer canonical evidence for this project.

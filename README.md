@@ -94,15 +94,15 @@ npm run build
 
 ## Verification status
 
-Batch 5-ZM/ZN closure verification: `966 passed, 1 skipped, 23 warnings`.
+Final local-archive regression: `971 passed, 1 skipped, 23 warnings`.
 The detached clean clone passed with three Lighthouse performance scores of
 `95/95/94`, accessibility `100/100/100`, Playwright `48 passed / 12 skipped`,
 all six release gates, and zero model or evaluation-external requests.
 
-The canonical release envelope is
-`data/releases/release_manifest_v1.json` (SHA-256
-`a65ab25aee9c41b131e213651994616f87950f93471771fc65a983a33f9833c9`);
-its clean-clone receipt is `data/releases/clean_clone_receipt_v1.json`.
+The current canonical release envelope is
+`data/releases/release_manifest_v2.json`; the prior V1 envelope remains a
+historical pre-archive snapshot. Its clean-clone receipt is
+`data/releases/clean_clone_receipt_v1.json`.
 CI verifies the manifest explicitly, and mutation tests reject missing,
 untracked, rehashed, or wrong-lineage artifacts.
 
@@ -120,13 +120,36 @@ untracked, rehashed, or wrong-lineage artifacts.
 | [ENGINEERING_DISCIPLINE](docs/ENGINEERING_DISCIPLINE.md) | Evidence-driven delivery and anti-self-deception controls |
 | [ROADMAP](docs/ROADMAP.md) | Historical evolution plus current closed Q5 state |
 | [TECHNICAL_DESIGN](docs/TECHNICAL_DESIGN.md) | Architecture, threat model, and ADRs |
+| [THREE_MINUTE_DEMO_SCRIPT](docs/THREE_MINUTE_DEMO_SCRIPT.md) | Exact 180-second recruiter demo with Claim boundaries |
+| [RESUME_BULLETS](docs/RESUME_BULLETS.md) | Role-specific, evidence-bound resume wording |
+| [PUBLIC_REPOSITORY_AUDIT](docs/PUBLIC_REPOSITORY_AUDIT.md) | Security, license, dependency, and publication audit |
+| [PROJECT_ARCHIVE_AND_MAINTENANCE](docs/PROJECT_ARCHIVE_AND_MAINTENANCE.md) | Archive state, maintenance authority, and unfreezing rules |
 
-Historical Q5 plans and protocol reports remain available for audit, but any plan to create `q5_test`, enter K1, run a confirmatory provider, create Boundary G, or publish a Q5 tag is superseded. No such action is currently authorized.
+Historical Q5 plans and protocol reports remain available for audit. Plans to
+create `q5_test`, enter K1, run a confirmatory provider, create Boundary G, or
+publish a Q5 **product** release are superseded. The only tag authorized by
+closure is the annotated, non-product research marker
+`agent-reliability-lab-q5-closed-20260717`.
 
 ## Evidence and release boundaries
 
 - Current public claims must originate in the claim registry and tracked hash-bound artifacts.
 - Evidence commits identify the implementation/run state that produced evidence; they are not self-referential “current documentation commits.”
 - Historical run IDs, tags, artifact schemas, and internal TrustRAG identifiers are intentionally immutable.
-- The latest stable tag is `v3.0-q4-reliability`; Q5 remains research evidence, not a tagged release.
+- The latest stable product tag is `v3.0-q4-reliability`; the Q5 annotated
+  research marker is not a product release, and no `v4.0` is created.
 - `q5_test` is absent and was not read or created during Q5 closure.
+
+## License and third-party material
+
+Project-authored code, documentation, synthetic data, labels, overlays, and
+original metadata are licensed under [Apache License 2.0](LICENSE). This is a
+multi-license repository: copied FastAPI documentation remains MIT, and the
+21 upstream Kubernetes documents remain CC BY 4.0. Exact path scopes,
+attribution, modification notices, and local license references are in
+[THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES.md).
+
+“Canonical” or “byte-frozen” describes evidence validity, not a no-derivatives
+copyright restriction. Downstream modification remains permitted under the
+applicable license; modified copies simply are not canonical evidence for this
+project.

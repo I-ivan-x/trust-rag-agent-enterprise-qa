@@ -3,6 +3,7 @@ name = "trust-rag-agent-enterprise-qa"
 version = "0.1.0"
 description = "Governed Runtime, Evaluation Harness, and Decision Frontier for Tool-Using Agents"
 readme = "README.md"
+license = "Apache-2.0"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.111,<1.0",

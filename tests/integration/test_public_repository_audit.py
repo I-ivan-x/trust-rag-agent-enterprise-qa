@@ -9,9 +9,13 @@ from pydantic import ValidationError
 from app.eval.public_repository_audit import (
     DEPENDENCY_AUDIT_PATH,
     REGISTRY_PATH,
+    REGISTRY_SCHEMA_PATH,
     _tracked_paths,
     _verify_data_provenance_closure,
     _verify_dependency_audit,
+    _verify_repository_license,
+    _verify_third_party_materials,
+    public_registry_schema_bytes,
     scan_sensitive_text,
     verify_formal_surface_text,
     verify_legacy_codename_path,
@@ -21,6 +25,7 @@ from app.eval.public_repository_audit import (
 from app.schemas.public_repository import (
     DependencyAudit,
     PublicRepositoryAuditRegistry,
+    RepositoryLicenseDecision,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -43,6 +48,8 @@ def test_public_repository_audit_passes() -> None:
     assert result["status"] == "passed"
     assert result["secret_findings"] == result["pii_findings"] == 0
     assert result["showcase_formal_references"] == 0
+    assert result["repository_license_status"] == "selected"
+    assert result["repository_license"] == "Apache-2.0"
     assert result["q5_test"] == "absent"
     assert result["model_requests"] == result["external_requests"] == 0
 
@@ -124,6 +131,45 @@ def test_dependency_inventory_missing_row_fails() -> None:
     payload["python"].pop()
     with pytest.raises(ValueError, match="inventory"):
         _verify_dependency_audit(DependencyAudit.model_validate(payload), ROOT)
+
+
+def test_public_repository_schema_matches_strict_model() -> None:
+    assert (ROOT / REGISTRY_SCHEMA_PATH).read_bytes() == public_registry_schema_bytes()
+
+
+def test_repository_license_hash_mutation_fails() -> None:
+    payload = _registry().repository_license.model_dump(mode="json")
+    payload["license_sha256"] = "0" * 64
+    with pytest.raises(ValueError, match="hash drifted"):
+        _verify_repository_license(
+            RepositoryLicenseDecision.model_validate(payload),
+            ROOT,
+            _tracked_paths(ROOT),
+        )
+
+
+def test_third_party_scope_or_spdx_mutation_fails() -> None:
+    payload = _registry().model_dump(mode="json")
+    fastapi = next(
+        item
+        for item in payload["third_party_materials"]
+        if item["name"] == "FastAPI documentation"
+    )
+    fastapi["path_prefixes"] = ["data/public_corpus/"]
+    mutated = PublicRepositoryAuditRegistry.model_validate(payload)
+    with pytest.raises(ValueError, match="scope or SPDX drifted"):
+        _verify_third_party_materials(mutated, ROOT, _tracked_paths(ROOT))
+
+
+def test_third_party_root_cannot_be_relicensed_as_apache() -> None:
+    payload = _registry().model_dump(mode="json")
+    row = next(
+        item for item in payload["data_roots"] if item["root"] == "data/public_corpus/"
+    )
+    row["license_status"] = "Apache-2.0"
+    mutated = PublicRepositoryAuditRegistry.model_validate(payload)
+    with pytest.raises(ValueError, match="incorrectly relicensed"):
+        _verify_third_party_materials(mutated, ROOT, _tracked_paths(ROOT))
 
 
 def test_registry_json_is_canonical_json() -> None:

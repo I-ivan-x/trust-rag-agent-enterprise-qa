@@ -7,7 +7,7 @@
 > TrustRAG 是 legacy codename；历史 run、tag、artifact schema 与内部标识保持原样。
 
 > 本文不是工作量陈列，也不以“写了很多代码”证明能力。它只记录能从仓库复核的执行行为，
-> 并明确区分已经落地的纪律、仅写入原则但尚未完全兑现的制度，以及当前仍需修复的秩序缺口。
+> 并明确区分已经落地的纪律、历史缺口如何收敛，以及仍然有效的证据边界。
 
 ------
 
@@ -15,7 +15,7 @@
 
 Agent Reliability Lab 的项目秩序不是传统的“先列功能，再逐项打勾”，而是围绕一个可守住的工程论断组织：
 
-> 在明确条件下，证明 Agent 的回答和动作比 naive 实现更可信；在证据不足时拒绝超卖，
+> 在明确冻结条件下，展示 Agent 的回答和动作比 naive 实现更可信；在证据不足时拒绝超卖，
 > 在结果失败时保留失败、定位机制并重新验证。
 
 从 Git 历史可以观察到稳定重复的交付闭环：
@@ -43,16 +43,17 @@ Agent Reliability Lab 的项目秩序不是传统的“先列功能，再逐项�
 
 | 证据 | 数量 / 时间 | 它说明什么 |
 | --- | ---: | --- |
-| Git commits | **166** | 交付被拆成可审查的小步，而非一次性大提交 |
+| Git commits | **170** | 含最终 manifest envelope；交付被拆成可审查的小步，而非一次性大提交 |
 | 有记录的开发跨度 | **2026-06-10 至 2026-07-27** | 48 个自然日内完成系统、评测、治理、可靠性、展示、Q5 与发布封装迭代 |
 | 正式阶段标签 | **4** | `v0.3-q1-hard-demo`、`v1.0-q2-agentic-eval`、`v2.0-q3-action-governance`、`v3.0-q4-reliability` |
 | 阶段性标签 | **6** | ingestion、retrieval、generation、trust gates、eval 分阶段冻结 |
-| `docs/*.md` | **86（含本文及 Q5 文档）** | 设计、协议、规格、报告、失败分析和交接材料分层保存 |
+| 研究封存标签 | **1** | `agent-reliability-lab-q5-closed-20260717`，非产品 release |
+| `docs/*.md` | **89（含最终演示、简历与维护规则）** | 设计、协议、规格、报告、失败分析和交接材料分层保存 |
 | 实现规格文档 | **25** | 高风险功能通常先写契约，再进入代码 |
-| 可执行 Python 脚本 | **60** | ingest、index、eval、leakage、ablation、diagnostic、release gate 均可命令化 |
-| Python app 代码 | **39,773 行** | 覆盖完整 RAG、Agent、治理、评测与可观测模块 |
-| Python test 代码 | **19,781 行** | 测试代码约为 app 代码的一半，质量投入不是尾部补丁 |
-| 全量回归 | **`966 passed, 1 skipped`** | Batch 5-ZM/ZN 全仓实跑输出；另有 23 条 warning |
+| 可执行 Python 脚本 | **61** | ingest、index、eval、leakage、ablation、diagnostic、release gate 均可命令化 |
+| Python app 代码 | **39,995 行** | 覆盖完整 RAG、Agent、治理、评测与可观测模块 |
+| Python test 代码 | **19,880 行** | 测试代码约为 app 代码的一半，质量投入不是尾部补丁 |
+| 全量回归 | **`971 passed, 1 skipped`** | 最终本地封存全仓实跑输出；另有 23 条 warning |
 
 这些数字只证明项目具有持续投入和结构化产物，不单独证明质量。质量结论仍以真实 run、评测边界、
 失败分析和可复现命令为准。
@@ -182,7 +183,7 @@ Git 历史中的多条链路都保持了相似结构：
 | 项目管理 | 分阶段目标、依赖链、Owner、验收标准、scope review、砍序、release tag |
 | 风险意识 | ACL/state/evidence gate、validator、HITL、red-team、mock/headline 隔离 |
 | 成本意识 | zero-token precheck、retrieval-only run、小样本 judge gate、调用量预算 |
-| 工程质量 | `966 passed, 1 skipped`、Ruff、clean clone、release manifest、trace、失败分类与回归检查脚本 |
+| 工程质量 | `971 passed, 1 skipped`、Ruff、clean clone、release manifest、trace、失败分类与回归检查脚本 |
 | 沟通能力 | README、技术 ADR、评测报告、失败报告、Interview QA、Web showcase 分别服务不同读者 |
 | 迭代能力 | Q2 证伪 Agent 增益，Q3 找到新价值面，Q4 把明确负结果修成受约束正结果 |
 
@@ -195,16 +196,20 @@ Git 历史中的多条链路都保持了相似结构：
 - `.github/workflows/ci.yml` 已接入 locked dependency install、Ruff、全量 pytest、release gates、
   public-claim drift、公开仓库、frontend artifact 与 canonical release-manifest gate；普通 CI 绿灯
   仍不能替代真实 run 证据。
-- 全量测试的本批最终结果为 `966 passed, 1 skipped`；它只说明代码回归状态，不等于实验结论。
+- 全量测试的最终本地封存结果为 `971 passed, 1 skipped`；它只说明代码回归状态，不等于实验结论。
 - detached clean clone 绑定提交与 tree，离线安装依赖后通过三次 Lighthouse `95/95/94`、
   accessibility `100/100/100`、Playwright `48/12` 与 6/6 release gates。
-- 最新稳定产品 release 仍是 `v3.0-q4-reliability`。Q5 没有形成新 tag/release。
+- 最新稳定产品 release 仍是 `v3.0-q4-reliability`。Q5 没有形成产品
+  release；唯一 exact annotated tag
+  `agent-reliability-lab-q5-closed-20260717` 只是研究封存 marker，不是
+  `v4.0`。
 - Q5 的正式 overall status 是 `scoped_negative_complete`。它展示了 selective runtime、observation
   adaptation、schema/transition safety 与 real-dev efficiency，但没有达到预注册 semantic uplift。
 - Boundary A–F 记录了项目如何持续增强 deterministic challenger。原 Boundary F 与 addendum 是顺序
   证据；addendum 关闭 frozen controlled-prose scope，不评价 open-world language。
-- 当前受控文本轨已关闭，K1=false。创建 `q5_test`、confirmatory run、Boundary G、新 K1 data 或 Q5
-  tag 的历史计划均已 superseded，不是待执行 backlog。
+- 当前受控文本轨已关闭，K1=false。创建 `q5_test`、confirmatory run、
+  Boundary G、新 K1 data 或 Q5 产品 tag 的历史计划均已 superseded，不是
+  待执行 backlog。
 - Q4 held-out 结果真实但样本薄、同语料表面且运行过两次；它展示纪律，不能替代更广泛独立外部评测。
 
 当前公开数字由 `data/claims/claim_registry.json` 和生成的 `Q5_CLAIM_MATRIX.md` 管理；本文只解释工程
@@ -214,11 +219,12 @@ Git 历史中的多条链路都保持了相似结构：
 
 ## 12. 简历与面试表达
 
-简历中的短句可以写为：
+完整的岗位化、证据绑定版本见 `docs/RESUME_BULLETS.md`。简历中的流程短句
+可以写为：
 
 > 建立 evidence-driven 的 Agent 研发流程，以设计冻结、预注册评测、零 token 诊断、消融实验、
 > run manifest 和机器化发布门管理 AI 协作开发；形成多个可审查提交和 4 个阶段 release，
-> 本批完整测试为 `966 passed, 1 skipped`，并将未达门槛的 judge/Agent 能力主动证伪、降级或锁定。
+> 最终本地封存完整测试为 `971 passed, 1 skipped`，并将未达门槛的 judge/Agent 能力主动证伪、降级或锁定。
 
 面试中的一分钟表达：
 

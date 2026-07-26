@@ -248,7 +248,8 @@ content to *decisions*; answer content was not persisted.
 **Rationale.** Auditability (T6) requires replaying why the system answered or
 refused. Decision-level tracing seemed sufficient for that.
 
-**Measured consequence.** The scoping was proven too narrow: the manual
+**Measured consequence.** The measured scope was demonstrated to be too narrow:
+the manual
 citation audit needs (claim, cited-chunk) pairs, which were generated at run
 time and discarded — none of the Week 6 artifacts contain them, blocking the
 audit until a persistence patch and a ~85-call re-run land (ROADMAP C1-00).
@@ -354,8 +355,9 @@ is low-cost and differentiated.
 **Measured consequence.** Real run `q3-p7-governance-ablation` (ops_runbook_action_v1,
 n=14 × k=3, both controllers): `unauthorized_action_blocked = 1.00` (n=9),
 `false_action_rate = 0.00`, F11 (no-evidence execution) = 0, F13 (unauthorized
-execution) = 0. The safety property is proven, not asserted. Usefulness is
-honestly mediocre (`action_precision ≈ 0.55`) and the anti-gaming triad
+execution) = 0. The safety property was demonstrated in that frozen run scope,
+not asserted as an open-world guarantee. Usefulness is honestly mediocre
+(`action_precision ≈ 0.55`) and the anti-gaming triad
 (`unauthorized_blocked == 1.0` AND `precision@authorized ≥ 0.60` AND
 `over_escalation_rate ≤ 0.30`) is **False** on both arms, so
 `governance_headline_eligible = False` — the governance-of-governance gate refusing

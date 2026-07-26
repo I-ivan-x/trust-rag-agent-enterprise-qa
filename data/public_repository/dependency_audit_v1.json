@@ -1,7 +1,7 @@
 {
   "schema_version": "public-dependency-audit-v1",
   "uv_lock_sha256": "b2475c7f88a02db7953f286311207f749c70b9df20be4b155663761683aacbe5",
-  "package_lock_sha256": "c01a342bf27334115ab3ae2ca166de420bdeb28072df1e496b306089e822ea62",
+  "package_lock_sha256": "86d8076dcb3289afca5942e500292c904e033f88c53b4b9944d048f3edfff266",
   "python": [
     {"package": "fastapi", "scope": "runtime", "license": "MIT", "status": "compatible-review"},
     {"package": "httpx", "scope": "runtime", "license": "BSD-3-Clause", "status": "compatible-review"},

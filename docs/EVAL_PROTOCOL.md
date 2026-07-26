@@ -58,8 +58,9 @@ title vocabulary.
 
 `expected_rewrite` is informational and is never scored. Rewrite statistics
 (trigger/success/second-pass) are reported as observability only. The value of
-the agentic loop is proven solely by **final_gated vs final_agentic on the
-obfuscated split** (grounded_correctness / correct refusal).
+the agentic loop is considered demonstrated in the frozen scope solely by
+**final_gated vs final_agentic on the obfuscated split** (grounded_correctness /
+correct refusal).
 
 ## Headline Rule
 
