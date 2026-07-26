@@ -263,6 +263,8 @@ def _playwright_counts(output: str) -> tuple[int, int]:
 
 def _last_json_object(output: str) -> dict:
     decoder = json.JSONDecoder()
+    candidate: dict | None = None
+    candidate_end = -1
     for index, character in enumerate(output):
         if character != "{":
             continue
@@ -270,9 +272,13 @@ def _last_json_object(output: str) -> dict:
             value, end = decoder.raw_decode(output[index:])
         except json.JSONDecodeError:
             continue
-        if not output[index + end :].strip():
-            return value
-    raise ValueError("command did not end with a JSON object")
+        absolute_end = index + end
+        if isinstance(value, dict) and absolute_end > candidate_end:
+            candidate = value
+            candidate_end = absolute_end
+    if candidate is not None:
+        return candidate
+    raise ValueError("command did not contain a complete JSON object")
 
 
 def _sha256(path: Path) -> str:
