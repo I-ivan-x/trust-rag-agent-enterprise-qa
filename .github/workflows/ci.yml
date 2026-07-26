@@ -49,6 +49,9 @@ jobs:
       - name: Frontend closure artifact gate
         run: uv run --frozen python scripts/verify_frontend_closure.py
 
+      - name: Canonical release manifest gate
+        run: uv run --frozen python scripts/build_release_manifest.py verify
+
       - name: Synthetic release gates
         run: >-
           uv run --frozen python scripts/check_release_gates.py
