@@ -40,8 +40,9 @@ No bounty or response-time commitment is implied.
 
 ## Dependency advisories
 
-Frontend production dependencies currently record no known vulnerability in
-the tracked audit. Lighthouse retains a development-only moderate
-OpenTelemetry chain described in `frontend/DEPENDENCY_SECURITY.md`; high and
-critical npm findings remain release-blocking. Offline audit evidence must be
-refreshed before a later release that changes either lockfile.
+Frontend production and development dependencies currently record no known
+vulnerability in the tracked audit. Lighthouse 13.4.1 closes the former
+Sentry/OpenTelemetry development chain described in
+`frontend/DEPENDENCY_SECURITY.md`; high and critical npm findings remain
+release-blocking. Advisory evidence must be refreshed before a later release
+that changes either lockfile.

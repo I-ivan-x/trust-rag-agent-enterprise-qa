@@ -45,12 +45,11 @@ The dependency record is bound to `uv.lock` and
 explicit license row. Current direct dependencies use permissive licenses such
 as MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, and ISC.
 
-The frontend production dependency audit records zero vulnerabilities. The
-development tree retains 17 moderate entries through the Lighthouse-only
-`@sentry/node` → OpenTelemetry chain for `GHSA-8988-4f7v-96qf`. It is absent
-from the static production bundle, high and critical findings remain zero, and
-this batch does not perform a breaking downgrade. The detailed reachability
-record remains in `frontend/DEPENDENCY_SECURITY.md`.
+The frontend production and development dependency audits record zero known
+vulnerabilities after the non-breaking Lighthouse 13.4.0 → 13.4.1 patch removed
+the former `@sentry/node` → OpenTelemetry/minimatch advisory chain. High and
+critical findings remain release-blocking. The lock-bound record and prior
+reachability history remain in `frontend/DEPENDENCY_SECURITY.md`.
 
 The Python review is offline because this batch permits no external advisory
 request. It records no known direct-runtime advisory in the repository, but it
@@ -75,7 +74,8 @@ evaluation artifacts. The owner must make the final choice.
 ## Residual risks
 
 - The offline Python advisory statement can age after this manifest is cut.
-- Lighthouse's development-only moderate chain remains accepted, not fixed.
+- Advisory data can change after the tracked audit and must be refreshed before
+  any later release or dependency-lock change.
 - Historical artifacts are intentionally retained for reproducibility; their
   public meaning must continue to come through the Claim registry rather than
   isolated raw fields.

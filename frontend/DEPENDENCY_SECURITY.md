@@ -1,6 +1,6 @@
 # Frontend dependency security baseline
 
-Verified on 2026-07-18 with Node.js 24.15.0 and npm 11.12.1. CI uses the
+Verified on 2026-07-27 with Node.js 24.15.0 and npm 11.12.1. CI uses the
 minimum supported project runtime, Node.js 22.19.0.
 
 ## Before
@@ -18,30 +18,17 @@ Tailwind CSS 4.3.3 through `@tailwindcss/vite` 4.3.3, and `@lucide/astro`
 absent from the lock.
 
 - `npm audit --audit-level=high`: passes; high=0 and critical=0.
+- `npm audit --json`: 0 vulnerabilities across the full development tree.
 - `npm audit --omit=dev --json`: 0 vulnerabilities.
 - `npm run build`: produces one static page; no SSR or server islands.
 - `npm ls vite esbuild`: one Vite 8.1.5 resolution and esbuild 0.28.1.
 
-## Accepted moderate advisory
+## Lighthouse advisory closure
 
-The full development tree reports 17 moderate entries. They all fan out from
-`GHSA-8988-4f7v-96qf`, an unbounded W3C Baggage allocation issue in
-`@opentelemetry/core` 1.30.1, through the pinned Lighthouse 13.4.0 CLI's
-`@sentry/node` dependency and its instrumentation packages.
-
-Reachability was checked rather than dismissed solely as “dev-only”:
-
-- `npm ls @sentry/node @opentelemetry/core` has a single root path:
-  `lighthouse -> @sentry/node -> @opentelemetry/*`.
-- `npm audit --omit=dev` is clean, so this path is absent from the production
-  dependency tree.
-- A recursive scan of `dist/` finds no Sentry, OpenTelemetry, or W3C Baggage
-  code in the shipped static assets.
-- Lighthouse is invoked only as an offline acceptance CLI against the local
-  static preview. The published site does not run the CLI, expose its Sentry
-  instrumentation, or accept inbound W3C Baggage headers through it.
-
-The moderate advisory is therefore accepted for the local audit tool while CI
-continues to fail on any high or critical finding. This acceptance must be
-revisited when Lighthouse updates its Sentry/OpenTelemetry chain or if the
-site stops being static.
+Lighthouse was patched from 13.4.0 to 13.4.1. That release removes the
+vulnerable `@sentry/node` / OpenTelemetry / minimatch chain previously reported
+as 16 moderate and 3 high entries by the current npm advisory database.
+The lock now contains 330 packages and the full online audit reports zero
+known vulnerabilities. CI continues to fail on any future high or critical
+finding, and the lock-bound public repository audit fails when the dependency
+record is not refreshed.

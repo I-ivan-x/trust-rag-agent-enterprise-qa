@@ -19,7 +19,7 @@ npm run build
 npm run test:e2e
 ```
 
-Dependency audit details and the remaining Lighthouse-only moderate advisory are
+Dependency audit details and the Lighthouse 13.4.1 advisory closure are
 recorded in [`DEPENDENCY_SECURITY.md`](./DEPENDENCY_SECURITY.md).
 
 ## Public data

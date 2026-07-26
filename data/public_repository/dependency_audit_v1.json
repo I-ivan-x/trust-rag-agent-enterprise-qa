@@ -1,7 +1,7 @@
 {
   "schema_version": "public-dependency-audit-v1",
   "uv_lock_sha256": "b2475c7f88a02db7953f286311207f749c70b9df20be4b155663761683aacbe5",
-  "package_lock_sha256": "2e742bd50153a1356f3556a56280bea612ec54f9f54fba42a57ddfd96a218b8e",
+  "package_lock_sha256": "c01a342bf27334115ab3ae2ca166de420bdeb28072df1e496b306089e822ea62",
   "python": [
     {"package": "fastapi", "scope": "runtime", "license": "MIT", "status": "compatible-review"},
     {"package": "httpx", "scope": "runtime", "license": "BSD-3-Clause", "status": "compatible-review"},
@@ -34,9 +34,9 @@
   "npm_production_vulnerabilities": 0,
   "npm_high_vulnerabilities": 0,
   "npm_critical_vulnerabilities": 0,
-  "npm_moderate_vulnerabilities": 17,
-  "accepted_moderate_advisory": "GHSA-8988-4f7v-96qf",
-  "accepted_advisory_scope": "Lighthouse-only development tooling",
+  "npm_moderate_vulnerabilities": 0,
+  "accepted_moderate_advisory": "none",
+  "accepted_advisory_scope": "none",
   "breaking_downgrade_performed": false,
   "external_requests": 0
 }
