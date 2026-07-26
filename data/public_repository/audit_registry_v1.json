@@ -1,0 +1,238 @@
+{
+  "schema_version": "public-repository-audit-v1",
+  "public_project_name": "Agent Reliability Lab",
+  "public_subtitle": "Governed Runtime, Evaluation Harness, and Decision Frontier for Tool-Using Agents",
+  "frontend_package_name": "agent-reliability-lab-showcase",
+  "legacy_python_distribution_name": "trust-rag-agent-enterprise-qa",
+  "stable_release": "v3.0-q4-reliability",
+  "data_roots": [
+    {
+      "root": "data/action_store/",
+      "source_types": ["synthetic"],
+      "redistribution_status": "synthetic-project-owned",
+      "license_status": "Project-authored local action-store fixtures.",
+      "provenance_evidence": ["data/action_store/alerts.jsonl"],
+      "notes": "Local deterministic action and approval sink fixtures; no production records."
+    },
+    {
+      "root": "data/agent_residual_corpus/",
+      "source_types": ["project-authored", "synthetic"],
+      "redistribution_status": "synthetic-project-owned",
+      "license_status": "Project-authored evaluation corpus.",
+      "provenance_evidence": ["data/agent_residual_corpus/ar-001-gold.md"],
+      "notes": "Fictional residual-case evaluation material."
+    },
+    {
+      "root": "data/citation_audit/",
+      "source_types": ["project-authored", "historical-immutable-artifact"],
+      "redistribution_status": "immutable-evidence-only",
+      "license_status": "Project-authored probes and human audit labels.",
+      "provenance_evidence": ["data/citation_audit/discriminative_probes.jsonl"],
+      "notes": "Tracked audit inputs and immutable labeling evidence."
+    },
+    {
+      "root": "data/claims/",
+      "source_types": ["project-authored", "historical-immutable-artifact"],
+      "redistribution_status": "immutable-evidence-only",
+      "license_status": "Project-authored registry plus hash-bound evidence snapshots.",
+      "provenance_evidence": ["data/claims/source_import_audit.json"],
+      "notes": "Canonical public claims and minimal immutable evidence imports."
+    },
+    {
+      "root": "data/eval_baselines/",
+      "source_types": ["project-authored", "historical-immutable-artifact"],
+      "redistribution_status": "immutable-evidence-only",
+      "license_status": "Project-authored regression baseline.",
+      "provenance_evidence": ["data/eval_baselines/regression_baseline_v1.json"],
+      "notes": "Versioned metric baseline, not user data."
+    },
+    {
+      "root": "data/eval_runs/",
+      "source_types": ["historical-immutable-artifact"],
+      "redistribution_status": "immutable-evidence-only",
+      "license_status": "Project-generated evaluation artifacts.",
+      "provenance_evidence": ["data/eval_runs/q5-boundary-f-addendum-z-a/lineage_receipt.json"],
+      "notes": "Only explicitly tracked evidence artifacts are public; bulk runtime outputs remain ignored."
+    },
+    {
+      "root": "data/gold_eval/",
+      "source_types": ["project-authored", "synthetic"],
+      "redistribution_status": "synthetic-project-owned",
+      "license_status": "Project-authored evaluation labels.",
+      "provenance_evidence": ["data/gold_eval/agent_residual_eval.jsonl"],
+      "notes": "Synthetic or project-authored answer and action labels."
+    },
+    {
+      "root": "data/hard_negative_corpus/",
+      "source_types": ["public-third-party", "project-authored"],
+      "redistribution_status": "upstream-license-with-attribution",
+      "license_status": "FastAPI documentation under the upstream MIT license; local pair metadata is project-authored.",
+      "provenance_evidence": ["data/hard_negative_corpus/hard_negative_manifest.jsonl", "docs/CORPUS_PROTOCOL.md"],
+      "notes": "Verbatim FastAPI excerpts with source metadata plus local hard-negative pairing."
+    },
+    {
+      "root": "data/ops_runbook_corpus/",
+      "source_types": ["public-third-party", "project-authored"],
+      "redistribution_status": "upstream-license-with-attribution",
+      "license_status": "Kubernetes documentation under CC BY 4.0; local SOP and overlay rows are project-authored.",
+      "provenance_evidence": ["data/ops_runbook_corpus/public_corpus_manifest.jsonl", "docs/CORPUS_PROTOCOL.md"],
+      "notes": "Upstream Kubernetes text remains attributed; synthetic policy overlays are explicitly marked."
+    },
+    {
+      "root": "data/public_corpus/",
+      "source_types": ["public-third-party"],
+      "redistribution_status": "upstream-license-with-attribution",
+      "license_status": "FastAPI documentation under the upstream MIT license.",
+      "provenance_evidence": ["data/public_corpus/public_corpus_manifest.jsonl", "docs/CORPUS_PROTOCOL.md"],
+      "notes": "Verbatim public repository documentation with source URLs and license notes."
+    },
+    {
+      "root": "data/public_repository/",
+      "source_types": ["project-authored", "historical-immutable-artifact"],
+      "redistribution_status": "immutable-evidence-only",
+      "license_status": "Project-authored public-repository audit registry and dependency snapshot.",
+      "provenance_evidence": ["data/public_repository/audit_registry_v1.json", "data/public_repository/dependency_audit_v1.json"],
+      "notes": "Versioned audit declarations verified against tracked repository state."
+    },
+    {
+      "root": "data/q5/",
+      "source_types": ["project-authored", "synthetic", "historical-immutable-artifact"],
+      "redistribution_status": "immutable-evidence-only",
+      "license_status": "Project-authored Q5 research data and archived dev authoring material.",
+      "provenance_evidence": ["data/q5/archive/dev-v1/README.md"],
+      "notes": "No q5_test split is present; archived dev generations remain immutable."
+    },
+    {
+      "root": "data/q5_frontier/",
+      "source_types": ["project-authored", "synthetic", "historical-immutable-artifact"],
+      "redistribution_status": "immutable-evidence-only",
+      "license_status": "Project-authored frontier datasets and audit artifacts.",
+      "provenance_evidence": ["data/q5_frontier/dev-k0u-audit/lineage_receipt.json"],
+      "notes": "Frozen Boundary evidence and synthetic frontier authoring."
+    },
+    {
+      "root": "data/redteam_adjudication/",
+      "source_types": ["project-authored", "historical-immutable-artifact"],
+      "redistribution_status": "immutable-evidence-only",
+      "license_status": "Project-authored adjudication labels.",
+      "provenance_evidence": ["data/redteam_adjudication/manual_adjudication_v1.jsonl"],
+      "notes": "Human review labels over fictional red-team fixtures."
+    },
+    {
+      "root": "data/redteam_corpus/",
+      "source_types": ["project-authored", "synthetic"],
+      "redistribution_status": "synthetic-project-owned",
+      "license_status": "Project-authored adversarial fixtures.",
+      "provenance_evidence": ["data/redteam_corpus/rt-001-deployment-notes.md"],
+      "notes": "Fictional injection and credential-shaped canaries; never real secrets."
+    },
+    {
+      "root": "data/releases/",
+      "source_types": ["project-authored", "historical-immutable-artifact"],
+      "redistribution_status": "immutable-evidence-only",
+      "license_status": "Project-authored release schemas, manifests and verification receipts.",
+      "provenance_evidence": ["data/releases/release_manifest_v1.schema.json"],
+      "notes": "Receipt-bearing release evidence; no tag or release object is created by this directory."
+    },
+    {
+      "root": "data/sample_corpus/",
+      "source_types": ["project-authored", "synthetic"],
+      "redistribution_status": "synthetic-project-owned",
+      "license_status": "Project-authored Northstar Cloud fixtures.",
+      "provenance_evidence": ["docs/CORPUS_PROTOCOL.md"],
+      "notes": "Fictional smoke-test and local demonstration documents."
+    },
+    {
+      "root": "data/showcase/",
+      "source_types": ["project-authored", "synthetic"],
+      "redistribution_status": "synthetic-project-owned",
+      "license_status": "Project-authored interview demonstration corpus.",
+      "provenance_evidence": ["data/showcase/interview-v1/manifest.json"],
+      "notes": "Demonstration-only, headline-ineligible and isolated from formal claims."
+    }
+  ],
+  "legacy_codename_policy": {
+    "codename": "TrustRAG",
+    "allowed_path_prefixes": [
+      "app/",
+      "tests/",
+      "data/claims/source/"
+    ],
+    "allowed_exact_paths": [
+      "README.md",
+      ".env.example",
+      "frontend/README.md",
+      "data/public_repository/audit_registry_v1.json",
+      "pyproject.toml",
+      "uv.lock",
+      "docker-compose.yml",
+      "data/claims/claim_registry.json",
+      "data/claims/claim_registry.schema.json",
+      "scripts/export_otel_trace.py",
+      "docs/ENGINEERING_DISCIPLINE.md",
+      "docs/PUBLIC_REPOSITORY_AUDIT.md",
+      "docs/EVALUATION_REPORT.md",
+      "docs/FAILURE_ANALYSIS.md",
+      "docs/INTERVIEW_QA.md",
+      "docs/LATEST_RESULTS_AND_DEMO.md",
+      "docs/PROJECT_OVERVIEW.md",
+      "docs/Q1_HARD_DEMO_TASK_PLAN.md",
+      "docs/ROADMAP.md",
+      "docs/SHOWCASE_PLAN.md",
+      "docs/SHOWCASE_PLAN_V2.md",
+      "docs/SPEC_Q4_P6_P7.md",
+      "docs/STUDY_CHECKLIST.md",
+      "docs/TECHNICAL_DESIGN.md",
+      "docs/TRUST_POLICY.md",
+      "docs/WEEK6_CLOSEOUT_REVIEW_PACKET.md"
+    ],
+    "current_public_identity": "Agent Reliability Lab"
+  },
+  "repository_license": {
+    "status": "owner-decision-pending",
+    "recommendations": ["Apache-2.0", "MIT"],
+    "license_file_created": false
+  },
+  "secret_fixture_path_prefixes": [
+    "data/public_corpus/",
+    "data/hard_negative_corpus/",
+    "data/ops_runbook_corpus/",
+    "data/q5/",
+    "data/q5_frontier/",
+    "data/sample_corpus/",
+    "data/redteam_corpus/",
+    "tests/"
+  ],
+  "tracked_ignored_exceptions": [
+    "data/eval_runs/q5-boundary-f-addendum-z-a/addendum_metrics.json",
+    "data/eval_runs/q5-boundary-f-addendum-z-a/addendum_report.md",
+    "data/eval_runs/q5-boundary-f-addendum-z-a/addendum_rows.jsonl",
+    "data/eval_runs/q5-boundary-f-addendum-z-a/artifact_hashes.json",
+    "data/eval_runs/q5-boundary-f-addendum-z-a/frozen_scope.json",
+    "data/eval_runs/q5-boundary-f-addendum-z-a/lineage_receipt.json",
+    "data/eval_runs/q5-boundary-f-addendum-z-a/parser_attestation.json"
+  ],
+  "public_brand_surfaces": [
+    "README.md",
+    "frontend/README.md",
+    "frontend/src/layouts/Base.astro",
+    "frontend/src/components/Hero.astro",
+    "app/web/index.html",
+    "pyproject.toml",
+    "frontend/package.json"
+  ],
+  "formal_claim_surfaces": [
+    "data/claims/claim_registry.json",
+    "docs/Q5_FINAL_REPORT.md",
+    "docs/Q5_CLAIM_MATRIX.md",
+    "docs/Q5_BOUNDARY_A_F_SUMMARY.md",
+    "frontend/src/data/questions.json",
+    "frontend/src/data/headline-results.json",
+    "frontend/src/data/decision-frontier.json",
+    "frontend/src/data/q5-evidence.json",
+    "frontend/src/data/engineering-signals.json"
+  ],
+  "q5_test": "absent",
+  "model_requests": 0,
+  "external_requests": 0
+}

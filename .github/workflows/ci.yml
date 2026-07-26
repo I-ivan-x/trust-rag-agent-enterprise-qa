@@ -43,6 +43,12 @@ jobs:
       - name: Interview showcase isolation gate
         run: uv run --frozen python scripts/build_interview_showcase.py --check
 
+      - name: Public repository audit gate
+        run: uv run --frozen python scripts/verify_public_repository.py
+
+      - name: Frontend closure artifact gate
+        run: uv run --frozen python scripts/verify_frontend_closure.py
+
       - name: Synthetic release gates
         run: >-
           uv run --frozen python scripts/check_release_gates.py

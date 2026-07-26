@@ -1,0 +1,42 @@
+{
+  "schema_version": "public-dependency-audit-v1",
+  "uv_lock_sha256": "b2475c7f88a02db7953f286311207f749c70b9df20be4b155663761683aacbe5",
+  "package_lock_sha256": "2e742bd50153a1356f3556a56280bea612ec54f9f54fba42a57ddfd96a218b8e",
+  "python": [
+    {"package": "fastapi", "scope": "runtime", "license": "MIT", "status": "compatible-review"},
+    {"package": "httpx", "scope": "runtime", "license": "BSD-3-Clause", "status": "compatible-review"},
+    {"package": "numpy", "scope": "runtime", "license": "BSD-3-Clause", "status": "compatible-review"},
+    {"package": "pydantic", "scope": "runtime", "license": "MIT", "status": "compatible-review"},
+    {"package": "pydantic-settings", "scope": "runtime", "license": "MIT", "status": "compatible-review"},
+    {"package": "PyYAML", "scope": "runtime", "license": "MIT", "status": "compatible-review"},
+    {"package": "qdrant-client", "scope": "runtime", "license": "Apache-2.0", "status": "compatible-review"},
+    {"package": "python-dotenv", "scope": "runtime", "license": "BSD-3-Clause", "status": "compatible-review"},
+    {"package": "python-frontmatter", "scope": "runtime", "license": "MIT", "status": "compatible-review"},
+    {"package": "uvicorn", "scope": "runtime", "license": "BSD-3-Clause", "status": "compatible-review"},
+    {"package": "Whoosh", "scope": "runtime", "license": "BSD-2-Clause", "status": "compatible-review"},
+    {"package": "sentence-transformers", "scope": "optional", "license": "Apache-2.0", "status": "compatible-review"},
+    {"package": "mcp", "scope": "optional", "license": "MIT", "status": "compatible-review"},
+    {"package": "opentelemetry-sdk", "scope": "optional", "license": "Apache-2.0", "status": "compatible-review"},
+    {"package": "opentelemetry-exporter-otlp-proto-grpc", "scope": "optional", "license": "Apache-2.0", "status": "compatible-review"},
+    {"package": "pytest", "scope": "development", "license": "MIT", "status": "tooling-only"},
+    {"package": "ruff", "scope": "development", "license": "MIT", "status": "tooling-only"}
+  ],
+  "npm": [
+    {"package": "astro", "scope": "runtime", "license": "MIT", "status": "compatible-review"},
+    {"package": "@lucide/astro", "scope": "runtime", "license": "ISC", "status": "compatible-review"},
+    {"package": "tailwindcss", "scope": "runtime", "license": "MIT", "status": "compatible-review"},
+    {"package": "@tailwindcss/vite", "scope": "runtime", "license": "MIT", "status": "compatible-review"},
+    {"package": "@playwright/test", "scope": "development", "license": "Apache-2.0", "status": "tooling-only"},
+    {"package": "lighthouse", "scope": "development", "license": "Apache-2.0", "status": "tooling-only"},
+    {"package": "vite", "scope": "development", "license": "MIT", "status": "tooling-only"}
+  ],
+  "python_advisory_status": "offline-review-no-known-direct-runtime-advisory",
+  "npm_production_vulnerabilities": 0,
+  "npm_high_vulnerabilities": 0,
+  "npm_critical_vulnerabilities": 0,
+  "npm_moderate_vulnerabilities": 17,
+  "accepted_moderate_advisory": "GHSA-8988-4f7v-96qf",
+  "accepted_advisory_scope": "Lighthouse-only development tooling",
+  "breaking_downgrade_performed": false,
+  "external_requests": 0
+}
