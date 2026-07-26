@@ -120,6 +120,10 @@ async function captureScreenshots() {
         }
       });
       await page.goto(url, { waitUntil: "networkidle" });
+      await page.addStyleTag({
+        content: ".section { content-visibility: visible !important; }",
+      });
+      await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => resolve())));
       const path = join(acceptanceRoot, `${viewport.name}.png`);
       await page.screenshot({ path, fullPage: true });
       if (externalUrls.length) throw new Error(`external screenshot requests: ${externalUrls}`);
