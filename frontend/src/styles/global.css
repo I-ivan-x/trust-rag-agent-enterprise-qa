@@ -82,6 +82,16 @@ main {
   overflow: clip;
 }
 
+#evaluation-infrastructure {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 1100px;
+}
+
+#evidence-ledger {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 3000px;
+}
+
 .wrap {
   width: min(100% - 40px, 1180px);
   margin-inline: auto;

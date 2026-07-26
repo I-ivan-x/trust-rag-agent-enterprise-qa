@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
-import { extname, join, normalize, resolve } from "node:path";
+import { extname, join, relative, resolve } from "node:path";
 import { brotliCompressSync } from "node:zlib";
 import { chromium } from "@playwright/test";
 import { launch } from "chrome-launcher";
@@ -20,20 +20,20 @@ const contentTypes = {
   ".json": "application/json; charset=utf-8",
   ".svg": "image/svg+xml",
 };
+const assets = await loadAssets(root);
 
-const server = createServer(async (request, response) => {
+const server = createServer((request, response) => {
   try {
     const pathname = new URL(request.url ?? "/", url).pathname;
-    const relative = pathname === "/" ? "index.html" : pathname.replace(/^\/+/, "");
-    const filePath = normalize(join(root, relative));
-    if (!filePath.startsWith(root)) throw new Error("invalid path");
-    const body = await readFile(filePath);
+    const assetPath = pathname === "/" ? "index.html" : pathname.replace(/^\/+/, "");
+    const asset = assets.get(assetPath);
+    if (!asset) throw new Error("not found");
     const acceptsBrotli = /(?:^|,)\s*br(?:\s*;|\s*,|$)/.test(
       String(request.headers["accept-encoding"] ?? ""),
     );
-    const responseBody = acceptsBrotli ? brotliCompressSync(body) : body;
+    const responseBody = acceptsBrotli ? asset.brotli : asset.body;
     response.writeHead(200, {
-      "content-type": contentTypes[extname(filePath)] ?? "application/octet-stream",
+      "content-type": asset.contentType,
       "cache-control": "no-store",
       ...(acceptsBrotli ? { "content-encoding": "br", vary: "accept-encoding" } : {}),
     });
@@ -84,7 +84,8 @@ try {
   const receipt = {
     schema_version: "frontend-lighthouse-receipt-v1",
     build_commit: buildCommit,
-    run_mode: "local static Astro build with Brotli; Lighthouse desktop simulated throttling",
+    run_mode:
+      "preloaded static Astro build with precompressed Brotli; Lighthouse desktop simulated throttling",
     viewport: { width: 1440, height: 900, deviceScaleFactor: 1 },
     scores: { performance, accessibility },
     thresholds: { performance: 90, accessibility: 90 },
@@ -106,4 +107,21 @@ try {
     if (error?.code !== "EPERM") throw error;
   }
   await new Promise((resolveClose) => server.close(resolveClose));
+}
+
+async function loadAssets(directory) {
+  const loaded = new Map();
+  const entries = await readdir(directory, { recursive: true, withFileTypes: true });
+  for (const entry of entries) {
+    if (!entry.isFile()) continue;
+    const filePath = join(entry.parentPath, entry.name);
+    const assetPath = relative(directory, filePath).replaceAll("\\", "/");
+    const body = await readFile(filePath);
+    loaded.set(assetPath, {
+      body,
+      brotli: brotliCompressSync(body),
+      contentType: contentTypes[extname(filePath)] ?? "application/octet-stream",
+    });
+  }
+  return loaded;
 }
