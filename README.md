@@ -94,7 +94,17 @@ npm run build
 
 ## Verification status
 
-Final Batch 5-Z verification: `908 passed, 1 skipped`. Ruff, claim drift, frontend build, and repository release gates are reported in the completion handoff.
+Batch 5-ZM/ZN closure verification: `966 passed, 1 skipped, 23 warnings`.
+The detached clean clone passed with three Lighthouse performance scores of
+`95/95/94`, accessibility `100/100/100`, Playwright `48 passed / 12 skipped`,
+all six release gates, and zero model or evaluation-external requests.
+
+The canonical release envelope is
+`data/releases/release_manifest_v1.json` (SHA-256
+`a65ab25aee9c41b131e213651994616f87950f93471771fc65a983a33f9833c9`);
+its clean-clone receipt is `data/releases/clean_clone_receipt_v1.json`.
+CI verifies the manifest explicitly, and mutation tests reject missing,
+untracked, rehashed, or wrong-lineage artifacts.
 
 ## Documentation map
 

@@ -426,3 +426,17 @@ release 仍是 `v3.0-q4-reliability`。
 历史设计、amendment、preflight 与 negative diagnostic 继续保留，用于审计实验如何被挑战和收缩；
 当前对外数字与状态只从 `data/claims/claim_registry.json`、生成的 `Q5_CLAIM_MATRIX.md` 和
 `Q5_FINAL_REPORT.md` 读取。
+
+------
+
+## 13. Batch 5-Z 工程封装状态
+
+- Z-L：Claim registry、生成器与 CI drift gate 已完成。
+- Z-M：detached `--no-hardlinks` clean clone、版本化 release manifest、receipt、mutation tests
+  与显式 CI gate 已完成。最终 clean-clone Lighthouse 为 `95/95/94`，accessibility
+  为 `100/100/100`。
+- Z-N：18 个 tracked data roots、secret/PII、品牌、showcase 隔离、依赖许可与再分发边界审计
+  已完成；Lighthouse 13.4.1 后 npm 全树在线审计为 0 漏洞。
+- 仓库级 `LICENSE` 仍是 Owner 决策：Apache-2.0 或 MIT。未选择前不擅自创建。
+- 项目最终归档仍待 Z-O；研究 milestone tag 仍未创建，稳定产品 release 继续保持
+  `v3.0-q4-reliability`。

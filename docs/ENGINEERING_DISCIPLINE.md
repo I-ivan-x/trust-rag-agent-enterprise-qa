@@ -1,7 +1,7 @@
 # Agent Reliability Lab — 工程纪律与高效执行记录
 
-盘点日期：2026-07-18
-证据范围：`2026-06-10` 至 `2026-07-18` 的 Git 历史、项目文档、评测代码、测试与发布标签
+盘点日期：2026-07-27
+证据范围：`2026-06-10` 至 `2026-07-27` 的 Git 历史、项目文档、评测代码、测试与发布标签
 用途：说明项目如何被组织、推进、验证和收口，以及这种执行方式体现的工程素养
 
 > TrustRAG 是 legacy codename；历史 run、tag、artifact schema 与内部标识保持原样。
@@ -43,16 +43,16 @@ Agent Reliability Lab 的项目秩序不是传统的“先列功能，再逐项�
 
 | 证据 | 数量 / 时间 | 它说明什么 |
 | --- | ---: | --- |
-| Git commits | **107** | 交付被拆成可审查的小步，而非一次性大提交 |
-| 有记录的开发跨度 | **2026-06-10 至 2026-07-13** | 34 个自然日内完成系统、评测、治理、可靠性、展示与 Q5 Agent Infra 迭代 |
+| Git commits | **166** | 交付被拆成可审查的小步，而非一次性大提交 |
+| 有记录的开发跨度 | **2026-06-10 至 2026-07-27** | 48 个自然日内完成系统、评测、治理、可靠性、展示、Q5 与发布封装迭代 |
 | 正式阶段标签 | **4** | `v0.3-q1-hard-demo`、`v1.0-q2-agentic-eval`、`v2.0-q3-action-governance`、`v3.0-q4-reliability` |
 | 阶段性标签 | **6** | ingestion、retrieval、generation、trust gates、eval 分阶段冻结 |
-| `docs/*.md` | **79（含本文及 Q5 文档）** | 设计、协议、规格、报告、失败分析和交接材料分层保存 |
-| 实现规格文档 | **21** | 高风险功能通常先写契约，再进入代码 |
-| 可执行脚本 | **28** | ingest、index、eval、leakage、ablation、diagnostic、release gate 均可命令化 |
-| Python app 代码 | **20,605 行** | 覆盖完整 RAG、Agent、治理、评测与可观测模块 |
-| Python test 代码 | **13,081 行** | 测试代码约为 app 代码的 63%，质量投入不是尾部补丁 |
-| 全量回归 | **`908 passed, 1 skipped`** | Batch 5-Z 全仓实跑输出；另有 23 条 warning |
+| `docs/*.md` | **86（含本文及 Q5 文档）** | 设计、协议、规格、报告、失败分析和交接材料分层保存 |
+| 实现规格文档 | **25** | 高风险功能通常先写契约，再进入代码 |
+| 可执行 Python 脚本 | **60** | ingest、index、eval、leakage、ablation、diagnostic、release gate 均可命令化 |
+| Python app 代码 | **39,773 行** | 覆盖完整 RAG、Agent、治理、评测与可观测模块 |
+| Python test 代码 | **19,781 行** | 测试代码约为 app 代码的一半，质量投入不是尾部补丁 |
+| 全量回归 | **`966 passed, 1 skipped`** | Batch 5-ZM/ZN 全仓实跑输出；另有 23 条 warning |
 
 这些数字只证明项目具有持续投入和结构化产物，不单独证明质量。质量结论仍以真实 run、评测边界、
 失败分析和可复现命令为准。
@@ -152,6 +152,7 @@ Git 历史中的多条链路都保持了相似结构：
 | 2026-06-25 至 2026-06-26 | Q4 diagnosis -> preregistration -> dev calibration -> freeze -> held-out -> OTel/manifest/gates -> Q4 tag |
 | 2026-06-29 | showcase plan -> snapshot data -> staged frontend implementation -> v2 focus redesign |
 | 2026-07-10 至 2026-07-13 | Q5 design freeze -> Batch 0-4 -> real-dev 负诊断 -> protocol v2/v3 -> v1/v2 archive -> crossed-counterfactual dev v3 |
+| 2026-07-17 至 2026-07-27 | Claim registry -> Q5 scoped-negative closure -> recruiter narrative -> public audit -> clean-clone manifest and CI drift gate |
 
 提交信息通常能直接回答“这是设计、实现、评测还是报告”，并保留关键负结果，例如
 `no judge deployed`、`agent gain falsified`、`negative->positive`。这使 Git 本身成为决策审计记录的一部分。
@@ -181,7 +182,7 @@ Git 历史中的多条链路都保持了相似结构：
 | 项目管理 | 分阶段目标、依赖链、Owner、验收标准、scope review、砍序、release tag |
 | 风险意识 | ACL/state/evidence gate、validator、HITL、red-team、mock/headline 隔离 |
 | 成本意识 | zero-token precheck、retrieval-only run、小样本 judge gate、调用量预算 |
-| 工程质量 | `908 passed, 1 skipped`、Ruff、Docker smoke、run manifest、trace、失败分类与回归检查脚本 |
+| 工程质量 | `966 passed, 1 skipped`、Ruff、clean clone、release manifest、trace、失败分类与回归检查脚本 |
 | 沟通能力 | README、技术 ADR、评测报告、失败报告、Interview QA、Web showcase 分别服务不同读者 |
 | 迭代能力 | Q2 证伪 Agent 增益，Q3 找到新价值面，Q4 把明确负结果修成受约束正结果 |
 
@@ -189,11 +190,14 @@ Git 历史中的多条链路都保持了相似结构：
 
 ## 11. 当前边界与已关闭研究轨
 
-为了让本文在面试中可守住，以下边界不能省略。截至 2026-07-18：
+为了让本文在面试中可守住，以下边界不能省略。截至 2026-07-27：
 
 - `.github/workflows/ci.yml` 已接入 locked dependency install、Ruff、全量 pytest、release gates、
-  frontend build 和 public-claim drift gate；普通 CI 绿灯仍不能替代真实 run 证据。
-- 全量测试的本批最终结果为 `908 passed, 1 skipped`；它只说明代码回归状态，不等于实验结论。
+  public-claim drift、公开仓库、frontend artifact 与 canonical release-manifest gate；普通 CI 绿灯
+  仍不能替代真实 run 证据。
+- 全量测试的本批最终结果为 `966 passed, 1 skipped`；它只说明代码回归状态，不等于实验结论。
+- detached clean clone 绑定提交与 tree，离线安装依赖后通过三次 Lighthouse `95/95/94`、
+  accessibility `100/100/100`、Playwright `48/12` 与 6/6 release gates。
 - 最新稳定产品 release 仍是 `v3.0-q4-reliability`。Q5 没有形成新 tag/release。
 - Q5 的正式 overall status 是 `scoped_negative_complete`。它展示了 selective runtime、observation
   adaptation、schema/transition safety 与 real-dev efficiency，但没有达到预注册 semantic uplift。
@@ -214,7 +218,7 @@ Git 历史中的多条链路都保持了相似结构：
 
 > 建立 evidence-driven 的 Agent 研发流程，以设计冻结、预注册评测、零 token 诊断、消融实验、
 > run manifest 和机器化发布门管理 AI 协作开发；形成多个可审查提交和 4 个阶段 release，
-> 本批完整测试为 `908 passed, 1 skipped`，并将未达门槛的 judge/Agent 能力主动证伪、降级或锁定。
+> 本批完整测试为 `966 passed, 1 skipped`，并将未达门槛的 judge/Agent 能力主动证伪、降级或锁定。
 
 面试中的一分钟表达：
 

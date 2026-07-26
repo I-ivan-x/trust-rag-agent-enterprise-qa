@@ -59,7 +59,10 @@ npm ci
 npm run build
 ```
 
-The site retains existing Q1–Q4 components and now has generated Q1–Q5 data contracts for future presentation work. This batch changes truth/data/branding only; it does not redesign visual components.
+The current site uses the seven-section interview narrative: Hero, Five
+Questions, Governed Runtime, Reliability Turn, Q5 Decision Frontier,
+Evaluation Infrastructure, and Evidence Ledger. Its Q1–Q5 data contracts are
+generated from the canonical Claim registry.
 
 Generated recruiting data:
 
@@ -90,9 +93,13 @@ Every generated record includes a claim ID, tracked artifact, artifact SHA-256, 
 
 ## Verification
 
-Final Batch 5-Z test result: `908 passed, 1 skipped`. Current generated claims are checked with:
+Batch 5-ZM/ZN test result: `966 passed, 1 skipped, 23 warnings`. The detached
+clean clone passed Lighthouse `95/95/94`, accessibility `100/100/100`,
+Playwright `48 passed / 12 skipped`, and release gates `6/6`. Verify the
+canonical release envelope and generated claims with:
 
 ```powershell
+py -m uv run --frozen python scripts/build_release_manifest.py verify
 py -m uv run --frozen python scripts/build_public_claims.py --check
 py -m uv run --frozen python scripts/check_claim_drift.py
 ```
