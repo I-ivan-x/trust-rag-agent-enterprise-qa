@@ -35,7 +35,10 @@ def verify_release_clean_clone(
 ) -> ReleaseCleanCloneReceipt:
     tested_commit = _git(repository, "rev-parse", f"{commit}^{{commit}}")
     tested_tree = _git(repository, "rev-parse", f"{tested_commit}^{{tree}}")
-    with tempfile.TemporaryDirectory(prefix="agent-release-clean-clone-") as temporary:
+    with tempfile.TemporaryDirectory(
+        prefix="agent-release-clean-clone-",
+        dir=repository.parent,
+    ) as temporary:
         clone = Path(temporary) / "repository"
         _run(
             [
