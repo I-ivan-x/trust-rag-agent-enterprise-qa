@@ -154,18 +154,18 @@
     }
   },
   "clean_clone_receipt": {
-    "git_blob_sha": "c39efc9a0e4477bbb91b43abc2a3d3de1c264c9f",
+    "git_blob_sha": "44ea8a863b1dd02a50d6e07aa3368298aa55e452",
     "path": "data/releases/clean_clone_receipt_v1.json",
-    "sha256": "8ecb1f4fce90a701eaad61db0030f2cf85f18dc0b6bba54efb4fa1b0f50e2469",
+    "sha256": "586f9d3d05d4ccde8cc6c087559e9b9c591fad7c76fda220ff05ffbbfd5b254a",
     "size_bytes": 4580
   },
   "external_requests": 0,
   "frontend": {
     "closure_receipt": {
-      "git_blob_sha": "a614b772a22bca895914ca68f1b54c3588cd8626",
+      "git_blob_sha": "64dcdd96b322f285bb9ed476faf6a1766a92928a",
       "path": "frontend/acceptance/frontend-closure/receipt.json",
-      "sha256": "d86a3a24fa076873c4a319164593d440754a45341f646dc738821ffe572a3553",
-      "size_bytes": 2335
+      "sha256": "4f1e619bfdd1c0404940e9962752b280af997f53b2d7232164841ad685b37ef7",
+      "size_bytes": 2334
     },
     "screenshots": [
       {
@@ -189,10 +189,10 @@
     ]
   },
   "frontend_lock": {
-    "git_blob_sha": "e2badcd5b32b7f96d4c097d1ae3d8971a5b1a10d",
+    "git_blob_sha": "a4795e41c8a0dd80a89c90f7f583cba628862167",
     "path": "frontend/package-lock.json",
-    "sha256": "2e742bd50153a1356f3556a56280bea612ec54f9f54fba42a57ddfd96a218b8e",
-    "size_bytes": 242372
+    "sha256": "c01a342bf27334115ab3ae2ca166de420bdeb28072df1e496b306089e822ea62",
+    "size_bytes": 216987
   },
   "model_requests": 0,
   "pending_research_milestone": {
@@ -209,16 +209,16 @@
       "size_bytes": 10891
     },
     {
-      "git_blob_sha": "75d2abe30861617f8269da04d53b7619a30db1d0",
+      "git_blob_sha": "3d61bc800a28894ec27978c2815a28799bbc78f9",
       "path": "data/public_repository/dependency_audit_v1.json",
-      "sha256": "5fe1189344a61b8ffb77de3a2dc4a6c2ca43c6fea08dd14e0f50b3c3856de887",
-      "size_bytes": 3199
+      "sha256": "4d6cf197de5b7fa01d172237d45a4367083b969fb4d03fb7cfbbbc81a8523b26",
+      "size_bytes": 3152
     },
     {
-      "git_blob_sha": "425f9f2fbe20b2add1d653feb3943182adba5b92",
+      "git_blob_sha": "04eee4a749bcee23fe49d802e3f5ebe17bca3883",
       "path": "docs/PUBLIC_REPOSITORY_AUDIT.md",
-      "sha256": "f941c1c7179e99e5153e919a35bfa427633eb672ab11f59f0376cbf1fbe6e783",
-      "size_bytes": 4737
+      "sha256": "d03a6b3d8f5e9b5c51caf173936ea7dc790bbf704414f460b184503565613568",
+      "size_bytes": 4731
     },
     {
       "git_blob_sha": "df01e632eba0aeff906e852a79ac52fb6cffe856",
@@ -227,10 +227,10 @@
       "size_bytes": 4329
     },
     {
-      "git_blob_sha": "6711437fac8893cb62e7d36ade16c9065e09a051",
+      "git_blob_sha": "49c150d37c2d636790ce1b0d46fb07aedaab4840",
       "path": "SECURITY.md",
-      "sha256": "77836ad7c06d19ffa08f64e65c95e22de5edda6e641de9150016090108d07bf5",
-      "size_bytes": 2036
+      "sha256": "994b490a0d94a4c89dce60e5c4e292f78294d79b29b1c7b78ee3f44790c53a6a",
+      "size_bytes": 2055
     }
   ],
   "python_lock": {
@@ -285,6 +285,6 @@
     "tag_kind": "annotated",
     "tag_object_sha": "4e5198c1303b8626a2d10cea33ec905116e5d286"
   },
-  "tested_commit": "ca0489a4eeab3e9d9b51f058421b646968af0649",
-  "tested_tree": "af9ab7aa4952d8f6bd7e9581e5b6992c99619b1d"
+  "tested_commit": "d2a8c703be770bf983d0b680c6005dd08fde416f",
+  "tested_tree": "c455faf82f79b46716efb7cb3d4e94ec9eef672a"
 }
