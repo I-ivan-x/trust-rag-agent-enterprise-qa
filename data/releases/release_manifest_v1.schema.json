@@ -1,0 +1,338 @@
+{
+  "$defs": {
+    "BoundaryFReleaseBindings": {
+      "additionalProperties": false,
+      "properties": {
+        "addendum_evidence": {
+          "items": {
+            "$ref": "#/$defs/ReleaseArtifact"
+          },
+          "minItems": 1,
+          "title": "Addendum Evidence",
+          "type": "array"
+        },
+        "original_evidence": {
+          "items": {
+            "$ref": "#/$defs/ReleaseArtifact"
+          },
+          "minItems": 1,
+          "title": "Original Evidence",
+          "type": "array"
+        }
+      },
+      "required": [
+        "original_evidence",
+        "addendum_evidence"
+      ],
+      "title": "BoundaryFReleaseBindings",
+      "type": "object"
+    },
+    "ClaimReleaseBindings": {
+      "additionalProperties": false,
+      "properties": {
+        "generated_views": {
+          "items": {
+            "$ref": "#/$defs/ReleaseArtifact"
+          },
+          "minItems": 1,
+          "title": "Generated Views",
+          "type": "array"
+        },
+        "presentation_catalog": {
+          "$ref": "#/$defs/ReleaseArtifact"
+        },
+        "registry": {
+          "$ref": "#/$defs/ReleaseArtifact"
+        },
+        "registry_schema": {
+          "$ref": "#/$defs/ReleaseArtifact"
+        }
+      },
+      "required": [
+        "registry",
+        "presentation_catalog",
+        "registry_schema",
+        "generated_views"
+      ],
+      "title": "ClaimReleaseBindings",
+      "type": "object"
+    },
+    "FrontendReleaseBindings": {
+      "additionalProperties": false,
+      "properties": {
+        "closure_receipt": {
+          "$ref": "#/$defs/ReleaseArtifact"
+        },
+        "screenshots": {
+          "items": {
+            "$ref": "#/$defs/ReleaseArtifact"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "title": "Screenshots",
+          "type": "array"
+        }
+      },
+      "required": [
+        "closure_receipt",
+        "screenshots"
+      ],
+      "title": "FrontendReleaseBindings",
+      "type": "object"
+    },
+    "PendingResearchMilestone": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "const": "q5-scoped-negative-research-closure",
+          "title": "Name",
+          "type": "string"
+        },
+        "release_created": {
+          "const": false,
+          "title": "Release Created",
+          "type": "boolean"
+        },
+        "tag_created": {
+          "const": false,
+          "title": "Tag Created",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "tag_created",
+        "release_created"
+      ],
+      "title": "PendingResearchMilestone",
+      "type": "object"
+    },
+    "ReleaseArtifact": {
+      "additionalProperties": false,
+      "properties": {
+        "git_blob_sha": {
+          "pattern": "^[0-9a-f]{40}$",
+          "title": "Git Blob Sha",
+          "type": "string"
+        },
+        "path": {
+          "minLength": 1,
+          "pattern": "^[^\\\\]+$",
+          "title": "Path",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "size_bytes": {
+          "exclusiveMinimum": 0,
+          "title": "Size Bytes",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "path",
+        "sha256",
+        "git_blob_sha",
+        "size_bytes"
+      ],
+      "title": "ReleaseArtifact",
+      "type": "object"
+    },
+    "ReportReleaseBindings": {
+      "additionalProperties": false,
+      "properties": {
+        "boundary_summary": {
+          "$ref": "#/$defs/ReleaseArtifact"
+        },
+        "q5_claim_matrix": {
+          "$ref": "#/$defs/ReleaseArtifact"
+        },
+        "q5_final_report": {
+          "$ref": "#/$defs/ReleaseArtifact"
+        }
+      },
+      "required": [
+        "q5_final_report",
+        "q5_claim_matrix",
+        "boundary_summary"
+      ],
+      "title": "ReportReleaseBindings",
+      "type": "object"
+    },
+    "RuntimeVersions": {
+      "additionalProperties": false,
+      "properties": {
+        "node": {
+          "minLength": 1,
+          "title": "Node",
+          "type": "string"
+        },
+        "npm": {
+          "minLength": 1,
+          "title": "Npm",
+          "type": "string"
+        },
+        "python": {
+          "minLength": 1,
+          "title": "Python",
+          "type": "string"
+        },
+        "uv": {
+          "minLength": 1,
+          "title": "Uv",
+          "type": "string"
+        }
+      },
+      "required": [
+        "python",
+        "uv",
+        "node",
+        "npm"
+      ],
+      "title": "RuntimeVersions",
+      "type": "object"
+    },
+    "StableReleaseBinding": {
+      "additionalProperties": false,
+      "properties": {
+        "release_commit": {
+          "pattern": "^[0-9a-f]{40}$",
+          "title": "Release Commit",
+          "type": "string"
+        },
+        "tag": {
+          "const": "v3.0-q4-reliability",
+          "title": "Tag",
+          "type": "string"
+        },
+        "tag_kind": {
+          "const": "annotated",
+          "title": "Tag Kind",
+          "type": "string"
+        },
+        "tag_object_sha": {
+          "pattern": "^[0-9a-f]{40}$",
+          "title": "Tag Object Sha",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tag",
+        "tag_kind",
+        "tag_object_sha",
+        "release_commit"
+      ],
+      "title": "StableReleaseBinding",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "boundary_f": {
+      "$ref": "#/$defs/BoundaryFReleaseBindings"
+    },
+    "claims": {
+      "$ref": "#/$defs/ClaimReleaseBindings"
+    },
+    "clean_clone_receipt": {
+      "$ref": "#/$defs/ReleaseArtifact"
+    },
+    "external_requests": {
+      "const": 0,
+      "title": "External Requests",
+      "type": "integer"
+    },
+    "frontend": {
+      "$ref": "#/$defs/FrontendReleaseBindings"
+    },
+    "frontend_lock": {
+      "$ref": "#/$defs/ReleaseArtifact"
+    },
+    "model_requests": {
+      "const": 0,
+      "title": "Model Requests",
+      "type": "integer"
+    },
+    "pending_research_milestone": {
+      "$ref": "#/$defs/PendingResearchMilestone"
+    },
+    "public_project_name": {
+      "const": "Agent Reliability Lab",
+      "title": "Public Project Name",
+      "type": "string"
+    },
+    "public_repository_audit": {
+      "items": {
+        "$ref": "#/$defs/ReleaseArtifact"
+      },
+      "minItems": 1,
+      "title": "Public Repository Audit",
+      "type": "array"
+    },
+    "python_lock": {
+      "$ref": "#/$defs/ReleaseArtifact"
+    },
+    "q5_test": {
+      "const": "absent",
+      "title": "Q5 Test",
+      "type": "string"
+    },
+    "release_schema": {
+      "$ref": "#/$defs/ReleaseArtifact"
+    },
+    "reports": {
+      "$ref": "#/$defs/ReportReleaseBindings"
+    },
+    "runtime_versions": {
+      "$ref": "#/$defs/RuntimeVersions"
+    },
+    "schema_version": {
+      "const": "agent-reliability-release-manifest-v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "showcase_manifest": {
+      "$ref": "#/$defs/ReleaseArtifact"
+    },
+    "stable_release": {
+      "$ref": "#/$defs/StableReleaseBinding"
+    },
+    "tested_commit": {
+      "pattern": "^[0-9a-f]{40}$",
+      "title": "Tested Commit",
+      "type": "string"
+    },
+    "tested_tree": {
+      "pattern": "^[0-9a-f]{40}$",
+      "title": "Tested Tree",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "public_project_name",
+    "tested_commit",
+    "tested_tree",
+    "runtime_versions",
+    "python_lock",
+    "frontend_lock",
+    "release_schema",
+    "claims",
+    "reports",
+    "boundary_f",
+    "showcase_manifest",
+    "frontend",
+    "clean_clone_receipt",
+    "public_repository_audit",
+    "stable_release",
+    "pending_research_milestone",
+    "model_requests",
+    "external_requests",
+    "q5_test"
+  ],
+  "title": "ReleaseManifest",
+  "type": "object"
+}
