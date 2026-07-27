@@ -197,8 +197,9 @@ Git 历史中的多条链路都保持了相似结构：
   public-claim drift、公开仓库、frontend artifact 与 canonical release-manifest gate；普通 CI 绿灯
   仍不能替代真实 run 证据。
 - 全量测试的最终本地封存结果为 `971 passed, 1 skipped`；它只说明代码回归状态，不等于实验结论。
-- detached clean clone 绑定提交与 tree，离线安装依赖后通过三次 Lighthouse `95/95/94`、
-  accessibility `100/100/100`、Playwright `48/12` 与 6/6 release gates。
+- detached clean clone 绑定提交与 tree，离线安装依赖后通过三次 Lighthouse
+  performance `>=90`、accessibility `100/100/100`、Playwright `48/12` 与
+  6/6 release gates；逐次 performance 只保留在版本化 receipt 中。
 - 最新稳定产品 release 仍是 `v3.0-q4-reliability`。Q5 没有形成产品
   release；唯一 exact annotated tag
   `agent-reliability-lab-q5-closed-20260717` 只是研究封存 marker，不是

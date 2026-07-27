@@ -1,26 +1,26 @@
 {
   "schema_version": "frontend-closure-acceptance-v1",
-  "tested_commit": "96ad2f00f9465e97939f672bc55435b226997864",
-  "tested_tree": "8457941aa1dc8cce1b302fbcd3961cca1b29f5b0",
+  "tested_commit": "ebd99dc99d7c71b0763ff7d9a9338cdd8842f098",
+  "tested_tree": "7449e3165ef301e7c6b45288446df7cc452bbb0d",
   "package_name": "agent-reliability-lab-showcase",
   "browser": "playwright-chromium",
   "lighthouse_run_count": 3,
   "lighthouse_runs": [
     {
       "run_index": 1,
-      "performance": 95,
+      "performance": 92,
       "accessibility": 100,
       "external_requests": 0,
       "report_path": "frontend/acceptance/runtime/frontend-closure-lighthouse/run-1/report.json",
-      "report_sha256": "3a44c725ea60930bae0cffda74c088e192ff76be42bdb35f13fdf0fb348c7a21"
+      "report_sha256": "5ace3673c294366ffeb394fe8cfebc133ec00839e275a0dff0474e67e245aa3d"
     },
     {
       "run_index": 2,
-      "performance": 95,
+      "performance": 94,
       "accessibility": 100,
       "external_requests": 0,
       "report_path": "frontend/acceptance/runtime/frontend-closure-lighthouse/run-2/report.json",
-      "report_sha256": "43fd4f445905aac9c10e829dbe1c5a8b9dfde6def12bf29bfd01f1f0a01f4b86"
+      "report_sha256": "9d2fcbcca48be4dead6ebe8920f0a28084ec78addc8c57530b23b01dc030ae65"
     },
     {
       "run_index": 3,
@@ -28,7 +28,7 @@
       "accessibility": 100,
       "external_requests": 0,
       "report_path": "frontend/acceptance/runtime/frontend-closure-lighthouse/run-3/report.json",
-      "report_sha256": "91d1c2a121ac9b6e9a362d041bf3f748850ba12a7c6b114574b952272376ac75"
+      "report_sha256": "cdae601fdf0d63e4ed2e00d772f8d131f7329c3d313bb8e1837a1ae1620d4fc6"
     }
   ],
   "thresholds": {
@@ -36,8 +36,8 @@
     "accessibility_each_minimum": 90,
     "performance_median_recommended": 95
   },
-  "performance_median": 95,
-  "performance_median_recommendation_met": true,
+  "performance_median": 94,
+  "performance_median_recommendation_met": false,
   "screenshots": [
     {
       "viewport": {

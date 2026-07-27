@@ -436,8 +436,8 @@ release 仍是 `v3.0-q4-reliability`。
 
 - Z-L：Claim registry、生成器与 CI drift gate 已完成。
 - Z-M：detached `--no-hardlinks` clean clone、版本化 release manifest、receipt、mutation tests
-  与显式 CI gate 已完成。最终 clean-clone Lighthouse 为 `95/95/94`，accessibility
-  为 `100/100/100`。
+  与显式 CI gate 已完成。最终 clean-clone 三次 Lighthouse performance 均
+  `>=90`，accessibility 为 `100/100/100`；逐次 performance 由 receipt 管理。
 - Z-N：18 个 tracked data roots、secret/PII、品牌、showcase 隔离、依赖许可与再分发边界审计
   已完成；Lighthouse 13.4.1 后 npm 全树在线审计为 0 漏洞。
 - Z-N 许可证决策已关闭：项目自有材料使用 Apache-2.0；FastAPI 文档保持 MIT，

@@ -101,8 +101,9 @@ summary.
 ## Verification
 
 Final local-archive regression: `971 passed, 1 skipped, 23 warnings`. The detached
-clean clone passed Lighthouse `95/95/94`, accessibility `100/100/100`,
-Playwright `48 passed / 12 skipped`, and release gates `6/6`. Verify the
+clean clone passed three consecutive Lighthouse performance runs at or above
+`90`, accessibility `100/100/100`, Playwright `48 passed / 12 skipped`, and
+release gates `6/6`. Exact per-run performance scores are receipt-owned. Verify the
 canonical release envelope and generated claims with:
 
 ```powershell

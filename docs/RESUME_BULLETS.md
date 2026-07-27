@@ -41,7 +41,7 @@ Claim 数字以 `data/claims/claim_registry.json` 为准，发布验收数字以
 
 ## 平台可靠性 / Release Engineering
 
-> 构建 schema 驱动的 Claim registry、SHA-256 evidence receipts、生成器/CI drift gate 与 detached clean-clone release manifest；将 14 条公开 Claim 绑定到 11 个 tracked source artifacts，并在 0 次模型及评测外部请求下通过 6/6 release gates、Playwright 48 passed/12 skipped 和三次 Lighthouse 95/95/94。
+> 构建 schema 驱动的 Claim registry、SHA-256 evidence receipts、生成器/CI drift gate 与 detached clean-clone release manifest；将 14 条公开 Claim 绑定到 11 个 tracked source artifacts，并在 0 次模型及评测外部请求下通过 6/6 release gates、Playwright 48 passed/12 skipped 和连续三次 Lighthouse performance ≥90。
 
 **证据合同：**
 
