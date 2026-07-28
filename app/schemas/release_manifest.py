@@ -281,7 +281,7 @@ class ReleaseCleanCloneReceipt(BaseModel):
     frontend_receipt_verified: Literal[True]
     screenshot_hashes_verified: Literal[True]
     clean_worktree_after_verification: Literal[True]
-    ignored_or_untracked_dependency_count: Literal[0]
+    unexpected_nonignored_file_count: Literal[0]
     model_requests: Literal[0]
     external_requests: Literal[0]
     request_observation_scope: Literal[

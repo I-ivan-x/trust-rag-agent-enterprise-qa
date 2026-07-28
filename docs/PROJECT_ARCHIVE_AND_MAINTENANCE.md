@@ -278,6 +278,9 @@ The clean-clone runner's internal 14-command matrix records portable logical
 Playwright/Chromium, working directory, and offline environment overrides.
 Each receipt proves the recorded platform/runtime combination; it is not an
 OS-level network attestation or a claim that every platform was tested.
+Installer outputs such as `.venv` and `node_modules` are expected ignored
+workspace products; the runner separately requires zero tracked or
+non-ignored file changes after verification.
 On POSIX shells, invoke the same Python scripts with `uv run --frozen python`
 instead of the PowerShell `py -m uv` launcher shown below.
 

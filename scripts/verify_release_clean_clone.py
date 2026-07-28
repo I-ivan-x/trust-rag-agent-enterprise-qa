@@ -172,8 +172,17 @@ def verify_release_clean_clone(
         playwright_passed, playwright_skipped = _playwright_counts(playwright_output)
         if "ALL 6 RELEASE GATES PASSED" not in gate_output:
             raise ValueError("clean-clone release gate count is not 6/6")
-        if _git(clone, "status", "--porcelain", "--untracked-files=all"):
-            raise ValueError("release verification modified tracked or untracked files")
+        unexpected_nonignored_files = _git(
+            clone,
+            "status",
+            "--porcelain",
+            "--untracked-files=all",
+        ).splitlines()
+        if unexpected_nonignored_files:
+            raise ValueError(
+                "release verification modified tracked or non-ignored files: "
+                + ", ".join(unexpected_nonignored_files)
+            )
         _verify_frontend_receipt(clone)
         return ReleaseCleanCloneReceipt(
             schema_version="agent-reliability-clean-clone-receipt-v1",
@@ -190,7 +199,7 @@ def verify_release_clean_clone(
             frontend_receipt_verified=True,
             screenshot_hashes_verified=True,
             clean_worktree_after_verification=True,
-            ignored_or_untracked_dependency_count=0,
+            unexpected_nonignored_file_count=len(unexpected_nonignored_files),
             model_requests=0,
             external_requests=0,
             request_observation_scope=(
