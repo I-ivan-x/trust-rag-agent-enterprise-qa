@@ -24,6 +24,12 @@ Q5_DEV_V1_ARCHIVE = Path("data/q5/archive/dev-v1")
 Q5_DEV_V2_ARCHIVE = Path("data/q5/archive/dev-v2")
 
 
+def _frozen_text_sha256(path: Path) -> str:
+    raw = path.read_bytes()
+    canonical = raw.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+    return hashlib.sha256(canonical.replace(b"\n", b"\r\n")).hexdigest()
+
+
 def test_formal_q5_dev_authoring_passes_static_pre_run() -> None:
     report = check_q5_pre_run(Q5_DEV_ROOT)
 
@@ -221,7 +227,7 @@ def test_q5_dev_v1_archive_preserves_real_run_dataset_hashes() -> None:
     }
 
     assert {
-        name: hashlib.sha256((Q5_DEV_V1_ARCHIVE / name).read_bytes()).hexdigest()
+        name: _frozen_text_sha256(Q5_DEV_V1_ARCHIVE / name)
         for name in expected
     } == expected
 
@@ -235,7 +241,7 @@ def test_q5_dev_v2_archive_preserves_batch5d_dataset_hashes() -> None:
     }
 
     assert {
-        name: hashlib.sha256((Q5_DEV_V2_ARCHIVE / name).read_bytes()).hexdigest()
+        name: _frozen_text_sha256(Q5_DEV_V2_ARCHIVE / name)
         for name in expected
     } == expected
 

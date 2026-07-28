@@ -4,6 +4,8 @@ import hashlib
 import inspect
 from pathlib import Path
 
+import pytest
+
 from app.eval.q5_dataset import load_q5_gold, load_q5_runtime_dataset
 from app.eval.q5_replay import replay_q5_graded_run
 from app.eval.q5_runner import load_q5_runtime_cases
@@ -48,6 +50,8 @@ def test_q5_semantic_table_control_is_runtime_only_and_reports_solvability() -> 
 def test_q5_batch5d_read_only_replay_reproduces_sealed_diagnostic(
     tmp_path: Path,
 ) -> None:
+    if not BATCH5D_RUN.exists():
+        pytest.skip("local sealed Batch 5-D run is absent from the public checkout")
     before = _file_hashes(BATCH5D_RUN)
     report = replay_q5_graded_run(
         BATCH5D_RUN,

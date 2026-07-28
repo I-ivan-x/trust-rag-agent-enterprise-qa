@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from app.eval.q5_provenance import verify_q5_graded_run
 from app.eval.q5_replay import replay_q5_graded_run
 
@@ -65,6 +67,8 @@ def test_q5_dev_v4_diff_is_limited_to_frozen_clarity_and_provenance() -> None:
 def test_q5_v3_real_replay_identifies_exact_f18_cases_without_mutation(
     tmp_path: Path,
 ) -> None:
+    if not V3_REAL.exists():
+        pytest.skip("local sealed Q5 v3 real run is absent from the public checkout")
     before = {
         path.name: path.read_bytes()
         for path in V3_REAL.iterdir()

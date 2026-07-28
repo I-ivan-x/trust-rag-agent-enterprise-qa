@@ -912,4 +912,13 @@ def _find_gold_fields(payload: Any) -> list[str]:
 
 
 def _sha256_file(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    raw = path.read_bytes()
+    # The frozen Q5 receipts were sealed from the original Windows authoring
+    # workspace, where text artifacts used CRLF. Git checkouts on Linux expose
+    # the same tracked content with LF, so hash the explicitly documented
+    # frozen-text representation instead of the platform-dependent checkout
+    # bytes. This keeps the historical receipt stable without weakening content
+    # verification.
+    canonical = raw.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+    canonical = canonical.replace(b"\n", b"\r\n")
+    return hashlib.sha256(canonical).hexdigest()

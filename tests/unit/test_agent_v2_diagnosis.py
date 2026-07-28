@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from app.agent.diagnosis import ActionType, FailureType, diagnose
 from app.core.enums import AccessLevel, DocumentStatus
 from app.guards.acl_gate import ACLGateDecision
@@ -218,6 +220,8 @@ def test_diagnosis_no_recovery_defaults_to_refuse() -> None:
 def test_current_p3_09_precheck_cases_match_report_anchor() -> None:
     json_path = Path("data/eval_runs/p3-09-diagnostic-precheck/diagnostic_precheck.json")
     report_path = Path("docs/P3_09_DIAGNOSTIC_PRECHECK.md")
+    if not json_path.exists():
+        pytest.skip("local sealed P3-09 diagnostic is absent from the public checkout")
 
     payload = json.loads(json_path.read_text(encoding="utf-8"))
     cases = payload["cases"]

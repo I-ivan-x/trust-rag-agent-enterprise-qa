@@ -136,7 +136,8 @@ def test_frontier_mutation_matrix_fails_closed(
         _rehash_frontier(target)
     elif mutation == "cross_case_ir_transplant":
         rows = _jsonl(target / "policy_ir.jsonl")
-        rows[0]["policy_ir"] = rows[1]["policy_ir"]
+        donor = next(row for row in rows[1:] if row["policy_ir"] != rows[0]["policy_ir"])
+        rows[0]["policy_ir"] = donor["policy_ir"]
         _write_jsonl(target / "policy_ir.jsonl", rows)
         _rehash_frontier(target)
     elif mutation == "gold_leak":

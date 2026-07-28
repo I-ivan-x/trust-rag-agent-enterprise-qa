@@ -91,6 +91,43 @@ def verify_release_clean_clone(
 
         passed("uv_sync", ["uv", "sync", "--locked", "--group", "dev"])
         python = ["uv", "run", "--frozen", "python"]
+        passed(
+            "generate_sample_corpus",
+            [
+                *python,
+                "scripts/ingest_corpus.py",
+                "--input",
+                "data/sample_corpus",
+                "--output",
+                "data/generated",
+                "--eval",
+                "data/generated/ci-no-eval.jsonl",
+            ],
+        )
+        passed(
+            "generate_public_corpus",
+            [
+                *python,
+                "scripts/ingest_corpus.py",
+                "--input",
+                "data/public_corpus",
+                "--output",
+                "data/generated/public",
+            ],
+        )
+        passed(
+            "generate_agent_residual_corpus",
+            [
+                *python,
+                "scripts/ingest_corpus.py",
+                "--input",
+                "data/agent_residual_corpus",
+                "--output",
+                "data/generated/agent_residual",
+            ],
+        )
+        passed("ruff", ["uv", "run", "--frozen", "ruff", "check", "."])
+        passed("pytest", ["uv", "run", "--frozen", "pytest", "-ra"])
         claim_build = passed(
             "claim_build",
             [*python, "scripts/build_public_claims.py"],

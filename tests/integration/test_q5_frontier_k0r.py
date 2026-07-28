@@ -141,7 +141,8 @@ def test_k0r_rehashed_mutation_matrix_fails_closed(
         _write_jsonl(target / "execution_rows.jsonl", rows)
     elif mutation == "cross_case_ir":
         rows = _jsonl(target / "policy_ir.jsonl")
-        rows[0]["policy_ir"] = rows[1]["policy_ir"]
+        donor = next(row for row in rows[1:] if row["policy_ir"] != rows[0]["policy_ir"])
+        rows[0]["policy_ir"] = donor["policy_ir"]
         _write_jsonl(target / "policy_ir.jsonl", rows)
     elif mutation == "runtime_gold":
         rows = _jsonl(target / "runtime_cases.jsonl")

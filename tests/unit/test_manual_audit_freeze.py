@@ -5,11 +5,21 @@ import random
 from hashlib import sha256
 from pathlib import Path
 
+import pytest
+
 SAMPLE_PATH = Path("data/citation_audit/manual_audit_v1_sample.jsonl")
 RUN_IDS = [
     "week7-audit-external-final-agentic",
     "week7-audit-obfuscated-final-agentic",
 ]
+RUN_ANSWER_PATHS = [
+    Path("data/eval_runs") / run_id / "answers.jsonl" for run_id in RUN_IDS
+]
+
+
+def _require_local_audit_runs() -> None:
+    if any(not path.exists() for path in RUN_ANSWER_PATHS):
+        pytest.skip("local sealed audit runs are absent from the public checkout")
 
 
 def _read_jsonl(path: Path) -> list[dict]:
@@ -21,6 +31,7 @@ def _read_jsonl(path: Path) -> list[dict]:
 
 
 def _expected_units() -> list[tuple[str, str, int]]:
+    _require_local_audit_runs()
     units: list[tuple[str, str, int]] = []
     for run_id in RUN_IDS:
         rows = _read_jsonl(Path("data/eval_runs") / run_id / "answers.jsonl")
@@ -83,6 +94,7 @@ def test_manual_audit_v1_sample_has_protocol_fields_and_dates() -> None:
 
 
 def test_manual_audit_v1_sample_sha_matches_answers_jsonl() -> None:
+    _require_local_audit_runs()
     answers_by_key: dict[tuple[str, str, int], dict] = {}
     for run_id in RUN_IDS:
         rows = _read_jsonl(Path("data/eval_runs") / run_id / "answers.jsonl")
