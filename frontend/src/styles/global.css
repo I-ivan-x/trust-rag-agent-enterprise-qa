@@ -2100,7 +2100,7 @@ a.infrastructure-card:hover {
   }
 
   .questions-section {
-    padding-block: 22px;
+    padding-block: 16px;
   }
 
   .questions-section .section-heading,
@@ -2118,7 +2118,7 @@ a.infrastructure-card:hover {
   }
 
   .runtime-section {
-    padding-block: 24px;
+    padding-block: 18px;
   }
 
   .pipeline-stage {
@@ -2140,7 +2140,7 @@ a.infrastructure-card:hover {
   }
 
   .reliability-section {
-    padding-block: 10px;
+    padding-block: 6px;
   }
 
   .turn-card {
@@ -2339,7 +2339,7 @@ a.infrastructure-card:hover {
   .questions-section,
   .runtime-section,
   .reliability-section {
-    padding-block: 9px;
+    padding-block: 8px;
   }
 
   .questions-section .section-heading,
