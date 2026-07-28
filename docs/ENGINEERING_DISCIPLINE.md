@@ -54,7 +54,7 @@ Agent Reliability Lab 的项目秩序不是传统的“先列功能，再逐项�
 | 可执行 Python 脚本 | **61** | ingest、index、eval、leakage、ablation、diagnostic、release gate 均可命令化 |
 | Python app 代码 | **40,172 行** | 覆盖完整 RAG、Agent、治理、评测与可观测模块 |
 | Python test 代码 | **20,096 行** | 测试代码约为 app 代码的一半，质量投入不是尾部补丁 |
-| 全量回归 | **`974 passed, 3 skipped`** | 最终本地封存全仓实跑输出；另有 23 条 warning |
+| 全量回归 | **`974 passed, 3 skipped`** | 最终本地封存全仓实跑输出；跳过边界见 §11 |
 
 这些数字只证明项目具有持续投入和结构化产物，不单独证明质量。质量结论仍以真实 run、评测边界、
 失败分析和可复现命令为准。
