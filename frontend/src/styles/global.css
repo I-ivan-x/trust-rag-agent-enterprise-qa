@@ -743,7 +743,7 @@ main {
 
 /* Five Questions */
 .questions-section {
-  padding-block: 34px;
+  padding-block: 28px;
   background: var(--surface);
 }
 
@@ -862,7 +862,7 @@ main {
 
 /* Runtime */
 .runtime-section {
-  padding-block: 36px;
+  padding-block: 30px;
   background-color: var(--bg);
 }
 
@@ -1221,7 +1221,7 @@ main {
 
 /* Reliability */
 .reliability-section {
-  padding-block: 36px;
+  padding-block: 30px;
   background: var(--surface);
 }
 
@@ -2100,7 +2100,7 @@ a.infrastructure-card:hover {
   }
 
   .questions-section {
-    padding-block: 28px;
+    padding-block: 22px;
   }
 
   .questions-section .section-heading,
@@ -2118,7 +2118,7 @@ a.infrastructure-card:hover {
   }
 
   .runtime-section {
-    padding-block: 30px;
+    padding-block: 24px;
   }
 
   .pipeline-stage {
@@ -2140,7 +2140,7 @@ a.infrastructure-card:hover {
   }
 
   .reliability-section {
-    padding-block: 16px;
+    padding-block: 10px;
   }
 
   .turn-card {
@@ -2339,7 +2339,7 @@ a.infrastructure-card:hover {
   .questions-section,
   .runtime-section,
   .reliability-section {
-    padding-block: 15px;
+    padding-block: 9px;
   }
 
   .questions-section .section-heading,
