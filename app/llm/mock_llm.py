@@ -9,13 +9,8 @@ MOCK_LLM_WARNING = (
     "do not use it for formal end-to-end metrics."
 )
 
-_CONTEXT_BLOCK_PATTERN = re.compile(
-    r"^CHUNK_ID:\s*(?P<chunk_id>[^\n]+)\n"
-    r"DOC_ID:\s*(?P<doc_id>[^\n]+)\n"
-    r"SECTION:\s*(?P<section>[^\n]*)\n"
-    r"TEXT:\s*(?P<text>.*?)(?=\n---CONTEXT_CHUNK---|\nEND_CONTEXT)",
-    re.MULTILINE | re.DOTALL,
-)
+_CONTEXT_MARKER = "---CONTEXT_CHUNK---"
+_END_CONTEXT_MARKER = "END_CONTEXT"
 
 
 class MockLLMClient:
@@ -25,15 +20,7 @@ class MockLLMClient:
         warnings.warn(MOCK_LLM_WARNING, RuntimeWarning, stacklevel=2)
 
     def generate(self, prompt: str) -> str:
-        chunks = [
-            {
-                "chunk_id": match.group("chunk_id").strip(),
-                "doc_id": match.group("doc_id").strip(),
-                "section": match.group("section").strip(),
-                "text": match.group("text").strip(),
-            }
-            for match in _CONTEXT_BLOCK_PATTERN.finditer(prompt)
-        ]
+        chunks = _parse_context_blocks(prompt)
         if not chunks:
             return json.dumps(
                 {
@@ -66,6 +53,30 @@ class MockLLMClient:
             ensure_ascii=False,
             sort_keys=True,
         )
+
+
+def _parse_context_blocks(prompt: str) -> list[dict[str, str]]:
+    """Parse the deterministic prompt format in linear time."""
+    chunks: list[dict[str, str]] = []
+    delimiter = f"\n{_CONTEXT_MARKER}\n"
+    for candidate in prompt.split(delimiter)[1:]:
+        block = candidate.split(f"\n{_END_CONTEXT_MARKER}", maxsplit=1)[0]
+        lines = block.split("\n", maxsplit=3)
+        if len(lines) != 4:
+            continue
+        chunk_line, doc_line, section_line, text_line = lines
+        prefixes = ("CHUNK_ID: ", "DOC_ID: ", "SECTION: ", "TEXT: ")
+        if not all(line.startswith(prefix) for line, prefix in zip(lines, prefixes, strict=True)):
+            continue
+        chunks.append(
+            {
+                "chunk_id": chunk_line.removeprefix(prefixes[0]).strip(),
+                "doc_id": doc_line.removeprefix(prefixes[1]).strip(),
+                "section": section_line.removeprefix(prefixes[2]).strip(),
+                "text": text_line.removeprefix(prefixes[3]).strip(),
+            }
+        )
+    return chunks
 
 
 def _answer_from_context(text: str) -> str:

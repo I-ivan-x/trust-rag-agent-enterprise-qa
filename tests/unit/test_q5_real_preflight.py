@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ssl
 from copy import deepcopy
 from types import SimpleNamespace
 
@@ -19,6 +20,53 @@ from scripts.preflight_q5_real import (
     _validate_v4_mock_metrics,
     build_parser,
 )
+
+
+def test_tls_readiness_requires_tls_1_2_or_newer(monkeypatch) -> None:
+    class FakeSecured:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return None
+
+        def version(self):
+            return "TLSv1.3"
+
+        def cipher(self):
+            return ("unit-test", "TLSv1.3", 256)
+
+    class FakeContext:
+        minimum_version = ssl.TLSVersion.MINIMUM_SUPPORTED
+
+        def wrap_socket(self, raw, *, server_hostname):
+            assert server_hostname == "api.example.test"
+            return FakeSecured()
+
+    class FakeRaw:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return None
+
+    context = FakeContext()
+    monkeypatch.setattr(preflight.ssl, "create_default_context", lambda: context)
+    monkeypatch.setattr(
+        preflight.socket,
+        "getaddrinfo",
+        lambda *args, **kwargs: [(None, None, None, None, ("203.0.113.10", 443))],
+    )
+    monkeypatch.setattr(
+        preflight.socket,
+        "create_connection",
+        lambda *args, **kwargs: FakeRaw(),
+    )
+
+    result = preflight._tls_readiness("api.example.test", 1.0)
+
+    assert result["ready"] is True
+    assert context.minimum_version is ssl.TLSVersion.TLSv1_2
 
 
 def _topology_fixture() -> tuple[list[str], list[dict], dict]:
