@@ -27,6 +27,112 @@
         "run",
         "--frozen",
         "python",
+        "scripts/ingest_corpus.py",
+        "--input",
+        "data/sample_corpus",
+        "--output",
+        "data/generated",
+        "--eval",
+        "data/generated/ci-no-eval.jsonl"
+      ],
+      "environment": {
+        "UV_OFFLINE": "1",
+        "npm_config_audit": "false",
+        "npm_config_offline": "true"
+      },
+      "execution_launcher": "uv-executable",
+      "name": "generate_sample_corpus",
+      "status": "passed",
+      "working_directory": "repository"
+    },
+    {
+      "command": [
+        "uv",
+        "run",
+        "--frozen",
+        "python",
+        "scripts/ingest_corpus.py",
+        "--input",
+        "data/public_corpus",
+        "--output",
+        "data/generated/public"
+      ],
+      "environment": {
+        "UV_OFFLINE": "1",
+        "npm_config_audit": "false",
+        "npm_config_offline": "true"
+      },
+      "execution_launcher": "uv-executable",
+      "name": "generate_public_corpus",
+      "status": "passed",
+      "working_directory": "repository"
+    },
+    {
+      "command": [
+        "uv",
+        "run",
+        "--frozen",
+        "python",
+        "scripts/ingest_corpus.py",
+        "--input",
+        "data/agent_residual_corpus",
+        "--output",
+        "data/generated/agent_residual"
+      ],
+      "environment": {
+        "UV_OFFLINE": "1",
+        "npm_config_audit": "false",
+        "npm_config_offline": "true"
+      },
+      "execution_launcher": "uv-executable",
+      "name": "generate_agent_residual_corpus",
+      "status": "passed",
+      "working_directory": "repository"
+    },
+    {
+      "command": [
+        "uv",
+        "run",
+        "--frozen",
+        "ruff",
+        "check",
+        "."
+      ],
+      "environment": {
+        "UV_OFFLINE": "1",
+        "npm_config_audit": "false",
+        "npm_config_offline": "true"
+      },
+      "execution_launcher": "uv-executable",
+      "name": "ruff",
+      "status": "passed",
+      "working_directory": "repository"
+    },
+    {
+      "command": [
+        "uv",
+        "run",
+        "--frozen",
+        "pytest",
+        "-ra",
+        "--ignore=tests/unit/test_release_manifest.py"
+      ],
+      "environment": {
+        "UV_OFFLINE": "1",
+        "npm_config_audit": "false",
+        "npm_config_offline": "true"
+      },
+      "execution_launcher": "uv-executable",
+      "name": "pytest_preseal",
+      "status": "passed",
+      "working_directory": "repository"
+    },
+    {
+      "command": [
+        "uv",
+        "run",
+        "--frozen",
+        "python",
         "scripts/build_public_claims.py"
       ],
       "environment": {
@@ -204,7 +310,7 @@
       "command": [
         "node",
         "scripts/run-lighthouse.mjs",
-        "0670e7addc0f61923bf17ddc6a48008ed00ff311",
+        "fcd3c70cea5c25c2efa1ef8a1f982546205332ff",
         "acceptance/runtime/release-clean-clone/run-1"
       ],
       "environment": {
@@ -221,7 +327,7 @@
       "command": [
         "node",
         "scripts/run-lighthouse.mjs",
-        "0670e7addc0f61923bf17ddc6a48008ed00ff311",
+        "fcd3c70cea5c25c2efa1ef8a1f982546205332ff",
         "acceptance/runtime/release-clean-clone/run-2"
       ],
       "environment": {
@@ -238,7 +344,7 @@
       "command": [
         "node",
         "scripts/run-lighthouse.mjs",
-        "0670e7addc0f61923bf17ddc6a48008ed00ff311",
+        "fcd3c70cea5c25c2efa1ef8a1f982546205332ff",
         "acceptance/runtime/release-clean-clone/run-3"
       ],
       "environment": {
@@ -258,7 +364,7 @@
     {
       "accessibility": 100,
       "external_requests": 0,
-      "performance": 95,
+      "performance": 94,
       "run_index": 1
     },
     {
@@ -270,7 +376,7 @@
     {
       "accessibility": 100,
       "external_requests": 0,
-      "performance": 94,
+      "performance": 95,
       "run_index": 3
     }
   ],
@@ -293,7 +399,7 @@
   "schema_version": "agent-reliability-clean-clone-receipt-v1",
   "screenshot_hashes_verified": true,
   "status": "passed",
-  "tested_commit": "0670e7addc0f61923bf17ddc6a48008ed00ff311",
-  "tested_tree": "97e3c9ce95fb85365e6df773ff5d95f0cb4e8378",
+  "tested_commit": "fcd3c70cea5c25c2efa1ef8a1f982546205332ff",
+  "tested_tree": "d2a8041b7cea13c46be630c4c55715580919a9b7",
   "unexpected_nonignored_file_count": 0
 }

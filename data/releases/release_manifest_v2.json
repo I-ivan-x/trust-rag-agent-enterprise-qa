@@ -154,10 +154,10 @@
     }
   },
   "clean_clone_receipt": {
-    "git_blob_sha": "59d0de6f4a42b9e0d1164ae7950906a0dea18b30",
+    "git_blob_sha": "eb2032d52851409e062cadc2bb39cb22803154d2",
     "path": "data/releases/clean_clone_receipt_v1.json",
-    "sha256": "748086956cad092924c10afe843a71f43bfeb860c3d54e5f00d01e6a817ef4d6",
-    "size_bytes": 7502
+    "sha256": "35f4cfb1e2da5b7dafdeb784b21d1c6c8bbccf609ff426ee0229bb850e350a8d",
+    "size_bytes": 10022
   },
   "closure_documents": [
     {
@@ -356,6 +356,6 @@
     "tag_kind": "annotated",
     "tag_object_sha": "4e5198c1303b8626a2d10cea33ec905116e5d286"
   },
-  "tested_commit": "0670e7addc0f61923bf17ddc6a48008ed00ff311",
-  "tested_tree": "97e3c9ce95fb85365e6df773ff5d95f0cb4e8378"
+  "tested_commit": "fcd3c70cea5c25c2efa1ef8a1f982546205332ff",
+  "tested_tree": "d2a8041b7cea13c46be630c4c55715580919a9b7"
 }

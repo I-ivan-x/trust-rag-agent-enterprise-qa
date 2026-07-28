@@ -173,7 +173,7 @@ def test_clean_clone_receipt_rejects_execution_matrix_mutation(
 
 def test_clean_clone_command_matrix_uses_cross_platform_uv_entrypoint() -> None:
     matrix = expected_clean_clone_commands("0" * 40)
-    assert len(matrix) == 14
+    assert len(matrix) == 19
     assert all(command[0] != "py" for _, command, _, _ in matrix)
     assert {working_directory for _, _, working_directory, _ in matrix} == {
         "repository",
@@ -192,7 +192,12 @@ def test_clean_clone_command_matrix_uses_cross_platform_uv_entrypoint() -> None:
 
 def test_clean_clone_receipt_rejects_launcher_mismatch() -> None:
     payload = _receipt(_manifest()).model_dump(mode="json")
-    payload["commands"][7]["execution_launcher"] = "python-module-uv"
+    npm_index = next(
+        index
+        for index, command in enumerate(payload["commands"])
+        if command["name"] == "npm_ci"
+    )
+    payload["commands"][npm_index]["execution_launcher"] = "python-module-uv"
     with pytest.raises(ValidationError, match="execution launcher"):
         ReleaseCleanCloneReceipt.model_validate(payload)
 
