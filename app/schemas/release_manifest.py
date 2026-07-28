@@ -147,9 +147,25 @@ class VerificationCommand(BaseModel):
 
     name: str = Field(pattern=r"^[a-z][a-z0-9_]*$")
     command: list[str] = Field(min_length=1)
+    execution_launcher: Literal[
+        "direct-executable",
+        "uv-executable",
+        "python-module-uv",
+    ]
     working_directory: Literal["repository", "frontend"]
     environment: dict[str, str] = Field(min_length=3, max_length=3)
     status: Literal["passed"]
+
+    @model_validator(mode="after")
+    def _launcher_matches_logical_command(self) -> VerificationCommand:
+        allowed = (
+            {"uv-executable", "python-module-uv"}
+            if self.command[0] == "uv"
+            else {"direct-executable"}
+        )
+        if self.execution_launcher not in allowed:
+            raise ValueError("execution launcher does not match logical command")
+        return self
 
 
 CLEAN_CLONE_ENVIRONMENT = {

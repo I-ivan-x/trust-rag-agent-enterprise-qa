@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import os
 import platform
@@ -68,6 +69,7 @@ def verify_release_clean_clone(
 
         def passed(name: str, command: list[str], *, cwd: Path = clone) -> str:
             completed = _run(command, cwd=cwd, env=environment)
+            _, execution_launcher = _resolve_command(command)
             relative_cwd = cwd.resolve().relative_to(clone.resolve()).as_posix()
             working_directory = {
                 ".": "repository",
@@ -79,6 +81,7 @@ def verify_release_clean_clone(
                 VerificationCommand(
                     name=name,
                     command=command,
+                    execution_launcher=execution_launcher,
                     working_directory=working_directory,
                     environment=CLEAN_CLONE_ENVIRONMENT,
                     status="passed",
@@ -317,9 +320,7 @@ def _run(
     cwd: Path,
     env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
-    executable = shutil.which(command[0])
-    if executable:
-        command = [executable, *command[1:]]
+    command, _ = _resolve_command(command)
     completed = subprocess.run(
         command,
         cwd=cwd,
@@ -333,6 +334,33 @@ def _run(
         details = completed.stderr.strip() or completed.stdout.strip()
         raise ValueError(f"command failed ({' '.join(command)}): {details}")
     return completed
+
+
+def _resolve_command(command: list[str]) -> tuple[list[str], str]:
+    """Resolve a logical receipt command to a platform launcher.
+
+    The receipt keeps the portable ``uv ...`` command matrix. Some Windows
+    Python installations expose uv only as ``python -m uv``; record that
+    launcher choice without persisting a user-specific executable path.
+    """
+
+    if command[0] == "uv":
+        executable = shutil.which("uv")
+        if not executable:
+            inherited = os.environ.get("UV")
+            if inherited and Path(inherited).is_file():
+                executable = inherited
+        if executable:
+            return [executable, *command[1:]], "uv-executable"
+        if importlib.util.find_spec("uv") is not None:
+            return [sys.executable, "-m", "uv", *command[1:]], "python-module-uv"
+        raise FileNotFoundError(
+            "uv is unavailable as an executable and as a Python module"
+        )
+    executable = shutil.which(command[0])
+    if executable:
+        return [executable, *command[1:]], "direct-executable"
+    return command, "direct-executable"
 
 
 def main() -> None:

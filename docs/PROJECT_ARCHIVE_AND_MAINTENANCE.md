@@ -272,8 +272,9 @@ passed.
 
 Run from the repository root in PowerShell.
 
-The clean-clone runner's internal 14-command matrix uses the cross-platform
-`uv` executable and records OS, architecture, Python/uv/Node/npm,
+The clean-clone runner's internal 14-command matrix records portable logical
+`uv` commands plus the actual launcher class (`uv` executable or
+`python -m uv`). It also records OS, architecture, Python/uv/Node/npm,
 Playwright/Chromium, working directory, and offline environment overrides.
 Each receipt proves the recorded platform/runtime combination; it is not an
 OS-level network attestation or a claim that every platform was tested.

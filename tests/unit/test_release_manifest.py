@@ -147,6 +147,7 @@ def test_clean_clone_receipt_nonancestor_and_mismatch_fail() -> None:
     ("field", "value"),
     [
         ("command", ["echo", "passed"]),
+        ("execution_launcher", "direct-executable"),
         ("working_directory", "frontend"),
         ("environment", {"UV_OFFLINE": "0"}),
     ],
@@ -178,6 +179,13 @@ def test_clean_clone_command_matrix_uses_cross_platform_uv_entrypoint() -> None:
         }
         for _, _, _, environment in matrix
     )
+
+
+def test_clean_clone_receipt_rejects_launcher_mismatch() -> None:
+    payload = _receipt(_manifest()).model_dump(mode="json")
+    payload["commands"][7]["execution_launcher"] = "python-module-uv"
+    with pytest.raises(ValidationError, match="execution launcher"):
+        ReleaseCleanCloneReceipt.model_validate(payload)
 
 
 def test_frontend_receipt_rejects_commit_tree_mismatch(
