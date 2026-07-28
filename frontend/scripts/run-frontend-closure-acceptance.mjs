@@ -75,11 +75,10 @@ await writeFile(join(acceptanceRoot, "receipt.json"), serialized, "utf8");
 process.stdout.write(serialized);
 
 async function captureScreenshots() {
-  const port = 4323;
-  const url = `http://127.0.0.1:${port}/`;
+  const host = "127.0.0.1";
   const server = createServer(async (request, response) => {
     try {
-      const pathname = new URL(request.url ?? "/", url).pathname;
+      const pathname = new URL(request.url ?? "/", `http://${host}/`).pathname;
       const relative = pathname === "/" ? "index.html" : pathname.replace(/^\/+/, "");
       const filePath = normalize(join(root, relative));
       if (!filePath.startsWith(root)) throw new Error("invalid path");
@@ -100,7 +99,12 @@ async function captureScreenshots() {
       response.writeHead(404).end("not found");
     }
   });
-  await new Promise((resolveListen) => server.listen(port, "127.0.0.1", resolveListen));
+  await new Promise((resolveListen) => server.listen(0, host, resolveListen));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("frontend closure server did not expose a TCP port");
+  }
+  const url = `http://${host}:${address.port}/`;
   const browser = await chromium.launch({ headless: true });
   const results = [];
   const viewports = [
