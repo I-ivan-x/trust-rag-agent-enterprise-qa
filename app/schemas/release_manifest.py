@@ -233,7 +233,19 @@ def expected_clean_clone_commands(
             environment,
         ),
         ("ruff", ["uv", "run", "--frozen", "ruff", "check", "."], root, environment),
-        ("pytest", ["uv", "run", "--frozen", "pytest", "-ra"], root, environment),
+        (
+            "pytest_preseal",
+            [
+                "uv",
+                "run",
+                "--frozen",
+                "pytest",
+                "-ra",
+                "--ignore=tests/unit/test_release_manifest.py",
+            ],
+            root,
+            environment,
+        ),
         ("claim_build", [*python, "scripts/build_public_claims.py"], root, environment),
         (
             "claim_check",

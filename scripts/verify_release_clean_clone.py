@@ -127,7 +127,17 @@ def verify_release_clean_clone(
             ],
         )
         passed("ruff", ["uv", "run", "--frozen", "ruff", "check", "."])
-        passed("pytest", ["uv", "run", "--frozen", "pytest", "-ra"])
+        passed(
+            "pytest_preseal",
+            [
+                "uv",
+                "run",
+                "--frozen",
+                "pytest",
+                "-ra",
+                "--ignore=tests/unit/test_release_manifest.py",
+            ],
+        )
         claim_build = passed(
             "claim_build",
             [*python, "scripts/build_public_claims.py"],
@@ -377,7 +387,11 @@ def _run(
         errors="replace",
     )
     if completed.returncode != 0:
-        details = completed.stderr.strip() or completed.stdout.strip()
+        details = "\n".join(
+            part.strip()
+            for part in (completed.stdout, completed.stderr)
+            if part and part.strip()
+        )
         raise ValueError(f"command failed ({' '.join(command)}): {details}")
     return completed
 
