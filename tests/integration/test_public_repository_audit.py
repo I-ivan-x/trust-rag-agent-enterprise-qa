@@ -75,6 +75,15 @@ def test_declared_synthetic_fixture_does_not_become_a_real_secret_finding() -> N
     assert scan_sensitive_text("tests/fixtures/fake.txt", text, ("tests/",)) == []
 
 
+def test_machine_hash_does_not_become_a_phone_finding() -> None:
+    sha256 = "b3cc1eb522809e5a886aad205c695775e17b3ae9ec015981069351f8d46f5859"
+
+    assert scan_sensitive_text("data/releases/manifest.json", sha256, ()) == []
+    assert scan_sensitive_text("data/releases/manifest.json", "13800138000", ()) == [
+        "pii:cn_mobile"
+    ]
+
+
 def test_showcase_reference_in_formal_claim_fails() -> None:
     with pytest.raises(ValueError, match="showcase corpus leaked"):
         verify_formal_surface_text(

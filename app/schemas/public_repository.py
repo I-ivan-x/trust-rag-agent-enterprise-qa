@@ -141,7 +141,7 @@ class DependencyAudit(BaseModel):
     ]
     python_audit_tool: Literal["pip-audit 2.10.1"]
     python_audit_scope: Literal[
-        "uv.lock full dependency graph including development dependencies"
+        "uv.lock full dependency graph including optional and development dependencies"
     ]
     python_known_vulnerabilities: Literal[0]
     npm_advisory_status: Literal["online-npm-audit-no-known-vulnerabilities"]

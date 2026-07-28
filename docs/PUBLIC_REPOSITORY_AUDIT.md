@@ -45,6 +45,9 @@ in the published history; they are not covered by that counter. Rewriting those
 objects would break evidence lineage, so this existing metadata is an
 Owner-accepted public-history boundary rather than a claim that the complete
 Git object database contains no personal identifier.
+Exact 40-character Git object IDs and 64-character SHA-256 values are treated
+as opaque machine identifiers before PII-pattern matching; an identical phone
+number outside such a complete hash token still fails the gate.
 
 At the final local prepublication checkpoint, Gitleaks 8.30.1 scanned every
 reachable commit and reported zero findings under the tracked `.gitleaks.toml`.
@@ -79,12 +82,14 @@ critical findings remain release-blocking. The lock-bound record and prior
 reachability history remain in `frontend/DEPENDENCY_SECURITY.md`.
 
 On 2026-07-28, `pip-audit 2.10.1` checked the full exported `uv.lock` graph,
-including development dependencies. The first pass found fixed advisories in
-`pydantic-settings 2.14.1`, `starlette 1.2.1`, and `pytest 8.4.2`; the lock was
-updated to `2.14.2`, `1.3.1`, and `9.1.1` respectively. The repeated full-graph
-Python audit and `npm audit 11.12.1` both report zero known vulnerabilities.
-These online security-advisory queries are intentionally separate from the
-project's zero model/evaluation-request counters.
+including optional and development dependencies. The first pass fixed
+advisories in `pydantic-settings`, `starlette`, and `pytest`. A final
+all-extras refresh then fixed `mcp 1.28.0`, `torch 2.12.0`, and
+`setuptools 81.0.0` by locking `1.28.1`, `2.13.0`, and `83.0.0`
+respectively. The repeated full-graph Python audit and `npm audit 11.12.1`
+both report zero known vulnerabilities. These online security-advisory queries
+are intentionally separate from the project's zero model/evaluation-request
+counters.
 
 ## Repository-license decision
 

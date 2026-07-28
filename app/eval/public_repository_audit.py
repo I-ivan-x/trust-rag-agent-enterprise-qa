@@ -47,6 +47,9 @@ PII_PATTERNS = {
         r"172\.(?:1[6-9]|2\d|3[01])\.(?:\d{1,3}\.)\d{1,3})(?![\d.])"
     ),
 }
+OPAQUE_HASH_PATTERN = re.compile(
+    r"(?<![0-9A-Fa-f])(?:[0-9A-Fa-f]{64}|[0-9A-Fa-f]{40})(?![0-9A-Fa-f])"
+)
 
 
 def verify_public_repository(
@@ -142,6 +145,7 @@ def scan_sensitive_text(
     fixture_prefixes: Iterable[str],
 ) -> list[str]:
     fixture = any(path.startswith(prefix) for prefix in fixture_prefixes)
+    pii_text = OPAQUE_HASH_PATTERN.sub("<opaque-hash>", text)
     findings = [
         f"secret:{name}"
         for name, pattern in SECRET_PATTERNS.items()
@@ -150,7 +154,7 @@ def scan_sensitive_text(
     pii = [
         f"pii:{name}"
         for name, pattern in PII_PATTERNS.items()
-        if pattern.search(text)
+        if pattern.search(pii_text)
         and path not in {"uv.lock", "frontend/package-lock.json"}
     ]
     if fixture:

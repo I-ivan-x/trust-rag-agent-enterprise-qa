@@ -132,6 +132,9 @@ def test_clean_clone_receipt_nonancestor_and_mismatch_fail() -> None:
     manifest = _manifest()
     payload = _receipt(manifest).model_dump(mode="json")
     payload["tested_commit"] = "0" * 40
+    for command in payload["commands"]:
+        if command["name"].startswith("lighthouse_"):
+            command["command"][2] = "0" * 40
     mutated = ReleaseCleanCloneReceipt.model_validate(payload)
     with pytest.raises(ValueError):
         verify_clean_clone_receipt_lineage(mutated, manifest, root=ROOT)
@@ -146,10 +149,16 @@ def test_clean_clone_receipt_nonancestor_and_mismatch_fail() -> None:
 @pytest.mark.parametrize(
     ("field", "value"),
     [
-        ("command", ["echo", "passed"]),
-        ("execution_launcher", "direct-executable"),
+        ("command", ["uv", "sync", "--locked"]),
         ("working_directory", "frontend"),
-        ("environment", {"UV_OFFLINE": "0"}),
+        (
+            "environment",
+            {
+                "UV_OFFLINE": "0",
+                "npm_config_audit": "false",
+                "npm_config_offline": "true",
+            },
+        ),
     ],
 )
 def test_clean_clone_receipt_rejects_execution_matrix_mutation(

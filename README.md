@@ -139,7 +139,7 @@ npm run dev -- --open
 
 ## Verification status
 
-Final local-archive regression: `974 passed, 3 skipped`.
+Final local-archive regression: `975 passed, 3 skipped`.
 The detached clean clone passed three consecutive Lighthouse performance runs
 at or above `90`, accessibility `100/100/100`, Playwright
 `55 passed / 14 conditionally skipped`, all six release gates, and zero model or

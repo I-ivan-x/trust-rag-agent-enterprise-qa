@@ -1,6 +1,6 @@
 {
   "schema_version": "public-dependency-audit-v1",
-  "uv_lock_sha256": "a6f56636286d44753a7e6368fb16a2a8bd1251b1b79808c70d19956fd99a7d3e",
+  "uv_lock_sha256": "aab394bd504c85453150dd292360edfe2810e484ba76ed4c7a6d5a8ab3224ff0",
   "package_lock_sha256": "86d8076dcb3289afca5942e500292c904e033f88c53b4b9944d048f3edfff266",
   "python": [
     {"package": "fastapi", "scope": "runtime", "license": "MIT", "status": "compatible-review"},
@@ -33,7 +33,7 @@
   "advisory_review_date": "2026-07-28",
   "python_advisory_status": "online-pip-audit-no-known-vulnerabilities",
   "python_audit_tool": "pip-audit 2.10.1",
-  "python_audit_scope": "uv.lock full dependency graph including development dependencies",
+  "python_audit_scope": "uv.lock full dependency graph including optional and development dependencies",
   "python_known_vulnerabilities": 0,
   "npm_advisory_status": "online-npm-audit-no-known-vulnerabilities",
   "npm_audit_tool": "npm audit 11.12.1",
