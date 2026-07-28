@@ -564,7 +564,10 @@ boundary rather than hidden.
 The Q5 conclusion is a scoped negative result, not an unfinished real-run plan. Boundary F's
 original frozen result and the later addendum are preserved as sequential evidence; the addendum
 does not rewrite history. The controlled-prose track is closed, K1 is false, and plans for
-`q5_test`, a confirmatory provider, Boundary G, new K1 data, or a Q5 release/tag are superseded.
+`q5_test`, a confirmatory provider, Boundary G, new K1 data, or a Q5 product
+release / semantic-version product tag (especially `v4.0`) are superseded. The
+exact annotated non-product research marker
+`agent-reliability-lab-q5-closed-20260717` remains allowed.
 
 Current Q5 statements must cite these registry claims rather than copying metrics into a new table:
 

@@ -19,7 +19,6 @@ from app.schemas.release_manifest import (
     ReleaseManifest,
     ReportReleaseBindings,
     ResearchMilestoneBinding,
-    RuntimeVersions,
     StableReleaseBinding,
 )
 
@@ -28,6 +27,7 @@ RELEASE_ROOT = Path("data/releases")
 RELEASE_SCHEMA_PATH = RELEASE_ROOT / "release_manifest_v2.schema.json"
 RELEASE_MANIFEST_PATH = RELEASE_ROOT / "release_manifest_v2.json"
 CLEAN_CLONE_RECEIPT_PATH = RELEASE_ROOT / "clean_clone_receipt_v1.json"
+RESEARCH_MILESTONE_TAG = "agent-reliability-lab-q5-closed-20260717"
 
 CLAIM_GENERATED_VIEWS = (
     "frontend/src/data/questions.json",
@@ -118,7 +118,7 @@ def build_release_manifest(
         public_project_name="Agent Reliability Lab",
         tested_commit=commit,
         tested_tree=tree,
-        runtime_versions=_runtime_versions(root),
+        runtime_versions=receipt.runtime_versions,
         python_lock=_artifact(root, "uv.lock", commit),
         frontend_lock=_artifact(root, "frontend/package-lock.json", commit),
         release_schema=_artifact(root, RELEASE_SCHEMA_PATH.as_posix(), commit),
@@ -168,10 +168,12 @@ def build_release_manifest(
         ],
         stable_release=_stable_release(root),
         research_milestone=ResearchMilestoneBinding(
-            name="agent-reliability-lab-q5-closed-20260717",
+            name=RESEARCH_MILESTONE_TAG,
             status="scoped_negative_complete",
             tag_kind="annotated",
-            target_policy="manifest-envelope-commit",
+            tag_object_sha=_research_milestone_tag_object(root),
+            target_policy="immutable-archive-ancestor",
+            target_commit=_research_milestone_target(root),
             release_created=False,
             stable_product_release_unchanged=True,
         ),
@@ -201,9 +203,11 @@ def write_release_manifest(
     )
     target = root / _relative(root, Path(output))
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(
-        json.dumps(manifest.model_dump(mode="json"), indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
+    target.write_bytes(
+        (
+            json.dumps(manifest.model_dump(mode="json"), indent=2, sort_keys=True)
+            + "\n"
+        ).encode("utf-8")
     )
     return manifest
 
@@ -248,7 +252,11 @@ def verify_release_manifest_payload(
         raise ValueError("release manifest tested commit is not a current ancestor")
     if (root / "data/q5_test").exists():
         raise ValueError("q5_test must remain absent")
-    _verify_research_milestone(manifest.research_milestone, root)
+    _verify_research_milestone(
+        manifest.research_milestone,
+        root,
+        tested_commit=manifest.tested_commit,
+    )
 
     expected = _expected_paths()
     actual = _paths_by_role(manifest)
@@ -288,6 +296,8 @@ def verify_clean_clone_receipt_lineage(
         or receipt.tested_tree != manifest.tested_tree
     ):
         raise ValueError("release clean-clone receipt commit/tree mismatch")
+    if receipt.runtime_versions != manifest.runtime_versions:
+        raise ValueError("release clean-clone receipt runtime versions mismatch")
     if not _is_ancestor(root, receipt.tested_commit, "HEAD"):
         raise ValueError("release clean-clone receipt points to a non-ancestor commit")
 
@@ -374,17 +384,23 @@ def _all_artifacts(manifest: ReleaseManifest) -> list[ReleaseArtifact]:
 def _verify_research_milestone(
     milestone: ResearchMilestoneBinding,
     root: Path,
+    *,
+    tested_commit: str,
 ) -> None:
     if _git(root, "tag", "--list", "v4.0*"):
         raise ValueError("v4.0 product release must remain absent")
     if not _git(root, "tag", "--list", milestone.name):
-        return
+        raise ValueError("research milestone tag is missing")
     reference = f"refs/tags/{milestone.name}"
     if _git(root, "cat-file", "-t", reference) != "tag":
         raise ValueError("research milestone must be an annotated tag")
+    if _git(root, "rev-parse", reference) != milestone.tag_object_sha:
+        raise ValueError("research milestone annotated tag object changed")
     target = _git(root, "rev-parse", f"{reference}^{{commit}}")
-    if target != _git(root, "rev-parse", "HEAD"):
-        raise ValueError("research milestone must target the manifest envelope commit")
+    if target != milestone.target_commit:
+        raise ValueError("research milestone target differs from its recorded commit")
+    if not _is_ancestor(root, target, tested_commit):
+        raise ValueError("research milestone target is not an ancestor of the tested commit")
     message = _git(root, "for-each-ref", "--format=%(contents)", reference).lower()
     required = (
         "scoped_negative_complete",
@@ -394,6 +410,25 @@ def _verify_research_milestone(
     )
     if any(token not in message for token in required):
         raise ValueError("research milestone annotation is incomplete")
+
+
+def _research_milestone_target(root: Path) -> str:
+    if not _git(root, "tag", "--list", RESEARCH_MILESTONE_TAG):
+        raise ValueError("research milestone tag is missing")
+    return _git(
+        root,
+        "rev-parse",
+        f"refs/tags/{RESEARCH_MILESTONE_TAG}^{{commit}}",
+    )
+
+
+def _research_milestone_tag_object(root: Path) -> str:
+    if not _git(root, "tag", "--list", RESEARCH_MILESTONE_TAG):
+        raise ValueError("research milestone tag is missing")
+    reference = f"refs/tags/{RESEARCH_MILESTONE_TAG}"
+    if _git(root, "cat-file", "-t", reference) != "tag":
+        raise ValueError("research milestone must be an annotated tag")
+    return _git(root, "rev-parse", reference)
 
 
 def _artifact(root: Path, path: str, tested_commit: str | None) -> ReleaseArtifact:
@@ -484,15 +519,6 @@ def _verify_showcase_manifest(path: Path) -> None:
         raise ValueError("interview showcase publication boundary changed")
 
 
-def _runtime_versions(root: Path) -> RuntimeVersions:
-    return RuntimeVersions(
-        python=_run(["py", "--version"], root).replace("Python ", ""),
-        uv=_run(["py", "-m", "uv", "--version"], root).split(" (", 1)[0].replace("uv ", ""),
-        node=_run(["node", "--version"], root).lstrip("v"),
-        npm=_run(["npm", "--version"], root),
-    )
-
-
 def _stable_release(root: Path) -> StableReleaseBinding:
     tag = "v3.0-q4-reliability"
     if _git(root, "cat-file", "-t", tag) != "tag":
@@ -569,7 +595,13 @@ def _run(command: list[str], cwd: Path) -> str:
     executable = shutil.which(command[0])
     if executable:
         command = [executable, *command[1:]]
-    completed = subprocess.run(command, cwd=cwd, capture_output=True, text=True)
+    completed = subprocess.run(
+        command,
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
     if completed.returncode != 0:
         details = completed.stderr.strip() or completed.stdout.strip()
         raise ValueError(f"command failed ({' '.join(command)}): {details}")

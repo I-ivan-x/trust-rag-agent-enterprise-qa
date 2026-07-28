@@ -79,7 +79,10 @@ The page contains exactly seven major sections:
 7. Evidence Ledger
 
 `AgentControlRoom` composes the compact `Pipeline` and `TrajectoryPlayer`.
-`DecisionFrontier` 默认解释规则、开放语义和高风险三条路径，研究缩写折叠到技术详情。
+`DecisionFrontier` 以 Grammar、Controlled prose、Open semantics、Unsafe
+四段控件展示输入路径，并用 Hypothesis、Real result、Final decision 三态解释
+研究过程。中文路径文案来自版本化 presentation catalog，真实结果来自 Claim
+registry；组件不另存一份结论。研究缩写折叠到技术详情。
 `EvidenceLedger` 展开所有正结果、负结果、未评估结论和来源血缘。
 
 ## Frontend acceptance

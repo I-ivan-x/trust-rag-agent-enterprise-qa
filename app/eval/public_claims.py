@@ -59,6 +59,12 @@ FRONTEND_STATUS_KEYS = {
     "scoped_negative_complete",
     "falsified_and_not_evaluated",
 }
+DECISION_FRONTIER_SEGMENT_KEYS = {
+    "grammar",
+    "controlled_prose",
+    "open_semantics",
+    "unsafe",
+}
 _TEMPLATE_PATTERN = re.compile(r"\{([A-Za-z0-9_]+)\|(fraction|numerator|denominator|value[0-6]|percent[0-2])\}")
 
 
@@ -136,6 +142,10 @@ def load_and_verify_presentation_catalog(
     }
     if set(catalog.metric_labels) != canonical_metric_keys:
         raise ValueError("zh-CN metric labels are incomplete or contain unknown keys")
+    if set(catalog.decision_frontier_segments) != DECISION_FRONTIER_SEGMENT_KEYS:
+        raise ValueError(
+            "zh-CN decision-frontier presentation keys are incomplete or unknown"
+        )
     for claim in registry.claims:
         presentation = catalog.claims[claim.claim_id]
         templates = (
@@ -313,6 +323,10 @@ def render_public_claims(
             }
         ],
     }
+    for segment in frontier["segments"]:
+        segment["presentation"] = presentation.decision_frontier_segments[
+            segment["segment_id"]
+        ].model_dump(mode="json")
     presentation_payload = {
         "schema_version": presentation.schema_version,
         "locale": presentation.locale,
@@ -521,7 +535,9 @@ def _q5_final_report(registry: ClaimRegistry) -> str:
                 "LLMs are generally without value.",
                 "",
                 "No `q5_test` split was created or read during closure. The latest stable product "
-                "release remains `v3.0-q4-reliability`; Q5 does not create a release or tag.",
+                "release remains `v3.0-q4-reliability`. Q5 creates no product release; "
+                "`agent-reliability-lab-q5-closed-20260717` is an annotated, non-product "
+                "research milestone and does not create `v4.0`.",
                 "",
                 "## Evidence boundary",
                 "",

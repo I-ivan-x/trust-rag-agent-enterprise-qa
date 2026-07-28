@@ -216,9 +216,11 @@ def write_receipt(
     if not target.is_absolute():
         target = repository / target
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(
-        json.dumps(receipt.model_dump(mode="json"), indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
+    target.write_bytes(
+        (
+            json.dumps(receipt.model_dump(mode="json"), indent=2, sort_keys=True)
+            + "\n"
+        ).encode("utf-8")
     )
     return target
 

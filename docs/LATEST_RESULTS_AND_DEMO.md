@@ -2,7 +2,7 @@
 
 **Governed Runtime, Evaluation Harness, and Decision Frontier for Tool-Using Agents**
 
-Updated for the Batch 5-Z public truth layer. TrustRAG is the legacy codename retained in historical artifacts and internal identifiers. The latest stable product release remains `v3.0-q4-reliability`; Q5 is closed as research evidence with overall status `scoped_negative_complete`.
+Current as of 2026-07-28. TrustRAG is the legacy codename retained in historical artifacts and internal identifiers. The latest stable product release remains `v3.0-q4-reliability`; Q5 is closed as research evidence with overall status `scoped_negative_complete`.
 
 ## Current result map
 
@@ -13,7 +13,7 @@ All result rows explicitly reference canonical claim IDs in `data/claims/claim_r
 | Q1 | Fail-closed answer safety and hybrid retrieval uplift were demonstrated within the tracked real-run scope, with refusal cost disclosed. | `q1.fail_closed_answers`, `q1.hybrid_retrieval` |
 | Q2 | Agentic retrieval recovery did not establish a meaningful gain in the evaluated real-run scope. | `q2.agentic_recovery` |
 | Q3 | Governed-action safety was demonstrated; the first selection-usefulness gate failed as intended. | `q3.action_safety`, `q3.action_usefulness` |
-| Q4 | Held-out calibrated action selection and the safety floor were demonstrated within the frozen scope. | `q4.calibrated_selection`, `q4.release_reliability` |
+| Q4 | Calibrated action selection and the safety floor were demonstrated in the disclosed second run over frozen `ops_test`; the first failure and correction remain archived. | `q4.calibrated_selection`, `q4.release_reliability` |
 | Q5 | Selective runtime, observation adaptation, schema/transition safety, and real-dev hybrid efficiency were demonstrated within their named scopes. Semantic uplift and controlled-prose LLM necessity were falsified in the current scope; open-world value was not evaluated. | all seven `q5.*` claims in `docs/Q5_CLAIM_MATRIX.md` |
 
 ## Q5 formal closure
@@ -89,7 +89,8 @@ summary.
 ## Honest boundaries
 
 - Structural citation validity is not the same as human semantic support audit.
-- Q4 is a scoped held-out result over a thin corpus surface, not a universal controller guarantee.
+- Q4 is a disclosed second-run result over frozen `ops_test`, the same thin synthetic corpus surface, and repaired queries—not a pristine one-shot holdout or universal controller guarantee.
+- `evidence_mode=real` means actual configured provider/embedding/reranker execution; it does not mean production traffic, customer data, or a real customer incident.
 - Mock, synthetic, replay, and offline-control evidence are labeled and cannot masquerade as real-run evidence.
 - Q5 efficiency does not imply Q5 semantic value.
 - The controlled-prose closure says nothing about open-world language understanding.

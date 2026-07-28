@@ -1,7 +1,9 @@
 # Citation Support Audit Guide (Manual Audit Protocol v1)
 
-Status: protocol frozen, ready to freeze sample (C1-00 landed; answers
-persisted). Audit not yet labeled.
+Status: **historical protocol**. The census has since completed; current results
+are in [`CITATION_AUDIT.md`](CITATION_AUDIT.md) and
+[`INTERVIEW_QA.md`](INTERVIEW_QA.md). The pre-audit instructions below are
+preserved as the protocol that governed labeling, not as current project state.
 Owner: Project Owner (single annotator).
 Prerequisite reading: `docs/CITATION_AUDIT.md` (rule-based v1 status and caveats).
 

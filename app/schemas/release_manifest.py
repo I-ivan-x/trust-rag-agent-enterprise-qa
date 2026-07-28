@@ -53,7 +53,9 @@ class ResearchMilestoneBinding(BaseModel):
     name: Literal["agent-reliability-lab-q5-closed-20260717"]
     status: Literal["scoped_negative_complete"]
     tag_kind: Literal["annotated"]
-    target_policy: Literal["manifest-envelope-commit"]
+    tag_object_sha: str = Field(pattern=GIT_SHA_PATTERN)
+    target_policy: Literal["immutable-archive-ancestor"]
+    target_commit: str = Field(pattern=GIT_SHA_PATTERN)
     release_created: Literal[False]
     stable_product_release_unchanged: Literal[True]
 
@@ -144,6 +146,50 @@ class VerificationCommand(BaseModel):
     status: Literal["passed"]
 
 
+def expected_clean_clone_commands(tested_commit: str) -> list[tuple[str, list[str]]]:
+    """Return the exact ordered command matrix bound into the clean-clone receipt."""
+
+    python = ["py", "-m", "uv", "run", "--frozen", "python"]
+    return [
+        ("uv_sync", ["py", "-m", "uv", "sync", "--locked", "--group", "dev"]),
+        ("claim_build", [*python, "scripts/build_public_claims.py"]),
+        ("claim_check", [*python, "scripts/build_public_claims.py", "--check"]),
+        ("claim_drift", [*python, "scripts/check_claim_drift.py"]),
+        (
+            "showcase_isolation",
+            [*python, "scripts/build_interview_showcase.py", "--check"],
+        ),
+        ("public_repository_audit", [*python, "scripts/verify_public_repository.py"]),
+        (
+            "release_gates",
+            [
+                *python,
+                "scripts/check_release_gates.py",
+                "--summary",
+                "tests/fixtures/release_gates/ci_clean_summary.json",
+                "--leakage",
+                "tests/fixtures/release_gates/ci_clean_leakage.json",
+            ],
+        ),
+        ("npm_ci", ["npm", "ci"]),
+        ("npm_build", ["npm", "run", "build"]),
+        ("playwright", ["npx", "playwright", "test"]),
+        ("frontend_receipt", [*python, "scripts/verify_frontend_closure.py"]),
+        *[
+            (
+                f"lighthouse_{index}",
+                [
+                    "node",
+                    "scripts/run-lighthouse.mjs",
+                    tested_commit,
+                    f"acceptance/runtime/release-clean-clone/run-{index}",
+                ],
+            )
+            for index in range(1, 4)
+        ],
+    ]
+
+
 class LighthouseVerificationRun(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -178,25 +224,10 @@ class ReleaseCleanCloneReceipt(BaseModel):
 
     @model_validator(mode="after")
     def _required_verification_matrix(self) -> ReleaseCleanCloneReceipt:
-        required = {
-            "uv_sync",
-            "claim_build",
-            "claim_check",
-            "claim_drift",
-            "showcase_isolation",
-            "public_repository_audit",
-            "release_gates",
-            "npm_ci",
-            "npm_build",
-            "playwright",
-            "frontend_receipt",
-            "lighthouse_1",
-            "lighthouse_2",
-            "lighthouse_3",
-        }
-        names = [row.name for row in self.commands]
-        if len(names) != len(set(names)) or set(names) != required:
-            raise ValueError("clean-clone command matrix is incomplete or duplicated")
+        actual = [(row.name, row.command) for row in self.commands]
+        expected = expected_clean_clone_commands(self.tested_commit)
+        if actual != expected:
+            raise ValueError("clean-clone command matrix changed, reordered, or substituted")
         if {row.run_index for row in self.lighthouse_runs} != {1, 2, 3}:
             raise ValueError("clean-clone Lighthouse run matrix must be exactly 1,2,3")
         return self

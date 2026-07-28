@@ -202,6 +202,10 @@ Evidence lineage depends on ancestry. Publication must preserve it.
   explicitly approved, a new tag; an old tag is never moved.
 - Remote publication must preserve the tested commit as an ancestor of the
   published archive-envelope commit.
+- The `release_manifest_v2` name identifies the envelope contract family, while
+  its exact schema bytes remain Git-snapshot-versioned. A historical tag is
+  verified against the schema committed at that tag; later fail-closed
+  maintenance may tighten V2 fields without rewriting the historical tag.
 
 These rules apply to publication history, not to disposable local experiments
 that are never used as Claim evidence.
@@ -254,8 +258,9 @@ Remote publication is a separate terminal condition. It requires:
   ancestry;
 - remote CI green on that commit using full history and tags;
 - local and remote `v3.0-q4-reliability` resolving to the same annotated tag;
-- the exact annotated research milestone tag created on the green archival
-  commit and pushed without creating `v4.0`;
+- the exact annotated research milestone tag remains an immutable archive
+  ancestor of the tested commit, with both its annotated tag object and peeled
+  target matching the release manifest, and is pushed without creating `v4.0`;
 - remote tag and peeled commit verified after push; and
 - any deployed showcase URL, if one is later added, built from the same
   reviewed source state and tested independently.
@@ -340,6 +345,6 @@ git ls-remote --tags origin `
   "refs/tags/agent-reliability-lab-q5-closed-20260717*"
 ```
 
-The first command must report `tag`, the milestone must peel to the intended
-archival commit, and the `v4.0*` query must be empty. If publication is later
+The first command must report `tag`, the milestone must peel to the recorded
+immutable archive ancestor, and the `v4.0*` query must be empty. If publication is later
 authorized, the remote reference must match the local tag after it is pushed.

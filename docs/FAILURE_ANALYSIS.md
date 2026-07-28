@@ -463,13 +463,14 @@ Week 6 boundary retained: hard_negative_error_rate=1.0 indicates a serious failu
   answers to actions was demonstrated within the named real-run scope. (Distinct from F12's under-escalation on
   the insufficient case, which is a usefulness defect, not an unauthorized execution.)
 
-## F10–F13 — Q4 held-out update (`q4-p5-selection-calibrated`, rule)
+## F10–F13 — Q4 frozen ops_test second-run update (`q4-p5-selection-calibrated`, rule)
 
-After the Q4 selection calibration, on the **held-out** `ops_test` (n=20, k=3):
+After the Q4 selection calibration, on the disclosed second run over frozen
+`ops_test` (n=20, k=3; not a pristine one-shot holdout):
 
 - **F10 Wrong Action Selected**: the dead `flag_stale` path is revived (root causes A+B
   fixed); ora-001/002/003-type STALE cases now reach `flag_stale`. Residual F10-style
-  misses on held-out are **retrieval-layer**, not logic: type-B stale SOP / policy doc not
+  misses on this frozen split are **retrieval-layer**, not logic: type-B stale SOP / policy doc not
   co-retrieved (t03/t04/t06), and a phantom `flag_stale`/`ACTIVE_ACTIVE_CONFLICT` from
   rerank instability on the ~30-doc corpus (t08/t11/t20). Recorded as a STALE/CONFLICT
   retrieval boundary, not a detection defect.
@@ -484,7 +485,7 @@ After the Q4 selection calibration, on the **held-out** `ops_test` (n=20, k=3):
   `unauthorized_action_blocked` = 1.00. Safety geometry held while usefulness rose.
 
 Net: the Q4 calibration moved the rule controller's anti-gaming triad **False → True** on a
-held-out set (precision@authorized 0.4545 → 0.6471), thresholds frozen — a positive result
+frozen second run (precision@authorized 0.4545 → 0.6471), thresholds frozen — a positive result
 earned by fixing detection/routing mechanisms, with the two-run §2.4 iteration disclosed in
 `EVALUATION_REPORT.md` and `Q4_P4_FREEZE.md`.
 
@@ -507,5 +508,7 @@ The public conclusion is therefore:
 - Open-world LLM value was not evaluated (`q5.open_world_llm_value`).
 
 This closes the controlled-prose track. Historical plans for K1, `q5_test`, confirmatory runs,
-Boundary G, new K1 data, or a Q5 release/tag are superseded, not pending. See the generated
+Boundary G, new K1 data, or a Q5 product release / semantic-version product tag
+(especially `v4.0`) are superseded, not pending. The exact annotated non-product
+research marker `agent-reliability-lab-q5-closed-20260717` remains allowed. See the generated
 `Q5_FINAL_REPORT.md` and `Q5_CLAIM_MATRIX.md` for metrics and hash-bound sources.

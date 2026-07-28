@@ -7,18 +7,30 @@ Claim 数字以 `data/claims/claim_registry.json` 为准，发布验收数字以
 
 ## 后端 / Agent Platform
 
-> 设计并实现 host-enforced 的 tool-using Agent 运行时，将 typed schema、状态机、证据与 ACL/capability 再授权、人工审批和 side-effect guard 串成 fail-closed 执行链；在冻结 Q4 留出范围内阻断 9/9 未授权动作，并将无证据动作与未授权漏升级分别保持为 0/120。
+**简历短版：**
+
+> 构建受治理 Tool-using Agent 运行时，以 typed schema、权限再授权与人工审批在已披露的冻结评测第二次运行中阻断 9/9 未授权动作。
+
+**面试展开版：**
+
+> 设计并实现 host-enforced 的 tool-using Agent 运行时，将 typed schema、状态机、证据与 ACL/capability 再授权、人工审批和 side-effect guard 串成 fail-closed 执行链；在已披露的 Q4 冻结 `ops_test` 第二次运行中阻断 9/9 未授权动作，并将无证据动作与未授权漏升级分别保持为 0/120。
 
 **证据合同：**
 
 - Claim：`q4.release_reliability`
-- Scope：`Q4 held-out ops_test safety floor`
-- Evidence mode：`real`
+- Scope：`Q4 frozen ops_test second-run safety floor`
+- Evidence mode：`real`（真实 provider/embedding/reranker 执行；不是生产流量或客户数据）
 - Headline eligibility：`true`
-- 限定：这是冻结留出集结果，不是开放世界安全保证
+- 限定：首次失败、机制修正与查询修复均已披露；这不是 pristine one-shot holdout 或开放世界安全保证
 - Source：`data/claims/source/q4-p5-selection-calibrated/summary.json`
 
 ## AI Infra / Evaluation
+
+**简历短版：**
+
+> 搭建预注册与 Claim 防漂移评测；以 1/12 未过门和确定性解析器 32/32 的结果关闭不成立的 Q5 价值假设。
+
+**面试展开版：**
 
 > 建立预注册、成对对照和 Decision Frontier 评测，在当前 real-dev 语义分层中记录 LLM uplift 仅 1/12、低于冻结的 0.10 门槛；随后以版本化 deterministic parser 在 frozen controlled-prose 范围解决 32/32 案例、剩余 0/32，据此关闭该受控文本轨并保持 K1=false，而不是扩写证据不支持的价值 Claim。
 
@@ -40,6 +52,12 @@ Claim 数字以 `data/claims/claim_registry.json` 为准，发布验收数字以
 - 限定：`q5.open_world_llm_value=not_evaluated`；不得写成“大模型没有价值”
 
 ## 平台可靠性 / Release Engineering
+
+**简历短版：**
+
+> 建立哈希证据、CI drift gate 与 clean-clone manifest，使 14 条公开结论可追溯，并在 detached 本地 clean clone 中连续三次通过 Lighthouse ≥90。
+
+**面试展开版：**
 
 > 构建 schema 驱动的 Claim registry、SHA-256 evidence receipts、生成器/CI drift gate 与 detached clean-clone release manifest；将 14 条公开 Claim 绑定到 11 个 tracked source artifacts，并在 0 次模型及评测外部请求下通过 6/6 release gates、Playwright 48 passed/12 skipped 和连续三次 Lighthouse performance ≥90。
 
@@ -66,7 +84,7 @@ Claim 数字以 `data/claims/claim_registry.json` 为准，发布验收数字以
 
 ## 禁止使用的夸大写法
 
-- 不写“证明 Agent 永远不会越权”；应写“在冻结 Q4 留出范围内阻断 9/9”。
+- 不写“证明 Agent 永远不会越权”；应写“在已披露的冻结 Q4 `ops_test` 第二次运行中阻断 9/9”。
 - 不写“证明大模型无用”；应写“当前 real-dev uplift 未过门槛，controlled-prose
   necessity 在冻结范围被否定，open-world 未评估”。
 - 不把 real-dev efficiency 写成 held-out product headline。

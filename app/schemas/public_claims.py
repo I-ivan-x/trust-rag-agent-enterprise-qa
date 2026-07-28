@@ -236,6 +236,20 @@ class ZhCnClaimPresentation(BaseModel):
     meaning_template: str = Field(min_length=1)
 
 
+class ZhCnDecisionFrontierSegmentPresentation(BaseModel):
+    """Chinese copy for one generated Q5 decision-frontier segment."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    label: str = Field(min_length=1)
+    route: str = Field(min_length=1)
+    parser_status: str = Field(min_length=1)
+    llm_called: str = Field(min_length=1)
+    terminal_outcome: str = Field(min_length=1)
+    hypothesis: str = Field(min_length=1)
+    final_decision: str = Field(min_length=1)
+
+
 class ZhCnPresentationCatalog(BaseModel):
     """Versioned localization SSOT consumed by the public-claim generator."""
 
@@ -248,6 +262,9 @@ class ZhCnPresentationCatalog(BaseModel):
     evidence_mode_labels: dict[str, str]
     derivation_labels: dict[str, str]
     metric_labels: dict[str, str]
+    decision_frontier_segments: dict[
+        str, ZhCnDecisionFrontierSegmentPresentation
+    ]
     claims: dict[str, ZhCnClaimPresentation]
 
     @model_validator(mode="after")

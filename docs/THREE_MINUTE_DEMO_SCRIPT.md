@@ -38,43 +38,44 @@
 
 ### 0:45–1:15｜Governed Runtime：模型只能提议，主机决定能否执行
 
-**屏幕动作：** 播放未授权轨迹；停在 capability 检查、拒绝结果和 audit trace。
+**屏幕动作：** 点击“危险路径：尝试绕过审批”，再切回“正确路径：等待审批”；
+停在权限检查、拒绝结果、trace ID 和 synthetic provenance。
 
 **照读：**
 
-> 看控制室。模型只能提议，主机检查 schema、状态、证据、角色和 capability；需审批就进人工队列，否则在副作用前拒绝。冻结 Q4 留出范围内，9 次未授权动作全部被阻断；120 次尝试中，无证据动作和未授权漏升级均为零。这是范围内安全结果，不是开放世界保证。
+> 屏幕轨迹是合成演示，不是评测样本；数字来自独立记录的冻结评测。模型只能提议，主机检查 schema、状态、证据、角色和 capability；需审批就进人工队列，否则在副作用前拒绝。在已披露的 Q4 冻结评测第二次运行里，9 次未授权动作全部被阻断；120 次尝试中，无证据动作和未授权漏升级均为零。这是范围内安全结果，不是开放世界保证。
 
 **Claim 锚点：**
 
 - `q4.release_reliability`
-- 范围：`Q4 held-out ops_test safety floor`
+- 范围：`Q4 frozen ops_test second-run safety floor`
 - 数字：`unauthorized_action_blocked=9/9`、
   `F11_action_without_evidence=0/120`、
   `F13_missed_escalation_unauth=0/120`
-- Evidence mode：`real`
+- Evidence mode：`real`，表示真实 provider/embedding/reranker 执行，不表示生产流量或客户数据
 - Headline eligibility：`true`，但只能按上述冻结留出范围表述
 
 ### 1:15–1:40｜Reliability Turn：安全成功，不代表选择有用
 
-**屏幕动作：** 切到 Reliability Turn，先指 Q3 的失败，再指 Q4 的留出集结果。
+**屏幕动作：** 切到 Reliability Turn，先指 Q3 的失败，再指 Q4 的冻结复验结果。
 
 **照读：**
 
-> 安全不等于有用。Q3 挡住越权，却没过动作选择门。我们没有降门槛，而是修正策略，再到独立留出集验证：授权 precision 33/51，triad 1/1，over-escalation 3/60。门禁让失败先暴露，再被修正。
+> 安全不等于有用。Q3 挡住越权，却没过动作选择门。我们没有降门槛，而是修正策略。`ops_test` 首次运行仍差一个案例，随后做了机制修正；两次运行和五条查询修复都保留披露。冻结的第二次运行达到授权 precision 33/51、triad 1/1、over-escalation 3/60。这是透明的 scoped result，不是 pristine one-shot holdout。
 
 **Claim 锚点：**
 
 - `q3.action_usefulness`：Q3 real ops development scope，
   `headline_eligible=false`，只用于解释失败转折
-- `q4.calibrated_selection`：Q4 held-out `ops_test` scope，
+- `q4.calibrated_selection`：Q4 frozen `ops_test` second-run scope，
   `precision_authorized=33/51`、`anti_gaming_triad=1/1`、
   `over_escalation_rate=3/60`，`headline_eligible=true`
 - Q4 结果真实但样本薄；不得外推为通用 controller 保证
 
 ### 1:40–2:30｜Q5 Decision Frontier：知道何时不该调用大模型
 
-**屏幕动作：** 依次切换 Grammar、Controlled prose、Open semantics、Unsafe；
-最后停在 `Final decision`。
+**屏幕动作：** 指出 Grammar、Controlled prose、Open semantics、Unsafe 四种路径；
+只进入 Controlled prose，依次点 Hypothesis、Real result、Final decision。其余三项不展开。
 
 **照读：**
 
@@ -103,7 +104,7 @@ evidence mode、scope 和 headline eligibility。
 > 最后看 Evidence Ledger。每个公开结论都绑定 claim ID、artifact hash、run、commit、scope 和 headline eligibility，生成器与 CI 拒绝漂移。价值不只是模型不越权，也包括发布不失真，以及团队知道何时停止。
 
 **证据边界：** Claim registry 当前含 14 条 Claim、11 个唯一 tracked source
-artifact。Detached clean clone 的发布验收是独立工程事实，不应冒充模型能力 Claim。
+artifact。Detached no-hardlinks clean clone 的发布验收是独立工程事实，不应冒充模型能力 Claim。
 
 ## 演示结束后的唯一补充句
 

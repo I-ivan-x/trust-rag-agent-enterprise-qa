@@ -106,9 +106,13 @@ def test_recruiting_data_contract_is_complete_and_scoped() -> None:
             "terminal_outcome",
             "claim_status",
             "states",
+            "presentation",
         } <= segment.keys()
         assert set(segment["states"]) == {
             "hypothesis",
             "real_result",
             "final_decision",
         }
+        assert segment["presentation"]["label"]
+        assert segment["presentation"]["route"]
+        assert segment["presentation"]["final_decision"]

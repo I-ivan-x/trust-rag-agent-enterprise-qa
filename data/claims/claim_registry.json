@@ -89,15 +89,15 @@
         "anti_gaming_triad": {"numerator": 0, "denominator": 1, "value": 0.0, "unit": "boolean_rate", "source": {"source_path": "data/claims/source/q3-p7-governance-ablation/summary.json", "derivation": "boolean", "value_pointer": "/governance_metrics/by_system/final_governed_rule/anti_gaming_triad_ok", "tolerance": 0.005}}
       },
       "headline_eligible": false,
-      "limitations": ["This negative Q3 result was later superseded by Q4 calibration on a held-out split."],
+      "limitations": ["This negative Q3 result was later superseded by the disclosed Q4 frozen-ops_test second-run result."],
       "public_summary": "Falsified in the Q3 ops scope: safe actions were still over-escalated, and the anti-gaming usefulness triad failed."
     },
     {
       "claim_id": "q4.calibrated_selection",
       "question_id": "Q4",
-      "public_label": "Held-out calibrated action selection",
+      "public_label": "Frozen ops_test calibrated action selection",
       "status": "demonstrated_in_frozen_scope",
-      "claim_scope": "Q4 held-out ops_test rule-controller evaluation",
+      "claim_scope": "Q4 frozen ops_test second-run mechanism verification",
       "evidence_mode": "real",
       "split_or_frozen_scope": "ops_test",
       "source_artifacts": [{"path": "data/claims/source/q4-p5-selection-calibrated/summary.json", "archived_from_path": "data/eval_runs/q4-p5-selection-calibrated/summary.json", "sha256": "130edf3aa4dbc681a1b811a220b8acb7210db2fe9a80d8f734ceed3e73667779", "run_id": "q4-p5-selection-calibrated", "execution_commit": "39d6cb78e6fcab4ed95d951d8c16f9925e048d77", "artifact_commit": "73ad26bc28cd70dcac6be8d7d21c41a531c44d16", "release_tag": "v3.0-q4-reliability", "tag_object_sha": "4e5198c1303b8626a2d10cea33ec905116e5d286", "release_commit": "2257ff02a77474d597a8ee180e18ea91c2963326"}],
@@ -107,15 +107,15 @@
         "over_escalation_rate": {"numerator": 3, "denominator": 60, "value": 0.05, "unit": "rate", "source": {"source_path": "data/claims/source/q4-p5-selection-calibrated/summary.json", "derivation": "rate_from_value", "value_pointer": "/governance_metrics/by_system/final_governed_rule/over_escalation_rate", "denominator_pointer": "/governance_metrics/by_system/final_governed_rule/denominators/over_escalation_rate", "tolerance": 0.005}}
       },
       "headline_eligible": true,
-      "limitations": ["The result is real but thin and clears the precision floor by roughly one case-equivalent.", "The LLM controller did not pass the triad."],
-      "public_summary": "Demonstrated within held-out ops_test: the calibrated rule controller reached 33/51 authorized precision and passed the anti-gaming triad."
+      "limitations": ["The result is real but thin and clears the precision floor by roughly one case-equivalent.", "The ops_test split was run twice; the first failure and the intervening mechanism correction are both archived.", "The split uses new queries over the same small synthetic corpus, and five queries were repaired after the logic freeze; this is not pristine novel-corpus generalization.", "The LLM controller did not pass the triad."],
+      "public_summary": "Demonstrated in the disclosed second run over frozen ops_test: the calibrated rule controller reached 33/51 authorized precision and passed the anti-gaming triad."
     },
     {
       "claim_id": "q4.release_reliability",
       "question_id": "Q4",
-      "public_label": "Held-out governance safety floor",
+      "public_label": "Frozen ops_test governance safety floor",
       "status": "demonstrated_in_frozen_scope",
-      "claim_scope": "Q4 held-out ops_test safety floor",
+      "claim_scope": "Q4 frozen ops_test second-run safety floor",
       "evidence_mode": "real",
       "split_or_frozen_scope": "ops_test",
       "source_artifacts": [{"path": "data/claims/source/q4-p5-selection-calibrated/summary.json", "archived_from_path": "data/eval_runs/q4-p5-selection-calibrated/summary.json", "sha256": "130edf3aa4dbc681a1b811a220b8acb7210db2fe9a80d8f734ceed3e73667779", "run_id": "q4-p5-selection-calibrated", "execution_commit": "39d6cb78e6fcab4ed95d951d8c16f9925e048d77", "artifact_commit": "73ad26bc28cd70dcac6be8d7d21c41a531c44d16", "release_tag": "v3.0-q4-reliability", "tag_object_sha": "4e5198c1303b8626a2d10cea33ec905116e5d286", "release_commit": "2257ff02a77474d597a8ee180e18ea91c2963326"}],
@@ -125,8 +125,8 @@
         "F13_missed_escalation_unauth": {"numerator": 0, "denominator": 120, "value": 0.0, "unit": "rate", "source": {"source_path": "data/claims/source/q4-p5-selection-calibrated/summary.json", "derivation": "ratio", "numerator_pointer": "/governance_attribution/failure_taxonomy/F13_missed_escalation_unauth", "denominator_pointer": "/attempt_count", "tolerance": 0.005}}
       },
       "headline_eligible": true,
-      "limitations": ["The stable product release remains v3.0-q4-reliability; Q5 does not supersede it."],
-      "public_summary": "Demonstrated within held-out ops_test: unauthorized actions remained blocked and F11/F13 stayed at zero."
+      "limitations": ["The ops_test split was run twice; this safety result is scoped to the disclosed frozen second run, not a pristine one-shot holdout.", "The corpus is synthetic and controlled; real execution does not mean production traffic or customer data.", "The stable product release remains v3.0-q4-reliability; Q5 does not supersede it."],
+      "public_summary": "Demonstrated in the disclosed second run over frozen ops_test: unauthorized actions remained blocked and F11/F13 stayed at zero."
     },
     {
       "claim_id": "q5.selective_runtime_architecture",

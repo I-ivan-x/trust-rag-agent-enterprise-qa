@@ -28,7 +28,7 @@ The historical protocol-v3 primary real-dev run made 210 model calls. Its Hybrid
 
 The semantic uplift was 1/12, below the frozen 0.10 value threshold. This is a current-scope negative result, not a claim that LLMs are generally without value.
 
-No `q5_test` split was created or read during closure. The latest stable product release remains `v3.0-q4-reliability`; Q5 does not create a release or tag.
+No `q5_test` split was created or read during closure. The latest stable product release remains `v3.0-q4-reliability`. Q5 creates no product release; `agent-reliability-lab-q5-closed-20260717` is an annotated, non-product research milestone and does not create `v4.0`.
 
 ## Evidence boundary
 

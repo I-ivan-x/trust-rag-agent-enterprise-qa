@@ -163,8 +163,18 @@
           "title": "Tag Kind",
           "type": "string"
         },
+        "tag_object_sha": {
+          "pattern": "^[0-9a-f]{40}$",
+          "title": "Tag Object Sha",
+          "type": "string"
+        },
+        "target_commit": {
+          "pattern": "^[0-9a-f]{40}$",
+          "title": "Target Commit",
+          "type": "string"
+        },
         "target_policy": {
-          "const": "manifest-envelope-commit",
+          "const": "immutable-archive-ancestor",
           "title": "Target Policy",
           "type": "string"
         }
@@ -173,7 +183,9 @@
         "name",
         "status",
         "tag_kind",
+        "tag_object_sha",
         "target_policy",
+        "target_commit",
         "release_created",
         "stable_product_release_unchanged"
       ],

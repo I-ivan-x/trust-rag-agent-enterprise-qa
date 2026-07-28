@@ -133,6 +133,19 @@ def test_clean_clone_receipt_nonancestor_and_mismatch_fail() -> None:
     with pytest.raises(ValueError):
         verify_clean_clone_receipt_lineage(mutated, manifest, root=ROOT)
 
+    payload = _receipt(manifest).model_dump(mode="json")
+    payload["runtime_versions"]["python"] = "0.0.0-mutated"
+    mutated = ReleaseCleanCloneReceipt.model_validate(payload)
+    with pytest.raises(ValueError, match="runtime versions"):
+        verify_clean_clone_receipt_lineage(mutated, manifest, root=ROOT)
+
+
+def test_clean_clone_receipt_rejects_command_substitution() -> None:
+    payload = _receipt(_manifest()).model_dump(mode="json")
+    payload["commands"][0]["command"] = ["echo", "passed"]
+    with pytest.raises(ValidationError, match="command matrix"):
+        ReleaseCleanCloneReceipt.model_validate(payload)
+
 
 def test_research_milestone_requires_a_complete_annotated_tag(tmp_path: Path) -> None:
     subprocess.run(["git", "init", "--quiet"], cwd=tmp_path, check=True)
@@ -153,20 +166,41 @@ def test_research_milestone_requires_a_complete_annotated_tag(tmp_path: Path) ->
         cwd=tmp_path,
         check=True,
     )
+    archive_commit = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    ).stdout.strip()
     milestone = ResearchMilestoneBinding(
         name="agent-reliability-lab-q5-closed-20260717",
         status="scoped_negative_complete",
         tag_kind="annotated",
-        target_policy="manifest-envelope-commit",
+        tag_object_sha="0" * 40,
+        target_policy="immutable-archive-ancestor",
+        target_commit=archive_commit,
         release_created=False,
         stable_product_release_unchanged=True,
     )
+    with pytest.raises(ValueError, match="missing"):
+        _verify_research_milestone(
+            milestone,
+            tmp_path,
+            tested_commit=archive_commit,
+        )
     subprocess.run(["git", "tag", milestone.name], cwd=tmp_path, check=True)
     with pytest.raises(ValueError, match="annotated"):
-        _verify_research_milestone(milestone, tmp_path)
+        _verify_research_milestone(
+            milestone,
+            tmp_path,
+            tested_commit=archive_commit,
+        )
     subprocess.run(["git", "tag", "--delete", milestone.name], cwd=tmp_path, check=True)
     message = (
         "scoped_negative_complete\n\n"
+        "冻结范围研究里程碑。\n"
         "Open-world LLM value was not evaluated.\n"
         "v3.0-q4-reliability remains stable.\n"
         "This is not a product release.\n"
@@ -187,10 +221,94 @@ def test_research_milestone_requires_a_complete_annotated_tag(tmp_path: Path) ->
         cwd=tmp_path,
         check=True,
     )
-    _verify_research_milestone(milestone, tmp_path)
+    milestone_payload = milestone.model_dump(mode="json")
+    milestone_payload["tag_object_sha"] = subprocess.run(
+        ["git", "rev-parse", f"refs/tags/{milestone.name}"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    ).stdout.strip()
+    milestone = ResearchMilestoneBinding.model_validate(milestone_payload)
+    _verify_research_milestone(
+        milestone,
+        tmp_path,
+        tested_commit=archive_commit,
+    )
+    (tmp_path / "maintenance.txt").write_text("docs fix\n", encoding="utf-8")
+    subprocess.run(["git", "add", "maintenance.txt"], cwd=tmp_path, check=True)
+    subprocess.run(
+        [
+            "git",
+            "-c",
+            "user.name=Archive Test",
+            "-c",
+            "user.email=archive@example.invalid",
+            "commit",
+            "--quiet",
+            "-m",
+            "maintenance",
+        ],
+        cwd=tmp_path,
+        check=True,
+    )
+    maintenance_commit = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    ).stdout.strip()
+    _verify_research_milestone(
+        milestone,
+        tmp_path,
+        tested_commit=maintenance_commit,
+    )
+
+    object_payload = milestone.model_dump(mode="json")
+    object_payload["tag_object_sha"] = "f" * 40
+    with pytest.raises(ValueError, match="tag object"):
+        _verify_research_milestone(
+            ResearchMilestoneBinding.model_validate(object_payload),
+            tmp_path,
+            tested_commit=maintenance_commit,
+        )
+
+    moved_payload = milestone.model_dump(mode="json")
+    moved_payload["target_commit"] = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    ).stdout.strip()
+    with pytest.raises(ValueError, match="recorded commit"):
+        _verify_research_milestone(
+            ResearchMilestoneBinding.model_validate(moved_payload),
+            tmp_path,
+            tested_commit=maintenance_commit,
+        )
 
 
 def test_release_manifest_json_is_canonical() -> None:
     manifest = _manifest()
-    expected = json.dumps(manifest.model_dump(mode="json"), indent=2, sort_keys=True) + "\n"
-    assert (ROOT / RELEASE_MANIFEST_PATH).read_text(encoding="utf-8") == expected
+    expected = (
+        json.dumps(manifest.model_dump(mode="json"), indent=2, sort_keys=True) + "\n"
+    ).encode("utf-8")
+    raw = (ROOT / RELEASE_MANIFEST_PATH).read_bytes()
+    assert b"\r\n" not in raw
+    assert raw == expected
+
+
+def test_clean_clone_receipt_json_is_canonical_lf() -> None:
+    manifest = _manifest()
+    receipt = _receipt(manifest)
+    expected = (
+        json.dumps(receipt.model_dump(mode="json"), indent=2, sort_keys=True) + "\n"
+    ).encode("utf-8")
+    raw = (ROOT / manifest.clean_clone_receipt.path).read_bytes()
+    assert b"\r\n" not in raw
+    assert raw == expected

@@ -23,6 +23,7 @@ import {
 } from "../lib/claims";
 
 const claims = questionsData.questions.flatMap((question) => question.claims);
+const publicRepository = "https://github.com/I-ivan-x/agent-reliability-lab";
 ---
 
 <section
@@ -107,7 +108,17 @@ const claims = questionsData.questions.flatMap((question) => question.claims);
                 {claim.source_artifacts.map((source) => (
                   <dl class="source-record">
                     <div><dt>运行 ID</dt><dd class="mono">{source.run_id}</dd></div>
-                    <div><dt>来源路径</dt><dd class="mono">{source.path}</dd></div>
+                    <div>
+                      <dt>来源路径</dt>
+                      <dd class="mono">
+                        <a
+                          href={`${publicRepository}/blob/${source.artifact_commit}/${source.path}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label={`在 GitHub 新标签页查看 ${source.path}，固定到产物提交`}
+                        >{source.path}</a>
+                      </dd>
+                    </div>
                     <div><dt>产物 SHA-256</dt><dd class="mono">{source.sha256}</dd></div>
                     <div><dt>执行提交</dt><dd class="mono">{source.execution_commit}</dd></div>
                     <div><dt>产物提交</dt><dd class="mono">{source.artifact_commit}</dd></div>

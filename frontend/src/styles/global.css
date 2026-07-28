@@ -245,6 +245,30 @@ main {
   margin: 0;
 }
 
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px 18px;
+}
+
+.footer-links a {
+  display: inline-flex;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  padding-inline: 4px;
+  color: var(--silver);
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 4px;
+}
+
+.footer-links a:hover {
+  color: var(--cyan);
+  text-decoration-color: var(--cyan);
+}
+
 .section {
   position: relative;
   padding-block: 72px;
@@ -990,10 +1014,14 @@ main {
 }
 
 .trajectory-tabs {
-  display: flex;
+  display: none;
   gap: 4px;
   padding: 8px;
   border-bottom: 1px solid var(--line);
+}
+
+.js .trajectory-tabs {
+  display: flex;
 }
 
 .trajectory-tabs button,
@@ -1330,6 +1358,7 @@ main {
 
 .frontier-summary {
   display: grid;
+  margin-top: 12px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
@@ -1379,18 +1408,36 @@ main {
 }
 
 .segmented-control {
-  display: grid;
+  display: none;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 4px;
   padding: 8px;
   border-bottom: 1px solid var(--line);
 }
 
+.js .segmented-control {
+  display: grid;
+}
+
 .segmented-control button {
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 7px;
+  gap: 1px;
+}
+
+.segmented-control button small,
+.state-tabs button small {
+  color: var(--faint);
+  font-size: 0.58rem;
+  font-weight: 560;
+  line-height: 1.3;
+}
+
+.segmented-control button[aria-selected="true"] small,
+.state-tabs button[aria-selected="true"] small {
+  color: var(--muted);
 }
 
 .segmented-control button[aria-selected="true"] {
@@ -1454,7 +1501,7 @@ main {
 }
 
 .state-tabs {
-  display: flex;
+  display: none;
   gap: 4px;
   padding: 4px;
   border: 1px solid var(--line);
@@ -1462,8 +1509,17 @@ main {
   background: var(--bg);
 }
 
+.js .state-tabs {
+  display: flex;
+}
+
 .state-tabs button {
   flex: 1;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
   padding-inline: 10px;
 }
 
@@ -1567,6 +1623,20 @@ main {
 
 .engineering-ownership span:last-child {
   border-right: 0;
+}
+
+.ownership-note {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-left: 2px solid var(--cyan);
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.55;
+}
+
+.ownership-note strong {
+  color: var(--silver);
 }
 
 .infrastructure-grid {
@@ -1899,6 +1969,21 @@ a.infrastructure-card:hover {
   color: var(--muted);
   font-size: 0.61rem;
   overflow-wrap: anywhere;
+}
+
+.source-record dd a {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  color: var(--cyan);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--cyan) 45%, transparent);
+  text-underline-offset: 3px;
+}
+
+.source-record dd a:hover {
+  color: var(--ink);
+  text-decoration-color: var(--cyan);
 }
 
 .metric-table {
@@ -2254,7 +2339,7 @@ a.infrastructure-card:hover {
   .questions-section,
   .runtime-section,
   .reliability-section {
-    padding-block: 16px;
+    padding-block: 15px;
   }
 
   .questions-section .section-heading,
@@ -2361,7 +2446,7 @@ a.infrastructure-card:hover {
     flex-direction: column;
   }
 
-  .trajectory-tabs {
+  .js .trajectory-tabs {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -2454,7 +2539,7 @@ a.infrastructure-card:hover {
     border-bottom: 0;
   }
 
-  .state-tabs {
+  .js .state-tabs {
     display: grid;
     grid-template-columns: 1fr;
   }
@@ -2463,6 +2548,10 @@ a.infrastructure-card:hover {
   .footer-grid {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .footer-links {
+    justify-content: flex-start;
   }
 
   .ledger-item summary {

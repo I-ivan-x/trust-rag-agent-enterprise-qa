@@ -278,11 +278,13 @@
     },
     {
       "claim_id": "q4.calibrated_selection",
-      "claim_scope": "Q4 held-out ops_test rule-controller evaluation",
+      "claim_scope": "Q4 frozen ops_test second-run mechanism verification",
       "evidence_mode": "real",
       "headline_eligible": true,
       "limitations": [
         "The result is real but thin and clears the precision floor by roughly one case-equivalent.",
+        "The ops_test split was run twice; the first failure and the intervening mechanism correction are both archived.",
+        "The split uses new queries over the same small synthetic corpus, and five queries were repaired after the logic freeze; this is not pristine novel-corpus generalization.",
         "The LLM controller did not pass the triad."
       ],
       "metrics": {
@@ -337,12 +339,14 @@
       },
       "presentation": {
         "canonical_status": "demonstrated_in_frozen_scope",
-        "claim_scope": "独立留出集上的规则控制器评测",
-        "frozen_scope": "独立留出集 ops_test",
+        "claim_scope": "冻结 ops_test 的第二次机制复验",
+        "frozen_scope": "冻结 ops_test 第二次运行",
         "headline_eligible": true,
-        "label": "留出集校准动作选择",
+        "label": "冻结评测集上的校准动作选择",
         "limitations": [
           "该结果来自真实运行，但样本仍薄，授权精确率仅以约一个案例的余量越过门槛。",
+          "ops_test 共运行两次；首次失败与其后的机制修正均已归档披露。",
+          "该 split 使用同一小型合成语料上的新查询，且逻辑冻结后修复过五条查询；它不是全新语料上的一次性独立泛化证明。",
           "模型控制器未通过有效性三联门。"
         ],
         "locale": "zh-CN",
@@ -353,10 +357,10 @@
           "precision_authorized": "授权精确率"
         },
         "status": "已验证 · 冻结范围",
-        "summary": "在独立留出集中得到验证：校准后的规则控制器授权精确率达到 33/51，并通过有效性三联门。"
+        "summary": "在已披露的冻结 ops_test 第二次运行中得到验证：校准后的规则控制器授权精确率达到 33/51，并通过有效性三联门。"
       },
-      "public_label": "Held-out calibrated action selection",
-      "public_summary": "Demonstrated within held-out ops_test: the calibrated rule controller reached 33/51 authorized precision and passed the anti-gaming triad.",
+      "public_label": "Frozen ops_test calibrated action selection",
+      "public_summary": "Demonstrated in the disclosed second run over frozen ops_test: the calibrated rule controller reached 33/51 authorized precision and passed the anti-gaming triad.",
       "question_id": "Q4",
       "source_artifacts": [
         {
@@ -377,10 +381,12 @@
     },
     {
       "claim_id": "q4.release_reliability",
-      "claim_scope": "Q4 held-out ops_test safety floor",
+      "claim_scope": "Q4 frozen ops_test second-run safety floor",
       "evidence_mode": "real",
       "headline_eligible": true,
       "limitations": [
+        "The ops_test split was run twice; this safety result is scoped to the disclosed frozen second run, not a pristine one-shot holdout.",
+        "The corpus is synthetic and controlled; real execution does not mean production traffic or customer data.",
         "The stable product release remains v3.0-q4-reliability; Q5 does not supersede it."
       ],
       "metrics": {
@@ -435,11 +441,13 @@
       },
       "presentation": {
         "canonical_status": "demonstrated_in_frozen_scope",
-        "claim_scope": "独立留出集安全底线",
-        "frozen_scope": "独立留出集 ops_test",
+        "claim_scope": "冻结 ops_test 第二次运行的安全底线",
+        "frozen_scope": "冻结 ops_test 第二次运行",
         "headline_eligible": true,
-        "label": "留出集治理安全底线",
+        "label": "冻结评测集上的治理安全底线",
         "limitations": [
+          "ops_test 共运行两次；该安全结果只适用于已披露的冻结第二次运行，不是一次性 pristine holdout。",
+          "语料为受控合成数据；真实执行不等于生产流量或客户数据。",
           "稳定产品版本仍为既有可靠性版本；后续研究不取代该版本。"
         ],
         "locale": "zh-CN",
@@ -450,10 +458,10 @@
           "unauthorized_action_blocked": "未授权动作阻断率"
         },
         "status": "已验证 · 冻结范围",
-        "summary": "在独立留出集中得到验证：9/9 次未授权动作全部被阻断，无证据动作与未授权漏升级保持为零。"
+        "summary": "在已披露的冻结 ops_test 第二次运行中得到验证：9/9 次未授权动作全部被阻断，无证据动作与未授权漏升级保持为零。"
       },
-      "public_label": "Held-out governance safety floor",
-      "public_summary": "Demonstrated within held-out ops_test: unauthorized actions remained blocked and F11/F13 stayed at zero.",
+      "public_label": "Frozen ops_test governance safety floor",
+      "public_summary": "Demonstrated in the disclosed second run over frozen ops_test: unauthorized actions remained blocked and F11/F13 stayed at zero.",
       "question_id": "Q4",
       "source_artifacts": [
         {

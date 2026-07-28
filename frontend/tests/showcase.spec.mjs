@@ -150,6 +150,51 @@ test("runtime paths and technical disclosure support keyboard operation", async 
   await expect(page.locator(".frontier-technical")).toHaveAttribute("open", "");
 });
 
+test("Q5 workbench follows the four-route and three-state demo script", async ({ page }) => {
+  const segmentTabs = page.locator("[data-frontier-segment-tabs]");
+  const grammar = segmentTabs.getByRole("tab", { name: /Grammar/ });
+  const controlled = segmentTabs.getByRole("tab", { name: /Controlled prose/ });
+  const openSemantics = segmentTabs.getByRole("tab", { name: /Open semantics/ });
+  const unsafe = segmentTabs.getByRole("tab", { name: /Unsafe/ });
+
+  await expect(controlled).toHaveAttribute("aria-selected", "true");
+  const controlledPanel = page.locator("#frontier-segment-panel-controlled_prose");
+  await expect(controlledPanel).toContainText("原未覆盖案例已全部解决");
+  await expect(controlledPanel).toContainText("不调用");
+
+  const stateTabs = controlledPanel.locator(".state-tabs");
+  const hypothesis = stateTabs.getByRole("tab", { name: /Hypothesis/ });
+  const realResult = stateTabs.getByRole("tab", { name: /Real result/ });
+  const finalDecision = stateTabs.getByRole("tab", { name: /Final decision/ });
+  await expect(finalDecision).toHaveAttribute("aria-selected", "true");
+  await hypothesis.click();
+  await expect(controlledPanel.getByText("待验证假设")).toBeVisible();
+  await realResult.click();
+  await expect(controlledPanel).toContainText("32/32");
+  await finalDecision.click();
+  await expect(controlledPanel.getByText("最终工程决策")).toBeVisible();
+
+  await openSemantics.click();
+  await expect(page.locator("#frontier-segment-panel-open_semantics")).toContainText(
+    "开放世界价值继续标记为未评估",
+  );
+  await unsafe.click();
+  await expect(page.locator("#frontier-segment-panel-unsafe")).toContainText(
+    "拒绝或安全升级",
+  );
+
+  await grammar.focus();
+  await grammar.press("ArrowDown");
+  await expect(controlled).toBeFocused();
+  await expect(controlled).toHaveAttribute("aria-selected", "true");
+  await controlled.press("End");
+  await expect(unsafe).toBeFocused();
+  await expect(unsafe).toHaveAttribute("aria-selected", "true");
+  await unsafe.press("Home");
+  await expect(grammar).toBeFocused();
+  await expect(grammar).toHaveAttribute("aria-selected", "true");
+});
+
 test("keyboard focus is visibly styled", async ({ page }) => {
   const target = page.locator(".hero-actions a").first();
   await target.focus();
@@ -169,6 +214,9 @@ test("mobile touch targets remain at least 44 CSS pixels", async ({ page }, test
         const style = getComputedStyle(node);
         const rect = node.getBoundingClientRect();
         return (
+          !node.closest("details:not([open])") &&
+          !node.closest("[hidden]") &&
+          !node.closest('[aria-hidden="true"]') &&
           style.display !== "none" &&
           style.visibility !== "hidden" &&
           rect.width > 0 &&
@@ -247,7 +295,20 @@ test("no-JavaScript view contains all static runtime and frontier conclusions", 
   for (const panel of await page.locator("[data-trajectory-panel]").all()) {
     await expect(panel).toBeVisible();
   }
-  await expect(page.locator(".frontier-route-card")).toHaveCount(3);
+  await expect(page.locator(".trajectory-tabs")).toBeHidden();
+  await expect(page.locator("[data-frontier-segment-panel]")).toHaveCount(4);
+  for (const panel of await page.locator("[data-frontier-segment-panel]").all()) {
+    await expect(panel).toBeVisible();
+  }
+  await expect(page.locator("[data-frontier-state-panel]")).toHaveCount(12);
+  for (const panel of await page.locator("[data-frontier-state-panel]").all()) {
+    await expect(panel).toBeVisible();
+  }
+  await expect(page.locator("[data-frontier-segment-tabs]")).toBeHidden();
+  await expect(page.locator(".state-tabs")).toHaveCount(4);
+  for (const tablist of await page.locator(".state-tabs").all()) {
+    await expect(tablist).toBeHidden();
+  }
   const summary = page.locator(".frontier-summary");
   await expect(summary.getByText(/解决了 32\/32 条案例/).first()).toBeVisible();
   await expect(summary.getByText(/语义提升为 1\/12/).first()).toBeVisible();
@@ -282,9 +343,9 @@ test("plain interview narrative answers the three core questions", async ({ page
 test("hero presents three distinct canonical outcomes", async ({ page }) => {
   const metrics = page.locator(".hero-metric");
   await expect(metrics).toHaveCount(3);
-  await expect(metrics.nth(0)).toContainText("未授权动作全部阻断");
-  await expect(metrics.nth(1)).toContainText("受控文本由确定性解析器解决");
-  await expect(metrics.nth(2)).toContainText("模型增益未达到门槛");
+  await expect(metrics.nth(0)).toContainText("冻结评测复验：未授权动作全部阻断");
+  await expect(metrics.nth(1)).toContainText("冻结受控文本：确定性解析器解决");
+  await expect(metrics.nth(2)).toContainText("当前开发范围：模型增益未达到门槛");
   expect(await metrics.evaluateAll((nodes) => nodes.map((node) => node.dataset.metricName))).toEqual([
     "unauthorized_action_blocked",
     "previously_uncovered_cases_resolved",
@@ -331,6 +392,40 @@ test("every rendered metric reverses to a claim ledger entry", async ({ page }) 
       .filter((claimId) => !claimId || !ledgerIds.has(claimId));
   });
   expect(unresolved).toEqual([]);
+});
+
+test("interactive controls and evidence links preserve exact lineage", async ({ page }) => {
+  const controlErrors = await page.evaluate(() => {
+    const controls = Array.from(document.querySelectorAll("[aria-controls]"));
+    const ids = controls.map((node) => node.getAttribute("aria-controls"));
+    return {
+      missing: ids.filter((id) => !id || !document.getElementById(id)),
+      duplicates: ids.filter((id, index) => ids.indexOf(id) !== index),
+    };
+  });
+  expect(controlErrors).toEqual({ missing: [], duplicates: [] });
+
+  const questions = JSON.parse(
+    await readFile(new URL("../src/data/questions.json", import.meta.url), "utf8"),
+  );
+  const firstClaim = questions.questions.flatMap((question) => question.claims)[0];
+  const source = firstClaim.source_artifacts[0];
+  const claim = page.locator(`[data-claim-id="${firstClaim.claim_id}"].ledger-item`);
+  await claim.locator("summary").click();
+  const sourceLink = claim.getByRole("link", { name: new RegExp(source.path.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")) });
+  await expect(sourceLink).toHaveAttribute(
+    "href",
+    `https://github.com/I-ivan-x/agent-reliability-lab/blob/${source.artifact_commit}/${source.path}`,
+  );
+});
+
+test("mobile chapter navigation closes after selection", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile-390x844", "mobile navigation contract");
+  const navigation = page.locator(".mobile-nav");
+  await navigation.locator("summary").click();
+  await expect(navigation).toHaveAttribute("open", "");
+  await navigation.getByRole("link", { name: "项目价值" }).click();
+  await expect(navigation).not.toHaveAttribute("open", "");
 });
 
 test("does not request retired hand-authored headline JSON", async ({ page }) => {

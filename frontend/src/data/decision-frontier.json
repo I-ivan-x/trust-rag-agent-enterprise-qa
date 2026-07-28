@@ -804,6 +804,15 @@
       "label": "Grammar",
       "llm_called": "No",
       "parser_status": "Resolved in the frozen controlled-prose scope",
+      "presentation": {
+        "final_decision": "封闭语法固定走解析器与编译器，不引入模型。",
+        "hypothesis": "规则已经封闭时，模型不会比可审计的解析器更必要。",
+        "label": "封闭语法",
+        "llm_called": "不调用",
+        "parser_status": "冻结范围内已解决",
+        "route": "确定性解析器 → 编译器",
+        "terminal_outcome": "生成有依据的处置，或安全失败"
+      },
       "route": "Deterministic parser → compiler",
       "segment_id": "grammar",
       "states": {
@@ -823,6 +832,15 @@
       "label": "Controlled prose",
       "llm_called": "No",
       "parser_status": "All frozen parser-uncovered cases resolved",
+      "presentation": {
+        "final_decision": "确定性解析器已覆盖冻结范围，因此关闭受控文本轨。",
+        "hypothesis": "受控自然语言可能仍保留只有模型才能覆盖的语义空间。",
+        "label": "受控文本",
+        "llm_called": "不调用",
+        "parser_status": "原未覆盖案例已全部解决",
+        "route": "版本化 runtime-only 解析器 → 编译器",
+        "terminal_outcome": "关闭受控文本轨，不进入下一研究阶段"
+      },
       "route": "Versioned runtime-only parser → compiler",
       "segment_id": "controlled_prose",
       "states": {
@@ -843,6 +861,15 @@
       "label": "Open semantics",
       "llm_called": "Yes in real-dev; open-world evaluation absent",
       "parser_status": "Open-world parser coverage not evaluated",
+      "presentation": {
+        "final_decision": "当前增益门未通过；开放世界价值继续标记为未评估。",
+        "hypothesis": "选择性模型路径应当在规则基线之外产生可测量语义价值。",
+        "label": "开放语义",
+        "llm_called": "当前开发运行调用过；开放世界未评估",
+        "parser_status": "开放世界覆盖未评估",
+        "route": "受治理运行时后的选择性模型候选路径",
+        "terminal_outcome": "发布当前负结果，不声称正向增益；保留开放问题"
+      },
       "route": "Selective LLM candidate behind the governed runtime",
       "segment_id": "open_semantics",
       "states": {
@@ -862,6 +889,15 @@
       "label": "Unsafe",
       "llm_called": "Irrelevant to the safety floor",
       "parser_status": "Invalid or ungrounded proposals rejected",
+      "presentation": {
+        "final_decision": "每个副作用前继续执行 fail-closed 校验与人工审批。",
+        "hypothesis": "动作安全不能依赖模型自己判断是否安全。",
+        "label": "危险或越权",
+        "llm_called": "与安全底线无关",
+        "parser_status": "无效、无依据或越权提案被拒绝",
+        "route": "Validator → 拒绝或安全升级",
+        "terminal_outcome": "不执行危险工具调用或非法状态转移"
+      },
       "route": "Validator → safe escalation",
       "segment_id": "unsafe",
       "states": {

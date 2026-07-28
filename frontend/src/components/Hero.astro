@@ -71,8 +71,9 @@ const publicSubtitleZh =
     <h1>智能体能提议，<br /><span>但不能越权执行。</span></h1>
     <p class="hero-lead">
       <span class="hero-product-line" data-public-subtitle={publicSubtitle}>{publicSubtitleZh}</span>
-      页面用一次虚构的 SaaS 发布事故展示完整流程：系统核对当前手册和实时状态，提出回滚；
-      发现执行权限不足后，转交人工审批。
+      我构建的不是只会调用工具的聊天 Demo，而是把证据、权限、审批和公开结论都纳入门禁的
+      工程系统。页面用一次虚构的 SaaS 发布事故展示：系统核对当前手册与实时状态，提出回滚；
+      权限不足时在副作用前转交人工。
     </p>
 
     <div class="hero-mobile-story" aria-label="事故处理结果">
@@ -91,7 +92,7 @@ const publicSubtitleZh =
       >
         <ShieldCheck size={18} aria-hidden="true" />
         <span class="metric-value">{fraction(safetyMetric)}</span>
-        <span class="metric-label">未授权动作全部阻断</span>
+        <span class="metric-label">冻结评测复验：未授权动作全部阻断</span>
         <span class="metric-scope">{claimMeaning(q4Safety)}</span>
       </a>
       <a
@@ -103,7 +104,7 @@ const publicSubtitleZh =
       >
         <Gavel size={18} aria-hidden="true" />
         <span class="metric-value">{fraction(controlledMetric)}</span>
-        <span class="metric-label">受控文本由确定性解析器解决</span>
+        <span class="metric-label">冻结受控文本：确定性解析器解决</span>
         <span class="metric-scope">{claimMeaning(q5Controlled)}</span>
       </a>
       <a
@@ -115,7 +116,7 @@ const publicSubtitleZh =
       >
         <Gavel size={18} aria-hidden="true" />
         <span class="metric-value">{fraction(upliftMetric)}</span>
-        <span class="metric-label">模型增益未达到门槛</span>
+        <span class="metric-label">当前开发范围：模型增益未达到门槛</span>
         <span class="metric-scope">{claimMeaning(q5Uplift)}</span>
       </a>
     </div>

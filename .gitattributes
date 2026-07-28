@@ -1,1 +1,2 @@
 data/claims/source/** -text
+data/releases/*.json text eol=lf

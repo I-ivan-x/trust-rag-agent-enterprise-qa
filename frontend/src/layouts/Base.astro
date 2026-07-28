@@ -10,6 +10,8 @@ const publicSubtitle =
   "Governed Runtime, Evaluation Harness, and Decision Frontier for Tool-Using Agents";
 const publicSubtitleZh =
   "面向工具调用智能体的受治理运行时、评测框架与决策边界";
+const publicDescription = `${publicName} — ${publicSubtitleZh}。${publicSubtitle}`;
+const publicRepository = "https://github.com/I-ivan-x/agent-reliability-lab";
 
 const navigation = [
   ["hero", "概览"],
@@ -29,8 +31,16 @@ const navigation = [
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content={`${publicName} — ${publicSubtitleZh}。${publicSubtitle}`}
+      content={publicDescription}
     />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta property="og:site_name" content={publicName} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={publicDescription} />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={publicDescription} />
     <meta name="theme-color" content="#070b10" />
     <title>{title}</title>
     <script is:inline>document.documentElement.classList.add("js");</script>
@@ -75,8 +85,34 @@ const navigation = [
     <footer class="site-footer">
       <div class="wrap footer-grid">
         <p>Agent Reliability Lab · 公开结论由哈希绑定注册表管理</p>
-        <p>完整研究术语、适用范围和产物血缘见证据账本</p>
+        <nav class="footer-links" aria-label="项目与复现链接">
+          <a
+            href={publicRepository}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="源代码（在新标签页打开）"
+          >源代码</a>
+          <a
+            href={`${publicRepository}/blob/main/docs/THREE_MINUTE_DEMO_SCRIPT.md`}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="三分钟脚本（在新标签页打开）"
+          >三分钟脚本</a>
+          <a
+            href={`${publicRepository}/blob/main/data/releases/release_manifest_v2.json`}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Release Manifest（在新标签页打开）"
+          >Release Manifest</a>
+        </nav>
       </div>
     </footer>
+    <script>
+      document.querySelectorAll(".mobile-nav-panel a").forEach((link) => {
+        link.addEventListener("click", () => {
+          link.closest("details")?.removeAttribute("open");
+        });
+      });
+    </script>
   </body>
 </html>
