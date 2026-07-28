@@ -499,6 +499,28 @@ def _verify_frontend_receipt(manifest: ReleaseManifest, root: Path) -> None:
         or _git(root, "rev-parse", f"{frontend_commit}^{{tree}}") != frontend_tree
     ):
         raise ValueError("frontend receipt tested tree does not match its commit")
+    allowed_evidence_changes = {
+        manifest.frontend.closure_receipt.path,
+        *(item.path for item in manifest.frontend.screenshots),
+    }
+    changed_frontend_paths = {
+        path
+        for path in _git(
+            root,
+            "diff",
+            "--name-only",
+            f"{frontend_commit}..{manifest.tested_commit}",
+            "--",
+            "frontend",
+        ).splitlines()
+        if path
+    }
+    stale_inputs = changed_frontend_paths - allowed_evidence_changes
+    if stale_inputs:
+        raise ValueError(
+            "frontend implementation changed after closure acceptance: "
+            + ", ".join(sorted(stale_inputs))
+        )
     recorded = {
         row["path"]: row["sha256"] for row in payload.get("screenshots", [])
     }

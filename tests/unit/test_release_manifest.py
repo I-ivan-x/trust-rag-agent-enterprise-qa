@@ -240,6 +240,110 @@ def test_frontend_receipt_rejects_commit_tree_mismatch(
         release_manifest_module._verify_frontend_receipt(manifest, tmp_path)
 
 
+def test_frontend_receipt_rejects_changed_inputs_after_acceptance(
+    tmp_path: Path,
+) -> None:
+    subprocess.run(["git", "init", "--quiet"], cwd=tmp_path, check=True)
+    subprocess.run(
+        ["git", "config", "user.name", "Archive Test"],
+        cwd=tmp_path,
+        check=True,
+    )
+    subprocess.run(
+        ["git", "config", "user.email", "archive@example.invalid"],
+        cwd=tmp_path,
+        check=True,
+    )
+    source = tmp_path / "frontend/src/app.css"
+    source.parent.mkdir(parents=True)
+    source.write_text("body { color: white; }\n", encoding="utf-8")
+    subprocess.run(["git", "add", "."], cwd=tmp_path, check=True)
+    subprocess.run(
+        ["git", "commit", "--quiet", "-m", "frontend implementation"],
+        cwd=tmp_path,
+        check=True,
+    )
+    frontend_commit = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    ).stdout.strip()
+    frontend_tree = subprocess.run(
+        ["git", "rev-parse", "HEAD^{tree}"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    ).stdout.strip()
+    receipt_path = "frontend/acceptance/frontend-closure/receipt.json"
+    screenshot_path = "frontend/acceptance/frontend-closure/desktop.png"
+    screenshot_hash = "c" * 64
+    receipt = tmp_path / receipt_path
+    receipt.parent.mkdir(parents=True)
+    receipt.write_text(
+        json.dumps(
+            {
+                "schema_version": "frontend-closure-acceptance-v1",
+                "tested_commit": frontend_commit,
+                "tested_tree": frontend_tree,
+                "model_requests": 0,
+                "external_requests": 0,
+                "hard_thresholds_passed": True,
+                "screenshots": [
+                    {"path": screenshot_path, "sha256": screenshot_hash}
+                ],
+                "lighthouse_runs": [
+                    {
+                        "performance": 90,
+                        "accessibility": 100,
+                        "external_requests": 0,
+                    }
+                    for _ in range(3)
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    (tmp_path / screenshot_path).write_bytes(b"image")
+    subprocess.run(["git", "add", "."], cwd=tmp_path, check=True)
+    subprocess.run(
+        ["git", "commit", "--quiet", "-m", "acceptance evidence"],
+        cwd=tmp_path,
+        check=True,
+    )
+    source.write_text("body { color: cyan; }\n", encoding="utf-8")
+    subprocess.run(["git", "add", "."], cwd=tmp_path, check=True)
+    subprocess.run(
+        ["git", "commit", "--quiet", "-m", "stale frontend change"],
+        cwd=tmp_path,
+        check=True,
+    )
+    tested_commit = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    ).stdout.strip()
+    manifest = SimpleNamespace(
+        tested_commit=tested_commit,
+        frontend=SimpleNamespace(
+            closure_receipt=SimpleNamespace(path=receipt_path),
+            screenshots=[
+                SimpleNamespace(path=screenshot_path, sha256=screenshot_hash)
+            ],
+        ),
+    )
+
+    with pytest.raises(ValueError, match="implementation changed"):
+        release_manifest_module._verify_frontend_receipt(manifest, tmp_path)
+
+
 def test_research_milestone_requires_a_complete_annotated_tag(tmp_path: Path) -> None:
     subprocess.run(["git", "init", "--quiet"], cwd=tmp_path, check=True)
     (tmp_path / "marker.txt").write_text("archive\n", encoding="utf-8")
