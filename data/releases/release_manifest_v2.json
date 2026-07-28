@@ -154,9 +154,9 @@
     }
   },
   "clean_clone_receipt": {
-    "git_blob_sha": "adef669cd2f2008b9302da788171beedf6e4369b",
+    "git_blob_sha": "1860a932ea0fb937a5e12dc3090ace786121289d",
     "path": "data/releases/clean_clone_receipt_v1.json",
-    "sha256": "2b01c6476b98268166f29c16bb37e46f85361d986615b6f616089d440f0bc9f1",
+    "sha256": "ea49c5203e533bce6317a57a9151498d00bf688d8756fd98911a77bb99e7e5e8",
     "size_bytes": 10022
   },
   "closure_documents": [
@@ -206,10 +206,10 @@
   "external_requests": 0,
   "frontend": {
     "closure_receipt": {
-      "git_blob_sha": "338deb3960f3d19947c7ddf4991a602a80672473",
+      "git_blob_sha": "fdc25d152b081cd4331ffc62bbfcf981f703c3a6",
       "path": "frontend/acceptance/frontend-closure/receipt.json",
-      "sha256": "371a02922c019f87359a94567a3b8731e24bf8264dbf5733cb5e66dcc274623b",
-      "size_bytes": 2335
+      "sha256": "055e61b2bbbb6b7580adb0a40e8682ec60be59431887bf3ea8113a3ee6ffeeb9",
+      "size_bytes": 2334
     },
     "screenshots": [
       {
@@ -219,16 +219,16 @@
         "size_bytes": 716487
       },
       {
-        "git_blob_sha": "f7e79af4eee55a7a4681f6d0022a46ac1b6bba56",
+        "git_blob_sha": "2480771152f7f753de03ac752f9a115756f91e61",
         "path": "frontend/acceptance/frontend-closure/laptop-1280x720.png",
-        "sha256": "fd3ae153cba7f8aceaba222d76d9fe2fe104da5e55428560a958f7d37ea57331",
-        "size_bytes": 647667
+        "sha256": "b7c4d17d00889ca26f9010305a6703aef0428344bc4c433ae07af892d5075b60",
+        "size_bytes": 647046
       },
       {
-        "git_blob_sha": "8c5b0f66fda07110d9e49d819e7b1f7d314fca7b",
+        "git_blob_sha": "545d248c3cf7681136d0cb815d0a0cd874759b7c",
         "path": "frontend/acceptance/frontend-closure/mobile-390x844.png",
-        "sha256": "3b6d22626ac1384f6869b404b791cdef9f9c1faf7950d025e86f0f16508fabf2",
-        "size_bytes": 557167
+        "sha256": "cfaf204e2f1fd048b6115165dd53562895cfe10e14a883d4c1d0ebe13e4142f4",
+        "size_bytes": 557118
       }
     ]
   },
@@ -356,6 +356,6 @@
     "tag_kind": "annotated",
     "tag_object_sha": "4e5198c1303b8626a2d10cea33ec905116e5d286"
   },
-  "tested_commit": "63933047b8323f90c726980baf8a6b528ec975d0",
-  "tested_tree": "f4162e5b04c9df4ef80d8a26f921d6370bd8ec8f"
+  "tested_commit": "3bf5efb7bbf93da385ec366d01c79bb7034e6b7f",
+  "tested_tree": "8eb84a1f8d95af793c32c0b0db1386b675560f09"
 }
