@@ -54,7 +54,7 @@ Agent Reliability Lab 的项目秩序不是传统的“先列功能，再逐项�
 | 可执行 Python 脚本 | **61** | ingest、index、eval、leakage、ablation、diagnostic、release gate 均可命令化 |
 | Python app 代码 | **40,172 行** | 覆盖完整 RAG、Agent、治理、评测与可观测模块 |
 | Python test 代码 | **20,096 行** | 测试代码约为 app 代码的一半，质量投入不是尾部补丁 |
-| 全量回归 | **`975 passed, 3 skipped`** | 最终本地封存全仓实跑输出；跳过边界见 §11 |
+| 全量回归 | **`974 passed, 3 skipped`** | 最终本地封存全仓实跑输出；跳过边界见 §11 |
 
 这些数字只证明项目具有持续投入和结构化产物，不单独证明质量。质量结论仍以真实 run、评测边界、
 失败分析和可复现命令为准。
@@ -186,7 +186,7 @@ Git 历史中的多条链路都保持了相似结构：
 | 项目管理 | 分阶段目标、依赖链、Owner、验收标准、scope review、砍序、release tag |
 | 风险意识 | ACL/state/evidence gate、validator、HITL、red-team、mock/headline 隔离 |
 | 成本意识 | zero-token precheck、retrieval-only run、小样本 judge gate、调用量预算 |
-| 工程质量 | `975 passed, 3 skipped`、Ruff、clean clone、release manifest、trace、失败分类与回归检查脚本 |
+| 工程质量 | `974 passed, 3 skipped`、Ruff、clean clone、release manifest、trace、失败分类与回归检查脚本 |
 | 沟通能力 | README、技术 ADR、评测报告、失败报告、Interview QA、Web showcase 分别服务不同读者 |
 | 迭代能力 | Q2 证伪 Agent 增益，Q3 找到新价值面，Q4 把明确负结果修成受约束正结果 |
 
@@ -199,7 +199,7 @@ Git 历史中的多条链路都保持了相似结构：
 - `.github/workflows/ci.yml` 已接入 locked dependency install、Ruff、全量 pytest、release gates、
   public-claim drift、公开仓库、frontend artifact 与 canonical release-manifest gate；普通 CI 绿灯
   仍不能替代真实 run 证据。
-- 全量测试的最终本地封存结果为 `975 passed, 3 skipped`；三个跳过项分别是
+- 全量测试的最终本地封存结果为 `974 passed, 3 skipped`；三个跳过项分别是
   未安装的可选 OTel SDK、本地未安装的可选 sentence-transformer，以及默认禁用以避免
   token 消耗的真实 provider smoke。它只说明代码回归状态，不等于实验结论。
 - detached clean clone 绑定提交与 tree，离线安装依赖后通过三次 Lighthouse
@@ -232,7 +232,7 @@ Git 历史中的多条链路都保持了相似结构：
 
 > 建立 evidence-driven 的 Agent 研发流程，以设计冻结、预注册评测、零 token 诊断、消融实验、
 > run manifest 和机器化发布门管理 AI 协作开发；形成多个可审查提交和 4 个阶段 release，
-> 最终本地封存完整测试为 `975 passed, 3 skipped`，并将未达门槛的 judge/Agent 能力主动证伪、降级或锁定。
+> 最终本地封存完整测试为 `974 passed, 3 skipped`，并将未达门槛的 judge/Agent 能力主动证伪、降级或锁定。
 
 面试中的一分钟表达：
 
