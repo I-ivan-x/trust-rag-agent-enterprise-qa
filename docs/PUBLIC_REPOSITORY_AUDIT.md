@@ -46,11 +46,12 @@ objects would break evidence lineage, so this existing metadata is an
 Owner-accepted public-history boundary rather than a claim that the complete
 Git object database contains no personal identifier.
 
-Before first full-history publication, Gitleaks 8.30.1 scanned 169 commits
-(approximately 11.86 MB) and reported zero findings under the tracked
-`.gitleaks.toml`. Its two narrow allowlists cover only SHA-256 trial identifiers
-misclassified as generic API keys and the vendored FastAPI tutorial's public
-example JWT. CI repeats the full-history scan with `fetch-depth: 0`.
+At the final local prepublication checkpoint, Gitleaks 8.30.1 scanned every
+reachable commit and reported zero findings under the tracked `.gitleaks.toml`.
+Its two narrow allowlists cover only SHA-256 trial identifiers misclassified
+as generic API keys and the vendored FastAPI tutorial's public example JWT. CI
+repeats the full-history scan with `fetch-depth: 0` and the same pinned scanner
+version.
 
 The seven Boundary F addendum files are the only declared exception to the
 general `data/eval_runs/*` ignore rule. They were deliberately force-added as
@@ -60,6 +61,9 @@ fails the closure check.
 The Python distribution name remains a legacy internal identifier for
 compatibility, while its description carries the current public subtitle. The
 frontend package metadata uses `agent-reliability-lab-showcase`.
+Python/API/frontend version `0.1.0` is unpublished compatibility metadata, not
+the Git milestone version; no PyPI or npm package is published. Product and
+research milestones are represented by the reviewed annotated Git tags.
 
 ## Dependency audit
 

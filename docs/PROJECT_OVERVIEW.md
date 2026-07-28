@@ -30,7 +30,7 @@ Q5's overall status is `scoped_negative_complete`. Boundary F's original 30/32 r
 
 ## Recruiter-ready bullets
 
-- Built a fail-closed enterprise RAG and action-governance runtime with independently measured answer and side-effect safety (`q1.fail_closed_answers`, `q3.action_safety`).
+- Built a fail-closed enterprise RAG and action-governance runtime with separately measured answer and side-effect safety (`q1.fail_closed_answers`, `q3.action_safety`).
 - Designed an evaluation harness that separates execution from sealed-gold grading, verifies complete trial matrices, preserves frozen protocol generations, and rejects mutated artifacts.
 - Converted a weak action-selection result into a scoped frozen-`ops_test`
   second-run improvement without changing the safety floor or frozen gate,
@@ -44,17 +44,21 @@ Q5's overall status is `scoped_negative_complete`. Boundary F's original 30/32 r
 
 The correct claim is narrow and useful:
 
-> In the frozen controlled-prose scope, deterministic runtime-only parsers recovered the entire targeted frontier, so LLM necessity and the preregistered semantic-uplift claim were falsified in that scope. The project does not infer that LLMs lack open-world value; that question was not evaluated.
+> The two scoped negatives are separate. In the current real-dev semantic
+> stratum, preregistered LLM uplift reached only 1/12 and failed its gate.
+> Separately, in the frozen controlled-prose K0U scope, a runtime-only parser
+> resolved 32/32 cases, falsifying LLM necessity there. Neither result evaluates
+> open-world LLM value.
 
 The engineering value is the ability to discover that a benchmark is too easy, preserve each negative boundary without rewriting history, and stop before spending more provider calls or creating a test split that cannot answer the intended question.
 
 ## Verification and release boundary
 
-- Final local-archive regression: `971 passed, 1 skipped, 23 warnings`.
+- Final local-archive regression: `974 passed, 3 skipped, 23 warnings`.
 - The detached clean clone passed three consecutive Lighthouse performance
   runs at or above `90`, accessibility `100/100/100`, Playwright
-  `48 passed / 12 skipped`, and release gates `6/6`; exact per-run performance
-  scores remain in the receipt.
+  `55 passed / 14 conditionally skipped`, and release gates `6/6`; exact
+  per-run performance scores remain in the receipt.
 - `data/releases/release_manifest_v2.json` binds the tested commit/tree, locks,
   claims, reports, Boundary F evidence, public audit, frontend receipt, and
   clean-clone receipt; CI rejects drift.

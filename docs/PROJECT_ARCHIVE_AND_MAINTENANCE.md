@@ -2,13 +2,13 @@
 
 Status: local archival closure
 
-Effective date: 2026-07-27
+Effective date: 2026-07-28
 
 Maintenance mode: security, reproducibility, factual correction, and compatibility only
 
 ## 1. Closure statement
 
-Agent Reliability Lab reached **local archival closure** on 2026-07-27. The
+Agent Reliability Lab reached **local archival closure** on 2026-07-28. The
 Q1–Q5 implementation, scoped research conclusions, public Claim registry,
 frontend acceptance evidence, public-repository audit, and clean-clone release
 envelope are present in the local Git history.
@@ -42,11 +42,13 @@ When documents disagree, use this precedence order:
 6. Historical plans, specifications, reports, run artifacts, and tag messages
    retain their period meaning but do not override current policy.
 
-The canonical evidence package proves that a named Claim was valid at its
-recorded commit and scope. It does **not** prohibit future maintenance of source
-code, documentation, dependencies, or presentation. A later change invalidates
-only the assumption that the old manifest describes the new tree; it does not
-erase the old evidence.
+The canonical evidence package demonstrates hash, schema, and lineage
+consistency and records that a named Claim met the project's internal
+admission rules at its recorded commit and scope. It does **not** independently
+prove the Claim's truth or prohibit future maintenance of source code,
+documentation, dependencies, or presentation. A later change invalidates only
+the assumption that the old manifest describes the new tree; it does not erase
+the old evidence.
 
 ## 3. Frozen research and release boundaries
 
@@ -99,7 +101,7 @@ positive or negative conclusion.
 
 Repository files fall into three lifecycle classes:
 
-1. **Historical evidence** — run artifacts, frozen reports, signed receipts,
+1. **Historical evidence** — run artifacts, frozen reports, hash-bound receipts,
    and existing tags are append-only. A discovered error is documented with a
    correction or addendum that preserves the original lineage.
 2. **Current truth surfaces** — the Claim registry, presentation catalog,
@@ -268,6 +270,16 @@ Remote publication is a separate terminal condition. It requires:
 No local test result may be used as evidence that remote CI or deployment
 passed.
 
+### Immutable historical-tag caveat
+
+The Q5 research tag is an immutable pre-maintenance snapshot. Its historical
+V2 manifest recorded one Windows-CRLF clean-clone receipt while Git stores the
+tracked blob with LF bytes. A tag-triggered Ubuntu run can therefore reject
+that historical envelope's byte binding. The tag must not be moved or rewritten
+to manufacture a green result. Current publication claims apply only to the
+refreshed `main` envelope and the final `main` CI run; they do not claim that
+every historical tag workflow is green.
+
 ## 11. Reproduction commands
 
 Run from the repository root in PowerShell.
@@ -276,8 +288,9 @@ The clean-clone runner's internal 14-command matrix records portable logical
 `uv` commands plus the actual launcher class (`uv` executable or
 `python -m uv`). It also records OS, architecture, Python/uv/Node/npm,
 Playwright/Chromium, working directory, and offline environment overrides.
-Each receipt proves the recorded platform/runtime combination; it is not an
-OS-level network attestation or a claim that every platform was tested.
+Each receipt records a passing execution on the named platform/runtime
+combination; it is not an independent attestation, an OS-level network proof,
+or a claim that every platform was tested.
 Installer outputs such as `.venv` and `node_modules` are expected ignored
 workspace products; the runner separately requires zero tracked or
 non-ignored file changes after verification.

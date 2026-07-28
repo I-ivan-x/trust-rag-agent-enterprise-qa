@@ -18,6 +18,10 @@ The current stable product release remains `v3.0-q4-reliability`. Q5 is a
 completed research track with overall status `scoped_negative_complete`; it
 does not create a new product release. This repository is the reviewed source
 and evidence package; no production deployment or hosted showcase is claimed.
+The `0.1.0` values in Python, API, and frontend package metadata are unpublished
+compatibility identifiers, not a competing product release number; no PyPI or
+npm package is published. The `v*` Git tags identify reviewed evidence/product
+milestones.
 
 ![Agent Reliability Lab recruiter showcase](docs/assets/interview-hero.png)
 
@@ -81,10 +85,13 @@ The safety boundary is host-enforced: model output never bypasses the typed sche
 
 Build and verify generated claims:
 
-```powershell
-py -m uv run --frozen python scripts/build_public_claims.py
-py -m uv run --frozen python scripts/check_claim_drift.py
+```shell
+uv run --frozen python scripts/build_public_claims.py
+uv run --frozen python scripts/check_claim_drift.py
 ```
+
+These commands assume the `uv` executable is on `PATH`. A Windows installation
+that exposes uv only as a Python module can substitute `py -m uv` for `uv`.
 
 The generator owns:
 
@@ -105,25 +112,25 @@ CI rejects schema violations, unknown statuses, duplicate claim IDs, missing rat
 
 Docker smoke path:
 
-```powershell
+```shell
 docker compose up -d --build
 docker compose exec api python scripts/smoke_test.py --prepare --embedding-provider mock --require-vector --chat
 ```
 
 Local uv path:
 
-```powershell
-py -m uv sync --locked --group dev
-py -m uv run python scripts/ingest_corpus.py
-py -m uv run python scripts/rebuild_indexes.py --embedding-provider mock
-py -m uv run uvicorn app.main:app --reload
+```shell
+uv sync --locked --group dev
+uv run python scripts/ingest_corpus.py
+uv run python scripts/rebuild_indexes.py --embedding-provider mock
+uv run uvicorn app.main:app --reload
 ```
 
 Open Swagger at <http://127.0.0.1:8000/docs> and the action-governance console at <http://127.0.0.1:8000/console/>. Mock output is for smoke and regression only; it is never headline evidence.
 
 The recruiter-facing static showcase is in [`frontend/`](frontend/):
 
-```powershell
+```shell
 cd frontend
 npm ci
 npm run build
@@ -132,10 +139,10 @@ npm run dev -- --open
 
 ## Verification status
 
-Final local-archive regression: `971 passed, 1 skipped, 23 warnings`.
+Final local-archive regression: `974 passed, 3 skipped, 23 warnings`.
 The detached clean clone passed three consecutive Lighthouse performance runs
 at or above `90`, accessibility `100/100/100`, Playwright
-`48 passed / 12 skipped`, all six release gates, and zero model or
+`55 passed / 14 conditionally skipped`, all six release gates, and zero model or
 evaluation-external requests. Exact per-run performance scores remain in the
 versioned receipt rather than being copied into narrative text.
 

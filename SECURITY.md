@@ -1,9 +1,11 @@
 # Security Policy
 
-## Supported release
+## Maintenance target
 
-The currently supported stable release is `v3.0-q4-reliability`. Q5 is a
-completed research track and is not a product release.
+Current `main` is the best-effort maintenance target. The immutable
+`v3.0-q4-reliability` tag remains the latest stable product/reference tag; it
+is not patched in place. Q5 is a completed research track and is not a product
+release. No support or response-time SLA is implied.
 
 ## Reporting a vulnerability
 

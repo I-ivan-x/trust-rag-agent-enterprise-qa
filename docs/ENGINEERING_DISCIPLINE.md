@@ -1,7 +1,7 @@
 # Agent Reliability Lab — 工程纪律与高效执行记录
 
-盘点日期：2026-07-27
-证据范围：`2026-06-10` 至 `2026-07-27` 的 Git 历史、项目文档、评测代码、测试与发布标签
+盘点日期：2026-07-28
+证据范围：`2026-06-10` 至 `2026-07-28` 的 Git 历史、项目文档、评测代码、测试与发布标签
 用途：说明项目如何被组织、推进、验证和收口，以及这种执行方式体现的工程素养
 
 > TrustRAG 是 legacy codename；历史 run、tag、artifact schema 与内部标识保持原样。
@@ -39,21 +39,22 @@ Agent Reliability Lab 的项目秩序不是传统的“先列功能，再逐项�
 
 ## 2. 可核验的项目规模
 
-以下数字来自当前分支在盘点日的机械统计；阶段名 Q1-Q4 是项目工程阶段，不代表四个自然季度。
+以下数字是提交 `f42829b` 在 2026-07-28 的机械快照；阶段名 Q1-Q4 是项目工程阶段，
+不代表四个自然季度。
 
 | 证据 | 数量 / 时间 | 它说明什么 |
 | --- | ---: | --- |
-| Git commits | **170** | 含最终 manifest envelope；交付被拆成可审查的小步，而非一次性大提交 |
-| 有记录的开发跨度 | **2026-06-10 至 2026-07-27** | 48 个自然日内完成系统、评测、治理、可靠性、展示、Q5 与发布封装迭代 |
+| Git commits | **175** | 截至快照提交；交付被拆成可审查的小步，而非一次性大提交 |
+| 有记录的开发跨度 | **2026-06-10 至 2026-07-28** | 49 个自然日内完成系统、评测、治理、可靠性、展示、Q5 与发布封装迭代 |
 | 正式阶段标签 | **4** | `v0.3-q1-hard-demo`、`v1.0-q2-agentic-eval`、`v2.0-q3-action-governance`、`v3.0-q4-reliability` |
 | 阶段性标签 | **6** | ingestion、retrieval、generation、trust gates、eval 分阶段冻结 |
 | 研究封存标签 | **1** | `agent-reliability-lab-q5-closed-20260717`，非产品 release |
-| `docs/*.md` | **89（含最终演示、简历与维护规则）** | 设计、协议、规格、报告、失败分析和交接材料分层保存 |
+| `docs/*.md` | **90（含最终演示、简历与维护规则）** | 设计、协议、规格、报告、失败分析和交接材料分层保存 |
 | 实现规格文档 | **25** | 高风险功能通常先写契约，再进入代码 |
 | 可执行 Python 脚本 | **61** | ingest、index、eval、leakage、ablation、diagnostic、release gate 均可命令化 |
-| Python app 代码 | **39,995 行** | 覆盖完整 RAG、Agent、治理、评测与可观测模块 |
-| Python test 代码 | **19,880 行** | 测试代码约为 app 代码的一半，质量投入不是尾部补丁 |
-| 全量回归 | **`971 passed, 1 skipped`** | 最终本地封存全仓实跑输出；另有 23 条 warning |
+| Python app 代码 | **40,172 行** | 覆盖完整 RAG、Agent、治理、评测与可观测模块 |
+| Python test 代码 | **20,096 行** | 测试代码约为 app 代码的一半，质量投入不是尾部补丁 |
+| 全量回归 | **`974 passed, 3 skipped`** | 最终本地封存全仓实跑输出；另有 23 条 warning |
 
 这些数字只证明项目具有持续投入和结构化产物，不单独证明质量。质量结论仍以真实 run、评测边界、
 失败分析和可复现命令为准。
@@ -81,13 +82,15 @@ Agent Reliability Lab 的项目秩序不是传统的“先列功能，再逐项�
 
 - schema、eval protocol、gold、成功阈值、数据切分先写设计或预注册，再进入实现。
 - 模块内部实现、prompt 和局部路由允许快速修改，但修改必须重新过测试和评测。
-- Q2、Q3、Q4 都有独立 design/spec 文档；Q4 在逻辑修改前提交成功标准和 held-out 列表。
+- Q2、Q3、Q4 都有独立 design/spec 文档；Q4 在首次 `ops_test` 运行前提交成功标准和冻结测试列表。
 - [`Q4_P4_FREEZE.md`](Q4_P4_FREEZE.md) 保存冻结 commit、配置、阈值、模型、索引和 dev 读数。
 - [`run_manifest.py`](../app/eval/run_manifest.py) 将 commit SHA、模型、index fingerprint、seed、k、
   cost、latency 和阈值快照写入 run provenance。
 
-典型例子是 Q4：先做零 token 根因诊断，再扩评测集和预注册，只在 dev 上校准，随后冻结配置并跑
-held-out；即使 test 第一次未过，第二次机制修正和两次结果也都被保留披露，而不是覆盖历史。
+典型例子是 Q4：先做零 token 根因诊断，再扩评测集和预注册，只在 dev 上校准，
+随后冻结配置并首次运行 `ops_test`。首次未过后，项目披露 stale-marker 机制修正及
+五条不改变 gold、condition、doc ID 或 authorized 的跨语言检索修复，再在同一冻结集上复验。
+两次结果均保留，因此最终正结果明确称为“第二次机制复验”，不是 pristine held-out。
 
 ------
 
@@ -150,10 +153,10 @@ Git 历史中的多条链路都保持了相似结构：
 | 2026-06-10 至 2026-06-14 | foundation -> ingestion -> retrieval -> generation -> trust gates -> real eval -> Q1 release |
 | 2026-06-15 至 2026-06-24 | judge gate failure -> descoped；hard-negative 重写；typed-action Agent -> ablation -> Q2 tag |
 | 2026-06-24 至 2026-06-25 | Q3 design/spec -> condition/sink/validator/controller -> real governance run -> Web console -> Q3 tag |
-| 2026-06-25 至 2026-06-26 | Q4 diagnosis -> preregistration -> dev calibration -> freeze -> held-out -> OTel/manifest/gates -> Q4 tag |
+| 2026-06-25 至 2026-06-26 | Q4 diagnosis -> preregistration -> dev calibration -> freeze -> frozen `ops_test` run #1/#2 -> OTel/manifest/gates -> Q4 tag |
 | 2026-06-29 | showcase plan -> snapshot data -> staged frontend implementation -> v2 focus redesign |
 | 2026-07-10 至 2026-07-13 | Q5 design freeze -> Batch 0-4 -> real-dev 负诊断 -> protocol v2/v3 -> v1/v2 archive -> crossed-counterfactual dev v3 |
-| 2026-07-17 至 2026-07-27 | Claim registry -> Q5 scoped-negative closure -> recruiter narrative -> public audit -> clean-clone manifest and CI drift gate |
+| 2026-07-17 至 2026-07-28 | Claim registry -> Q5 scoped-negative closure -> recruiter narrative -> public audit -> clean-clone manifest and CI drift gate |
 
 提交信息通常能直接回答“这是设计、实现、评测还是报告”，并保留关键负结果，例如
 `no judge deployed`、`agent gain falsified`、`negative->positive`。这使 Git 本身成为决策审计记录的一部分。
@@ -183,7 +186,7 @@ Git 历史中的多条链路都保持了相似结构：
 | 项目管理 | 分阶段目标、依赖链、Owner、验收标准、scope review、砍序、release tag |
 | 风险意识 | ACL/state/evidence gate、validator、HITL、red-team、mock/headline 隔离 |
 | 成本意识 | zero-token precheck、retrieval-only run、小样本 judge gate、调用量预算 |
-| 工程质量 | `971 passed, 1 skipped`、Ruff、clean clone、release manifest、trace、失败分类与回归检查脚本 |
+| 工程质量 | `974 passed, 3 skipped`、Ruff、clean clone、release manifest、trace、失败分类与回归检查脚本 |
 | 沟通能力 | README、技术 ADR、评测报告、失败报告、Interview QA、Web showcase 分别服务不同读者 |
 | 迭代能力 | Q2 证伪 Agent 增益，Q3 找到新价值面，Q4 把明确负结果修成受约束正结果 |
 
@@ -191,15 +194,18 @@ Git 历史中的多条链路都保持了相似结构：
 
 ## 11. 当前边界与已关闭研究轨
 
-为了让本文在面试中可守住，以下边界不能省略。截至 2026-07-27：
+为了让本文在面试中可守住，以下边界不能省略。截至 2026-07-28：
 
 - `.github/workflows/ci.yml` 已接入 locked dependency install、Ruff、全量 pytest、release gates、
   public-claim drift、公开仓库、frontend artifact 与 canonical release-manifest gate；普通 CI 绿灯
   仍不能替代真实 run 证据。
-- 全量测试的最终本地封存结果为 `971 passed, 1 skipped`；它只说明代码回归状态，不等于实验结论。
+- 全量测试的最终本地封存结果为 `974 passed, 3 skipped`；三个跳过项分别是
+  未安装的可选 OTel SDK、本地未安装的可选 sentence-transformer，以及默认禁用以避免
+  token 消耗的真实 provider smoke。它只说明代码回归状态，不等于实验结论。
 - detached clean clone 绑定提交与 tree，离线安装依赖后通过三次 Lighthouse
-  performance `>=90`、accessibility `100/100/100`、Playwright `48/12` 与
-  6/6 release gates；逐次 performance 只保留在版本化 receipt 中。
+  performance `>=90`、accessibility `100/100/100`、Playwright
+  `55 passed / 14 conditionally skipped` 与 6/6 release gates；逐次
+  performance 只保留在版本化 receipt 中。
 - 最新稳定产品 release 仍是 `v3.0-q4-reliability`。Q5 没有形成产品
   release；唯一 exact annotated tag
   `agent-reliability-lab-q5-closed-20260717` 只是研究封存 marker，不是
@@ -211,7 +217,8 @@ Git 历史中的多条链路都保持了相似结构：
 - 当前受控文本轨已关闭，K1=false。创建 `q5_test`、confirmatory run、
   Boundary G、新 K1 data 或 Q5 产品 tag 的历史计划均已 superseded，不是
   待执行 backlog。
-- Q4 held-out 结果真实但样本薄、同语料表面且运行过两次；它展示纪律，不能替代更广泛独立外部评测。
+- Q4 冻结 `ops_test` 第二次机制复验真实但样本薄、同语料表面且测试集已被首次运行观察；
+  它展示纪律，不能替代独立外部评测。
 
 当前公开数字由 `data/claims/claim_registry.json` 和生成的 `Q5_CLAIM_MATRIX.md` 管理；本文只解释工程
 纪律，不维护第二份事实表。
@@ -225,7 +232,7 @@ Git 历史中的多条链路都保持了相似结构：
 
 > 建立 evidence-driven 的 Agent 研发流程，以设计冻结、预注册评测、零 token 诊断、消融实验、
 > run manifest 和机器化发布门管理 AI 协作开发；形成多个可审查提交和 4 个阶段 release，
-> 最终本地封存完整测试为 `971 passed, 1 skipped`，并将未达门槛的 judge/Agent 能力主动证伪、降级或锁定。
+> 最终本地封存完整测试为 `974 passed, 3 skipped`，并将未达门槛的 judge/Agent 能力主动证伪、降级或锁定。
 
 面试中的一分钟表达：
 

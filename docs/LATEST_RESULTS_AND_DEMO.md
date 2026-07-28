@@ -101,11 +101,12 @@ summary.
 
 ## Verification
 
-Final local-archive regression: `971 passed, 1 skipped, 23 warnings`. The detached
+Final local-archive regression: `974 passed, 3 skipped, 23 warnings`. The detached
 clean clone passed three consecutive Lighthouse performance runs at or above
-`90`, accessibility `100/100/100`, Playwright `48 passed / 12 skipped`, and
-release gates `6/6`. Exact per-run performance scores are receipt-owned. Verify the
-canonical release envelope and generated claims with:
+`90`, accessibility `100/100/100`, Playwright
+`55 passed / 14 conditionally skipped`, and release gates `6/6`. Exact per-run
+performance scores are receipt-owned. Verify the canonical release envelope
+and generated claims with:
 
 ```powershell
 py -m uv run --frozen python scripts/build_release_manifest.py verify

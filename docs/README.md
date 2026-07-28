@@ -8,7 +8,7 @@
 | 时间 | 阅读或演示路径 | 能得到什么 |
 | --- | --- | --- |
 | 30 秒 | [`../README.md`](../README.md) 的项目定位、三项结果与页面截图 | 项目解决什么问题、最重要的正负结果 |
-| 90 秒 | 展示页已预启动时，看 Hero → Five Questions → Governed Runtime；依赖安装与启动时间不计入观看预算 | 为什么 Agent 不能越权、五个问题如何串成工程故事 |
+| 90 秒 | 展示页已预启动时，看 Hero → Governed Runtime → Q5 Decision Frontier 的 Final decision | 问题、执行控制链，以及为什么主动关闭无证据支持的 LLM 路径 |
 | 3 分钟 | [`THREE_MINUTE_DEMO_SCRIPT.md`](THREE_MINUTE_DEMO_SCRIPT.md) | 可直接照读的完整网页演示 |
 | 5 分钟 | [`PROJECT_OVERVIEW.md`](PROJECT_OVERVIEW.md) → [`Q5_FINAL_REPORT.md`](Q5_FINAL_REPORT.md) | 架构、结果转折、Q5 为什么以负结论收口 |
 | 验真 | [`Q5_CLAIM_MATRIX.md`](Q5_CLAIM_MATRIX.md) → [`PROJECT_ARCHIVE_AND_MAINTENANCE.md`](PROJECT_ARCHIVE_AND_MAINTENANCE.md) | Claim 来源、适用范围、复现与维护边界 |

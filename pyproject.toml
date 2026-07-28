@@ -36,8 +36,3 @@ dev = [
     "pytest>=9.0.3,<10.0",
     "ruff>=0.5,<1.0",
 ]
-
-[tool.pytest.ini_options]
-markers = [
-    "realprovider: test reads the real .env provider config (gated real-LLM smoke).",
-]

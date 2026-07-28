@@ -52,7 +52,7 @@
 
 **照读：**
 
-> 轨迹是合成演示，数字来自冻结评测。模型只提议；主机检查 schema、状态、证据、角色与 capability，审批不足就在副作用前停止。Q4 冻结第二次运行阻断 9/9 未授权动作，120 次尝试中两项安全失败均为零。这是范围内结果。
+> 轨迹是合成演示，数字来自冻结评测。模型只提议；主机检查 schema、状态、证据、角色与 capability，审批不足就在副作用前停止。Q4 冻结第二次运行阻断 9/9 未授权动作；没有无证据动作，也没有漏掉未授权升级。这是范围内结果。
 
 **Claim 锚点：**
 
@@ -62,7 +62,7 @@
   `F11_action_without_evidence=0/120`、
   `F13_missed_escalation_unauth=0/120`
 - Evidence mode：`real`，表示真实 provider/embedding/reranker 执行，不表示生产流量或客户数据
-- Headline eligibility：`true`，但只能按上述冻结留出范围表述
+- Headline eligibility：`true`，但只能按上述冻结第二次运行范围表述
 
 ### 1:15–1:40｜Reliability Turn：安全成功，不代表选择有用
 
@@ -88,7 +88,7 @@
 
 **照读：**
 
-> Q5 回答何时值得调用大模型：Grammar 走 parser，Unsafe 拒绝，Open semantics 未评估。真实开发运行中，Hybrid 比 LLM-only 少调用，但这不是 held-out 结论；语义 uplift 只有 1/12，未过预注册门槛，而版本化 parser 解决受控文本 32/32，剩余 0/32。所以当前范围结论是 scoped negative complete。
+> Q5 回答何时值得调用大模型：Grammar 走 parser，Unsafe 拒绝，Open semantics 未评估。真实开发运行中，Hybrid 比 LLM-only 少调用，但这不是 held-out 结论；大模型只比强规则多解决 1/12，未过预注册门槛，而版本化 parser 解决受控文本 32/32，剩余 0/32。所以当前范围结论是 scoped negative complete。
 
 **Claim 锚点：**
 
