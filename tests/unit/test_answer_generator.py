@@ -9,7 +9,7 @@ from app.core.enums import (
     ExpectedBehavior,
     MetadataOrigin,
 )
-from app.llm.mock_llm import MockLLMClient
+from app.llm.mock_llm import MockLLMClient, _parse_context_blocks
 
 
 def test_mock_llm_generates_structured_answer() -> None:
@@ -47,6 +47,29 @@ def test_empty_context_returns_no_evidence_answer() -> None:
     assert answer.response_mode == ExpectedBehavior.refuse_no_evidence
     assert answer.claims == []
     assert "no_context" in answer.warnings
+
+
+def test_mock_context_parser_is_linear_and_rejects_incomplete_headers() -> None:
+    prompt = (
+        "BEGIN_CONTEXT\n"
+        "---CONTEXT_CHUNK---\n"
+        "CHUNK_ID: chunk-1\n"
+        "DOC_ID: doc-1\n"
+        "SECTION: Operations\n"
+        f"TEXT: {' ' * 100_000}bounded text\n"
+        "END_CONTEXT"
+    )
+    malformed = f"\n---CONTEXT_CHUNK---\nCHUNK_ID: missing-fields\n{' ' * 100_000}\nEND_CONTEXT"
+
+    assert _parse_context_blocks(prompt) == [
+        {
+            "chunk_id": "chunk-1",
+            "doc_id": "doc-1",
+            "section": "Operations",
+            "text": "bounded text",
+        }
+    ]
+    assert _parse_context_blocks(malformed) == []
 
 
 def test_json_parse_failure_has_deterministic_fallback() -> None:

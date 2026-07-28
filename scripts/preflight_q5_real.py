@@ -629,6 +629,7 @@ def _tls_readiness(host: str, timeout: float) -> dict[str, object]:
             }
         )
         context = ssl.create_default_context()
+        context.minimum_version = ssl.TLSVersion.TLSv1_2
         with socket.create_connection((host, 443), timeout=timeout) as raw:
             with context.wrap_socket(raw, server_hostname=host) as secured:
                 protocol = secured.version()
