@@ -5,34 +5,42 @@
   "commands": [
     {
       "command": [
-        "py",
-        "-m",
         "uv",
         "sync",
         "--locked",
         "--group",
         "dev"
       ],
+      "environment": {
+        "UV_OFFLINE": "1",
+        "npm_config_audit": "false",
+        "npm_config_offline": "true"
+      },
+      "execution_launcher": "uv-executable",
       "name": "uv_sync",
-      "status": "passed"
+      "status": "passed",
+      "working_directory": "repository"
     },
     {
       "command": [
-        "py",
-        "-m",
         "uv",
         "run",
         "--frozen",
         "python",
         "scripts/build_public_claims.py"
       ],
+      "environment": {
+        "UV_OFFLINE": "1",
+        "npm_config_audit": "false",
+        "npm_config_offline": "true"
+      },
+      "execution_launcher": "uv-executable",
       "name": "claim_build",
-      "status": "passed"
+      "status": "passed",
+      "working_directory": "repository"
     },
     {
       "command": [
-        "py",
-        "-m",
         "uv",
         "run",
         "--frozen",
@@ -40,26 +48,36 @@
         "scripts/build_public_claims.py",
         "--check"
       ],
+      "environment": {
+        "UV_OFFLINE": "1",
+        "npm_config_audit": "false",
+        "npm_config_offline": "true"
+      },
+      "execution_launcher": "uv-executable",
       "name": "claim_check",
-      "status": "passed"
+      "status": "passed",
+      "working_directory": "repository"
     },
     {
       "command": [
-        "py",
-        "-m",
         "uv",
         "run",
         "--frozen",
         "python",
         "scripts/check_claim_drift.py"
       ],
+      "environment": {
+        "UV_OFFLINE": "1",
+        "npm_config_audit": "false",
+        "npm_config_offline": "true"
+      },
+      "execution_launcher": "uv-executable",
       "name": "claim_drift",
-      "status": "passed"
+      "status": "passed",
+      "working_directory": "repository"
     },
     {
       "command": [
-        "py",
-        "-m",
         "uv",
         "run",
         "--frozen",
@@ -67,26 +85,36 @@
         "scripts/build_interview_showcase.py",
         "--check"
       ],
+      "environment": {
+        "UV_OFFLINE": "1",
+        "npm_config_audit": "false",
+        "npm_config_offline": "true"
+      },
+      "execution_launcher": "uv-executable",
       "name": "showcase_isolation",
-      "status": "passed"
+      "status": "passed",
+      "working_directory": "repository"
     },
     {
       "command": [
-        "py",
-        "-m",
         "uv",
         "run",
         "--frozen",
         "python",
         "scripts/verify_public_repository.py"
       ],
+      "environment": {
+        "UV_OFFLINE": "1",
+        "npm_config_audit": "false",
+        "npm_config_offline": "true"
+      },
+      "execution_launcher": "uv-executable",
       "name": "public_repository_audit",
-      "status": "passed"
+      "status": "passed",
+      "working_directory": "repository"
     },
     {
       "command": [
-        "py",
-        "-m",
         "uv",
         "run",
         "--frozen",
@@ -97,16 +125,30 @@
         "--leakage",
         "tests/fixtures/release_gates/ci_clean_leakage.json"
       ],
+      "environment": {
+        "UV_OFFLINE": "1",
+        "npm_config_audit": "false",
+        "npm_config_offline": "true"
+      },
+      "execution_launcher": "uv-executable",
       "name": "release_gates",
-      "status": "passed"
+      "status": "passed",
+      "working_directory": "repository"
     },
     {
       "command": [
         "npm",
         "ci"
       ],
+      "environment": {
+        "UV_OFFLINE": "1",
+        "npm_config_audit": "false",
+        "npm_config_offline": "true"
+      },
+      "execution_launcher": "direct-executable",
       "name": "npm_ci",
-      "status": "passed"
+      "status": "passed",
+      "working_directory": "frontend"
     },
     {
       "command": [
@@ -114,8 +156,15 @@
         "run",
         "build"
       ],
+      "environment": {
+        "UV_OFFLINE": "1",
+        "npm_config_audit": "false",
+        "npm_config_offline": "true"
+      },
+      "execution_launcher": "direct-executable",
       "name": "npm_build",
-      "status": "passed"
+      "status": "passed",
+      "working_directory": "frontend"
     },
     {
       "command": [
@@ -123,56 +172,88 @@
         "playwright",
         "test"
       ],
+      "environment": {
+        "UV_OFFLINE": "1",
+        "npm_config_audit": "false",
+        "npm_config_offline": "true"
+      },
+      "execution_launcher": "direct-executable",
       "name": "playwright",
-      "status": "passed"
+      "status": "passed",
+      "working_directory": "frontend"
     },
     {
       "command": [
-        "py",
-        "-m",
         "uv",
         "run",
         "--frozen",
         "python",
         "scripts/verify_frontend_closure.py"
       ],
+      "environment": {
+        "UV_OFFLINE": "1",
+        "npm_config_audit": "false",
+        "npm_config_offline": "true"
+      },
+      "execution_launcher": "uv-executable",
       "name": "frontend_receipt",
-      "status": "passed"
+      "status": "passed",
+      "working_directory": "repository"
     },
     {
       "command": [
         "node",
         "scripts/run-lighthouse.mjs",
-        "212e7e4d0878a2b0658d279ce0fa8043b22e0db5",
+        "837ac8ab99dbdb21151380bab7146d1520e5440a",
         "acceptance/runtime/release-clean-clone/run-1"
       ],
+      "environment": {
+        "UV_OFFLINE": "1",
+        "npm_config_audit": "false",
+        "npm_config_offline": "true"
+      },
+      "execution_launcher": "direct-executable",
       "name": "lighthouse_1",
-      "status": "passed"
+      "status": "passed",
+      "working_directory": "frontend"
     },
     {
       "command": [
         "node",
         "scripts/run-lighthouse.mjs",
-        "212e7e4d0878a2b0658d279ce0fa8043b22e0db5",
+        "837ac8ab99dbdb21151380bab7146d1520e5440a",
         "acceptance/runtime/release-clean-clone/run-2"
       ],
+      "environment": {
+        "UV_OFFLINE": "1",
+        "npm_config_audit": "false",
+        "npm_config_offline": "true"
+      },
+      "execution_launcher": "direct-executable",
       "name": "lighthouse_2",
-      "status": "passed"
+      "status": "passed",
+      "working_directory": "frontend"
     },
     {
       "command": [
         "node",
         "scripts/run-lighthouse.mjs",
-        "212e7e4d0878a2b0658d279ce0fa8043b22e0db5",
+        "837ac8ab99dbdb21151380bab7146d1520e5440a",
         "acceptance/runtime/release-clean-clone/run-3"
       ],
+      "environment": {
+        "UV_OFFLINE": "1",
+        "npm_config_audit": "false",
+        "npm_config_offline": "true"
+      },
+      "execution_launcher": "direct-executable",
       "name": "lighthouse_3",
-      "status": "passed"
+      "status": "passed",
+      "working_directory": "frontend"
     }
   ],
   "external_requests": 0,
   "frontend_receipt_verified": true,
-  "ignored_or_untracked_dependency_count": 0,
   "lighthouse_runs": [
     {
       "accessibility": 100,
@@ -183,7 +264,7 @@
     {
       "accessibility": 100,
       "external_requests": 0,
-      "performance": 93,
+      "performance": 94,
       "run_index": 2
     },
     {
@@ -194,19 +275,25 @@
     }
   ],
   "model_requests": 0,
-  "playwright_passed": 48,
-  "playwright_skipped": 12,
+  "playwright_passed": 55,
+  "playwright_skipped": 14,
   "q5_test": "absent",
   "release_gate_count": 6,
+  "request_observation_scope": "application counters and browser request capture; dependency installers forced offline; not an OS-level egress attestation",
   "runtime_versions": {
+    "architecture": "AMD64",
+    "chromium": "149.0.7827.55",
     "node": "24.15.0",
     "npm": "11.12.1",
+    "operating_system": "Windows 10",
+    "playwright": "1.61.1",
     "python": "3.11.3",
-    "uv": "0.11.28"
+    "uv": "0.11.19"
   },
   "schema_version": "agent-reliability-clean-clone-receipt-v1",
   "screenshot_hashes_verified": true,
   "status": "passed",
-  "tested_commit": "212e7e4d0878a2b0658d279ce0fa8043b22e0db5",
-  "tested_tree": "68cf05ae17e6fa83172c12b6ad639ab3d5d7a5a6"
+  "tested_commit": "837ac8ab99dbdb21151380bab7146d1520e5440a",
+  "tested_tree": "a80a5c1ba83747c08409754683a430e3861290e6",
+  "unexpected_nonignored_file_count": 0
 }
