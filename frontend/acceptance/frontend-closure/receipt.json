@@ -1,34 +1,34 @@
 {
   "schema_version": "frontend-closure-acceptance-v1",
-  "tested_commit": "c3b5056ee0c331c73d7ee537e116279f535d930e",
-  "tested_tree": "3f55931201b375316f8221518f86d10fd1516363",
+  "tested_commit": "49547fd034cfadb1bfe90bdc247cf80d6df2909d",
+  "tested_tree": "eaf1f1c5add697afdb0d52fbe2b6ec2613b4c40f",
   "package_name": "agent-reliability-lab-showcase",
   "browser": "playwright-chromium",
   "lighthouse_run_count": 3,
   "lighthouse_runs": [
     {
       "run_index": 1,
-      "performance": 92,
+      "performance": 93,
       "accessibility": 100,
       "external_requests": 0,
       "report_path": "frontend/acceptance/runtime/frontend-closure-lighthouse/run-1/report.json",
-      "report_sha256": "a3329a950788721e23ffce9f2b39854b7b14887fae814d6e1ed49e7068dc8bb3"
+      "report_sha256": "9eb0f9e67e5b5ed314d14baf0b94588e836c51587445763d9bdd56aae4da4ea8"
     },
     {
       "run_index": 2,
-      "performance": 94,
+      "performance": 92,
       "accessibility": 100,
       "external_requests": 0,
       "report_path": "frontend/acceptance/runtime/frontend-closure-lighthouse/run-2/report.json",
-      "report_sha256": "108904dd565bb403d821eaa9489947575e079197cdcb03236cbc9cbc8b3560cf"
+      "report_sha256": "9256650c4ff43d428a716190beea18929b90d09b6e51952cf20d9c18ebab4427"
     },
     {
       "run_index": 3,
-      "performance": 94,
+      "performance": 93,
       "accessibility": 100,
       "external_requests": 0,
       "report_path": "frontend/acceptance/runtime/frontend-closure-lighthouse/run-3/report.json",
-      "report_sha256": "d63b4b385c615782e70ed53bc38745ec676675315431354070e437688d4dc8a6"
+      "report_sha256": "86fbd0527017ac980201affd9193dfe5a02c0511ce174446376fedf8ca179c92"
     }
   ],
   "thresholds": {
@@ -36,7 +36,7 @@
     "accessibility_each_minimum": 90,
     "performance_median_recommended": 95
   },
-  "performance_median": 94,
+  "performance_median": 93,
   "performance_median_recommendation_met": false,
   "screenshots": [
     {
@@ -45,7 +45,7 @@
         "height": 900
       },
       "path": "frontend/acceptance/frontend-closure/desktop-1440x900.png",
-      "sha256": "316fbabf7c6b5afa4c81659443cdeeea09a51bcc78f9ef473a36f2a6126401fc"
+      "sha256": "5d0f3c51ba36973b4aaaa77efb085dca797a7fbb73cbbbc233f964158617bc0a"
     },
     {
       "viewport": {
@@ -53,7 +53,7 @@
         "height": 720
       },
       "path": "frontend/acceptance/frontend-closure/laptop-1280x720.png",
-      "sha256": "c3c1fd62b2e30613c1cba3ce2808432a7a580892afb954d631cc737935b402d3"
+      "sha256": "fd3ae153cba7f8aceaba222d76d9fe2fe104da5e55428560a958f7d37ea57331"
     },
     {
       "viewport": {
@@ -61,7 +61,7 @@
         "height": 844
       },
       "path": "frontend/acceptance/frontend-closure/mobile-390x844.png",
-      "sha256": "bebac0dc1e01b3101d9617e1acdc557f28209ce9b3dde011fcd23c8e910edda3"
+      "sha256": "3b6d22626ac1384f6869b404b791cdef9f9c1faf7950d025e86f0f16508fabf2"
     }
   ],
   "model_requests": 0,
