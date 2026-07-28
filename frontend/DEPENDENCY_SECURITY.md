@@ -1,6 +1,6 @@
 # Frontend dependency security baseline
 
-Verified on 2026-07-27 with Node.js 24.15.0 and npm 11.12.1. CI uses the
+Verified again online on 2026-07-28 with Node.js 24.15.0 and npm 11.12.1. CI uses the
 minimum supported project runtime, Node.js 22.19.0.
 
 ## Before

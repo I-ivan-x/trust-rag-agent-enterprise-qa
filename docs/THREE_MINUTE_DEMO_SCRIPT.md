@@ -6,6 +6,15 @@
 `data/releases/clean_clone_receipt_v1.json`。如果本文与 canonical artifact
 不一致，以 artifact 为准。
 
+## 面试前 5 分钟 preflight
+
+- 预先启动本地静态页并停在 Hero；90 秒观看预算不包含依赖安装。
+- 另开两个只读标签页：`data/claims/claim_registry.json` 与
+  `data/releases/release_manifest_v2.json`，便于当场验真。
+- 保留 `docs/assets/interview-hero.png` 作为浏览器或本地服务故障时的截图兜底。
+- 关闭含 token、`.env`、个人路径或无关客户信息的终端和编辑器面板；演示窗口不展示密钥。
+- 确认 `git status --short` 为空、`q5_test` 不存在，并从头试点一次六个页面动作。
+
 ## 使用规则
 
 - 全程正好六段，`22 + 23 + 30 + 25 + 50 + 30 = 180` 秒。
@@ -43,7 +52,7 @@
 
 **照读：**
 
-> 屏幕轨迹是合成演示，不是评测样本；数字来自独立记录的冻结评测。模型只能提议，主机检查 schema、状态、证据、角色和 capability；需审批就进人工队列，否则在副作用前拒绝。在已披露的 Q4 冻结评测第二次运行里，9 次未授权动作全部被阻断；120 次尝试中，无证据动作和未授权漏升级均为零。这是范围内安全结果，不是开放世界保证。
+> 轨迹是合成演示，数字来自冻结评测。模型只提议；主机检查 schema、状态、证据、角色与 capability，审批不足就在副作用前停止。Q4 冻结第二次运行阻断 9/9 未授权动作，120 次尝试中两项安全失败均为零。这是范围内结果。
 
 **Claim 锚点：**
 
@@ -61,7 +70,7 @@
 
 **照读：**
 
-> 安全不等于有用。Q3 挡住越权，却没过动作选择门。我们没有降门槛，而是修正策略。`ops_test` 首次运行仍差一个案例，随后做了机制修正；两次运行和五条查询修复都保留披露。冻结的第二次运行达到授权 precision 33/51、triad 1/1、over-escalation 3/60。这是透明的 scoped result，不是 pristine one-shot holdout。
+> 安全不等于有用。Q3 虽挡住越权，却没过动作选择门。我们不降门槛，只修机制；`ops_test` 首次仍差一例，第二次才过门。两次运行和五条查询修复全部保留，所以这是披露后的机制复验，不是 pristine one-shot holdout。
 
 **Claim 锚点：**
 
@@ -79,7 +88,7 @@
 
 **照读：**
 
-> Q5 回答何时值得调用大模型。Grammar 走 parser，Unsafe 拒绝，Open semantics 未评估。真实开发运行里，Hybrid 调用 78 次，LLM-only 132 次，但效率不是 held-out headline。预注册语义 uplift 仅 1/12，低于 0.10；版本化 parser 又解决受控文本 32/32，剩余 0/32。因此结论是 scoped negative complete：当前范围没有测出额外语义价值。
+> Q5 回答何时值得调用大模型：Grammar 走 parser，Unsafe 拒绝，Open semantics 未评估。真实开发运行中，Hybrid 比 LLM-only 少调用，但这不是 held-out 结论；语义 uplift 只有 1/12，未过预注册门槛，而版本化 parser 解决受控文本 32/32，剩余 0/32。所以当前范围结论是 scoped negative complete。
 
 **Claim 锚点：**
 

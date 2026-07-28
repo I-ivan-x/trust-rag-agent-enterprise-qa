@@ -27,11 +27,12 @@ const afterPrecision = q4Selection.metrics.precision_authorized;
       <p class="eyebrow">可靠性转折 · 从安全到好用</p>
       <h2>拦住危险动作之后，还要减少不必要的人工升级。</h2>
       <p>
-        第一阶段虽然安全，但动作选择不够准；校准后在独立留出集上改善选择，安全底线保持不变。
+        Q3 开发范围先暴露动作选择问题；机制修正后，Q4 冻结 ops_test
+        的第二次运行过门，安全底线保持不变。两组分数来自不同评测范围，不作为同集提升量。
       </p>
     </header>
 
-    <div class="turn-comparison" aria-label="Q3 到 Q4 的校准结果">
+    <div class="turn-comparison" aria-label="Q3 问题暴露到 Q4 冻结机制复验">
       <a
         class="turn-card turn-before"
         href={`#evidence-${q3Usefulness.claim_id}`}
@@ -39,14 +40,14 @@ const afterPrecision = q4Selection.metrics.precision_authorized;
       >
         <div class="turn-card-head">
           <CircleX size={19} aria-hidden="true" />
-          <span>校准前 · 动作选择不够准</span>
+          <span>Q3 开发范围 · 暴露问题</span>
         </div>
         <strong
           class="metric-value"
           data-metric-claim={q3Usefulness.claim_id}
           data-metric-name="rule_precision_authorized"
         >{fraction(beforePrecision)}</strong>
-        <span>授权动作精确率 · {metricPercent(beforePrecision)}</span>
+        <span>开发范围授权动作精确率 · {metricPercent(beforePrecision)}</span>
         <small>{claimMeaning(q3Usefulness)}</small>
       </a>
 
@@ -59,14 +60,14 @@ const afterPrecision = q4Selection.metrics.precision_authorized;
       >
         <div class="turn-card-head">
           <CircleCheck size={19} aria-hidden="true" />
-          <span>校准后 · 独立留出集通过</span>
+          <span>Q4 冻结第二次运行 · 机制复验过门</span>
         </div>
         <strong
           class="metric-value"
           data-metric-claim={q4Selection.claim_id}
           data-metric-name="precision_authorized"
         >{fraction(afterPrecision)}</strong>
-        <span>授权动作精确率 · {metricPercent(afterPrecision)}</span>
+        <span>冻结范围授权动作精确率 · {metricPercent(afterPrecision)}</span>
         <small>{claimMeaning(q4Selection)}</small>
       </a>
     </div>

@@ -32,10 +32,14 @@ class ReleaseArtifact(BaseModel):
 class RuntimeVersions(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
+    operating_system: str = Field(min_length=1)
+    architecture: str = Field(min_length=1)
     python: str = Field(min_length=1)
     uv: str = Field(min_length=1)
     node: str = Field(min_length=1)
     npm: str = Field(min_length=1)
+    playwright: str = Field(min_length=1)
+    chromium: str = Field(min_length=1)
 
 
 class StableReleaseBinding(BaseModel):
@@ -143,23 +147,59 @@ class VerificationCommand(BaseModel):
 
     name: str = Field(pattern=r"^[a-z][a-z0-9_]*$")
     command: list[str] = Field(min_length=1)
+    working_directory: Literal["repository", "frontend"]
+    environment: dict[str, str] = Field(min_length=3, max_length=3)
     status: Literal["passed"]
 
 
-def expected_clean_clone_commands(tested_commit: str) -> list[tuple[str, list[str]]]:
+CLEAN_CLONE_ENVIRONMENT = {
+    "UV_OFFLINE": "1",
+    "npm_config_audit": "false",
+    "npm_config_offline": "true",
+}
+
+
+def expected_clean_clone_commands(
+    tested_commit: str,
+) -> list[tuple[str, list[str], str, dict[str, str]]]:
     """Return the exact ordered command matrix bound into the clean-clone receipt."""
 
-    python = ["py", "-m", "uv", "run", "--frozen", "python"]
+    python = ["uv", "run", "--frozen", "python"]
+    root = "repository"
+    frontend = "frontend"
+    environment = CLEAN_CLONE_ENVIRONMENT
     return [
-        ("uv_sync", ["py", "-m", "uv", "sync", "--locked", "--group", "dev"]),
-        ("claim_build", [*python, "scripts/build_public_claims.py"]),
-        ("claim_check", [*python, "scripts/build_public_claims.py", "--check"]),
-        ("claim_drift", [*python, "scripts/check_claim_drift.py"]),
+        (
+            "uv_sync",
+            ["uv", "sync", "--locked", "--group", "dev"],
+            root,
+            environment,
+        ),
+        ("claim_build", [*python, "scripts/build_public_claims.py"], root, environment),
+        (
+            "claim_check",
+            [*python, "scripts/build_public_claims.py", "--check"],
+            root,
+            environment,
+        ),
+        (
+            "claim_drift",
+            [*python, "scripts/check_claim_drift.py"],
+            root,
+            environment,
+        ),
         (
             "showcase_isolation",
             [*python, "scripts/build_interview_showcase.py", "--check"],
+            root,
+            environment,
         ),
-        ("public_repository_audit", [*python, "scripts/verify_public_repository.py"]),
+        (
+            "public_repository_audit",
+            [*python, "scripts/verify_public_repository.py"],
+            root,
+            environment,
+        ),
         (
             "release_gates",
             [
@@ -170,11 +210,18 @@ def expected_clean_clone_commands(tested_commit: str) -> list[tuple[str, list[st
                 "--leakage",
                 "tests/fixtures/release_gates/ci_clean_leakage.json",
             ],
+            root,
+            environment,
         ),
-        ("npm_ci", ["npm", "ci"]),
-        ("npm_build", ["npm", "run", "build"]),
-        ("playwright", ["npx", "playwright", "test"]),
-        ("frontend_receipt", [*python, "scripts/verify_frontend_closure.py"]),
+        ("npm_ci", ["npm", "ci"], frontend, environment),
+        ("npm_build", ["npm", "run", "build"], frontend, environment),
+        ("playwright", ["npx", "playwright", "test"], frontend, environment),
+        (
+            "frontend_receipt",
+            [*python, "scripts/verify_frontend_closure.py"],
+            root,
+            environment,
+        ),
         *[
             (
                 f"lighthouse_{index}",
@@ -184,6 +231,8 @@ def expected_clean_clone_commands(tested_commit: str) -> list[tuple[str, list[st
                     tested_commit,
                     f"acceptance/runtime/release-clean-clone/run-{index}",
                 ],
+                frontend,
+                environment,
             )
             for index in range(1, 4)
         ],
@@ -219,12 +268,19 @@ class ReleaseCleanCloneReceipt(BaseModel):
     ignored_or_untracked_dependency_count: Literal[0]
     model_requests: Literal[0]
     external_requests: Literal[0]
+    request_observation_scope: Literal[
+        "application counters and browser request capture; dependency installers "
+        "forced offline; not an OS-level egress attestation"
+    ]
     q5_test: Literal["absent"]
     status: Literal["passed"]
 
     @model_validator(mode="after")
     def _required_verification_matrix(self) -> ReleaseCleanCloneReceipt:
-        actual = [(row.name, row.command) for row in self.commands]
+        actual = [
+            (row.name, row.command, row.working_directory, row.environment)
+            for row in self.commands
+        ]
         expected = expected_clean_clone_commands(self.tested_commit)
         if actual != expected:
             raise ValueError("clean-clone command matrix changed, reordered, or substituted")

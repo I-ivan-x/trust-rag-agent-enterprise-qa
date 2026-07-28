@@ -197,7 +197,7 @@
     "license_path": "LICENSE",
     "license_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
     "third_party_notices_path": "THIRD_PARTY_NOTICES.md",
-    "third_party_notices_sha256": "e764f7ad20bdcd1d3125bdbe6c02be160c28f490d00a429625f73b37448d6b51",
+    "third_party_notices_sha256": "3528f9df401486339af55c158e7c0c2722d08f588aeaf71e7091d289d4f53b9f",
     "applies_to": [
       "project-authored code, documentation, configuration, synthetic data, labels, overlays and original metadata"
     ],

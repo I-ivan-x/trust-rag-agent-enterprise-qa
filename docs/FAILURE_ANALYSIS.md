@@ -194,7 +194,8 @@ must cite `data/claims/claim_registry.json`; this historical taxonomy is not a s
 
 ## Hard-Negative Failure Analysis
 
-hard_negative_error_rate=1.0 indicates a serious failure mode.
+The historical `hard_negative_error_rate=1.0` indicates a serious evaluation-design
+failure; after adjudication it is not evidence of a top-5 retrieval collapse.
 
 The Week 6 `hard_negative_error_rate=1.0` row is now classified as F8: an
 invalid hard-negative test caused by metadata-template queries. It remains a

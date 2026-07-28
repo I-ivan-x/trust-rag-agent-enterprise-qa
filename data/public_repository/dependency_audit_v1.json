@@ -1,6 +1,6 @@
 {
   "schema_version": "public-dependency-audit-v1",
-  "uv_lock_sha256": "b2475c7f88a02db7953f286311207f749c70b9df20be4b155663761683aacbe5",
+  "uv_lock_sha256": "a6f56636286d44753a7e6368fb16a2a8bd1251b1b79808c70d19956fd99a7d3e",
   "package_lock_sha256": "86d8076dcb3289afca5942e500292c904e033f88c53b4b9944d048f3edfff266",
   "python": [
     {"package": "fastapi", "scope": "runtime", "license": "MIT", "status": "compatible-review"},
@@ -30,7 +30,13 @@
     {"package": "lighthouse", "scope": "development", "license": "Apache-2.0", "status": "tooling-only"},
     {"package": "vite", "scope": "development", "license": "MIT", "status": "tooling-only"}
   ],
-  "python_advisory_status": "offline-review-no-known-direct-runtime-advisory",
+  "advisory_review_date": "2026-07-28",
+  "python_advisory_status": "online-pip-audit-no-known-vulnerabilities",
+  "python_audit_tool": "pip-audit 2.10.1",
+  "python_audit_scope": "uv.lock full dependency graph including development dependencies",
+  "python_known_vulnerabilities": 0,
+  "npm_advisory_status": "online-npm-audit-no-known-vulnerabilities",
+  "npm_audit_tool": "npm audit 11.12.1",
   "npm_production_vulnerabilities": 0,
   "npm_high_vulnerabilities": 0,
   "npm_critical_vulnerabilities": 0,
@@ -38,5 +44,6 @@
   "accepted_moderate_advisory": "none",
   "accepted_advisory_scope": "none",
   "breaking_downgrade_performed": false,
-  "external_requests": 0
+  "security_advisory_network_mode": "online",
+  "model_or_evaluation_requests": 0
 }

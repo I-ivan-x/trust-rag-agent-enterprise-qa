@@ -187,11 +187,11 @@
 
 ## 6. Q4：可靠性校准与负转正
 
-- [ ] **A** Q4 承重问题：能否修真实缺陷，并在冻结门槛和 held-out test 上翻正。
+- [ ] **A** Q4 承重问题：能否修真实缺陷，并在预注册门槛与冻结 `ops_test` 的机制复验中翻正；为什么最终结果不能再称 pristine holdout。
 - [ ] **A** zero-token diagnostic 如何区分 detection miss 与 routing error。
 - [ ] **A** `flag_stale` 死路径、过度升级、漏升级的根因与修复方向。
 - [ ] **A** 为什么优先修规则检测/路由，而不是继续调 LLM prompt。
-- [ ] **A** dev/test 物理隔离、预注册、阈值冻结、一次性终评的作用。
+- [ ] **A** dev/test 初始物理隔离、预注册与阈值冻结的作用；首次查看 test 后，任何修订与第二次运行都必须披露，不能再包装成一次性终评。
 - [ ] **A** 为什么不能看 test 后继续调参；post-hoc 修订应如何标记。
 - [ ] **A** 为什么 validator 保持不变是“能力提升未牺牲安全”的关键证据。
 - [ ] **A** precision@authorized `0.4545 -> 0.6471` 的含义。
@@ -500,10 +500,11 @@
 | Q1 | false answer `0`; citation structural validity `1.00`; grounded `0.24`; false refusal `0.46` | real evaluated result；安全强、覆盖保守 |
 | Q2 | gated `0.2273`; agentic `0.2727`; rule == LLM | 仅薄弱增量，不支持 LLM controller 优越性 |
 | Q3 | unauthorized blocked `1.00`; F11/F13 `0`; triad `False` | 安全成立，选择能力未达门 |
-| Q4 | precision authorized `0.4545 -> 0.6471`; over-escalation `0.2857 -> 0.05`; triad `False -> True` | held-out、阈值冻结、validator 不动；结果真但样本薄 |
+| Q4 | Q3 dev `0.4545` 暴露问题；Q4 frozen `ops_test` 第二次运行 precision authorized `0.6471`、over-escalation `0.05`、triad `True` | 两组数字来自不同范围，不作同集 A/B 提升量；第二次机制复验已披露，不是 pristine holdout |
 | Q5 v3 real | observation recall `1.00`; Hybrid call/token ratio `.590909/.644393`; semantic uplift `.083333`; CI `[-.25,.416667]` | G0/G2/G3/G5 pass，G1 fail，G4 not run |
 | Q5 v4 value | `108 neutral / 0 beneficial`; Hybrid `42 calls / 0 incremental successes`; symbolic `1/1/1` | deterministic mock + offline controls，不是 real LLM 胜负 |
-| Boundary F | post-hoc `30/32`; coverage `.9375`; conditional accuracy `1`; risk `0`; abstain `2` | controlled handwritten prose 仍在 practical deterministic frontier |
+| Boundary F 原始层 | post-hoc `30/32`; coverage `.9375`; conditional accuracy `1`; risk `0`; abstain `2` | 历史结果字节不变；不能被 addendum 覆盖 |
+| Boundary F addendum | `previously_uncovered_cases_resolved 32/32`; `remaining_uncovered_cases 0/32`; coverage `1`; risk `0`; abstain `0` | post-hoc runtime-only parser 机制证据，不是 held-out 泛化成绩；controlled prose track 已关闭 |
 | 当前 Q5 | K1 false；q5_test absent；Xiaomi/confirmatory `0` | scoped negative complete；不声称 open-world LLM 无价值 |
 
 ## 18. 建议学习顺序

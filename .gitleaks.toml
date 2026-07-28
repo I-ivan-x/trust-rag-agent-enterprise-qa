@@ -1,0 +1,25 @@
+title = "Agent Reliability Lab secret-scanning policy"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Q5 manifests store SHA-256 trial identifiers, not API keys."
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+regexes = [
+  '''"trial_key_sha256"\s*:\s*"[0-9a-f]{64}"''',
+]
+paths = [
+  '''^data/claims/source/q5-dev-v3-real-deepseek-v4-flash-e54c42e-primary-k3/manifest\.json$''',
+  '''^tests/fixtures/q5_protocol_v[12]/manifest\.json$''',
+]
+
+[[allowlists]]
+description = "Vendored FastAPI OAuth tutorial contains its documented example JWT."
+targetRules = ["jwt"]
+paths = [
+  '''^data/public_corpus/active/038-tutorial-security-oauth2-jwt\.md$''',
+  '''^data/hard_negative_corpus/hn-fastapi-0013/a-038-tutorial-security-oauth2-jwt\.md$''',
+]

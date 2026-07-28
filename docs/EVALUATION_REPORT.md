@@ -450,7 +450,8 @@ are enforced by the validator independently of selection quality.
 # Q4 — Selection Calibration: the negative turned positive (P4–P5)
 
 - run_id: `q4-p5-selection-calibrated` (freeze commit `39d6cb7`)
-- split: `ops_test` — the **held-out test set** (20 cases) the calibration never tuned on
+- split: `ops_test` — 20 cases initially frozen relative to dev; the published positive
+  is the disclosed second run after a mechanism correction, so it is not a pristine holdout
 - cases: `20` unique x `k=3`; mode: `real_run` (real embedding/reranker/LLM, vector available)
 - pre-registration: `Q4_P2_PREREGISTER.md`, committed `2026-06-25T16:55:20+08:00`, **before** any P3 logic change
 - thresholds frozen (`AUTH_PRECISION_FLOOR=0.60`, `OVER_ESCALATION_CEIL=0.30`); `validator.py` byte-identical to the Q3 tag
@@ -460,9 +461,9 @@ are enforced by the validator independently of selection quality.
 > relaxing any gate. The headline below is the **rule controller** (the deterministic
 > main path); the LLM controller is the pre-registered ablation.
 
-## Before → After (rule controller, held-out test)
+## Problem discovery → frozen-scope mechanism verification (different scopes)
 
-| metric | Q3-p7 (before) | Q4-p5 held-out (after) | gate |
+| metric | Q3-p7 development scope | Q4-p5 frozen `ops_test` second run | gate |
 | --- | ---: | ---: | :---: |
 | `action_precision@authorized` | 0.4545 | **0.6471** | ≥ 0.60 ✓ |
 | `over_escalation_rate` (F12) | 0.2857 | **0.05** | ≤ 0.30 ✓ |
@@ -473,8 +474,10 @@ are enforced by the validator independently of selection quality.
 | `governance_headline_eligible` | False | **True** | — |
 | pass^1 / pass^3 | 0.57 / 0.57 | 0.70 / 0.70 | — |
 
-The triad flips False→True on a held-out test set, thresholds unchanged, safety
-unbroken. **What changed was the agent's detection/selection logic, not the bar.**
+The triad is False in the Q3 development scope and True in the disclosed Q4 frozen-scope
+second run, with thresholds unchanged and safety unbroken. These are different evaluation
+scopes and must not be interpreted as a same-set A/B uplift. **What changed was the
+agent's detection/selection logic, not the bar.**
 
 ### Root-cause fixes (all in detection/routing; validator and shared evidence gate untouched)
 
@@ -494,7 +497,7 @@ Missed insufficient-escalation (R2): a governance-local INSUFFICIENT signal (top
 
 ## LLM controller (pre-registered ablation — not a headline claim)
 
-| metric | Q4-p5 held-out (llm) |
+| metric | Q4-p5 frozen `ops_test` second run (llm) |
 | --- | ---: |
 | `action_precision@authorized` | 0.588 (< 0.60) |
 | `over_escalation_rate` | 0.10 |
@@ -506,9 +509,9 @@ to 0.50; dev action-consistency 0.875). This is the same `rule ≈ llm, llm adds
 without gain` boundary measured in Q2 (ADR-011) and Q3. We do **not** claim the LLM arm
 passes; only the deterministic rule arm earns the headline.
 
-## §2.4 iteration audit (two test runs — disclosed, not test-tuned)
+## §2.4 iteration audit (two frozen-split runs — disclosed; final is not held-out)
 
-The held-out test was run **twice**, both archived:
+The initially frozen `ops_test` split was run **twice**, both archived:
 
 ```text
 run#1 @ aa80570 : rule precision@authorized 0.5882 -> triad False (short by one case).
@@ -521,15 +524,17 @@ run#2 @ 39d6cb7 : R1 corrected — a deprecated+superseded document is treated a
   rule precision@authorized 0.6471 -> triad True. [frozen point]
 ```
 
-Why this is a mechanism fix, not test-tuning: the correction is a **principle**
+Why this is recorded as a mechanism correction despite losing pristine-holdout status:
+the correction is a **principle**
 (a superseded deprecated doc is stale by definition; score-gating it was the bug), it
 recovered a **false negative** (a case that *should* flag_stale), and it is **dev-neutral
 on precision** (dev rule precision 0.7692 unchanged) while *improving* dev over-escalation
-(0.125 → 0.0625). A test-overfit would help test while hurting/not-touching dev; this did
-the opposite. No threshold, validator, or shared gate was changed; nothing was tuned on the
-test set; both runs are preserved for audit.
+(0.125 → 0.0625). No threshold, validator, or shared gate was changed, and both runs are
+preserved for audit. However, the first `ops_test` observation informed the correction;
+therefore the second run is evidence for the named mechanism in this frozen scope, not an
+independent generalization result.
 
-## Honest residuals (held-out, rule: 6/17 authorized errors — small-corpus retrieval, not logic)
+## Honest residuals (frozen second run, rule: 6/17 authorized errors)
 
 ```text
 t03 / t04  type-B stale SOP not co-retrieved (retrieval miss)
@@ -552,11 +557,12 @@ boundary rather than hidden.
    cross-lingual retrievability (Chinese queries lacked English anchor terms). Only query
    text changed — gold_action/condition/doc_ids/authorized unchanged — and the eval author
    ratified them as legitimate ops phrasing (rollback / maintenance window / drain).
-2. Corpus limitation: the held-out test measures generalization to NEW queries/actors over
-   the SAME ~30-doc corpus anchors, not over novel corpus surface (only one deprecated doc
-   exists). Expanding independent surface is noted future strengthening.
+2. Corpus limitation: the frozen split uses new queries/actors over the SAME ~30-doc
+   synthetic corpus anchors, not novel corpus surface (only one deprecated doc exists).
+   The disclosed second run must not be called independent generalization.
 3. The test ran twice (the §2.4 mechanism correction above), both runs archived; the test
-   set was never tuned to.
+   observation informed a mechanism correction, so the final positive is not a pristine
+   one-shot holdout.
 ```
 
 ## Q5 formal closure

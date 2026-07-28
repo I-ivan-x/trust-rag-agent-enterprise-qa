@@ -50,9 +50,9 @@ the full document body while drafting external eval queries.
 
 ## Hard Negative Corpus
 
-`data/hard_negative_corpus/` holds adjacent-version, similar-title, and
-same-term/different-answer documents. Of the frozen 30 pairs, at least 20 are
-adjacent versions taken from the public corpus; at most 10 are self-authored.
+`data/hard_negative_corpus/` holds adjacent-topic and similar-title documents.
+The tracked manifest contains 20 frozen pairs from the public FastAPI corpus:
+10 adjacent-topic pairs and 10 similar-title pairs; none are self-authored.
 
 ## Public corpus metadata overlay
 

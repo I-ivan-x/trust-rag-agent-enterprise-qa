@@ -6,6 +6,17 @@ The root Apache License 2.0 applies to project-authored code, documentation,
 configuration, synthetic data, labels, overlays, and original metadata unless a
 file or directory says otherwise. It does not relicense third-party material.
 
+## Historical tag notice
+
+The immutable product tags through `v3.0-q4-reliability` predate the commit that
+added the root `LICENSE`, this notice, and the local third-party license copies.
+The Owner's Apache-2.0 grant in current `main` covers project-authored material
+retained in that repository history, but a standalone archive of an older tag
+does not contain the governing texts. Anyone using such an archive must also
+consult the current `LICENSE`, this notice, and `LICENSES/`; FastAPI and
+Kubernetes material always remains under the upstream terms listed below.
+Historical tags must not be moved merely to insert these files.
+
 ## FastAPI documentation
 
 - Paths: `data/public_corpus/` and the copied source pages under

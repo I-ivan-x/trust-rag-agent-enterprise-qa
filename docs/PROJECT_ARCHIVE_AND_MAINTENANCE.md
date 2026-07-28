@@ -243,7 +243,7 @@ Local archival closure requires:
   screenshot hashes passing;
 - release gates passing;
 - detached no-hardlinks clean clone passing with zero model and evaluation
-  external requests;
+  external requests at the instrumented application/browser boundary;
 - canonical manifest verification passing;
 - project license and third-party attribution boundaries mechanically
   verified; and
@@ -271,6 +271,14 @@ passed.
 ## 11. Reproduction commands
 
 Run from the repository root in PowerShell.
+
+The clean-clone runner's internal 14-command matrix uses the cross-platform
+`uv` executable and records OS, architecture, Python/uv/Node/npm,
+Playwright/Chromium, working directory, and offline environment overrides.
+Each receipt proves the recorded platform/runtime combination; it is not an
+OS-level network attestation or a claim that every platform was tested.
+On POSIX shells, invoke the same Python scripts with `uv run --frozen python`
+instead of the PowerShell `py -m uv` launcher shown below.
 
 ### Core and governance verification
 

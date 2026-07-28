@@ -4,10 +4,12 @@ import hashlib
 import json
 import subprocess
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from pydantic import ValidationError
 
+import app.eval.release_manifest as release_manifest_module
 from app.eval.release_manifest import (
     RELEASE_MANIFEST_PATH,
     RELEASE_SCHEMA_PATH,
@@ -23,6 +25,7 @@ from app.schemas.release_manifest import (
     ReleaseCleanCloneReceipt,
     ReleaseManifest,
     ResearchMilestoneBinding,
+    expected_clean_clone_commands,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -140,11 +143,93 @@ def test_clean_clone_receipt_nonancestor_and_mismatch_fail() -> None:
         verify_clean_clone_receipt_lineage(mutated, manifest, root=ROOT)
 
 
-def test_clean_clone_receipt_rejects_command_substitution() -> None:
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("command", ["echo", "passed"]),
+        ("working_directory", "frontend"),
+        ("environment", {"UV_OFFLINE": "0"}),
+    ],
+)
+def test_clean_clone_receipt_rejects_execution_matrix_mutation(
+    field: str,
+    value: object,
+) -> None:
     payload = _receipt(_manifest()).model_dump(mode="json")
-    payload["commands"][0]["command"] = ["echo", "passed"]
+    payload["commands"][0][field] = value
     with pytest.raises(ValidationError, match="command matrix"):
         ReleaseCleanCloneReceipt.model_validate(payload)
+
+
+def test_clean_clone_command_matrix_uses_cross_platform_uv_entrypoint() -> None:
+    matrix = expected_clean_clone_commands("0" * 40)
+    assert len(matrix) == 14
+    assert all(command[0] != "py" for _, command, _, _ in matrix)
+    assert {working_directory for _, _, working_directory, _ in matrix} == {
+        "repository",
+        "frontend",
+    }
+    assert all(
+        environment
+        == {
+            "UV_OFFLINE": "1",
+            "npm_config_audit": "false",
+            "npm_config_offline": "true",
+        }
+        for _, _, _, environment in matrix
+    )
+
+
+def test_frontend_receipt_rejects_commit_tree_mismatch(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    frontend_commit = "a" * 40
+    recorded_tree = "b" * 40
+    screenshot_path = "frontend/acceptance/frontend-closure/desktop.png"
+    screenshot_hash = "c" * 64
+    receipt_path = tmp_path / "receipt.json"
+    receipt_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "frontend-closure-acceptance-v1",
+                "tested_commit": frontend_commit,
+                "tested_tree": recorded_tree,
+                "model_requests": 0,
+                "external_requests": 0,
+                "hard_thresholds_passed": True,
+                "screenshots": [
+                    {"path": screenshot_path, "sha256": screenshot_hash}
+                ],
+                "lighthouse_runs": [
+                    {
+                        "performance": 90,
+                        "accessibility": 100,
+                        "external_requests": 0,
+                    }
+                    for _ in range(3)
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    manifest = SimpleNamespace(
+        tested_commit="d" * 40,
+        frontend=SimpleNamespace(
+            closure_receipt=SimpleNamespace(path="receipt.json"),
+            screenshots=[
+                SimpleNamespace(path=screenshot_path, sha256=screenshot_hash)
+            ],
+        ),
+    )
+    monkeypatch.setattr(release_manifest_module, "_is_ancestor", lambda *_: True)
+    monkeypatch.setattr(
+        release_manifest_module,
+        "_git",
+        lambda *_: "e" * 40,
+    )
+    with pytest.raises(ValueError, match="tested tree"):
+        release_manifest_module._verify_frontend_receipt(manifest, tmp_path)
 
 
 def test_research_milestone_requires_a_complete_annotated_tag(tmp_path: Path) -> None:

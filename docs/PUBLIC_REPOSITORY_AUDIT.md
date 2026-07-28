@@ -13,6 +13,11 @@ tag authorized by closure is the annotated, non-product research marker
 `agent-reliability-lab-q5-closed-20260717`; it does not create a GitHub Release
 or `v4.0`.
 
+The immutable tags through `v3.0-q4-reliability` predate the repository's root
+license and notice files. They are preserved for evidence lineage, not moved.
+The current `LICENSE` and `THIRD_PARTY_NOTICES.md` state the Owner grant and
+third-party boundaries that must accompany use of those historical snapshots.
+
 ## Publication checks
 
 | Area | Result | Enforcement |
@@ -24,7 +29,7 @@ or `v4.0`.
 | Brand | Current public surfaces use **Agent Reliability Lab**. | Exact public-surface registry |
 | Legacy codename | **TrustRAG** is limited to declared historical artifacts, internal identifiers, and three explicit public explanations of the rename. | Path allowlist |
 | Image accessibility | HTML/Astro images require `alt`; Markdown images cannot use an empty label. | Source scan |
-| Q5 boundary | `q5_test` is absent. No Boundary G, K1 data, provider run, product release, or `v4.0` is created; the one exact annotated research marker is separately constrained. | Repository and release verifier |
+| Q5 boundary | `q5_test` is absent. No Boundary G, K1 data, new or confirmatory provider run during closure, product release, or `v4.0` is created; the one exact annotated research marker is separately constrained. | Repository and release verifier |
 | Project license | Root Apache-2.0 text, package metadata, notices, exclusions, and SHA-256 values agree. | V2 registry plus mutation tests |
 | Third-party material | FastAPI MIT and Kubernetes CC BY 4.0 scopes, attribution, license references, and hashes remain explicit. | Structured third-party inventory |
 
@@ -33,6 +38,19 @@ public upstream documentation contains fictional example identities. Those
 directories are declared fixtures or attributed third-party sources. The
 exception is path-scoped; moving the same text into a normal document fails the
 gate.
+
+The zero-PII result above is explicitly a **tracked-text** finding. Git author
+and annotated-tag metadata retain the Owner identity and email already present
+in the published history; they are not covered by that counter. Rewriting those
+objects would break evidence lineage, so this existing metadata is an
+Owner-accepted public-history boundary rather than a claim that the complete
+Git object database contains no personal identifier.
+
+Before first full-history publication, Gitleaks 8.30.1 scanned 169 commits
+(approximately 11.86 MB) and reported zero findings under the tracked
+`.gitleaks.toml`. Its two narrow allowlists cover only SHA-256 trial identifiers
+misclassified as generic API keys and the vendored FastAPI tutorial's public
+example JWT. CI repeats the full-history scan with `fetch-depth: 0`.
 
 The seven Boundary F addendum files are the only declared exception to the
 general `data/eval_runs/*` ignore rule. They were deliberately force-added as
@@ -56,10 +74,13 @@ the former `@sentry/node` → OpenTelemetry/minimatch advisory chain. High and
 critical findings remain release-blocking. The lock-bound record and prior
 reachability history remain in `frontend/DEPENDENCY_SECURITY.md`.
 
-The Python review is offline because this batch permits no external advisory
-request. It records no known direct-runtime advisory in the repository, but it
-does not claim that an offline lock inspection replaces a current OSV or
-GitHub Advisory Database query before a later release.
+On 2026-07-28, `pip-audit 2.10.1` checked the full exported `uv.lock` graph,
+including development dependencies. The first pass found fixed advisories in
+`pydantic-settings 2.14.1`, `starlette 1.2.1`, and `pytest 8.4.2`; the lock was
+updated to `2.14.2`, `1.3.1`, and `9.1.1` respectively. The repeated full-graph
+Python audit and `npm audit 11.12.1` both report zero known vulnerabilities.
+These online security-advisory queries are intentionally separate from the
+project's zero model/evaluation-request counters.
 
 ## Repository-license decision
 
@@ -85,8 +106,7 @@ this project.
 
 ## Residual risks
 
-- The offline Python advisory statement can age after this manifest is cut.
-- Advisory data can change after the tracked audit and must be refreshed before
+- Advisory data can change after the 2026-07-28 online audit and must be refreshed before
   any later release or dependency-lock change.
 - Historical artifacts are intentionally retained for reproducibility; their
   public meaning must continue to come through the Claim registry rather than

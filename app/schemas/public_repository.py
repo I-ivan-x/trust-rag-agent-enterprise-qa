@@ -135,7 +135,17 @@ class DependencyAudit(BaseModel):
     package_lock_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     python: list[DependencyLicenseRow] = Field(min_length=1)
     npm: list[DependencyLicenseRow] = Field(min_length=1)
-    python_advisory_status: Literal["offline-review-no-known-direct-runtime-advisory"]
+    advisory_review_date: Literal["2026-07-28"]
+    python_advisory_status: Literal[
+        "online-pip-audit-no-known-vulnerabilities"
+    ]
+    python_audit_tool: Literal["pip-audit 2.10.1"]
+    python_audit_scope: Literal[
+        "uv.lock full dependency graph including development dependencies"
+    ]
+    python_known_vulnerabilities: Literal[0]
+    npm_advisory_status: Literal["online-npm-audit-no-known-vulnerabilities"]
+    npm_audit_tool: Literal["npm audit 11.12.1"]
     npm_production_vulnerabilities: Literal[0]
     npm_high_vulnerabilities: Literal[0]
     npm_critical_vulnerabilities: Literal[0]
@@ -143,4 +153,5 @@ class DependencyAudit(BaseModel):
     accepted_moderate_advisory: Literal["none"]
     accepted_advisory_scope: Literal["none"]
     breaking_downgrade_performed: Literal[False]
-    external_requests: Literal[0]
+    security_advisory_network_mode: Literal["online"]
+    model_or_evaluation_requests: Literal[0]

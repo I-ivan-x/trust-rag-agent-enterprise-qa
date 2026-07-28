@@ -62,6 +62,7 @@ FRONTEND_SCREENSHOTS = (
     "frontend/acceptance/frontend-closure/mobile-390x844.png",
 )
 PUBLIC_AUDIT_ARTIFACTS = (
+    ".gitleaks.toml",
     "data/public_repository/audit_registry_v1.json",
     "data/public_repository/audit_registry_v2.json",
     "data/public_repository/audit_registry_v2.schema.json",
@@ -281,8 +282,11 @@ def verify_release_manifest_payload(
     verify_clean_clone_receipt_lineage(receipt, manifest, root=root)
     _verify_frontend_receipt(manifest, root)
     _verify_showcase_manifest(root / manifest.showcase_manifest.path)
-    if _stable_release(root) != manifest.stable_release:
+    stable_release = _stable_release(root)
+    if stable_release != manifest.stable_release:
         raise ValueError("stable release binding changed")
+    if not _is_ancestor(root, stable_release.release_commit, manifest.tested_commit):
+        raise ValueError("stable release is not an ancestor of the tested commit")
 
 
 def verify_clean_clone_receipt_lineage(
@@ -489,6 +493,12 @@ def _verify_frontend_receipt(manifest: ReleaseManifest, root: Path) -> None:
         root, frontend_commit, manifest.tested_commit
     ):
         raise ValueError("frontend receipt does not point to an ancestor implementation")
+    frontend_tree = str(payload.get("tested_tree", ""))
+    if (
+        not re.fullmatch(r"[0-9a-f]{40}", frontend_tree)
+        or _git(root, "rev-parse", f"{frontend_commit}^{{tree}}") != frontend_tree
+    ):
+        raise ValueError("frontend receipt tested tree does not match its commit")
     recorded = {
         row["path"]: row["sha256"] for row in payload.get("screenshots", [])
     }

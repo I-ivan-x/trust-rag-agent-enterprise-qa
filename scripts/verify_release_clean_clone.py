@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import platform
 import re
 import shutil
 import subprocess
@@ -21,6 +22,7 @@ from app.eval.release_manifest import (  # noqa: E402
     FRONTEND_SCREENSHOTS,
 )
 from app.schemas.release_manifest import (  # noqa: E402
+    CLEAN_CLONE_ENVIRONMENT,
     LighthouseVerificationRun,
     ReleaseCleanCloneReceipt,
     RuntimeVersions,
@@ -61,49 +63,51 @@ def verify_release_clean_clone(
             raise ValueError("q5_test must remain absent")
 
         environment = dict(os.environ)
-        environment["UV_OFFLINE"] = "1"
-        environment["npm_config_offline"] = "true"
-        environment["npm_config_audit"] = "false"
+        environment.update(CLEAN_CLONE_ENVIRONMENT)
         commands: list[VerificationCommand] = []
 
         def passed(name: str, command: list[str], *, cwd: Path = clone) -> str:
             completed = _run(command, cwd=cwd, env=environment)
+            relative_cwd = cwd.resolve().relative_to(clone.resolve()).as_posix()
+            working_directory = {
+                ".": "repository",
+                "frontend": "frontend",
+            }.get(relative_cwd)
+            if working_directory is None:
+                raise ValueError(f"unsupported verification cwd: {relative_cwd}")
             commands.append(
-                VerificationCommand(name=name, command=command, status="passed")
+                VerificationCommand(
+                    name=name,
+                    command=command,
+                    working_directory=working_directory,
+                    environment=CLEAN_CLONE_ENVIRONMENT,
+                    status="passed",
+                )
             )
             return completed.stdout + completed.stderr
 
-        passed("uv_sync", ["py", "-m", "uv", "sync", "--locked", "--group", "dev"])
+        passed("uv_sync", ["uv", "sync", "--locked", "--group", "dev"])
+        python = ["uv", "run", "--frozen", "python"]
         claim_build = passed(
             "claim_build",
-            ["py", "-m", "uv", "run", "--frozen", "python", "scripts/build_public_claims.py"],
+            [*python, "scripts/build_public_claims.py"],
         )
         passed(
             "claim_check",
             [
-                "py",
-                "-m",
-                "uv",
-                "run",
-                "--frozen",
-                "python",
+                *python,
                 "scripts/build_public_claims.py",
                 "--check",
             ],
         )
         passed(
             "claim_drift",
-            ["py", "-m", "uv", "run", "--frozen", "python", "scripts/check_claim_drift.py"],
+            [*python, "scripts/check_claim_drift.py"],
         )
         passed(
             "showcase_isolation",
             [
-                "py",
-                "-m",
-                "uv",
-                "run",
-                "--frozen",
-                "python",
+                *python,
                 "scripts/build_interview_showcase.py",
                 "--check",
             ],
@@ -111,24 +115,14 @@ def verify_release_clean_clone(
         passed(
             "public_repository_audit",
             [
-                "py",
-                "-m",
-                "uv",
-                "run",
-                "--frozen",
-                "python",
+                *python,
                 "scripts/verify_public_repository.py",
             ],
         )
         gate_output = passed(
             "release_gates",
             [
-                "py",
-                "-m",
-                "uv",
-                "run",
-                "--frozen",
-                "python",
+                *python,
                 "scripts/check_release_gates.py",
                 "--summary",
                 "tests/fixtures/release_gates/ci_clean_summary.json",
@@ -143,12 +137,7 @@ def verify_release_clean_clone(
         passed(
             "frontend_receipt",
             [
-                "py",
-                "-m",
-                "uv",
-                "run",
-                "--frozen",
-                "python",
+                *python,
                 "scripts/verify_frontend_closure.py",
             ],
         )
@@ -201,6 +190,10 @@ def verify_release_clean_clone(
             ignored_or_untracked_dependency_count=0,
             model_requests=0,
             external_requests=0,
+            request_observation_scope=(
+                "application counters and browser request capture; dependency "
+                "installers forced offline; not an OS-level egress attestation"
+            ),
             q5_test="absent",
             status="passed",
         )
@@ -245,13 +238,33 @@ def _verify_frontend_receipt(repository: Path) -> None:
 
 
 def _runtime_versions(repository: Path) -> RuntimeVersions:
+    frontend = repository / "frontend"
+    chromium_version_script = (
+        "const {chromium}=require('@playwright/test');"
+        "(async()=>{const browser=await chromium.launch({headless:true});"
+        "console.log(browser.version());await browser.close();})()"
+        ".catch((error)=>{console.error(error);process.exit(1);});"
+    )
     return RuntimeVersions(
-        python=_command_text(["py", "--version"], repository).replace("Python ", ""),
-        uv=_command_text(["py", "-m", "uv", "--version"], repository)
+        operating_system=f"{platform.system()} {platform.release()}",
+        architecture=platform.machine(),
+        python=_command_text(
+            ["uv", "run", "--frozen", "python", "--version"],
+            repository,
+        ).replace("Python ", ""),
+        uv=_command_text(["uv", "--version"], repository)
         .split(" (", 1)[0]
         .replace("uv ", ""),
         node=_command_text(["node", "--version"], repository).lstrip("v"),
         npm=_command_text(["npm", "--version"], repository),
+        playwright=_command_text(
+            ["node", "-p", "require('@playwright/test/package.json').version"],
+            frontend,
+        ),
+        chromium=_command_text(
+            ["node", "-e", chromium_version_script],
+            frontend,
+        ),
     )
 
 

@@ -195,6 +195,16 @@
     "RuntimeVersions": {
       "additionalProperties": false,
       "properties": {
+        "architecture": {
+          "minLength": 1,
+          "title": "Architecture",
+          "type": "string"
+        },
+        "chromium": {
+          "minLength": 1,
+          "title": "Chromium",
+          "type": "string"
+        },
         "node": {
           "minLength": 1,
           "title": "Node",
@@ -203,6 +213,16 @@
         "npm": {
           "minLength": 1,
           "title": "Npm",
+          "type": "string"
+        },
+        "operating_system": {
+          "minLength": 1,
+          "title": "Operating System",
+          "type": "string"
+        },
+        "playwright": {
+          "minLength": 1,
+          "title": "Playwright",
           "type": "string"
         },
         "python": {
@@ -217,10 +237,14 @@
         }
       },
       "required": [
+        "operating_system",
+        "architecture",
         "python",
         "uv",
         "node",
-        "npm"
+        "npm",
+        "playwright",
+        "chromium"
       ],
       "title": "RuntimeVersions",
       "type": "object"
