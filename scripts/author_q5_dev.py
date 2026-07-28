@@ -1318,7 +1318,7 @@ def _write_corpus(root: Path, specs: list[CaseSpec]) -> None:
             rows.extend([f"## {evidence.doc_id}", "", evidence.text, ""])
         path = root / f"{surface}.md"
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text("\n".join(rows).rstrip() + "\n", encoding="utf-8")
+        _write_frozen_text(path, "\n".join(rows).rstrip() + "\n")
     provenance = {
         "schema_version": "q5-corpus-provenance-v4",
         "dataset": "q5_dev",
@@ -1346,15 +1346,20 @@ def _write_jsonl(path: Path, rows: Sequence[Any]) -> None:
     for row in rows:
         payload = row.model_dump(mode="json") if hasattr(row, "model_dump") else row
         serialized.append(json.dumps(payload, ensure_ascii=False, sort_keys=True))
-    path.write_text("\n".join(serialized) + "\n", encoding="utf-8")
+    _write_frozen_text(path, "\n".join(serialized) + "\n")
 
 
 def _write_json(path: Path, payload: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
+    _write_frozen_text(
+        path,
         json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
     )
+
+
+def _write_frozen_text(path: Path, text: str) -> None:
+    normalized = text.replace("\r\n", "\n").replace("\r", "\n")
+    path.write_bytes(normalized.replace("\n", "\r\n").encode("utf-8"))
 
 
 if __name__ == "__main__":  # pragma: no cover

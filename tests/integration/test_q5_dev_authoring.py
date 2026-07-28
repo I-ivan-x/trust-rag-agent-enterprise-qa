@@ -82,6 +82,18 @@ def test_q5_dev_authoring_is_reproducible_in_an_isolated_root(tmp_path: Path) ->
     assert payload["task_count"] == 36
     assert payload["pre_run_valid"] is True
     assert check_q5_pre_run(output).valid is True
+    frozen_outputs = [
+        output / "tasks.jsonl",
+        output / "environment.jsonl",
+        output / "runtime_cases.jsonl",
+        output / "gold.jsonl",
+        *sorted((output / "corpus").rglob("*.json")),
+        *sorted((output / "corpus").rglob("*.md")),
+    ]
+    for path in frozen_outputs:
+        raw = path.read_bytes()
+        assert b"\r\n" in raw
+        assert b"\n" not in raw.replace(b"\r\n", b"")
 
 
 def test_q5_dev_semantic_queries_form_crossed_counterfactual_pairs() -> None:
