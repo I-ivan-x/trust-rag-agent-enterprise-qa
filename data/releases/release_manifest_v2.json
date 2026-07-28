@@ -154,9 +154,9 @@
     }
   },
   "clean_clone_receipt": {
-    "git_blob_sha": "2fa37f53d384687262376159687209f3884bccbd",
+    "git_blob_sha": "59d0de6f4a42b9e0d1164ae7950906a0dea18b30",
     "path": "data/releases/clean_clone_receipt_v1.json",
-    "sha256": "94f4369c618fdf645de1f9e6188ee2255d8aa49153cd2db250fda00011e7ad10",
+    "sha256": "748086956cad092924c10afe843a71f43bfeb860c3d54e5f00d01e6a817ef4d6",
     "size_bytes": 7502
   },
   "closure_documents": [
@@ -266,16 +266,16 @@
       "size_bytes": 9778
     },
     {
-      "git_blob_sha": "dd3a1a531eaa88dca57af13a2db41b6a1c0d2d39",
+      "git_blob_sha": "46f46f8fa999969cad245e289dc59c9681e1b0d7",
       "path": "data/public_repository/dependency_audit_v1.json",
-      "sha256": "adc3c78df207191c5247dde2317edda07f27a85cb69e8f3e1e8b076b8ee25918",
-      "size_bytes": 3526
+      "sha256": "4cd9f11f7b38cf706a68f6f3860f2e27b87de50f6a3d29fc57b3fe23b2e42f61",
+      "size_bytes": 3539
     },
     {
-      "git_blob_sha": "2e3448325d83b4b59c4173d062341c64158a038f",
+      "git_blob_sha": "84757e523e9b7a1ebafc3c0150f6f395434034b4",
       "path": "docs/PUBLIC_REPOSITORY_AUDIT.md",
-      "sha256": "a05b99537e85fe14301fd8dda9640a9cb97d783eeaafb55b62e2d4abf76e7756",
-      "size_bytes": 7766
+      "sha256": "753eee093a1e53c9a445da357a50696d20e443c8de5f26a8db8d6f0ab0567a5d",
+      "size_bytes": 8055
     },
     {
       "git_blob_sha": "66cfed8493926e6a9b5ba8eb2255089972f9e3a1",
@@ -291,10 +291,10 @@
     }
   ],
   "python_lock": {
-    "git_blob_sha": "a1b955be49e419f5a33b681bd92fc71ca7780b01",
+    "git_blob_sha": "2f55ffd0ebebb1d3dfb1c876848a561856ff42b6",
     "path": "uv.lock",
-    "sha256": "a6f56636286d44753a7e6368fb16a2a8bd1251b1b79808c70d19956fd99a7d3e",
-    "size_bytes": 428689
+    "sha256": "aab394bd504c85453150dd292360edfe2810e484ba76ed4c7a6d5a8ab3224ff0",
+    "size_bytes": 429667
   },
   "q5_test": "absent",
   "release_schema": {
@@ -356,6 +356,6 @@
     "tag_kind": "annotated",
     "tag_object_sha": "4e5198c1303b8626a2d10cea33ec905116e5d286"
   },
-  "tested_commit": "837ac8ab99dbdb21151380bab7146d1520e5440a",
-  "tested_tree": "a80a5c1ba83747c08409754683a430e3861290e6"
+  "tested_commit": "0670e7addc0f61923bf17ddc6a48008ed00ff311",
+  "tested_tree": "97e3c9ce95fb85365e6df773ff5d95f0cb4e8378"
 }

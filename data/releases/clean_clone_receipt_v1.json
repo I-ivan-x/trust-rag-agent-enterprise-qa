@@ -204,7 +204,7 @@
       "command": [
         "node",
         "scripts/run-lighthouse.mjs",
-        "837ac8ab99dbdb21151380bab7146d1520e5440a",
+        "0670e7addc0f61923bf17ddc6a48008ed00ff311",
         "acceptance/runtime/release-clean-clone/run-1"
       ],
       "environment": {
@@ -221,7 +221,7 @@
       "command": [
         "node",
         "scripts/run-lighthouse.mjs",
-        "837ac8ab99dbdb21151380bab7146d1520e5440a",
+        "0670e7addc0f61923bf17ddc6a48008ed00ff311",
         "acceptance/runtime/release-clean-clone/run-2"
       ],
       "environment": {
@@ -238,7 +238,7 @@
       "command": [
         "node",
         "scripts/run-lighthouse.mjs",
-        "837ac8ab99dbdb21151380bab7146d1520e5440a",
+        "0670e7addc0f61923bf17ddc6a48008ed00ff311",
         "acceptance/runtime/release-clean-clone/run-3"
       ],
       "environment": {
@@ -258,7 +258,7 @@
     {
       "accessibility": 100,
       "external_requests": 0,
-      "performance": 93,
+      "performance": 95,
       "run_index": 1
     },
     {
@@ -270,7 +270,7 @@
     {
       "accessibility": 100,
       "external_requests": 0,
-      "performance": 93,
+      "performance": 94,
       "run_index": 3
     }
   ],
@@ -293,7 +293,7 @@
   "schema_version": "agent-reliability-clean-clone-receipt-v1",
   "screenshot_hashes_verified": true,
   "status": "passed",
-  "tested_commit": "837ac8ab99dbdb21151380bab7146d1520e5440a",
-  "tested_tree": "a80a5c1ba83747c08409754683a430e3861290e6",
+  "tested_commit": "0670e7addc0f61923bf17ddc6a48008ed00ff311",
+  "tested_tree": "97e3c9ce95fb85365e6df773ff5d95f0cb4e8378",
   "unexpected_nonignored_file_count": 0
 }
