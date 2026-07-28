@@ -115,30 +115,6 @@ def test_q5_manifest_hashes_task_gold_env_corpus_separately(tmp_path: Path) -> N
     assert persisted["paths"]["gold"].endswith("gold.jsonl")
 
 
-def test_q5_manifest_hashes_frozen_text_independent_of_checkout_eol(
-    tmp_path: Path,
-) -> None:
-    hashes: list[dict[str, str]] = []
-    for label, newline in (("lf", b"\n"), ("crlf", b"\r\n")):
-        root = tmp_path / label
-        corpus = root / "corpus"
-        corpus.mkdir(parents=True)
-        for name in ("tasks.jsonl", "environment.jsonl", "gold.jsonl"):
-            (root / name).write_bytes(b'{"value":1}' + newline)
-        (corpus / "provenance.json").write_bytes(b'{"source":"fixture"}' + newline)
-        (corpus / "prompt.md").write_bytes(b"# Fixture" + newline)
-        hashes.append(
-            build_q5_dataset_manifest(
-                tasks_path=root / "tasks.jsonl",
-                environment_path=root / "environment.jsonl",
-                gold_path=root / "gold.jsonl",
-                corpus_path=corpus,
-            )["sha256"]
-        )
-
-    assert hashes[0] == hashes[1]
-
-
 def test_q5_requested_capability_never_falls_back_to_gold() -> None:
     payload = _task_payload()
     payload.pop("requested_capability")

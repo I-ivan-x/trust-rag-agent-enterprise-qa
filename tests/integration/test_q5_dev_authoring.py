@@ -54,6 +54,26 @@ def test_formal_q5_dev_authoring_passes_static_pre_run() -> None:
     assert persisted == report.model_dump(mode="json")
 
 
+def test_formal_q5_pre_run_receipt_is_checkout_eol_independent(
+    tmp_path: Path,
+) -> None:
+    copied = tmp_path / "q5-dev-lf"
+    shutil.copytree(Q5_DEV_ROOT, copied)
+    for path in copied.rglob("*"):
+        if path.is_file() and path.suffix.lower() in {
+            ".json",
+            ".jsonl",
+            ".md",
+            ".txt",
+            ".yaml",
+            ".yml",
+        }:
+            raw = path.read_bytes()
+            path.write_bytes(raw.replace(b"\r\n", b"\n").replace(b"\r", b"\n"))
+
+    assert check_q5_pre_run(copied).valid is True
+
+
 def test_q5_dev_authoring_is_reproducible_in_an_isolated_root(tmp_path: Path) -> None:
     output = tmp_path / "q5-dev"
 

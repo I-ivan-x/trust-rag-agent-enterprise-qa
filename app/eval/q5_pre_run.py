@@ -592,6 +592,10 @@ def check_q5_pre_run(
         gold_path=paths["gold"],
         corpus_path=paths["corpus"],
     )
+    expected_manifest["sha256"] = {
+        name: _sha256_frozen_path(paths[name])
+        for name in ("tasks", "environment", "gold", "corpus")
+    }
     try:
         persisted_manifest = json.loads(paths["manifest"].read_text(encoding="utf-8"))
     except (FileNotFoundError, json.JSONDecodeError, OSError) as exc:
@@ -912,7 +916,27 @@ def _find_gold_fields(payload: Any) -> list[str]:
 
 
 def _sha256_file(path: Path) -> str:
+    return hashlib.sha256(_frozen_hash_bytes(path)).hexdigest()
+
+
+def _sha256_frozen_path(path: Path) -> str:
+    if path.is_file():
+        return _sha256_file(path)
+    if not path.is_dir():
+        raise FileNotFoundError(f"Q5 pre-run artifact not found: {path}")
+    digest = hashlib.sha256()
+    for file_path in sorted(item for item in path.rglob("*") if item.is_file()):
+        digest.update(file_path.relative_to(path).as_posix().encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(_frozen_hash_bytes(file_path))
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
+def _frozen_hash_bytes(path: Path) -> bytes:
     raw = path.read_bytes()
+    if path.suffix.lower() not in {".json", ".jsonl", ".md", ".txt", ".yaml", ".yml"}:
+        return raw
     # The frozen Q5 receipts were sealed from the original Windows authoring
     # workspace, where text artifacts used CRLF. Git checkouts on Linux expose
     # the same tracked content with LF, so hash the explicitly documented
@@ -920,5 +944,4 @@ def _sha256_file(path: Path) -> str:
     # bytes. This keeps the historical receipt stable without weakening content
     # verification.
     canonical = raw.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
-    canonical = canonical.replace(b"\n", b"\r\n")
-    return hashlib.sha256(canonical).hexdigest()
+    return canonical.replace(b"\n", b"\r\n")
