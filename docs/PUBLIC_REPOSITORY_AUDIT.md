@@ -49,7 +49,7 @@ Exact 40-character Git object IDs and 64-character SHA-256 values are treated
 as opaque machine identifiers before PII-pattern matching; an identical phone
 number outside such a complete hash token still fails the gate.
 
-At the final local prepublication checkpoint, Gitleaks 8.30.1 scanned every
+At the final source-publication checkpoint, Gitleaks 8.30.1 scanned every
 reachable commit and reported zero findings under the tracked `.gitleaks.toml`.
 Its two narrow allowlists cover only SHA-256 trial identifiers misclassified
 as generic API keys and the vendored FastAPI tutorial's public example JWT. CI

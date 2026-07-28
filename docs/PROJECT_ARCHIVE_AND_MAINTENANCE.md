@@ -1,6 +1,6 @@
 # Agent Reliability Lab — Project Archive and Maintenance Policy
 
-Status: local archival closure
+Status: source-published archival closure; intentionally undeployed
 
 Effective date: 2026-07-28
 
@@ -8,23 +8,22 @@ Maintenance mode: security, reproducibility, factual correction, and compatibili
 
 ## 1. Closure statement
 
-Agent Reliability Lab reached **local archival closure** on 2026-07-28. The
+Agent Reliability Lab reached **source-published archival closure** on
+2026-07-28. The
 Q1–Q5 implementation, scoped research conclusions, public Claim registry,
 frontend acceptance evidence, public-repository audit, and clean-clone release
-envelope are present in the local Git history.
+envelope are published at
+`https://github.com/I-ivan-x/agent-reliability-lab`.
 
-This status does **not** mean that publication has completed:
+Remote `main` and the three intended annotated tags were verified after push,
+and GitHub Actions passed the full-history source-publication gate. The
+repository security baseline enables secret scanning with push protection,
+Dependabot alerts and security updates, and private vulnerability reporting.
 
-- `origin/main` has not yet been advanced to the archival history;
-- the archival branch has not yet passed CI on the remote repository;
-- the local Q3 and Q4 tags have not yet been confirmed on the remote;
-- the Q5 research milestone tag is a local-only archival marker and has not
-  been pushed; and
-- the static showcase has no audited production deployment in this closure.
-
-Until the remote publication conditions in §10 pass, public wording must say
-“locally archived and reproducible,” not “published,” “deployed,” or “remote-CI
-verified.”
+This closure deliberately excludes deployment. The static showcase is
+interview-ready source and audited build output, but no production showcase URL
+was created or claimed. Public wording may therefore say “source published,
+reproducible, and remote-CI verified,” but not “deployed.”
 
 ## 2. Sources of truth
 
@@ -254,7 +253,7 @@ Local archival closure requires:
 
 ### Remote publication
 
-Remote publication is a separate terminal condition. It requires:
+Remote source publication is a separate terminal condition. It requires:
 
 - remote `main` at the intended archive-envelope commit with preserved
   ancestry;
@@ -270,6 +269,10 @@ Remote publication is a separate terminal condition. It requires:
 No local test result may be used as evidence that remote CI or deployment
 passed.
 
+Current state on 2026-07-28: the source-publication conditions above passed for
+`main`; the repository and intended tags are public and remote CI is green.
+Deployment was explicitly excluded from the closure and remains unclaimed.
+
 ### Immutable historical-tag caveat
 
 The Q5 research tag is an immutable pre-maintenance snapshot. Its historical
@@ -284,7 +287,7 @@ every historical tag workflow is green.
 
 Run from the repository root in PowerShell.
 
-The clean-clone runner's internal 14-command matrix records portable logical
+The clean-clone runner's internal 19-command matrix records portable logical
 `uv` commands plus the actual launcher class (`uv` executable or
 `python -m uv`). It also records OS, architecture, Python/uv/Node/npm,
 Playwright/Chromium, working directory, and offline environment overrides.
@@ -352,7 +355,7 @@ clean worktree before publication.
 
 ### Research milestone verification
 
-After local archival closure, verify the local marker with:
+Verify the local marker with:
 
 ```powershell
 git cat-file -t agent-reliability-lab-q5-closed-20260717
@@ -362,8 +365,7 @@ git for-each-ref refs/tags/agent-reliability-lab-q5-closed-20260717 `
 git tag --list "v4.0*"
 ```
 
-Only after explicit publication authorization and green remote CI, verify the
-remote marker separately:
+Verify the published remote marker separately:
 
 ```powershell
 git ls-remote --tags origin `
@@ -371,5 +373,5 @@ git ls-remote --tags origin `
 ```
 
 The first command must report `tag`, the milestone must peel to the recorded
-immutable archive ancestor, and the `v4.0*` query must be empty. If publication is later
-authorized, the remote reference must match the local tag after it is pushed.
+immutable archive ancestor, the `v4.0*` query must be empty, and the remote
+reference must exactly match the local annotated tag object and peeled target.
