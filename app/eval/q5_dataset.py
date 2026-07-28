@@ -269,7 +269,7 @@ def _result_payload(result: Mapping[str, Any] | BaseModel) -> dict[str, Any]:
 
 def _sha256_path(path: Path) -> str:
     if path.is_file():
-        return hashlib.sha256(path.read_bytes()).hexdigest()
+        return hashlib.sha256(_frozen_hash_bytes(path)).hexdigest()
     if not path.is_dir():
         raise FileNotFoundError(f"Q5 manifest artifact not found: {path}")
 
@@ -279,6 +279,14 @@ def _sha256_path(path: Path) -> str:
         relative = file_path.relative_to(path).as_posix().encode("utf-8")
         digest.update(relative)
         digest.update(b"\0")
-        digest.update(file_path.read_bytes())
+        digest.update(_frozen_hash_bytes(file_path))
         digest.update(b"\0")
     return digest.hexdigest()
+
+
+def _frozen_hash_bytes(path: Path) -> bytes:
+    raw = path.read_bytes()
+    if path.suffix.lower() not in {".json", ".jsonl", ".md", ".txt", ".yaml", ".yml"}:
+        return raw
+    normalized = raw.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+    return normalized.replace(b"\n", b"\r\n")
